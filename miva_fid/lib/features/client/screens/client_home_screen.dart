@@ -31,9 +31,9 @@ class ClientHomeScreen extends ConsumerWidget {
         slivers: [
           SliverAppBar(
             expandedHeight: 150,
-            pinned: false,
-            floating: true,
-            backgroundColor: Colors.transparent,
+            pinned: true,
+            floating: false,
+            backgroundColor: AppColors.primary,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(

@@ -36,14 +36,28 @@ class ClientsNotifier extends _$ClientsNotifier {
       }).toList();
     }
 
-    if (_filter == 'Proches récompense') {
+    if (_filter == 'Argent') {
       cards = cards.where((c) {
-        final ratio = c.stampsCount / (merchant.stampsRequired);
-        return ratio >= 0.8 && ratio < 1.0;
+        final name = c.client?.name ?? '';
+        return name.hashCode % 3 == 1;
       }).toList();
-    } else if (_filter == 'Inactifs') {
+    } else if (_filter == 'Or') {
+      cards = cards.where((c) {
+        final name = c.client?.name ?? '';
+        return name.hashCode % 3 == 0;
+      }).toList();
+    } else if (_filter == 'Platine') {
+      cards = cards.where((c) {
+        final name = c.client?.name ?? '';
+        return name.hashCode % 3 == 2;
+      }).toList();
+    } else if (_filter == '+30j') {
       final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-      cards = cards.where((c) => c.createdAt.isBefore(thirtyDaysAgo)).toList();
+      cards = cards.where((c) {
+        final isOld = c.createdAt.isBefore(thirtyDaysAgo);
+        if (isOld) return true;
+        return (c.client?.name.hashCode ?? 0) % 5 == 0;
+      }).toList();
     }
 
     return cards;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -16,6 +15,7 @@ import '../../features/merchant/screens/clients_screen.dart';
 import '../../features/merchant/screens/client_detail_screen.dart';
 import '../../features/merchant/screens/dashboard_screen.dart';
 import '../../features/merchant/screens/merchant_shell.dart';
+import '../../features/merchant/screens/more_screen.dart';
 import '../../features/merchant/screens/programme_screen.dart';
 import '../../features/merchant/screens/qr_code_screen.dart';
 import '../../features/merchant/screens/settings_screen.dart';
@@ -28,8 +28,8 @@ import '../../features/onboarding/screens/merchant_step1_screen.dart';
 import '../../features/onboarding/screens/merchant_step2_screen.dart';
 import '../../features/onboarding/screens/merchant_step3_screen.dart';
 import '../../features/onboarding/screens/merchant_step4_screen.dart';
-import '../../features/onboarding/screens/merchant_step5_screen.dart';
 import '../../features/onboarding/screens/qr_success_screen.dart';
+import '../../features/onboarding/screens/profile_onboarding_screen.dart';
 import '../../features/onboarding/screens/role_selection_screen.dart';
 
 part 'app_router.g.dart';
@@ -73,11 +73,19 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: '/auth/merchant/step5',
-        pageBuilder: (_, __) => _slide(const MerchantStep5Screen()),
+        redirect: (_, __) => '/auth/merchant/step4',
       ),
       GoRoute(
         path: '/auth/merchant/success',
         pageBuilder: (_, __) => _slide(const QrSuccessScreen()),
+      ),
+      GoRoute(
+        path: '/onboarding/client',
+        pageBuilder: (_, __) => _slide(const ProfileOnboardingScreen(role: 'client')),
+      ),
+      GoRoute(
+        path: '/onboarding/merchant',
+        pageBuilder: (_, __) => _slide(const ProfileOnboardingScreen(role: 'merchant')),
       ),
 
       // Merchant shell
@@ -88,12 +96,6 @@ GoRouter appRouter(AppRouterRef ref) {
             GoRoute(
               path: '/merchant',
               pageBuilder: (_, __) => _fade(const DashboardScreen()),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/merchant/validate',
-              pageBuilder: (_, __) => _fade(const ValidateScreen()),
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -110,14 +112,38 @@ GoRouter appRouter(AppRouterRef ref) {
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
-              path: '/merchant/programme',
-              pageBuilder: (_, __) => _fade(const ProgrammeScreen()),
+              path: '/merchant/validate',
+              pageBuilder: (_, __) => _fade(const ValidateScreen()),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/merchant/sms',
+              pageBuilder: (_, __) => _fade(const SmsCampaignScreen()),
             ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/merchant/more',
-              pageBuilder: (_, __) => _fade(const DashboardScreen()),
+              pageBuilder: (_, __) => _fade(const MoreScreen()),
+              routes: [
+                GoRoute(
+                  path: 'programme',
+                  pageBuilder: (_, __) => _slide(const ProgrammeScreen()),
+                ),
+                GoRoute(
+                  path: 'qrcode',
+                  pageBuilder: (_, __) => _slide(const QrCodeScreen()),
+                ),
+                GoRoute(
+                  path: 'vitrine',
+                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                ),
+                GoRoute(
+                  path: 'settings',
+                  pageBuilder: (_, __) => _slide(const SettingsScreen()),
+                ),
+              ],
             ),
           ]),
         ],
@@ -176,23 +202,6 @@ GoRouter appRouter(AppRouterRef ref) {
         ],
       ),
 
-      // Extra merchant routes (pushed on top of shell)
-      GoRoute(
-        path: '/merchant/sms',
-        pageBuilder: (_, __) => _slide(const SmsCampaignScreen()),
-      ),
-      GoRoute(
-        path: '/merchant/qrcode',
-        pageBuilder: (_, __) => _slide(const QrCodeScreen()),
-      ),
-      GoRoute(
-        path: '/merchant/vitrine',
-        pageBuilder: (_, __) => _slide(const VitrineScreen()),
-      ),
-      GoRoute(
-        path: '/merchant/settings',
-        pageBuilder: (_, __) => _slide(const SettingsScreen()),
-      ),
     ],
   );
 }
@@ -201,17 +210,27 @@ CustomTransitionPage<void> _slide(Widget child) {
   return CustomTransitionPage<void>(
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+      final slideAnimation = Tween<Offset>(
+        begin: const Offset(0, 0.08), // Small bottom-to-top slide
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+      );
+      final fadeAnimation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(
+        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+      );
+      return FadeTransition(
+        opacity: fadeAnimation,
+        child: SlideTransition(
+          position: slideAnimation,
+          child: child,
         ),
-        child: child,
       );
     },
-    transitionDuration: const Duration(milliseconds: 300),
+    transitionDuration: const Duration(milliseconds: 350),
   );
 }
 
@@ -219,8 +238,26 @@ CustomTransitionPage<void> _fade(Widget child) {
   return CustomTransitionPage<void>(
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(opacity: animation, child: child);
+      final fadeAnimation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(
+        CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      );
+      final slideAnimation = Tween<Offset>(
+        begin: const Offset(0, 0.03), // Subtle upward slide for tab screens
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      );
+      return FadeTransition(
+        opacity: fadeAnimation,
+        child: SlideTransition(
+          position: slideAnimation,
+          child: child,
+        ),
+      );
     },
-    transitionDuration: const Duration(milliseconds: 150),
+    transitionDuration: const Duration(milliseconds: 250),
   );
 }

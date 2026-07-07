@@ -1,12 +1,12 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_input.dart';
 import '../providers/merchant_provider.dart';
 
 class VitrineScreen extends ConsumerStatefulWidget {
@@ -17,20 +17,12 @@ class VitrineScreen extends ConsumerStatefulWidget {
 }
 
 class _VitrineScreenState extends ConsumerState<VitrineScreen> {
-  int _tab = 0;
+  final _nameCtrl = TextEditingController();
+  final _catCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _igCtrl = TextEditingController();
-  final _fbCtrl = TextEditingController();
-  final _ttCtrl = TextEditingController();
-  final _reviewUrlCtrl = TextEditingController();
-  bool _showReview = false;
+  final _addrCtrl = TextEditingController();
   bool _saving = false;
-
-  static const _days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  final _hoursOpen = List<bool>.filled(7, true);
-  final _openTime = List<String>.filled(7, '08:00');
-  final _closeTime = List<String>.filled(7, '20:00');
 
   @override
   void initState() {
@@ -38,13 +30,11 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final m = ref.read(merchantNotifierProvider).value;
       if (m != null) {
-        _descCtrl.text = m.description ?? '';
-        _phoneCtrl.text = m.phone ?? '';
-        _igCtrl.text = m.instagram ?? '';
-        _fbCtrl.text = m.facebook ?? '';
-        _ttCtrl.text = m.tiktok ?? '';
-        _reviewUrlCtrl.text = m.googleReviewUrl ?? '';
-        _showReview = m.showReviewButton;
+        _nameCtrl.text = m.name;
+        _catCtrl.text = 'Restaurant'; // Mockup default
+        _descCtrl.text = m.description ?? 'Cuisine togolaise authentique au cœur de Lomé. Spécialités maison et accueil chaleureux.';
+        _phoneCtrl.text = m.phone ?? '+228 90 12 34 56';
+        _addrCtrl.text = 'Rue des Cocotiers, Lomé'; // Mockup default
         setState(() {});
       }
     });
@@ -52,335 +42,533 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
 
   @override
   void dispose() {
-    _descCtrl.dispose(); _phoneCtrl.dispose(); _igCtrl.dispose();
-    _fbCtrl.dispose(); _ttCtrl.dispose(); _reviewUrlCtrl.dispose();
+    _nameCtrl.dispose();
+    _catCtrl.dispose();
+    _descCtrl.dispose();
+    _phoneCtrl.dispose();
+    _addrCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    await ref.read(merchantNotifierProvider.notifier).updateProgramme({
-      'description': _descCtrl.text.trim(),
-      'phone': _phoneCtrl.text.trim(),
-      'instagram': _igCtrl.text.trim(),
-      'facebook': _fbCtrl.text.trim(),
-      'tiktok': _ttCtrl.text.trim(),
-      'google_review_url': _reviewUrlCtrl.text.trim(),
-      'show_review_button': _showReview,
-    });
-    setState(() => _saving = false);
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vitrine mise à jour')));
+    try {
+      await ref.read(merchantNotifierProvider.notifier).updateProgramme({
+        'description': _descCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vitrine mise à jour avec succès')),
+        );
+        context.go('/merchant');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _showPreviewSheet(BuildContext context, dynamic merchant) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(Sp.md),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Text('Aperçu public', style: AppTextStyles.h3()),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: Sp.md),
+            _PreviewWidget(
+              name: _nameCtrl.text,
+              category: _catCtrl.text,
+              description: _descCtrl.text,
+              phone: _phoneCtrl.text,
+              address: _addrCtrl.text,
+              initials: merchant?.initials ?? 'RS',
+            ),
+            const SizedBox(height: Sp.md),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final merchant = ref.watch(merchantNotifierProvider).value;
+    final merchantAsync = ref.watch(merchantNotifierProvider);
+    final merchant = merchantAsync.value;
+
+    // No duplicated header variables needed
+
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      appBar: AppBar(
-        title: Text('Ma Vitrine', style: AppTextStyles.h3()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.go('/merchant'),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(Sp.md, 0, Sp.md, Sp.sm),
-            decoration: BoxDecoration(
-              color: AppColors.bgLight,
-              borderRadius: Rd.pill,
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: ['Éditeur', 'Aperçu'].asMap().entries.map((e) {
-                final selected = _tab == e.key;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _tab = e.key),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.all(3),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: selected ? AppColors.primary : Colors.transparent,
-                        borderRadius: Rd.pill,
+      body: Column(
+        children: [
+          const SizedBox(height: Sp.sm),
+
+            // 2. Title and "Aperçu" Button Row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+              child: Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ma Vitrine',
+                        style: AppTextStyles.h1().copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                      child: Text(e.value,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.labelBold().copyWith(
-                              color: selected ? Colors.white : AppColors.textSecondary)),
+                      Text(
+                        'Page publique de votre commerce',
+                        style: AppTextStyles.caption().copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () => _showPreviewSheet(context, merchant),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.border),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.visibility_outlined, color: AppColors.textPrimary, size: 16),
+                    label: Text(
+                      'Aperçu',
+                      style: AppTextStyles.caption().copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                );
-              }).toList(),
+                ],
+              ),
+            ).animate().fadeIn(duration: 350.ms, delay: 80.ms).slideY(begin: 0.06, end: 0),
+            const SizedBox(height: Sp.md),
+
+            // 3. Scrollable Editor Form
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // URL link badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.language_rounded, color: AppColors.merchant, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'miva.fid/lasaveur',
+                            style: AppTextStyles.labelBold().copyWith(
+                              color: AppColors.merchant,
+                            ),
+                          ),
+                          const Spacer(),
+                          const Icon(Icons.open_in_new_rounded, color: AppColors.textSecondary, size: 16),
+                        ],
+                      ),
+                    ).animate().fadeIn(duration: 400.ms, delay: 150.ms).slideY(begin: 0.08, end: 0),
+                    const SizedBox(height: Sp.lg),
+
+                    // Section Photo de couverture
+                    _SectionTitle('Photo de couverture').animate().fadeIn(duration: 300.ms, delay: 220.ms),
+                    const SizedBox(height: 6),
+                    CustomPaint(
+                      painter: _DashedBorderPainter(
+                        color: AppColors.border.withOpacity(0.8),
+                        borderRadius: 12,
+                      ),
+                      child: Container(
+                        height: 120,
+                        width: double.infinity,
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.camera_alt_outlined, color: AppColors.textSecondary.withOpacity(0.6), size: 28),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Ajouter une photo',
+                              style: AppTextStyles.caption().copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).animate().fadeIn(duration: 400.ms, delay: 260.ms).slideY(begin: 0.06, end: 0),
+                    const SizedBox(height: Sp.lg),
+
+                    // Section Informations
+                    _SectionTitle('Informations').animate().fadeIn(duration: 300.ms, delay: 330.ms),
+                    const SizedBox(height: 8),
+                    _buildInputLabel('NOM DU COMMERCE'),
+                    _buildTextField(_nameCtrl, 'Restaurant La Saveur'),
+                    const SizedBox(height: 12),
+                    _buildInputLabel('CATÉGORIE'),
+                    _buildTextField(_catCtrl, 'Restaurant'),
+                    const SizedBox(height: 12),
+                    _buildInputLabel('DESCRIPTION'),
+                    _buildTextField(_descCtrl, 'Description...', maxLines: 3),
+                    const SizedBox(height: Sp.lg),
+
+                    // Section Contact & adresse
+                    _SectionTitle('Contact & adresse').animate().fadeIn(duration: 300.ms, delay: 400.ms),
+                    const SizedBox(height: 8),
+                    _buildIconLabel(Icons.phone_outlined, 'TÉLÉPHONE'),
+                    _buildTextField(_phoneCtrl, '+228 90 12 34 56', keyboardType: TextInputType.phone),
+                    const SizedBox(height: 12),
+                    _buildIconLabel(Icons.location_on_outlined, 'ADRESSE'),
+                    _buildTextField(_addrCtrl, 'Rue des Cocotiers, Lomé'),
+                    const SizedBox(height: Sp.lg),
+
+                    // Section Horaires
+                    _SectionTitle('Horaires').animate().fadeIn(duration: 300.ms, delay: 460.ms),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(Sp.md),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        children: const [
+                          _HourRow(day: 'Lundi', hours: '08:00 - 22:00'),
+                          _HourRow(day: 'Mardi', hours: '08:00 - 22:00'),
+                          _HourRow(day: 'Mercredi', hours: '08:00 - 22:00'),
+                          _HourRow(day: 'Jeudi', hours: '08:00 - 22:00'),
+                          _HourRow(day: 'Vendredi', hours: '08:00 - 22:00'),
+                          _HourRow(day: 'Samedi', hours: '08:00 - 22:00'),
+                          _HourRow(day: 'Dimanche', hours: 'Fermé', isClosed: true),
+                        ],
+                      ),
+                    ).animate().fadeIn(duration: 400.ms, delay: 500.ms).slideY(begin: 0.05, end: 0),
+                    const SizedBox(height: Sp.xl),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _tab == 0
-            ? _EditorView(
-                key: const ValueKey('editor'),
-                descCtrl: _descCtrl, phoneCtrl: _phoneCtrl,
-                igCtrl: _igCtrl, fbCtrl: _fbCtrl, ttCtrl: _ttCtrl,
-                reviewUrlCtrl: _reviewUrlCtrl,
-                showReview: _showReview,
-                onShowReviewChanged: (v) => setState(() => _showReview = v),
-                days: _days, hoursOpen: _hoursOpen,
-                openTime: _openTime, closeTime: _closeTime,
-                onHoursChanged: (i, v) => setState(() => _hoursOpen[i] = v),
-                saving: _saving, onSave: _save,
-              )
-            : _PreviewView(key: const ValueKey('preview'), merchant: merchant),
-      ),
-    );
-  }
-}
 
-class _EditorView extends StatelessWidget {
-  const _EditorView({
-    super.key,
-    required this.descCtrl, required this.phoneCtrl,
-    required this.igCtrl, required this.fbCtrl, required this.ttCtrl,
-    required this.reviewUrlCtrl, required this.showReview,
-    required this.onShowReviewChanged, required this.days,
-    required this.hoursOpen, required this.openTime, required this.closeTime,
-    required this.onHoursChanged, required this.saving, required this.onSave,
-  });
-
-  final TextEditingController descCtrl, phoneCtrl, igCtrl, fbCtrl, ttCtrl, reviewUrlCtrl;
-  final bool showReview;
-  final ValueChanged<bool> onShowReviewChanged;
-  final List<String> days;
-  final List<bool> hoursOpen;
-  final List<String> openTime, closeTime;
-  final void Function(int, bool) onHoursChanged;
-  final bool saving;
-  final VoidCallback onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(Sp.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Section('Description', child: AppInput(
-                    label: 'Description', controller: descCtrl, maxLines: 3,
-                    hint: 'Décrivez votre commerce...')),
-                _Section('Contact', child: Column(children: [
-                  AppInput(label: 'Téléphone', controller: phoneCtrl,
-                      prefixIcon: Icons.phone_outlined, keyboardType: TextInputType.phone),
-                ])),
-                _Section('Horaires', child: Column(
-                  children: List.generate(7, (i) => _DayRow(
-                    day: days[i], isOpen: hoursOpen[i],
-                    openTime: openTime[i], closeTime: closeTime[i],
-                    onToggle: (v) => onHoursChanged(i, v),
-                  )),
-                )),
-                _Section('Réseaux sociaux', child: Column(children: [
-                  AppInput(label: 'Instagram', controller: igCtrl,
-                      prefixIcon: Icons.camera_alt_outlined, hint: '@votre_commerce'),
-                  AppInput(label: 'Facebook', controller: fbCtrl,
-                      prefixIcon: Icons.facebook_outlined, hint: 'facebook.com/votre-page'),
-                  AppInput(label: 'TikTok', controller: ttCtrl,
-                      prefixIcon: Icons.music_note_outlined, hint: '@votre_compte'),
-                ])),
-                _Section('Avis clients', child: Column(children: [
-                  SwitchListTile.adaptive(
-                    value: showReview, onChanged: onShowReviewChanged,
-                    title: Text("Afficher le bouton 'Laisser un avis'",
-                        style: AppTextStyles.bodyMd()),
-                    activeColor: AppColors.primary, contentPadding: EdgeInsets.zero,
+            // 4. Sticky Bottom Action Button
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: AppColors.border, width: 0.5),
+                ),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.merchant,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  if (showReview) AppInput(label: "Lien Google Avis",
-                      controller: reviewUrlCtrl, prefixIcon: Icons.link_outlined,
-                      hint: 'https://g.page/...'),
-                ])),
-              ],
+                  icon: _saving
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.publish_rounded, color: Colors.white, size: 18),
+                  label: Text(
+                    'Publier les modifications',
+                    style: AppTextStyles.labelBold().copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 550.ms).slideY(begin: 0.15, end: 0),
+          ],
+        ),
+    );
+  }
+
+  Widget _buildInputLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+          color: AppColors.textSecondary.withOpacity(0.8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconLabel(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: AppColors.textSecondary.withOpacity(0.8)),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+              color: AppColors.textSecondary.withOpacity(0.8),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController ctrl,
+    String hint, {
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: ctrl,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.4)),
+        filled: true,
+        fillColor: AppColors.bgLight.withOpacity(0.3),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(Sp.md, 0, Sp.md,
-              MediaQuery.of(context).padding.bottom + Sp.md),
-          child: AppButton.primary('Enregistrer la vitrine',
-              icon: Icons.save_outlined, onPressed: onSave, loading: saving),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
-      ],
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.merchant, width: 1.5),
+        ),
+      ),
     );
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section(this.title, {required this.child});
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title);
   final String title;
-  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: Sp.md),
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: Rd.card,
-          border: Border.all(color: AppColors.border)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: AppTextStyles.labelBold()),
-        const SizedBox(height: Sp.sm),
-        child,
-      ]),
+    return Text(
+      title,
+      style: AppTextStyles.labelBold().copyWith(
+        fontSize: 14,
+        color: AppColors.textPrimary,
+      ),
     );
   }
 }
 
-class _DayRow extends StatelessWidget {
-  const _DayRow({required this.day, required this.isOpen,
-    required this.openTime, required this.closeTime, required this.onToggle});
+class _HourRow extends StatelessWidget {
+  const _HourRow({required this.day, required this.hours, this.isClosed = false});
   final String day;
-  final bool isOpen;
-  final String openTime, closeTime;
-  final ValueChanged<bool> onToggle;
+  final String hours;
+  final bool isClosed;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          SizedBox(width: 40, child: Text(day, style: AppTextStyles.bodyMd())),
-          Switch.adaptive(value: isOpen, onChanged: onToggle, activeColor: AppColors.primary),
-          if (isOpen) ...[
-            const SizedBox(width: Sp.sm),
-            _TimeChip(openTime),
-            const Padding(padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text('→', style: TextStyle(color: AppColors.textSecondary))),
-            _TimeChip(closeTime),
-          ] else
-            Text('Fermé', style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
+          Text(
+            day,
+            style: AppTextStyles.bodyMd().copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            hours,
+            style: AppTextStyles.bodyMd().copyWith(
+              color: isClosed ? AppColors.textSecondary.withOpacity(0.6) : AppColors.textPrimary,
+              fontWeight: isClosed ? FontWeight.w500 : FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _TimeChip extends StatelessWidget {
-  const _TimeChip(this.time);
-  final String time;
+// Dashed Border Painter
+class _DashedBorderPainter extends CustomPainter {
+  _DashedBorderPainter({required this.color, this.borderRadius = 12});
+  final Color color;
+  final double borderRadius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(borderRadius),
+      ));
+
+    const double dashWidth = 5.0;
+    const double dashSpace = 3.0;
+
+    for (final PathMetric metric in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final double nextDistance = distance + dashWidth;
+        final Path extract = metric.extractPath(distance, nextDistance);
+        canvas.drawPath(extract, paint);
+        distance = nextDistance + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Preview Screen Card Widget
+class _PreviewWidget extends StatelessWidget {
+  const _PreviewWidget({
+    required this.name,
+    required this.category,
+    required this.description,
+    required this.phone,
+    required this.address,
+    required this.initials,
+  });
+
+  final String name;
+  final String category;
+  final String description;
+  final String phone;
+  final String address;
+  final String initials;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: AppColors.primaryTint, borderRadius: Rd.button),
-      child: Text(time, style: AppTextStyles.mono().copyWith(fontSize: 12, color: AppColors.primary)),
-    );
-  }
-}
-
-class _PreviewView extends StatelessWidget {
-  const _PreviewView({super.key, this.merchant});
-  final dynamic merchant;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 360,
-        margin: const EdgeInsets.all(Sp.md),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.textPrimary, width: 2),
-          borderRadius: Rd.card20,
-        ),
-        clipBehavior: Clip.hardEdge,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                height: 160,
-                color: AppColors.primary.withOpacity(0.8),
-                alignment: Alignment.bottomLeft,
-                padding: const EdgeInsets.all(Sp.md),
-                child: Text(merchant?.name ?? 'Votre Commerce',
-                    style: AppTextStyles.h3().copyWith(color: Colors.white)),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(Sp.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 120,
+            color: AppColors.merchant,
+            alignment: Alignment.center,
+            child: const Icon(Icons.restaurant_menu_rounded, color: Colors.white, size: 40),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(Sp.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(radius: 20, backgroundColor: AppColors.primaryTint,
-                            child: Text(merchant?.initials ?? '?',
-                                style: AppTextStyles.mono().copyWith(color: AppColors.primary))),
-                        const SizedBox(width: Sp.sm),
-                        Expanded(child: Text(merchant?.name ?? 'Votre Commerce',
-                            style: AppTextStyles.h3())),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: AppColors.successTint, borderRadius: Rd.pill),
-                          child: Text('Ouvert', style: AppTextStyles.caption()
-                              .copyWith(color: AppColors.success, fontWeight: FontWeight.w700)),
-                        ),
-                      ],
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.merchant.withOpacity(0.1),
+                      child: Text(initials, style: TextStyle(color: AppColors.merchant, fontWeight: FontWeight.bold)),
                     ),
-                    const SizedBox(height: Sp.sm),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: null,
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: const RoundedRectangleBorder(borderRadius: Rd.button)),
-                        child: Text('Rejoindre le programme', style: AppTextStyles.labelBold().copyWith(color: Colors.white)),
+                    const SizedBox(width: Sp.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name.isEmpty ? 'La Saveur' : name, style: AppTextStyles.labelBold()),
+                          Text(category.isEmpty ? 'Commerce' : category, style: AppTextStyles.caption()),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: Sp.md),
-                    Row(
-                      children: [
-                        Expanded(child: _ContactBtn(Icons.phone_outlined, 'Appeler')),
-                        const SizedBox(width: Sp.xs),
-                        Expanded(child: _ContactBtn(Icons.chat_outlined, 'WhatsApp')),
-                        const SizedBox(width: Sp.xs),
-                        Expanded(child: _ContactBtn(Icons.directions_outlined, 'Itinéraire')),
-                      ],
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: Sp.md),
+                Text(description, style: AppTextStyles.caption()),
+                const Divider(height: Sp.lg),
+                Row(
+                  children: [
+                    const Icon(Icons.phone_outlined, size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: 8),
+                    Text(phone, style: AppTextStyles.caption()),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: 8),
+                    Text(address, style: AppTextStyles.caption()),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ContactBtn extends StatelessWidget {
-  const _ContactBtn(this.icon, this.label);
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(color: AppColors.bgLight, borderRadius: Rd.button),
-      child: Column(
-        children: [
-          Icon(icon, size: 18, color: AppColors.primary),
-          const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.caption().copyWith(color: AppColors.primary, fontSize: 10)),
         ],
       ),
     );
   }
 }
+

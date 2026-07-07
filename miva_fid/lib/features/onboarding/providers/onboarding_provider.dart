@@ -14,6 +14,7 @@ class OnboardingState {
     this.commerceName = '',
     this.commerceType = '',
     this.address = '',
+    this.description = '',
     this.logoUrl,
     this.colorPrimary = const Color(0xFF4F46E5),
     this.colorSecondary = const Color(0xFF3730A3),
@@ -34,6 +35,7 @@ class OnboardingState {
   final String commerceName;
   final String commerceType;
   final String address;
+  final String description;
   final String? logoUrl;
   final Color colorPrimary;
   final Color colorSecondary;
@@ -47,9 +49,9 @@ class OnboardingState {
 
   String get fullName => '$firstName $lastName'.trim();
   String get colorPrimaryHex =>
-      '#${colorPrimary.value.toRadixString(16).substring(2).toUpperCase()}';
+      '#${(colorPrimary.toARGB32() & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
   String get colorSecondaryHex =>
-      '#${colorSecondary.value.toRadixString(16).substring(2).toUpperCase()}';
+      '#${(colorSecondary.toARGB32() & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
   OnboardingState copyWith({
     String? firstName,
@@ -60,6 +62,7 @@ class OnboardingState {
     String? commerceName,
     String? commerceType,
     String? address,
+    String? description,
     String? logoUrl,
     Color? colorPrimary,
     Color? colorSecondary,
@@ -80,6 +83,7 @@ class OnboardingState {
       commerceName: commerceName ?? this.commerceName,
       commerceType: commerceType ?? this.commerceType,
       address: address ?? this.address,
+      description: description ?? this.description,
       logoUrl: logoUrl ?? this.logoUrl,
       colorPrimary: colorPrimary ?? this.colorPrimary,
       colorSecondary: colorSecondary ?? this.colorSecondary,
@@ -99,6 +103,7 @@ class OnboardingState {
       'name': commerceName,
       'category': commerceType,
       'address': address,
+      'description': description.isEmpty ? null : description,
       'phone': phone,
       'color_primary': colorPrimaryHex,
       'color_secondary': colorSecondaryHex,
@@ -125,6 +130,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   void setCommerceName(String v) => state = state.copyWith(commerceName: v);
   void setCommerceType(String v) => state = state.copyWith(commerceType: v);
   void setAddress(String v) => state = state.copyWith(address: v);
+  void setDescription(String v) => state = state.copyWith(description: v);
   void setLogoUrl(String v) => state = state.copyWith(logoUrl: v);
   void setColorPrimary(Color c) => state = state.copyWith(colorPrimary: c);
   void setColorSecondary(Color c) => state = state.copyWith(colorSecondary: c);

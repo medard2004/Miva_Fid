@@ -18,18 +18,19 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      appBar: AppBar(
-        title: Text('Paramètres', style: AppTextStyles.h3()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.go('/merchant'),
-        ),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(Sp.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'Paramètres',
+              style: AppTextStyles.h1().copyWith(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: Sp.md),
             _SettingsSection('Mon compte', children: [
               _SettingsTile(Icons.person_outline, 'Informations personnelles', onTap: () {}),
               _SettingsTile(Icons.lock_outline, 'Changer le mot de passe', onTap: () {}),
@@ -38,11 +39,11 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: Sp.md),
             _SettingsSection('Programme', children: [
               _SettingsTile(Icons.workspace_premium_outlined, 'Mon programme fidélité',
-                  onTap: () => context.go('/merchant/programme')),
+                  onTap: () => context.go('/merchant/more/programme')),
               _SettingsTile(Icons.qr_code_outlined, 'Mon QR Code',
-                  onTap: () => context.go('/merchant/qrcode')),
+                  onTap: () => context.go('/merchant/more/qrcode')),
               _SettingsTile(Icons.public_outlined, 'Ma vitrine publique',
-                  onTap: () => context.go('/merchant/vitrine')),
+                  onTap: () => context.go('/merchant/more/vitrine')),
             ]),
             const SizedBox(height: Sp.md),
             _SettingsSection('Abonnement', children: [

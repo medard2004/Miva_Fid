@@ -124,7 +124,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           title: Text('Valider un achat', style: AppTextStyles.h3()),
           bottom: TabBar(
             indicator: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.merchant,
               borderRadius: Rd.pill,
             ),
             labelColor: Colors.white,
@@ -231,7 +231,7 @@ class _ManualTab extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onSubmit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.merchant,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: const RoundedRectangleBorder(borderRadius: Rd.button),

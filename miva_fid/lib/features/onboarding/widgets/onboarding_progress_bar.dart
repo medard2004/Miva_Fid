@@ -18,37 +18,31 @@ class OnboardingProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(Sp.md, Sp.md, Sp.md, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Étape $current sur $total',
-                style: AppTextStyles.caption().copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                '${((current / total) * 100).round()}%',
-                style: AppTextStyles.mono().copyWith(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Sp.xs),
-          ClipRRect(
-            borderRadius: Rd.pill,
-            child: LinearProgressIndicator(
-              value: current / total,
-              backgroundColor: AppColors.border,
-              color: AppColors.primary,
-              minHeight: 6,
+          Text(
+            'Étape $current',
+            style: AppTextStyles.labelBold().copyWith(
+              color: AppColors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          Row(
+            children: List.generate(total, (index) {
+              final isActive = index == current - 1;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: isActive ? 16 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.primary : AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
           ),
         ],
       ),

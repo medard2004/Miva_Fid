@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
@@ -38,7 +39,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.35),
+            color: primary.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -51,15 +52,63 @@ class LoyaltyCardPreview extends ConsumerWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    _iconForType(state.commerceType),
-                    size: 18,
-                    color: primary,
+                // show uploaded logo (network or local) when available, otherwise default icon
+                if (state.logoUrl != null && state.logoUrl!.isNotEmpty) ...[
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Builder(builder: (context) {
+                        final url = state.logoUrl!;
+                        if (url.startsWith('http')) {
+                          return Image.network(
+                            url,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              _iconForType(state.commerceType),
+                              size: 18,
+                              color: primary,
+                            ),
+                          );
+                        }
+
+                        try {
+                          final f = File(url);
+                          return Image.file(
+                            f,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              _iconForType(state.commerceType),
+                              size: 18,
+                              color: primary,
+                            ),
+                          );
+                        } catch (_) {
+                          return Icon(
+                            _iconForType(state.commerceType),
+                            size: 18,
+                            color: primary,
+                          );
+                        }
+                      }),
+                    ),
                   ),
-                ),
+                ] else ...[
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      _iconForType(state.commerceType),
+                      size: 18,
+                      color: primary,
+                    ),
+                  ),
+                ],
                 const SizedBox(width: Sp.sm),
                 Expanded(
                   child: Column(
@@ -99,7 +148,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
             Text(
               '$previewStamps sur ${state.stampsRequired} — encore $remaining pour votre récompense',
               style: AppTextStyles.caption().copyWith(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: Sp.xs),
@@ -108,7 +157,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 color: Colors.white,
-                backgroundColor: Colors.white.withOpacity(0.3),
+                backgroundColor: Colors.white.withValues(alpha: 0.3),
                 minHeight: 3,
               ),
             ),
