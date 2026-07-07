@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,7 +13,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/app_badge.dart';
+
 import '../providers/merchant_provider.dart';
 
 class QrCodeScreen extends ConsumerWidget {
@@ -29,10 +29,12 @@ class QrCodeScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => const Center(child: Text('Erreur')),
         data: (merchant) {
-          if (merchant == null) return const SizedBox();
           final uid = Supabase.instance.client.auth.currentUser?.id ?? '';
           final qrData = jsonEncode({'merchantId': uid, 'app': 'mivafid'});
-          final slug = merchant.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+          final merchantName = merchant?.name ?? 'Votre Commerce';
+          final merchantAddress = merchant?.address ?? '';
+          final merchantPhone = merchant?.phone ?? '';
+          final slug = merchantName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
           final directLink = 'miva.fid/r/$slug';
 
           return SingleChildScrollView(
@@ -114,7 +116,7 @@ class QrCodeScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: Sp.md),
                       Text(
-                        merchant.name,
+                        merchantName,
                         style: AppTextStyles.labelBold().copyWith(
                           color: AppColors.textPrimary,
                           fontSize: 16,
@@ -149,12 +151,12 @@ class QrCodeScreen extends ConsumerWidget {
                     _buildActionButton(
                       icon: Icons.print_outlined,
                       label: 'A4',
-                      onTap: () => _generatePdf(merchant.name, merchant.address ?? '', merchant.phone ?? '', qrData),
+                      onTap: () => _generatePdf(merchantName, merchantAddress, merchantPhone, qrData),
                     ),
                     _buildActionButton(
                       icon: Icons.share_outlined,
                       label: 'Partager',
-                      onTap: () => _shareWhatsApp(merchant.name),
+                      onTap: () => _shareWhatsApp(merchantName),
                     ),
                   ],
                 ),
