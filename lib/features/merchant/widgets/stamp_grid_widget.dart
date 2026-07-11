@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/theme/app_colors.dart';
+
 
 class StampGridWidget extends StatelessWidget {
   const StampGridWidget({
@@ -11,6 +11,10 @@ class StampGridWidget extends StatelessWidget {
     this.stampSize = 28,
     this.gap = 6,
     this.animate = false,
+    this.designType = 'check',
+    this.emoji = '✨',
+    this.iconName = 'check_rounded',
+    required this.primaryColor,
   });
 
   final int filled;
@@ -18,6 +22,32 @@ class StampGridWidget extends StatelessWidget {
   final double stampSize;
   final double gap;
   final bool animate;
+  final String designType;
+  final String emoji;
+  final String iconName;
+  final Color primaryColor;
+
+  IconData _getIconData(String name) {
+    switch (name) {
+      case 'star_rounded':
+        return Icons.star_rounded;
+      case 'favorite_rounded':
+        return Icons.favorite_rounded;
+      case 'local_cafe_rounded':
+        return Icons.local_cafe_rounded;
+      case 'card_giftcard_rounded':
+        return Icons.card_giftcard_rounded;
+      case 'auto_awesome_rounded':
+        return Icons.auto_awesome_rounded;
+      case 'emoji_emotions_rounded':
+        return Icons.emoji_emotions_rounded;
+      case 'diamond_rounded':
+        return Icons.diamond_rounded;
+      case 'check_rounded':
+      default:
+        return Icons.check_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,21 +57,49 @@ class StampGridWidget extends StatelessWidget {
       runSpacing: gap,
       children: List.generate(total, (i) {
         final isFilled = i < clampedFilled;
+        
+        Widget? child;
+        if (isFilled) {
+          if (designType == 'emoji') {
+            child = Center(
+              child: Text(
+                emoji,
+                style: TextStyle(fontSize: stampSize * 0.55),
+              ),
+            );
+          } else if (designType == 'icon') {
+            child = Center(
+              child: Icon(
+                _getIconData(iconName),
+                color: primaryColor,
+                size: stampSize * 0.55,
+              ),
+            );
+          } else {
+            child = Center(
+              child: Icon(
+                Icons.check_rounded,
+                color: primaryColor,
+                size: stampSize * 0.55,
+              ),
+            );
+          }
+        }
+
         Widget stamp = Container(
           width: stampSize,
           height: stampSize,
           decoration: BoxDecoration(
-            color: isFilled ? AppColors.primaryTint : Colors.transparent,
+            color: isFilled ? Colors.white : Colors.transparent,
             shape: BoxShape.circle,
             border: Border.all(
-              color: isFilled ? AppColors.primary : AppColors.border,
+              color: isFilled ? Colors.white : Colors.white.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
-          child: isFilled
-              ? Icon(Icons.check_rounded, color: AppColors.primary, size: stampSize * 0.5)
-              : null,
+          child: child,
         );
+
         if (animate && isFilled) {
           stamp = stamp
               .animate(delay: (i * 40).ms)
@@ -58,3 +116,4 @@ class StampGridWidget extends StatelessWidget {
     );
   }
 }
+

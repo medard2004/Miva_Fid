@@ -139,7 +139,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryLight.withOpacity(0.4),
+                          color: AppColors.primaryLight.withValues(alpha: 0.4),
                           blurRadius: 40,
                           spreadRadius: 8,
                         ),
@@ -177,7 +177,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                       borderRadius: Rd.card20,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -198,9 +198,9 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                         const SizedBox(height: Sp.sm),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const AppBadge('QR Code'),
-                            const SizedBox(width: Sp.sm),
+                          children: const [
+                            AppBadge('QR Code'),
+                            SizedBox(width: Sp.sm),
                             AppBadge('NFC', color: AppColors.success),
                           ],
                         ),

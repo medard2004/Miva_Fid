@@ -60,11 +60,8 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final merchantAsync = ref.watch(merchantNotifierProvider);
+    ref.watch(merchantNotifierProvider); // reserved for future merchant-specific UI
     final smsAsync = ref.watch(smsNotifierProvider);
-
-    final merchant = merchantAsync.value;
-
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -123,19 +120,18 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
             ),
             const SizedBox(height: Sp.lg),
 
-            // 3. Stats Row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: Sp.md),
               child: Row(
                 children: [
                   Expanded(
                     child: _StatCard(value: '12', label: 'Envoyées'),
                   ),
-                  const SizedBox(width: Sp.sm),
+                  SizedBox(width: Sp.sm),
                   Expanded(
                     child: _StatCard(value: '82%', label: 'Ouverture'),
                   ),
-                  const SizedBox(width: Sp.sm),
+                  SizedBox(width: Sp.sm),
                   Expanded(
                     child: _StatCard(value: '143', label: 'Atteints'),
                   ),
@@ -222,7 +218,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: Rd.card,
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.03),
+            color: AppColors.textPrimary.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -271,7 +267,7 @@ class _CampaignCard extends StatelessWidget {
         borderRadius: Rd.card,
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.02),
+            color: AppColors.textPrimary.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -322,7 +318,7 @@ class _CampaignCard extends StatelessWidget {
                 Text(
                   campaign.stats,
                   style: AppTextStyles.caption().copyWith(
-                    color: AppColors.textSecondary.withOpacity(0.7),
+                    color: AppColors.textSecondary.withValues(alpha: 0.7),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -442,7 +438,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
-                color: AppColors.textSecondary.withOpacity(0.8),
+                color: AppColors.textSecondary.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 6),
@@ -450,9 +446,9 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
               controller: _nameCtrl,
               decoration: InputDecoration(
                 hintText: 'Ex. Promo week-end',
-                hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
+                hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
                 filled: true,
-                fillColor: AppColors.bgLight.withOpacity(0.5),
+                fillColor: AppColors.bgLight.withValues(alpha: 0.5),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -477,7 +473,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
-                color: AppColors.textSecondary.withOpacity(0.8),
+                color: AppColors.textSecondary.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 6),
@@ -493,7 +489,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.bgLight.withOpacity(0.5),
+                  color: AppColors.bgLight.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
@@ -518,7 +514,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
-                color: AppColors.textSecondary.withOpacity(0.8),
+                color: AppColors.textSecondary.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 6),
@@ -529,9 +525,9 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Écrivez votre message...',
-                hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
+                hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
                 filled: true,
-                fillColor: AppColors.bgLight.withOpacity(0.5),
+                fillColor: AppColors.bgLight.withValues(alpha: 0.5),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 counterText: '', // Hide default counter
                 border: OutlineInputBorder(
@@ -553,12 +549,12 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
               children: [
                 Text(
                   '${_msgCtrl.text.length}/160 caractères',
-                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withOpacity(0.8)),
+                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withValues(alpha: 0.8)),
                 ),
                 const Spacer(),
                 Text(
                   '${(_msgCtrl.text.length / 160).ceil()} SMS',
-                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withOpacity(0.8)),
+                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withValues(alpha: 0.8)),
                 ),
               ],
             ),

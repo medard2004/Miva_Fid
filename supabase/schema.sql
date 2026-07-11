@@ -34,6 +34,11 @@ CREATE TABLE IF NOT EXISTS merchants (
   reward_value_fcfa INT,
   google_review_url TEXT,
   show_review_button BOOLEAN DEFAULT false,
+  stamp_design_type TEXT DEFAULT 'check',
+  stamp_emoji TEXT DEFAULT '✨',
+  stamp_icon TEXT DEFAULT 'check_rounded',
+  card_decoration_pattern TEXT DEFAULT 'none',
+  card_gradient_type TEXT DEFAULT 'linear',
   plan TEXT DEFAULT 'free',
   sms_remaining INT DEFAULT 100,
   created_at TIMESTAMPTZ DEFAULT now()

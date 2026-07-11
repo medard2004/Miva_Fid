@@ -83,7 +83,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   void _finish() {
     HapticFeedback.lightImpact();
     if (widget.role == 'merchant') {
-      context.go('/auth/merchant/step1');
+      context.go('/auth/merchant/auth');
     } else {
       context.go('/auth/client-signup');
     }

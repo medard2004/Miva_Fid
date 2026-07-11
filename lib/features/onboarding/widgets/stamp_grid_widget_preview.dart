@@ -8,12 +8,42 @@ class StampGridWidgetPreview extends StatelessWidget {
     required this.total,
     this.stampSize = 26,
     this.gap = 6,
+    this.designType = 'check',
+    this.emoji = '✨',
+    this.iconName = 'check_rounded',
+    required this.primaryColor,
   });
 
   final int filled;
   final int total;
   final double stampSize;
   final double gap;
+  final String designType;
+  final String emoji;
+  final String iconName;
+  final Color primaryColor;
+
+  IconData _getIconData(String name) {
+    switch (name) {
+      case 'star_rounded':
+        return Icons.star_rounded;
+      case 'favorite_rounded':
+        return Icons.favorite_rounded;
+      case 'local_cafe_rounded':
+        return Icons.local_cafe_rounded;
+      case 'card_giftcard_rounded':
+        return Icons.card_giftcard_rounded;
+      case 'auto_awesome_rounded':
+        return Icons.auto_awesome_rounded;
+      case 'emoji_emotions_rounded':
+        return Icons.emoji_emotions_rounded;
+      case 'diamond_rounded':
+        return Icons.diamond_rounded;
+      case 'check_rounded':
+      default:
+        return Icons.check_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +54,32 @@ class StampGridWidgetPreview extends StatelessWidget {
       children: List.generate(total, (i) {
         final isFilled = i < clampedFilled;
         if (isFilled) {
+          Widget child;
+          if (designType == 'emoji') {
+            child = Center(
+              child: Text(
+                emoji,
+                style: TextStyle(fontSize: stampSize * 0.55),
+              ),
+            );
+          } else if (designType == 'icon') {
+            child = Center(
+              child: Icon(
+                _getIconData(iconName),
+                color: primaryColor,
+                size: stampSize * 0.55,
+              ),
+            );
+          } else {
+            child = Center(
+              child: Icon(
+                Icons.check_rounded,
+                color: primaryColor,
+                size: stampSize * 0.55,
+              ),
+            );
+          }
+
           return Container(
             width: stampSize,
             height: stampSize,
@@ -31,11 +87,7 @@ class StampGridWidgetPreview extends StatelessWidget {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.check_rounded,
-              color: Colors.transparent,
-              size: stampSize * 0.5,
-            ),
+            child: child,
           )
               .animate()
               .scale(
@@ -57,7 +109,7 @@ class StampGridWidgetPreview extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
@@ -66,3 +118,4 @@ class StampGridWidgetPreview extends StatelessWidget {
     );
   }
 }
+

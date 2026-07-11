@@ -213,7 +213,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     const SizedBox(height: 6),
                     CustomPaint(
                       painter: _DashedBorderPainter(
-                        color: AppColors.border.withOpacity(0.8),
+                        color: AppColors.border.withValues(alpha: 0.8),
                         borderRadius: 12,
                       ),
                       child: Container(
@@ -223,7 +223,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.camera_alt_outlined, color: AppColors.textSecondary.withOpacity(0.6), size: 28),
+                            Icon(Icons.camera_alt_outlined, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 28),
                             const SizedBox(height: 8),
                             Text(
                               'Ajouter une photo',
@@ -339,7 +339,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
-          color: AppColors.textSecondary.withOpacity(0.8),
+          color: AppColors.textSecondary.withValues(alpha: 0.8),
         ),
       ),
     );
@@ -350,7 +350,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppColors.textSecondary.withOpacity(0.8)),
+          Icon(icon, size: 14, color: AppColors.textSecondary.withValues(alpha: 0.8)),
           const SizedBox(width: 4),
           Text(
             text,
@@ -358,7 +358,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
-              color: AppColors.textSecondary.withOpacity(0.8),
+              color: AppColors.textSecondary.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -378,9 +378,9 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.4)),
+        hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.4)),
         filled: true,
-        fillColor: AppColors.bgLight.withOpacity(0.3),
+        fillColor: AppColors.bgLight.withValues(alpha: 0.3),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -438,7 +438,7 @@ class _HourRow extends StatelessWidget {
           Text(
             hours,
             style: AppTextStyles.bodyMd().copyWith(
-              color: isClosed ? AppColors.textSecondary.withOpacity(0.6) : AppColors.textPrimary,
+              color: isClosed ? AppColors.textSecondary.withValues(alpha: 0.6) : AppColors.textPrimary,
               fontWeight: isClosed ? FontWeight.w500 : FontWeight.bold,
             ),
           ),
@@ -530,7 +530,7 @@ class _PreviewWidget extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: AppColors.merchant.withOpacity(0.1),
+                      backgroundColor: AppColors.merchant.withValues(alpha: 0.1),
                       child: Text(initials, style: TextStyle(color: AppColors.merchant, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: Sp.sm),

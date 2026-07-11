@@ -6,82 +6,113 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-class RoleSelectionScreen extends StatelessWidget {
+class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
+
+  @override
+  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+}
+
+class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+  String? _selectedRole;
+  bool _navigating = false;
+
+  void _handleRoleSelection(String role, String route) {
+    if (_navigating) return;
+    setState(() {
+      _selectedRole = role;
+      _navigating = true;
+    });
+    Future.delayed(const Duration(milliseconds: 320), () {
+      if (mounted) {
+        context.go(route);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 860;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
+    final bool isClientSelected = _selectedRole == 'client';
+    final bool isMerchantSelected = _selectedRole == 'merchant';
+    final bool hasSelection = _selectedRole != null;
+
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: Stack(
         children: [
-          // Background mesh glows
+          // Background mesh glows (fade out on selection)
           Positioned(
             top: -100,
             left: -100,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.12),
-                    blurRadius: 180,
-                    spreadRadius: 80,
-                  ),
-                ],
+            child: AnimatedOpacity(
+              opacity: hasSelection ? 0.0 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              child: Container(
+                width: 250,
+                height: 250,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      blurRadius: 180,
+                      spreadRadius: 80,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           Positioned(
             bottom: -100,
             right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.merchant.withOpacity(0.08),
-                    blurRadius: 200,
-                    spreadRadius: 90,
-                  ),
-                ],
+            child: AnimatedOpacity(
+              opacity: hasSelection ? 0.0 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.merchant.withValues(alpha: 0.08),
+                      blurRadius: 200,
+                      spreadRadius: 90,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
           // Main content
           SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(Sp.md, Sp.lg, Sp.md, bottomInset + Sp.md),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.vertical - Sp.lg,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Header Section
-                    Column(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(Sp.md, Sp.md, Sp.md, bottomInset + Sp.sm),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Header Section (fade out on selection)
+                  AnimatedOpacity(
+                    opacity: hasSelection ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 250),
+                    child: Column(
                       children: [
-                        const SizedBox(height: Sp.sm),
+                        const SizedBox(height: Sp.xs),
                         // Premium Glass Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.85),
+                            color: Colors.white.withValues(alpha: 0.85),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.12), width: 1),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.05),
+                                color: AppColors.primary.withValues(alpha: 0.05),
                                 blurRadius: 16,
                                 offset: const Offset(0, 4),
                               ),
@@ -90,7 +121,7 @@ class RoleSelectionScreen extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.auto_awesome, size: 14, color: AppColors.primary),
+                              const Icon(Icons.auto_awesome, size: 14, color: AppColors.primary),
                               const SizedBox(width: 6),
                               Text(
                                 'Miva Fid',
@@ -106,25 +137,27 @@ class RoleSelectionScreen extends StatelessWidget {
                             .animate()
                             .fadeIn(duration: 400.ms)
                             .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
-                        const SizedBox(height: Sp.md),
+                        const SizedBox(height: Sp.sm),
                         Text(
                           'Quel est votre profil ?',
-                          style: AppTextStyles.h1().copyWith(
+                          style: AppTextStyles.h2().copyWith(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
+                            fontSize: 22,
                           ),
                           textAlign: TextAlign.center,
                         )
                             .animate(delay: 100.ms)
                             .fadeIn(duration: 400.ms)
                             .slideY(begin: 0.08, end: 0, duration: 400.ms, curve: Curves.easeOut),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           'Choisissez l’option qui vous correspond pour continuer.',
                           style: AppTextStyles.bodyMd().copyWith(
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w500,
+                            fontSize: 13,
                           ),
                           textAlign: TextAlign.center,
                         )
@@ -133,14 +166,20 @@ class RoleSelectionScreen extends StatelessWidget {
                             .slideY(begin: 0.08, end: 0, duration: 400.ms, curve: Curves.easeOut),
                       ],
                     ),
+                  ),
 
-                    const SizedBox(height: Sp.xl),
+                  const SizedBox(height: Sp.sm),
 
-                    // Cards Layout
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final cards = [
-                          _SelectionCard(
+                  // Cards Layout
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final clientCard = AnimatedOpacity(
+                        opacity: hasSelection && !isClientSelected ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 250),
+                        child: AnimatedScale(
+                          scale: isClientSelected ? 1.03 : (hasSelection ? 0.96 : 1.0),
+                          duration: const Duration(milliseconds: 250),
+                          child: _SelectionCard(
                             title: 'Je suis Client',
                             subtitle: 'Cumulez des points et débloquez des récompenses exclusives chez vos commerçants.',
                             accent: const LinearGradient(
@@ -149,17 +188,21 @@ class RoleSelectionScreen extends StatelessWidget {
                               end: Alignment.bottomRight,
                             ),
                             icon: Icons.card_giftcard_rounded,
-                            points: const [
-                              'Fidélité facile',
-                              'QR codes rapides',
-                              'Récompenses',
-                            ],
                             buttonText: 'Commencer mon parcours',
-                            onTap: () => context.go('/onboarding/client'),
-                          ).animate(delay: 200.ms)
-                           .fadeIn(duration: 500.ms)
-                           .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
-                          _SelectionCard(
+                            isSelected: isClientSelected,
+                            hasSelection: hasSelection,
+                            onTap: () => _handleRoleSelection('client', '/onboarding/client'),
+                          ),
+                        ),
+                      );
+
+                      final merchantCard = AnimatedOpacity(
+                        opacity: hasSelection && !isMerchantSelected ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 250),
+                        child: AnimatedScale(
+                          scale: isMerchantSelected ? 1.03 : (hasSelection ? 0.96 : 1.0),
+                          duration: const Duration(milliseconds: 250),
+                          child: _SelectionCard(
                             title: 'Je suis Commerçant',
                             subtitle: 'Fidélisez votre clientèle locale et gérez vos campagnes de tampons digitalisés.',
                             accent: const LinearGradient(
@@ -168,55 +211,55 @@ class RoleSelectionScreen extends StatelessWidget {
                               end: Alignment.bottomRight,
                             ),
                             icon: Icons.storefront_rounded,
-                            points: const [
-                              'Boutique personnalisée',
-                              'Statistiques clients',
-                              'Campagnes SMS',
-                            ],
                             buttonText: 'Créer mon espace marchand',
-                            onTap: () => context.go('/onboarding/merchant'),
-                          ).animate(delay: 280.ms)
-                           .fadeIn(duration: 500.ms)
-                           .slideX(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
-                        ];
+                            isSelected: isMerchantSelected,
+                            hasSelection: hasSelection,
+                            onTap: () => _handleRoleSelection('merchant', '/onboarding/merchant'),
+                          ),
+                        ),
+                      );
 
-                        if (isWide || constraints.maxWidth >= 800) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: cards[0]),
-                              const SizedBox(width: Sp.md),
-                              Expanded(child: cards[1]),
-                            ],
-                          );
-                        }
-
-                        return Column(
+                      if (isWide || constraints.maxWidth >= 800) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            cards[0],
-                            const SizedBox(height: Sp.md),
-                            cards[1],
+                            Expanded(child: clientCard),
+                            const SizedBox(width: Sp.md),
+                            Expanded(child: merchantCard),
                           ],
                         );
-                      },
-                    ),
+                      }
 
-                    const SizedBox(height: Sp.xl),
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          clientCard,
+                          const SizedBox(height: Sp.sm),
+                          merchantCard,
+                        ],
+                      );
+                    },
+                  ),
 
-                    // Footer
-                    TextButton(
-                      onPressed: () => context.go('/auth/login'),
+                  const SizedBox(height: Sp.sm),
+
+                  // Footer (fade out on selection)
+                  AnimatedOpacity(
+                    opacity: hasSelection ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 250),
+                    child: TextButton(
+                      onPressed: hasSelection ? null : () => context.go('/auth/login'),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
+                        padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.xs),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
                       child: RichText(
                         text: TextSpan(
-                          style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
-                          children: [
-                            const TextSpan(text: 'Déjà un compte ? '),
+                          style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary, fontSize: 13),
+                          children: const [
+                            TextSpan(text: 'Déjà un compte ? '),
                             TextSpan(
                               text: 'Se connecter',
                               style: TextStyle(
@@ -228,11 +271,9 @@ class RoleSelectionScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                    )
-                        .animate(delay: 350.ms)
-                        .fadeIn(duration: 400.ms),
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -248,18 +289,20 @@ class _SelectionCard extends StatefulWidget {
     required this.subtitle,
     required this.accent,
     required this.icon,
-    required this.points,
     required this.buttonText,
     required this.onTap,
+    this.isSelected = false,
+    this.hasSelection = false,
   });
 
   final String title;
   final String subtitle;
   final LinearGradient accent;
   final IconData icon;
-  final List<String> points;
   final String buttonText;
   final VoidCallback onTap;
+  final bool isSelected;
+  final bool hasSelection;
 
   @override
   State<_SelectionCard> createState() => _SelectionCardState();
@@ -270,37 +313,38 @@ class _SelectionCardState extends State<_SelectionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final bool enableHoverScale = _isHovered && !widget.hasSelection;
+
     return AnimatedScale(
-      scale: _isHovered ? 1.02 : 1.0,
-      duration: const Duration(milliseconds: 200),
+      scale: widget.isSelected ? 1.0 : (enableHoverScale ? 1.015 : 1.0),
+      duration: const Duration(milliseconds: 150),
       curve: Curves.easeOutCubic,
       child: Container(
         width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 310),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(20),
           gradient: widget.accent,
           boxShadow: [
             BoxShadow(
-              color: widget.accent.colors.last.withOpacity(0.35),
-              blurRadius: _isHovered ? 28 : 20,
-              offset: Offset(0, _isHovered ? 12 : 8),
+              color: widget.accent.colors.last.withValues(alpha: widget.isSelected ? 0.40 : (enableHoverScale ? 0.25 : 0.15)),
+              blurRadius: widget.isSelected ? 20 : (enableHoverScale ? 14 : 8),
+              offset: Offset(0, widget.isSelected ? 6 : (enableHoverScale ? 4 : 3)),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // Beautiful Watermark Icon Background
+              // Watermark Icon Background
               Positioned(
-                right: -24,
-                bottom: -24,
+                right: -16,
+                bottom: -16,
                 child: Opacity(
-                  opacity: 0.10,
+                  opacity: 0.08,
                   child: Icon(
                     widget.icon,
-                    size: 180,
+                    size: 110,
                     color: Colors.white,
                   ),
                 ),
@@ -308,100 +352,76 @@ class _SelectionCardState extends State<_SelectionCard> {
 
               // Card Content
               InkWell(
-                onTap: widget.onTap,
+                onTap: widget.hasSelection ? null : widget.onTap,
                 onHighlightChanged: (highlighted) {
-                  setState(() {
-                    _isHovered = highlighted;
-                  });
+                  if (!widget.hasSelection) {
+                    setState(() {
+                      _isHovered = highlighted;
+                    });
+                  }
                 },
-                splashColor: Colors.white.withOpacity(0.12),
-                highlightColor: Colors.white.withOpacity(0.06),
+                splashColor: Colors.white.withValues(alpha: 0.12),
+                highlightColor: Colors.white.withValues(alpha: 0.06),
                 child: Padding(
-                  padding: const EdgeInsets.all(Sp.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Top Row with Glassmorphism Icon container
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.20),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
-                        ),
-                        child: Icon(
-                          widget.icon,
-                          color: Colors.white,
-                          size: 26,
-                        ),
+                      // Header Row: Icon and Title inline
+                      Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.20),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.2),
+                            ),
+                            child: Icon(
+                              widget.icon,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: Sp.sm),
+                          Expanded(
+                            child: Text(
+                              widget.title,
+                              style: AppTextStyles.h3().copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: Sp.md),
+                      const SizedBox(height: Sp.sm),
 
-                      // Card Titles
-                      Text(
-                        widget.title,
-                        style: AppTextStyles.h2().copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 24,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                      // Card Subtitle
                       Text(
                         widget.subtitle,
-                        style: AppTextStyles.bodyMd().copyWith(
-                          color: Colors.white.withOpacity(0.90),
-                          height: 1.35,
+                        style: AppTextStyles.caption().copyWith(
+                          color: Colors.white.withValues(alpha: 0.90),
+                          height: 1.3,
                         ),
                       ),
                       const SizedBox(height: Sp.md),
 
-                      // Feature Pills
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: widget.points
-                            .map(
-                              (point) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: Colors.white.withOpacity(0.10), width: 1),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 12),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      point,
-                                      style: AppTextStyles.caption().copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                      const SizedBox(height: Sp.lg),
-
-                      // Call to action button mimicking style
+                      // Button CTA
                       Container(
                         width: double.infinity,
-                        height: 48,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
@@ -413,6 +433,7 @@ class _SelectionCardState extends State<_SelectionCard> {
                                 widget.buttonText,
                                 style: AppTextStyles.labelBold().copyWith(
                                   color: widget.accent.colors.last,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -420,7 +441,7 @@ class _SelectionCardState extends State<_SelectionCard> {
                               Icon(
                                 Icons.arrow_forward_rounded,
                                 color: widget.accent.colors.last,
-                                size: 16,
+                                size: 14,
                               ),
                             ],
                           ),
@@ -437,4 +458,3 @@ class _SelectionCardState extends State<_SelectionCard> {
     );
   }
 }
-

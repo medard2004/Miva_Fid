@@ -144,7 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: Sp.sm),
                   Container(
                     padding: const EdgeInsets.all(Sp.sm),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.dangerTint,
                       borderRadius: Rd.button,
                     ),

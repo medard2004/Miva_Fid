@@ -59,7 +59,7 @@ class CardDetailScreen extends ConsumerWidget {
                     children: [
                       Text('Votre progression', style: AppTextStyles.h3()),
                       const SizedBox(height: Sp.md),
-                      StampGridWidget(filled: card.stampsCount, total: required, stampSize: 32),
+                      StampGridWidget(filled: card.stampsCount, total: required, stampSize: 32, primaryColor: AppColors.primary),
                       const SizedBox(height: Sp.md),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

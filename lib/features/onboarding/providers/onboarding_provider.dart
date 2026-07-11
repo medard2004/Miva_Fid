@@ -23,6 +23,11 @@ class OnboardingState {
     this.rewardDescription = '',
     this.showReviewButton = false,
     this.googleReviewUrl = '',
+    this.stampDesignType = 'check',
+    this.stampEmoji = '✨',
+    this.stampIcon = 'check_rounded',
+    this.cardDecorationPattern = 'none',
+    this.cardGradientType = 'linear',
     this.isLoading = false,
     this.error,
   });
@@ -44,6 +49,11 @@ class OnboardingState {
   final String rewardDescription;
   final bool showReviewButton;
   final String googleReviewUrl;
+  final String stampDesignType;
+  final String stampEmoji;
+  final String stampIcon;
+  final String cardDecorationPattern;
+  final String cardGradientType;
   final bool isLoading;
   final String? error;
 
@@ -71,6 +81,11 @@ class OnboardingState {
     String? rewardDescription,
     bool? showReviewButton,
     String? googleReviewUrl,
+    String? stampDesignType,
+    String? stampEmoji,
+    String? stampIcon,
+    String? cardDecorationPattern,
+    String? cardGradientType,
     bool? isLoading,
     String? error,
   }) {
@@ -92,6 +107,11 @@ class OnboardingState {
       rewardDescription: rewardDescription ?? this.rewardDescription,
       showReviewButton: showReviewButton ?? this.showReviewButton,
       googleReviewUrl: googleReviewUrl ?? this.googleReviewUrl,
+      stampDesignType: stampDesignType ?? this.stampDesignType,
+      stampEmoji: stampEmoji ?? this.stampEmoji,
+      stampIcon: stampIcon ?? this.stampIcon,
+      cardDecorationPattern: cardDecorationPattern ?? this.cardDecorationPattern,
+      cardGradientType: cardGradientType ?? this.cardGradientType,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -112,6 +132,11 @@ class OnboardingState {
       'reward_description': rewardDescription,
       'show_review_button': showReviewButton,
       'google_review_url': googleReviewUrl.isEmpty ? null : googleReviewUrl,
+      'stamp_design_type': stampDesignType,
+      'stamp_emoji': stampEmoji,
+      'stamp_icon': stampIcon,
+      'card_decoration_pattern': cardDecorationPattern,
+      'card_gradient_type': cardGradientType,
       'logo_url': logoUrl,
     };
   }
@@ -142,6 +167,16 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       state = state.copyWith(showReviewButton: v);
   void setGoogleReviewUrl(String v) =>
       state = state.copyWith(googleReviewUrl: v);
+  void setStampDesignType(String v) =>
+      state = state.copyWith(stampDesignType: v);
+  void setStampEmoji(String v) =>
+      state = state.copyWith(stampEmoji: v);
+  void setStampIcon(String v) =>
+      state = state.copyWith(stampIcon: v);
+  void setCardDecorationPattern(String v) =>
+      state = state.copyWith(cardDecorationPattern: v);
+  void setCardGradientType(String v) =>
+      state = state.copyWith(cardGradientType: v);
 
   Future<bool> registerUser() async {
     state = state.copyWith(isLoading: true);

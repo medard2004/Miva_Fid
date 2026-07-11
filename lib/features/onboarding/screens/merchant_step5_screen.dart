@@ -106,7 +106,7 @@ class _MerchantStep5ScreenState extends ConsumerState<MerchantStep5Screen> {
                       onChanged: notifier.setShowReviewButton,
                       title: Text("Afficher le bouton 'Laisser un avis'",
                           style: AppTextStyles.bodyMd()),
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       contentPadding: EdgeInsets.zero,
                     ),
                     if (state.showReviewButton) ...[

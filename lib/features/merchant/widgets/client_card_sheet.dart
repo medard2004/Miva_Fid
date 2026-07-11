@@ -75,6 +75,7 @@ class ClientCardSheet extends StatelessWidget {
                   filled: card.stampsCount,
                   total: stampsRequired,
                   stampSize: 28,
+                  primaryColor: AppColors.primary,
                 ),
                 const SizedBox(height: Sp.sm),
                 Text('${card.stampsCount} sur $stampsRequired tampons',

@@ -71,7 +71,7 @@ class MerchantStep3Screen extends ConsumerWidget {
                     const SizedBox(height: Sp.md),
                     Container(
                       padding: const EdgeInsets.all(Sp.md),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppColors.primaryTint,
                         borderRadius: Rd.card,
                       ),

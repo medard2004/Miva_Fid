@@ -123,7 +123,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         appBar: AppBar(
           title: Text('Valider un achat', style: AppTextStyles.h3()),
           bottom: TabBar(
-            indicator: BoxDecoration(
+            indicator: const BoxDecoration(
               color: AppColors.merchant,
               borderRadius: Rd.pill,
             ),
@@ -173,7 +173,7 @@ class _ScannerTab extends StatelessWidget {
           const SizedBox(height: Sp.sm),
           IconButton.filled(
             style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(Colors.black.withOpacity(0.12))),
+              backgroundColor: WidgetStatePropertyAll(Colors.black.withValues(alpha: 0.12))),
             icon: const Icon(Icons.flashlight_on, color: Colors.white),
             onPressed: controller.toggleTorch,
           ),

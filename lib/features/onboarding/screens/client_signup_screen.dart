@@ -152,7 +152,7 @@ class _ClientSignupScreenState extends ConsumerState<ClientSignupScreen> {
                       if (_error != null) ...[
                         Container(
                           padding: const EdgeInsets.all(Sp.sm),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppColors.dangerTint,
                             borderRadius: Rd.button,
                           ),

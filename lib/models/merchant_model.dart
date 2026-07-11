@@ -26,6 +26,11 @@ class MerchantModel {
     this.rewardValueFcfa,
     this.googleReviewUrl,
     this.showReviewButton = false,
+    this.stampDesignType = 'check',
+    this.stampEmoji = '✨',
+    this.stampIcon = 'check_rounded',
+    this.cardDecorationPattern = 'none',
+    this.cardGradientType = 'linear',
     this.plan = 'free',
     this.smsRemaining = 100,
     required this.createdAt,
@@ -55,6 +60,11 @@ class MerchantModel {
   final int? rewardValueFcfa;
   final String? googleReviewUrl;
   final bool showReviewButton;
+  final String stampDesignType;
+  final String stampEmoji;
+  final String stampIcon;
+  final String cardDecorationPattern;
+  final String cardGradientType;
   final String plan;
   final int smsRemaining;
   final DateTime createdAt;
@@ -114,6 +124,11 @@ class MerchantModel {
       rewardValueFcfa: json['reward_value_fcfa'] as int?,
       googleReviewUrl: json['google_review_url'] as String?,
       showReviewButton: json['show_review_button'] as bool? ?? false,
+      stampDesignType: json['stamp_design_type'] as String? ?? 'check',
+      stampEmoji: json['stamp_emoji'] as String? ?? '✨',
+      stampIcon: json['stamp_icon'] as String? ?? 'check_rounded',
+      cardDecorationPattern: json['card_decoration_pattern'] as String? ?? 'none',
+      cardGradientType: json['card_gradient_type'] as String? ?? 'linear',
       plan: json['plan'] as String? ?? 'free',
       smsRemaining: json['sms_remaining'] as int? ?? 100,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -146,6 +161,11 @@ class MerchantModel {
       'reward_value_fcfa': rewardValueFcfa,
       'google_review_url': googleReviewUrl,
       'show_review_button': showReviewButton,
+      'stamp_design_type': stampDesignType,
+      'stamp_emoji': stampEmoji,
+      'stamp_icon': stampIcon,
+      'card_decoration_pattern': cardDecorationPattern,
+      'card_gradient_type': cardGradientType,
       'plan': plan,
       'sms_remaining': smsRemaining,
       'created_at': createdAt.toIso8601String(),
@@ -177,6 +197,11 @@ class MerchantModel {
     int? rewardValueFcfa,
     String? googleReviewUrl,
     bool? showReviewButton,
+    String? stampDesignType,
+    String? stampEmoji,
+    String? stampIcon,
+    String? cardDecorationPattern,
+    String? cardGradientType,
     String? plan,
     int? smsRemaining,
     DateTime? createdAt,
@@ -206,6 +231,11 @@ class MerchantModel {
       rewardValueFcfa: rewardValueFcfa ?? this.rewardValueFcfa,
       googleReviewUrl: googleReviewUrl ?? this.googleReviewUrl,
       showReviewButton: showReviewButton ?? this.showReviewButton,
+      stampDesignType: stampDesignType ?? this.stampDesignType,
+      stampEmoji: stampEmoji ?? this.stampEmoji,
+      stampIcon: stampIcon ?? this.stampIcon,
+      cardDecorationPattern: cardDecorationPattern ?? this.cardDecorationPattern,
+      cardGradientType: cardGradientType ?? this.cardGradientType,
       plan: plan ?? this.plan,
       smsRemaining: smsRemaining ?? this.smsRemaining,
       createdAt: createdAt ?? this.createdAt,

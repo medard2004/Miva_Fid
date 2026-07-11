@@ -23,9 +23,17 @@ class MerchantStep4Screen extends ConsumerStatefulWidget {
 }
 
 class _MerchantStep4ScreenState extends ConsumerState<MerchantStep4Screen> {
-  final _rewardCtrl = TextEditingController();
-  final _reviewUrlCtrl = TextEditingController();
+  late final TextEditingController _rewardCtrl;
+  late final TextEditingController _reviewUrlCtrl;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = ref.read(onboardingNotifierProvider);
+    _rewardCtrl = TextEditingController(text: state.rewardDescription);
+    _reviewUrlCtrl = TextEditingController(text: state.googleReviewUrl);
+  }
 
   @override
   void dispose() {
@@ -89,13 +97,172 @@ class _MerchantStep4ScreenState extends ConsumerState<MerchantStep4Screen> {
                           .copyWith(color: AppColors.primary),
                     ),
                     const SizedBox(height: Sp.xl),
-                    Text('Nombre de tampons', style: AppTextStyles.labelBold()),
+
+                    // Mode de Récompense
+                    Text(
+                      'Mode de récompense',
+                      style: AppTextStyles.labelBold(),
+                    ),
                     const SizedBox(height: Sp.sm),
-                    StampStepper(
-                      value: state.stampsRequired,
-                      onChanged: notifier.setStampsRequired,
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildModeButton(
+                            label: 'Tampons',
+                            icon: Icons.grid_view_rounded,
+                            isSelected: state.loyaltyMode == 'stamps',
+                            onTap: () {
+                              notifier.setLoyaltyMode('stamps');
+                              if (state.stampsRequired > 25) {
+                                notifier.setStampsRequired(10);
+                              }
+                            },
+                          ),
+                          const SizedBox(width: Sp.xs),
+                          _buildModeButton(
+                            label: 'Points',
+                            icon: Icons.stars_rounded,
+                            isSelected: state.loyaltyMode == 'points',
+                            onTap: () {
+                              notifier.setLoyaltyMode('points');
+                              notifier.setStampsRequired(100);
+                            },
+                          ),
+                          const SizedBox(width: Sp.xs),
+                          _buildModeButton(
+                            label: 'Achat',
+                            icon: Icons.shopping_cart_rounded,
+                            isSelected: state.loyaltyMode == 'spend',
+                            onTap: () {
+                              notifier.setLoyaltyMode('spend');
+                              notifier.setStampsRequired(500);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: Sp.lg),
+
+                    // Conditional inputs based on loyaltyMode
+                    if (state.loyaltyMode == 'stamps') ...[
+                      Text('Nombre de tampons requis', style: AppTextStyles.labelBold()),
+                      const SizedBox(height: Sp.sm),
+                      StampStepper(
+                        value: state.stampsRequired,
+                        onChanged: notifier.setStampsRequired,
+                      ),
+                      const SizedBox(height: Sp.lg),
+                    ] else if (state.loyaltyMode == 'points') ...[
+                      Text('Seuil de points requis', style: AppTextStyles.labelBold()),
+                      const SizedBox(height: Sp.sm),
+                      Row(
+                        children: [100, 250, 500, 1000].map((pts) {
+                          final isSelected = state.stampsRequired == pts;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => notifier.setStampsRequired(pts),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.primary : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.primary : AppColors.border,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '$pts pts',
+                                  style: AppTextStyles.bodyMd().copyWith(
+                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: Sp.lg),
+                    ] else ...[
+                      Text('Objectif de points d\'achat', style: AppTextStyles.labelBold()),
+                      const SizedBox(height: Sp.sm),
+                      Row(
+                        children: [300, 500, 1000, 2000].map((pts) {
+                          final isSelected = state.stampsRequired == pts;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => notifier.setStampsRequired(pts),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.primary : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.primary : AppColors.border,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '$pts pts',
+                                  style: AppTextStyles.bodyMd().copyWith(
+                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: Sp.lg),
+                      Container(
+                        padding: const EdgeInsets.all(Sp.md),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.monetization_on_outlined,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: Sp.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '1 point par 500 FCFA d\'achat',
+                                    style: AppTextStyles.bodyMd().copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Exemple : Un achat de 2 500 FCFA donne 5 points.',
+                                    style: AppTextStyles.caption().copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: Sp.lg),
+                    ],
+
                     AppInput(
                       label: 'Votre récompense',
                       hint: 'Ex : 1 café offert, 10% de réduction',
@@ -162,6 +329,57 @@ class _MerchantStep4ScreenState extends ConsumerState<MerchantStep4Screen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTextStyles.bodyMd().copyWith(
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 13,
               ),
             ),
           ],

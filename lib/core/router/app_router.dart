@@ -24,6 +24,8 @@ import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/onboarding/screens/client_signup_screen.dart';
 import '../../features/onboarding/screens/login_screen.dart';
+import '../../features/onboarding/screens/forgot_password_screen.dart';
+import '../../features/onboarding/screens/merchant_auth_screen.dart';
 import '../../features/onboarding/screens/merchant_step1_screen.dart';
 import '../../features/onboarding/screens/merchant_step2_screen.dart';
 import '../../features/onboarding/screens/merchant_step3_screen.dart';
@@ -54,6 +56,14 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/auth/client-signup',
         pageBuilder: (_, __) => _slide(const ClientSignupScreen()),
+      ),
+      GoRoute(
+        path: '/auth/merchant/auth',
+        pageBuilder: (_, __) => _slide(const MerchantAuthScreen()),
+      ),
+      GoRoute(
+        path: '/auth/forgot-password',
+        pageBuilder: (_, __) => _slide(const ForgotPasswordScreen()),
       ),
       GoRoute(
         path: '/auth/merchant/step1',

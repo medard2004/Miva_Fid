@@ -47,19 +47,11 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Couleur principale',
-          style: AppTextStyles.caption().copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: Sp.sm),
         Wrap(
           spacing: Sp.sm,
           runSpacing: Sp.sm,
           children: _presets.map((color) {
-            final isSelected = _selected?.value == color.value;
+            final isSelected = _selected?.toARGB32() == color.toARGB32();
             return GestureDetector(
               onTap: () {
                 setState(() => _selected = color);
@@ -78,7 +70,7 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: color.withOpacity(0.5),
+                            color: color.withValues(alpha: 0.5),
                             blurRadius: 8,
                             spreadRadius: 2,
                           ),
@@ -97,7 +89,7 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
           onPressed: () => _showCustomPicker(context),
           icon: const Icon(Icons.color_lens_outlined, size: 16),
           label: Text(
-            'Choisir une autre couleur',
+            'Choisir mes propres couleurs →',
             style: AppTextStyles.caption().copyWith(color: AppColors.primary),
           ),
           style: TextButton.styleFrom(

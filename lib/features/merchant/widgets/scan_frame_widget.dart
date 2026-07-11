@@ -53,7 +53,7 @@ class _ScanFrameWidgetState extends State<ScanFrameWidget>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [
                     Colors.transparent,
-                    AppColors.primary.withOpacity(0.8),
+                    AppColors.primary.withValues(alpha: 0.8),
                     Colors.transparent,
                   ]),
                 ),

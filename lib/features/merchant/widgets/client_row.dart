@@ -83,7 +83,7 @@ class ClientRow extends StatelessWidget {
           borderRadius: Rd.card,
           boxShadow: [
             BoxShadow(
-              color: AppColors.textPrimary.withOpacity(0.03),
+              color: AppColors.textPrimary.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -169,7 +169,7 @@ class ClientRow extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         color: AppColors.merchant,
-                        backgroundColor: AppColors.border.withOpacity(0.5),
+                        backgroundColor: AppColors.border.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -205,8 +205,8 @@ class _QuickActionBtn extends StatelessWidget {
       child: Container(
         width: 32,
         height: 32,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF3F4F6),
           shape: BoxShape.circle,
         ),
         child: Icon(

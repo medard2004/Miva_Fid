@@ -84,7 +84,7 @@ class ClientDetailScreen extends ConsumerWidget {
                       Text('Membre depuis $since',
                           style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
                       const Divider(height: Sp.xl),
-                      StampGridWidget(filled: stamps, total: required, stampSize: 30),
+                      StampGridWidget(filled: stamps, total: required, stampSize: 30, primaryColor: merchantAsync.value?.primaryColor ?? AppColors.primary),
                       const SizedBox(height: Sp.sm),
                       Text('$stamps sur $required tampons',
                           style: AppTextStyles.mono().copyWith(color: AppColors.primary)),

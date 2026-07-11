@@ -55,7 +55,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     data: (list) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.merchant.withOpacity(0.08),
+                        color: AppColors.merchant.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -167,7 +167,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     child: ChoiceChip(
                       label: Text(f),
                       selected: isSelected,
-                      selectedColor: AppColors.merchant.withOpacity(0.08),
+                      selectedColor: AppColors.merchant.withValues(alpha: 0.08),
                       backgroundColor: Colors.white,
                       labelStyle: TextStyle(
                         fontSize: 12,
