@@ -28,6 +28,10 @@ class OnboardingState {
     this.stampIcon = 'check_rounded',
     this.cardDecorationPattern = 'none',
     this.cardGradientType = 'linear',
+    this.whatsapp = '',
+    this.instagram = '',
+    this.facebook = '',
+    this.tiktok = '',
     this.isLoading = false,
     this.error,
   });
@@ -54,6 +58,10 @@ class OnboardingState {
   final String stampIcon;
   final String cardDecorationPattern;
   final String cardGradientType;
+  final String whatsapp;
+  final String instagram;
+  final String facebook;
+  final String tiktok;
   final bool isLoading;
   final String? error;
 
@@ -86,6 +94,10 @@ class OnboardingState {
     String? stampIcon,
     String? cardDecorationPattern,
     String? cardGradientType,
+    String? whatsapp,
+    String? instagram,
+    String? facebook,
+    String? tiktok,
     bool? isLoading,
     String? error,
   }) {
@@ -112,6 +124,10 @@ class OnboardingState {
       stampIcon: stampIcon ?? this.stampIcon,
       cardDecorationPattern: cardDecorationPattern ?? this.cardDecorationPattern,
       cardGradientType: cardGradientType ?? this.cardGradientType,
+      whatsapp: whatsapp ?? this.whatsapp,
+      instagram: instagram ?? this.instagram,
+      facebook: facebook ?? this.facebook,
+      tiktok: tiktok ?? this.tiktok,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -138,6 +154,10 @@ class OnboardingState {
       'card_decoration_pattern': cardDecorationPattern,
       'card_gradient_type': cardGradientType,
       'logo_url': logoUrl,
+      'whatsapp': whatsapp.isEmpty ? null : whatsapp,
+      'instagram': instagram.isEmpty ? null : instagram,
+      'facebook': facebook.isEmpty ? null : facebook,
+      'tiktok': tiktok.isEmpty ? null : tiktok,
     };
   }
 }
@@ -177,6 +197,10 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       state = state.copyWith(cardDecorationPattern: v);
   void setCardGradientType(String v) =>
       state = state.copyWith(cardGradientType: v);
+  void setWhatsapp(String v) => state = state.copyWith(whatsapp: v);
+  void setInstagram(String v) => state = state.copyWith(instagram: v);
+  void setFacebook(String v) => state = state.copyWith(facebook: v);
+  void setTiktok(String v) => state = state.copyWith(tiktok: v);
 
   Future<bool> registerUser() async {
     state = state.copyWith(isLoading: true);

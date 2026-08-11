@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -68,11 +69,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                      LucideIcons.arrowLeft,
                       size: 20,
                       color: AppColors.textPrimary,
                     ),
-                    onPressed: () => context.pop(),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/auth/merchant/auth');
+                      }
+                    },
                   ),
                 ],
               ),
@@ -100,53 +107,54 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: Sp.lg),
+          const SizedBox(height: Sp.md),
 
           // Icon
           Container(
-            width: 56,
-            height: 56,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: AppColors.primaryTint,
+              color: AppColors.merchantTint,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.merchant.withValues(alpha: 0.16), width: 1.2),
             ),
             child: const Icon(
-              Icons.lock_reset_rounded,
-              color: AppColors.primary,
-              size: 28,
+              LucideIcons.keyRound,
+              color: AppColors.merchant,
+              size: 24,
             ),
           ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.8, 0.8)),
 
-          const SizedBox(height: Sp.xl),
+          const SizedBox(height: Sp.md),
 
           // Title
           Text(
             'Mot de passe oublié ?',
-            style: AppTextStyles.h1().copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: 26,
+            style: AppTextStyles.h2().copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+              color: AppColors.textPrimary,
             ),
           ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.12, end: 0),
 
-          const SizedBox(height: Sp.sm),
+          const SizedBox(height: Sp.xs),
 
-          // Subtitle
           Text(
-            'Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.',
+            'Recevez un lien pour réinitialiser votre accès.',
             style: AppTextStyles.bodyMd().copyWith(
               color: AppColors.textSecondary,
-              height: 1.5,
+              height: 1.45,
             ),
-          ).animate(delay: 50.ms).fadeIn(duration: 350.ms).slideY(begin: 0.12, end: 0),
+          ).animate(delay: 50.ms).fadeIn(duration: 350.ms),
 
-          const SizedBox(height: Sp.xl),
+          const SizedBox(height: Sp.md),
 
           // Email field
           AppInput(
             label: 'ADRESSE EMAIL',
             hint: 'vous@exemple.com',
             controller: _emailCtrl,
-            prefixIcon: Icons.mail_outline_rounded,
+            prefixIcon: LucideIcons.mail,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             validator: (v) {
@@ -172,7 +180,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               child: Row(
                 children: [
                   const Icon(
-                    Icons.error_outline_rounded,
+                    LucideIcons.circleAlert,
                     color: AppColors.danger,
                     size: 18,
                   ),
@@ -195,9 +203,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           const SizedBox(height: Sp.md),
 
           // Send button
-          AppButton.primary(
+          AppButton.merchant(
             'Envoyer le lien',
-            icon: Icons.send_rounded,
+            icon: LucideIcons.send,
             loading: _loading,
             onPressed: _sendResetLink,
           ).animate(delay: 150.ms).fadeIn(duration: 350.ms),
@@ -208,19 +216,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           Container(
             padding: const EdgeInsets.all(Sp.md),
             decoration: BoxDecoration(
-              color: AppColors.primaryTint.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.merchantTint.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                width: 1.5,
+                color: AppColors.merchant.withValues(alpha: 0.16),
+                width: 1.2,
               ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(
-                  Icons.info_outline_rounded,
-                  color: AppColors.primary,
+                  LucideIcons.info,
+                  color: AppColors.merchant,
                   size: 18,
                 ),
                 const SizedBox(width: Sp.sm),
@@ -228,7 +236,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   child: Text(
                     'Vérifiez votre dossier spam si vous ne recevez pas l\'email dans les prochaines minutes.',
                     style: AppTextStyles.caption().copyWith(
-                      color: AppColors.primary,
+                      color: AppColors.merchantDark,
                       height: 1.5,
                       fontWeight: FontWeight.w500,
                     ),
@@ -258,7 +266,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             shape: BoxShape.circle,
           ),
           child: const Icon(
-            Icons.mark_email_read_rounded,
+            LucideIcons.mailCheck,
             color: AppColors.success,
             size: 40,
           ),
@@ -306,7 +314,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(Sp.md),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -319,19 +327,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           child: Column(
             children: [
               _buildStep(
-                icon: Icons.mail_outlined,
+                icon: LucideIcons.mail,
                 title: 'Ouvrez votre boîte mail',
                 subtitle: 'Cherchez un email de Miva-Fid',
               ),
               const Divider(height: Sp.lg),
               _buildStep(
-                icon: Icons.link_rounded,
+                icon: LucideIcons.link,
                 title: 'Cliquez sur le lien',
                 subtitle: 'Le lien est valide pendant 24h',
               ),
               const Divider(height: Sp.lg),
               _buildStep(
-                icon: Icons.lock_outline_rounded,
+                icon: LucideIcons.lock,
                 title: 'Créez un nouveau mot de passe',
                 subtitle: 'Au moins 8 caractères recommandés',
               ),
@@ -341,9 +349,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
         const SizedBox(height: Sp.xl),
 
-        AppButton.primary(
+        AppButton.merchant(
           'Retour à la connexion',
-          icon: Icons.arrow_back_rounded,
+          icon: LucideIcons.arrowLeft,
           onPressed: () => context.go('/auth/merchant/auth'),
         ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
 
@@ -374,10 +382,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.primaryTint,
+            color: AppColors.merchantTint,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 20),
+          child: Icon(icon, color: AppColors.merchant, size: 20),
         ),
         const SizedBox(width: Sp.md),
         Expanded(

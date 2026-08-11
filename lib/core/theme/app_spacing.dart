@@ -19,4 +19,5 @@ class Rd {
   static const pill = BorderRadius.all(Radius.circular(999));
   static const input = BorderRadius.all(Radius.circular(12));
   static const card20 = BorderRadius.all(Radius.circular(20));
+  static const card28 = BorderRadius.all(Radius.circular(28));
 }

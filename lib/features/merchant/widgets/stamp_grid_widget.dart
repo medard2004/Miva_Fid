@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 
@@ -30,22 +31,22 @@ class StampGridWidget extends StatelessWidget {
   IconData _getIconData(String name) {
     switch (name) {
       case 'star_rounded':
-        return Icons.star_rounded;
+        return LucideIcons.star;
       case 'favorite_rounded':
-        return Icons.favorite_rounded;
+        return LucideIcons.heart;
       case 'local_cafe_rounded':
-        return Icons.local_cafe_rounded;
+        return LucideIcons.coffee;
       case 'card_giftcard_rounded':
-        return Icons.card_giftcard_rounded;
+        return LucideIcons.gift;
       case 'auto_awesome_rounded':
-        return Icons.auto_awesome_rounded;
+        return LucideIcons.sparkles;
       case 'emoji_emotions_rounded':
-        return Icons.emoji_emotions_rounded;
+        return LucideIcons.smile;
       case 'diamond_rounded':
-        return Icons.diamond_rounded;
+        return LucideIcons.gem;
       case 'check_rounded':
       default:
-        return Icons.check_rounded;
+        return LucideIcons.check;
     }
   }
 
@@ -78,7 +79,7 @@ class StampGridWidget extends StatelessWidget {
           } else {
             child = Center(
               child: Icon(
-                Icons.check_rounded,
+                LucideIcons.check,
                 color: primaryColor,
                 size: stampSize * 0.55,
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../widgets/client_row.dart';
@@ -80,7 +82,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () => AppToast.info(context, 'Export bientôt disponible'),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.border),
                         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -88,7 +90,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      icon: const Icon(Icons.file_download_outlined, color: AppColors.textPrimary, size: 18),
+                      icon: const Icon(LucideIcons.fileDown, color: AppColors.textPrimary, size: 18),
                       label: Text(
                         'Exporter',
                         style: AppTextStyles.labelBold().copyWith(
@@ -101,7 +103,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: () => AppToast.info(context, 'Ajout manuel bientôt disponible'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.merchant,
                         foregroundColor: Colors.white,
@@ -111,7 +113,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 18),
+                      icon: const Icon(LucideIcons.userPlus, color: Colors.white, size: 18),
                       label: Text(
                         'Ajouter',
                         style: AppTextStyles.labelBold().copyWith(
@@ -132,7 +134,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               child: TextField(
                 onChanged: (q) => ref.read(clientsNotifierProvider.notifier).search(q),
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                  prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 20),
                   hintText: 'Rechercher un client...',
                   hintStyle: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
                   filled: true,
@@ -289,7 +291,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: null, // Pagination pas encore implémentée côté requête
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.border),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -303,10 +305,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       children: [
                         Text(
                           'Suiv.',
-                          style: AppTextStyles.caption().copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                          style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 2),
-                        const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textPrimary),
+                        const Icon(LucideIcons.chevronRight, size: 14, color: AppColors.textSecondary),
                       ],
                     ),
                   ),

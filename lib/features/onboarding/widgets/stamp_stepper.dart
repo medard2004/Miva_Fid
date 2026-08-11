@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -33,7 +34,7 @@ class StampStepper extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _StepperBtn(
-                icon: Icons.remove,
+                icon: LucideIcons.minus,
                 onTap: value > min
                     ? () {
                         AppHaptics.selection();
@@ -46,7 +47,7 @@ class StampStepper extends StatelessWidget {
                 style: AppTextStyles.monoXl().copyWith(color: AppColors.primary),
               ),
               _StepperBtn(
-                icon: Icons.add,
+                icon: LucideIcons.plus,
                 onTap: value < max
                     ? () {
                         AppHaptics.selection();

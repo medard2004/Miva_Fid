@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:io';
 import 'dart:math' as math;
@@ -7,7 +8,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/onboarding_provider.dart';
+import 'premium_card_surface.dart';
 import 'stamp_grid_widget_preview.dart';
+
+IconData _iconForCommerceType(String type) {
+  switch (type) {
+    case 'Restaurant':
+      return LucideIcons.utensils;
+    case 'Hôtel':
+      return LucideIcons.bedDouble;
+    case 'Salon':
+    case 'Salon de coiffure':
+    case 'Salon de beauté':
+      return LucideIcons.scissors;
+    case 'Boutique':
+      return LucideIcons.shoppingBag;
+    case 'Café':
+    case 'Pâtisserie':
+      return LucideIcons.coffee;
+    default:
+      return LucideIcons.store;
+  }
+}
 
 class LoyaltyCardPreview extends ConsumerWidget {
   const LoyaltyCardPreview({super.key, this.previewStamps = 7});
@@ -34,8 +56,6 @@ class LoyaltyCardPreview extends ConsumerWidget {
         ? previewStamps / state.stampsRequired
         : currentPoints / state.stampsRequired;
 
-    final remainingStamps = state.stampsRequired - previewStamps;
-
     // Gradient configuration
     final gradient = state.cardGradientType == 'radial'
         ? RadialGradient(
@@ -49,226 +69,60 @@ class LoyaltyCardPreview extends ConsumerWidget {
             end: Alignment.bottomRight,
           );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 188,
-      decoration: BoxDecoration(
-        borderRadius: Rd.card20,
-        gradient: gradient,
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: Rd.card20,
-        child: Stack(
-          children: [
-            // Pattern Overlay
-            if (state.cardDecorationPattern != 'none')
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _CardPatternPainter(
-                    pattern: state.cardDecorationPattern,
-                    color: Colors.white.withValues(alpha: 0.08),
-                  ),
+    return PremiumCardSurface(
+      height: 148,
+      gradient: gradient,
+      shadowColor: primary,
+      child: Stack(
+        children: [
+          // Pattern Overlay
+          if (state.cardDecorationPattern != 'none')
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _CardPatternPainter(
+                  pattern: state.cardDecorationPattern,
+                  color: Colors.white.withValues(alpha: 0.08),
                 ),
               ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(Sp.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // show uploaded logo (network or local) when available, otherwise default icon
-                      if (state.logoUrl != null && state.logoUrl!.isNotEmpty) ...[
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Builder(builder: (context) {
-                              final url = state.logoUrl!;
-                              if (url.startsWith('http')) {
-                                return Image.network(
-                                  url,
-                                  width: 36,
-                                  height: 36,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(
-                                    _iconForType(state.commerceType),
-                                    size: 18,
-                                    color: primary,
-                                  ),
-                                );
-                              }
-
-                              try {
-                                final f = File(url);
-                                return Image.file(
-                                  f,
-                                  width: 36,
-                                  height: 36,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(
-                                    _iconForType(state.commerceType),
-                                    size: 18,
-                                    color: primary,
-                                  ),
-                                );
-                              } catch (_) {
-                                return Icon(
-                                  _iconForType(state.commerceType),
-                                  size: 18,
-                                  color: primary,
-                                );
-                              }
-                            }),
-                          ),
-                        ),
-                      ] else ...[
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            _iconForType(state.commerceType),
-                            size: 18,
-                            color: primary,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(width: Sp.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              state.commerceName.isEmpty
-                                  ? 'Votre Commerce'
-                                  : state.commerceName,
-                              style: AppTextStyles.labelBold().copyWith(
-                                color: Colors.white,
-                                fontSize: 15,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              state.commerceType.isEmpty
-                                  ? 'Commerce'
-                                  : state.commerceType,
-                              style: AppTextStyles.caption().copyWith(
-                                  color: Colors.white.withValues(alpha: 0.7)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  if (isStampsMode) ...[
-                    const SizedBox(height: Sp.sm),
-                    StampGridWidgetPreview(
-                      filled: previewStamps,
-                      total: state.stampsRequired,
-                      stampSize: 26,
-                      designType: state.stampDesignType,
-                      emoji: state.stampEmoji,
-                      iconName: state.stampIcon,
-                      primaryColor: primary,
-                    ),
-                    const SizedBox(height: Sp.xs),
-                    Text(
-                      '$previewStamps sur ${state.stampsRequired} — encore $remainingStamps pour votre récompense',
-                      style: AppTextStyles.caption().copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ] else ...[
-                    const Spacer(),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '$currentPoints',
-                          style: AppTextStyles.h1().copyWith(
-                            color: Colors.white,
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          state.loyaltyMode == 'spend' ? 'pts' : 'points',
-                          style: AppTextStyles.labelBold().copyWith(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.stars_rounded,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Objectif : ${state.stampsRequired} pts',
-                                style: AppTextStyles.caption().copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: Sp.xs),
-                    Text(
-                      'Encore $remainingPoints points pour obtenir : ${state.rewardDescription.isEmpty ? "votre récompense" : state.rewardDescription}',
-                      style: AppTextStyles.caption().copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: Sp.xs),
-                  ClipRRect(
-                    borderRadius: Rd.pill,
-                    child: LinearProgressIndicator(
-                      value: progress.clamp(0.0, 1.0),
-                      color: Colors.white,
-                      backgroundColor: Colors.white.withValues(alpha: 0.3),
-                      minHeight: 3,
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ],
-        ),
+
+          // Content — même grammaire visuelle que la carte du module
+          // client (badge catégorie + nom en serif Cormorant + bloc de
+          // données en DM Mono), adaptée à la personnalisation marchand
+          // (logo, motif, mode tampons/points en direct). Hauteur et
+          // paddings alignés sur la carte compacte du module client
+          // (lib/features/client/wallet/widgets/loyalty_card_widget.dart)
+          // pour une cohérence visuelle entre les deux parcours.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _CardTopGroup(
+                  commerceType: state.commerceType,
+                  commerceName: state.commerceName,
+                  logoUrl: state.logoUrl,
+                  primaryColor: primary,
+                ),
+                _CardBottomGroup(
+                  isStampsMode: isStampsMode,
+                  previewStamps: previewStamps,
+                  stampsRequired: state.stampsRequired,
+                  currentPoints: currentPoints,
+                  remainingPoints: remainingPoints,
+                  loyaltyMode: state.loyaltyMode,
+                  rewardDescription: state.rewardDescription,
+                  progress: progress,
+                  stampDesignType: state.stampDesignType,
+                  stampEmoji: state.stampEmoji,
+                  stampIcon: state.stampIcon,
+                  primaryColor: primary,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     ).animate().scale(
           begin: const Offset(0.98, 0.98),
@@ -276,25 +130,233 @@ class LoyaltyCardPreview extends ConsumerWidget {
           duration: 150.ms,
         );
   }
+}
 
-  IconData _iconForType(String type) {
-    switch (type) {
-      case 'Restaurant':
-        return Icons.restaurant_outlined;
-      case 'Hôtel':
-        return Icons.hotel_outlined;
-      case 'Salon':
-      case 'Salon de coiffure':
-      case 'Salon de beauté':
-        return Icons.content_cut_outlined;
-      case 'Boutique':
-        return Icons.shopping_bag_outlined;
-      case 'Café':
-      case 'Pâtisserie':
-        return Icons.coffee_outlined;
-      default:
-        return Icons.store_outlined;
-    }
+/// Badge catégorie (gauche) + logo (droite), puis nom du commerce — même
+/// disposition que le haut de la carte du module client.
+class _CardTopGroup extends StatelessWidget {
+  const _CardTopGroup({
+    required this.commerceType,
+    required this.commerceName,
+    required this.logoUrl,
+    required this.primaryColor,
+  });
+
+  final String commerceType;
+  final String commerceName;
+  final String? logoUrl;
+  final Color primaryColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLogo = logoUrl != null && logoUrl!.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: Rd.pill,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_iconForCommerceType(commerceType), size: 10, color: Colors.white),
+                  const SizedBox(width: 5),
+                  Text(
+                    (commerceType.isEmpty ? 'Commerce' : commerceType).toUpperCase(),
+                    style: AppTextStyles.mono().copyWith(
+                      fontSize: 9,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            // Logo — fond plein si un vrai logo est fourni, sinon pastille
+            // translucide avec l'icône de catégorie.
+            if (hasLogo)
+              CircleAvatar(
+                radius: 13,
+                backgroundColor: Colors.white,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Builder(builder: (context) {
+                    final url = logoUrl!;
+                    Widget fallback() => Icon(
+                          _iconForCommerceType(commerceType),
+                          size: 13,
+                          color: primaryColor,
+                        );
+                    if (url.startsWith('http')) {
+                      return Image.network(url,
+                          width: 22, height: 22, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback());
+                    }
+                    try {
+                      return Image.file(File(url),
+                          width: 22, height: 22, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback());
+                    } catch (_) {
+                      return fallback();
+                    }
+                  }),
+                ),
+              )
+            else
+              CircleAvatar(
+                radius: 13,
+                backgroundColor: Colors.white.withValues(alpha: 0.16),
+                child: Icon(_iconForCommerceType(commerceType), size: 13, color: Colors.white),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          commerceName.isEmpty ? 'Votre Commerce' : commerceName,
+          style: AppTextStyles.cardName().copyWith(color: Colors.white, fontSize: 17, height: 1.0),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+}
+
+/// Bloc mécanique (tampons/points) + barre de progression — bas de la
+/// carte, poussé en bas via `MainAxisAlignment.spaceBetween` du parent.
+class _CardBottomGroup extends StatelessWidget {
+  const _CardBottomGroup({
+    required this.isStampsMode,
+    required this.previewStamps,
+    required this.stampsRequired,
+    required this.currentPoints,
+    required this.remainingPoints,
+    required this.loyaltyMode,
+    required this.rewardDescription,
+    required this.progress,
+    required this.stampDesignType,
+    required this.stampEmoji,
+    required this.stampIcon,
+    required this.primaryColor,
+  });
+
+  final bool isStampsMode;
+  final int previewStamps;
+  final int stampsRequired;
+  final int currentPoints;
+  final int remainingPoints;
+  final String loyaltyMode;
+  final String rewardDescription;
+  final double progress;
+  final String stampDesignType;
+  final String stampEmoji;
+  final String stampIcon;
+  final Color primaryColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isStampsMode) ...[
+          Text(
+            'TAMPONS',
+            style: AppTextStyles.mono().copyWith(
+              fontSize: 9,
+              color: Colors.white.withValues(alpha: 0.7),
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '$previewStamps/$stampsRequired',
+            style: AppTextStyles.monoLg().copyWith(color: Colors.white, fontSize: 18),
+          ),
+          const SizedBox(height: 4),
+          StampGridWidgetPreview(
+            filled: previewStamps,
+            total: stampsRequired,
+            stampSize: 15,
+            gap: 4,
+            designType: stampDesignType,
+            emoji: stampEmoji,
+            iconName: stampIcon,
+            primaryColor: primaryColor,
+          ),
+        ] else ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '$currentPoints',
+                style: AppTextStyles.monoLg().copyWith(color: Colors.white, fontSize: 18),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                loyaltyMode == 'spend' ? 'pts' : 'points',
+                style: AppTextStyles.mono().copyWith(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 11,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.sparkles, color: Colors.white, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Objectif : $stampsRequired pts',
+                      style: AppTextStyles.caption().copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Encore $remainingPoints pour : ${rewardDescription.isEmpty ? "votre récompense" : rewardDescription}',
+            style: AppTextStyles.caption().copyWith(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 10.5,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: Rd.pill,
+          child: LinearProgressIndicator(
+            value: progress.clamp(0.0, 1.0),
+            color: Colors.white,
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
+            minHeight: 3,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -347,4 +409,3 @@ class _CardPatternPainter extends CustomPainter {
   bool shouldRepaint(covariant _CardPatternPainter oldDelegate) =>
       oldDelegate.pattern != pattern || oldDelegate.color != color;
 }
-

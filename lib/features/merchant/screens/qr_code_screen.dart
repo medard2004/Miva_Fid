@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -107,7 +108,7 @@ class QrCodeScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
-                              Icons.qr_code_scanner_rounded,
+                              LucideIcons.scanLine,
                               color: Colors.white,
                               size: 20,
                             ),
@@ -140,7 +141,7 @@ class QrCodeScreen extends ConsumerWidget {
                 Row(
                   children: [
                     _buildActionButton(
-                      icon: Icons.file_download_outlined,
+                      icon: LucideIcons.fileDown,
                       label: 'PNG',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -149,12 +150,12 @@ class QrCodeScreen extends ConsumerWidget {
                       },
                     ),
                     _buildActionButton(
-                      icon: Icons.print_outlined,
+                      icon: LucideIcons.printer,
                       label: 'A4',
                       onTap: () => _generatePdf(merchantName, merchantAddress, merchantPhone, qrData),
                     ),
                     _buildActionButton(
-                      icon: Icons.share_outlined,
+                      icon: LucideIcons.share,
                       label: 'Partager',
                       onTap: () => _shareWhatsApp(merchantName),
                     ),
@@ -168,7 +169,7 @@ class QrCodeScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: AppColors.gray100,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -184,7 +185,7 @@ class QrCodeScreen extends ConsumerWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.copy_rounded, color: AppColors.textSecondary, size: 20),
+                          icon: const Icon(LucideIcons.copy, color: AppColors.textSecondary, size: 20),
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: directLink));
                             ScaffoldMessenger.of(context).showSnackBar(

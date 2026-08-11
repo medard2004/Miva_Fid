@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -21,17 +22,12 @@ class ColorPalettePicker extends StatefulWidget {
 class _ColorPalettePickerState extends State<ColorPalettePicker> {
   static const _presets = [
     Color(0xFF4F46E5), // Indigo
-    Color(0xFF7C3AED), // Violet
     Color(0xFFDB2777), // Rose
     Color(0xFFDC2626), // Rouge
     Color(0xFFEA580C), // Orange
-    Color(0xFFD97706), // Ambre
     Color(0xFF16A34A), // Vert
-    Color(0xFF0891B2), // Cyan
     Color(0xFF0284C7), // Bleu
-    Color(0xFF475569), // Ardoise
     Color(0xFF1C1917), // Noir
-    Color(0xFF78716C), // Pierre
   ];
 
   Color? _selected;
@@ -78,7 +74,7 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
                       : null,
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                    ? const Icon(LucideIcons.check, color: Colors.white, size: 16)
                     : null,
               ),
             );
@@ -87,9 +83,9 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
         const SizedBox(height: Sp.xs),
         TextButton.icon(
           onPressed: () => _showCustomPicker(context),
-          icon: const Icon(Icons.color_lens_outlined, size: 16),
+          icon: const Icon(LucideIcons.palette, size: 16),
           label: Text(
-            'Choisir mes propres couleurs →',
+            'Autre couleur',
             style: AppTextStyles.caption().copyWith(color: AppColors.primary),
           ),
           style: TextButton.styleFrom(

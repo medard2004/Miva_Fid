@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,7 +26,7 @@ class ClientDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.bgLight,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: const Icon(LucideIcons.arrowLeft),
           onPressed: () => context.go('/merchant/clients'),
         ),
         title: Text('Détail client', style: AppTextStyles.h3()),
@@ -103,7 +104,7 @@ class ClientDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: Sp.md),
                 AppButton.tint('Ajouter un tampon bonus',
-                    icon: Icons.add_circle_outline,
+                    icon: LucideIcons.circlePlus,
                     onPressed: () async {
                       await ref.read(clientsNotifierProvider.notifier)
                           .addBonusStamp(data['id'] as String);

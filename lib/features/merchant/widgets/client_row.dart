@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -34,16 +35,16 @@ class ClientRow extends StatelessWidget {
     final Color badgeFg;
     if (hash % 3 == 0) {
       tier = 'Or';
-      badgeBg = const Color(0xFFFEF3C7);
-      badgeFg = const Color(0xFFD97706);
+      badgeBg = AppColors.warningTint;
+      badgeFg = AppColors.warningDark;
     } else if (hash % 3 == 1) {
       tier = 'Argent';
-      badgeBg = const Color(0xFFF3F4F6);
-      badgeFg = const Color(0xFF4B5563);
+      badgeBg = AppColors.gray100;
+      badgeFg = AppColors.gray600;
     } else {
       tier = 'Platine';
-      badgeBg = const Color(0xFFF3E8FF);
-      badgeFg = const Color(0xFF7C3AED);
+      badgeBg = AppColors.merchantTint;
+      badgeFg = AppColors.merchant;
     }
 
     // Determine deterministic last visit time
@@ -79,7 +80,7 @@ class ClientRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: Sp.sm),
         padding: const EdgeInsets.all(Sp.md),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surfaceLight,
           borderRadius: Rd.card,
           boxShadow: [
             BoxShadow(
@@ -147,12 +148,12 @@ class ClientRow extends StatelessWidget {
                 ),
                 // Quick Action Buttons
                 _QuickActionBtn(
-                  icon: Icons.visibility_outlined,
+                  icon: LucideIcons.eye,
                   onTap: onViewDetail ?? onTap,
                 ),
                 const SizedBox(width: 8),
                 _QuickActionBtn(
-                  icon: Icons.chat_bubble_outline_rounded,
+                  icon: LucideIcons.messageCircle,
                   onTap: onSendMessage,
                 ),
               ],
@@ -206,7 +207,7 @@ class _QuickActionBtn extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: const BoxDecoration(
-          color: Color(0xFFF3F4F6),
+          color: AppColors.gray100,
           shape: BoxShape.circle,
         ),
         child: Icon(

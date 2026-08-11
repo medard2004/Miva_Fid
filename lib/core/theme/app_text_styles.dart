@@ -46,6 +46,16 @@ class AppTextStyles {
         fontWeight: FontWeight.w400,
       );
 
+  // Cormorant — nom d'établissement sur la carte de fidélité (aligné sur
+  // le traitement du module client, cf.
+  // lib/features/client/core/theme/app_text_styles.dart:displayLarge).
+  static TextStyle cardName() => GoogleFonts.cormorant(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
+        letterSpacing: -0.1,
+      );
+
   // DM Mono — chiffres, FCFA, codes
   static TextStyle mono() => GoogleFonts.dmMono(
         fontSize: 14,

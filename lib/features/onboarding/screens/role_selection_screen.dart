@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,7 +33,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width >= 860;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     final bool isClientSelected = _selectedRole == 'client';
@@ -43,237 +43,173 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       backgroundColor: AppColors.bgLight,
       body: Stack(
         children: [
-          // Background mesh glows (fade out on selection)
+          // Soft ambient glow behind the content
           Positioned(
-            top: -100,
-            left: -100,
+            top: -140,
+            left: -60,
+            right: -60,
             child: AnimatedOpacity(
               opacity: hasSelection ? 0.0 : 1.0,
               duration: const Duration(milliseconds: 250),
               child: Container(
-                width: 250,
-                height: 250,
+                height: 320,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                      blurRadius: 180,
-                      spreadRadius: 80,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            right: -100,
-            child: AnimatedOpacity(
-              opacity: hasSelection ? 0.0 : 1.0,
-              duration: const Duration(milliseconds: 250),
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.merchant.withValues(alpha: 0.08),
-                      blurRadius: 200,
-                      spreadRadius: 90,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Main content
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(Sp.md, Sp.md, Sp.md, bottomInset + Sp.sm),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Header Section (fade out on selection)
-                  AnimatedOpacity(
-                    opacity: hasSelection ? 0.0 : 1.0,
-                    duration: const Duration(milliseconds: 250),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: Sp.xs),
-                        // Premium Glass Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.12), width: 1),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.05),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.auto_awesome, size: 14, color: AppColors.primary),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Miva Fid',
-                                style: AppTextStyles.caption().copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                            .animate()
-                            .fadeIn(duration: 400.ms)
-                            .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
-                        const SizedBox(height: Sp.sm),
-                        Text(
-                          'Quel est votre profil ?',
-                          style: AppTextStyles.h2().copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                            fontSize: 22,
-                          ),
-                          textAlign: TextAlign.center,
-                        )
-                            .animate(delay: 100.ms)
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: 0.08, end: 0, duration: 400.ms, curve: Curves.easeOut),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Choisissez l’option qui vous correspond pour continuer.',
-                          style: AppTextStyles.bodyMd().copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                          textAlign: TextAlign.center,
-                        )
-                            .animate(delay: 150.ms)
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: 0.08, end: 0, duration: 400.ms, curve: Curves.easeOut),
-                      ],
-                    ),
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.16),
+                      AppColors.merchant.withValues(alpha: 0.0),
+                    ],
                   ),
+                ),
+              ),
+            ),
+          ),
 
-                  const SizedBox(height: Sp.sm),
-
-                  // Cards Layout
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final clientCard = AnimatedOpacity(
-                        opacity: hasSelection && !isClientSelected ? 0.0 : 1.0,
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(Sp.md, Sp.lg, Sp.md, bottomInset + Sp.sm),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Header
+                      AnimatedOpacity(
+                        opacity: hasSelection ? 0.0 : 1.0,
                         duration: const Duration(milliseconds: 250),
-                        child: AnimatedScale(
-                          scale: isClientSelected ? 1.03 : (hasSelection ? 0.96 : 1.0),
-                          duration: const Duration(milliseconds: 250),
-                          child: _SelectionCard(
-                            title: 'Je suis Client',
-                            subtitle: 'Cumulez des points et débloquez des récompenses exclusives chez vos commerçants.',
-                            accent: const LinearGradient(
-                              colors: [Color(0xFF2E2BF7), Color(0xFF4F46E5)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            icon: Icons.card_giftcard_rounded,
-                            buttonText: 'Commencer mon parcours',
-                            isSelected: isClientSelected,
-                            hasSelection: hasSelection,
-                            onTap: () => _handleRoleSelection('client', '/onboarding/client'),
-                          ),
-                        ),
-                      );
-
-                      final merchantCard = AnimatedOpacity(
-                        opacity: hasSelection && !isMerchantSelected ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 250),
-                        child: AnimatedScale(
-                          scale: isMerchantSelected ? 1.03 : (hasSelection ? 0.96 : 1.0),
-                          duration: const Duration(milliseconds: 250),
-                          child: _SelectionCard(
-                            title: 'Je suis Commerçant',
-                            subtitle: 'Fidélisez votre clientèle locale et gérez vos campagnes de tampons digitalisés.',
-                            accent: const LinearGradient(
-                              colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            icon: Icons.storefront_rounded,
-                            buttonText: 'Créer mon espace marchand',
-                            isSelected: isMerchantSelected,
-                            hasSelection: hasSelection,
-                            onTap: () => _handleRoleSelection('merchant', '/onboarding/merchant'),
-                          ),
-                        ),
-                      );
-
-                      if (isWide || constraints.maxWidth >= 800) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Column(
                           children: [
-                            Expanded(child: clientCard),
-                            const SizedBox(width: Sp.md),
-                            Expanded(child: merchantCard),
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF4F46E5), Color(0xFF8B5CF6)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: 0.35),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 26),
+                            )
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack),
+                            const SizedBox(height: Sp.md),
+                            ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [Color(0xFF4F46E5), Color(0xFF8B5CF6)],
+                              ).createShader(bounds),
+                              child: Text(
+                                'Quel est votre profil ?',
+                                style: AppTextStyles.h1().copyWith(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  letterSpacing: -0.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                                .animate(delay: 100.ms)
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: 0.08, end: 0, duration: 400.ms, curve: Curves.easeOut),
                           ],
-                        );
-                      }
+                        ),
+                      ),
 
-                      return Column(
+                      // Cards
+                      Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          clientCard,
-                          const SizedBox(height: Sp.sm),
-                          merchantCard,
-                        ],
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: Sp.sm),
-
-                  // Footer (fade out on selection)
-                  AnimatedOpacity(
-                    opacity: hasSelection ? 0.0 : 1.0,
-                    duration: const Duration(milliseconds: 250),
-                    child: TextButton(
-                      onPressed: hasSelection ? null : () => context.go('/auth/login'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.xs),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                      child: RichText(
-                        text: TextSpan(
-                          style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary, fontSize: 13),
-                          children: const [
-                            TextSpan(text: 'Déjà un compte ? '),
-                            TextSpan(
-                              text: 'Se connecter',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
+                          AnimatedOpacity(
+                            opacity: hasSelection && !isClientSelected ? 0.0 : 1.0,
+                            duration: const Duration(milliseconds: 250),
+                            child: _SelectionCard(
+                              title: 'Je suis Client',
+                              subtitle: 'Cumulez des points et gagnez des récompenses',
+                              accent: const LinearGradient(
+                                colors: [Color(0xFF2E2BF7), Color(0xFF4F46E5)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
+                              icon: LucideIcons.gift,
+                              isSelected: isClientSelected,
+                              hasSelection: hasSelection,
+                              onTap: () => _handleRoleSelection('client', '/client/onboarding'),
+                            ).animate(delay: 150.ms).fadeIn(duration: 400.ms).slideY(
+                                  begin: 0.12,
+                                  end: 0,
+                                  duration: 400.ms,
+                                  curve: Curves.easeOut,
+                                ),
+                          ),
+                          const SizedBox(height: Sp.md),
+                          AnimatedOpacity(
+                            opacity: hasSelection && !isMerchantSelected ? 0.0 : 1.0,
+                            duration: const Duration(milliseconds: 250),
+                            child: _SelectionCard(
+                              title: 'Je suis Commerçant',
+                              subtitle: 'Fidélisez votre clientèle avec des tampons digitaux',
+                              accent: const LinearGradient(
+                                colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              icon: LucideIcons.store,
+                              isSelected: isMerchantSelected,
+                              hasSelection: hasSelection,
+                              onTap: () => _handleRoleSelection('merchant', '/onboarding/merchant'),
+                            ).animate(delay: 220.ms).fadeIn(duration: 400.ms).slideY(
+                                  begin: 0.12,
+                                  end: 0,
+                                  duration: 400.ms,
+                                  curve: Curves.easeOut,
+                                ),
+                          ),
+                        ],
+                      ),
+
+                      // Footer
+                      AnimatedOpacity(
+                        opacity: hasSelection ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 250),
+                        child: TextButton(
+                          onPressed: hasSelection ? null : () => context.go('/auth/login'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.xs),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
                             ),
-                          ],
+                          ),
+                          child: RichText(
+                            text: TextSpan(
+                              style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary, fontSize: 13),
+                              children: const [
+                                TextSpan(text: 'Déjà un compte ? '),
+                                TextSpan(
+                                  text: 'Se connecter',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -289,7 +225,6 @@ class _SelectionCard extends StatefulWidget {
     required this.subtitle,
     required this.accent,
     required this.icon,
-    required this.buttonText,
     required this.onTap,
     this.isSelected = false,
     this.hasSelection = false,
@@ -299,7 +234,6 @@ class _SelectionCard extends StatefulWidget {
   final String subtitle;
   final LinearGradient accent;
   final IconData icon;
-  final String buttonText;
   final VoidCallback onTap;
   final bool isSelected;
   final bool hasSelection;
@@ -314,146 +248,149 @@ class _SelectionCardState extends State<_SelectionCard> {
   @override
   Widget build(BuildContext context) {
     final bool enableHoverScale = _isHovered && !widget.hasSelection;
+    final Color accentColor = widget.accent.colors.last;
 
     return AnimatedScale(
-      scale: widget.isSelected ? 1.0 : (enableHoverScale ? 1.015 : 1.0),
+      scale: widget.isSelected ? 1.02 : (enableHoverScale ? 1.012 : 1.0),
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeOutCubic,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: widget.accent,
-          boxShadow: [
-            BoxShadow(
-              color: widget.accent.colors.last.withValues(alpha: widget.isSelected ? 0.40 : (enableHoverScale ? 0.25 : 0.15)),
-              blurRadius: widget.isSelected ? 20 : (enableHoverScale ? 14 : 8),
-              offset: Offset(0, widget.isSelected ? 6 : (enableHoverScale ? 4 : 3)),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              // Watermark Icon Background
-              Positioned(
-                right: -16,
-                bottom: -16,
-                child: Opacity(
-                  opacity: 0.08,
-                  child: Icon(
-                    widget.icon,
-                    size: 110,
-                    color: Colors.white,
-                  ),
-                ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: widget.accent,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: widget.isSelected ? 0.5 : 0.14),
+                width: widget.isSelected ? 1.6 : 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withValues(alpha: widget.isSelected ? 0.38 : (enableHoverScale ? 0.24 : 0.16)),
+                  blurRadius: widget.isSelected ? 26 : (enableHoverScale ? 18 : 12),
+                  offset: Offset(0, widget.isSelected ? 10 : 6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Stack(
+                children: [
+                  // Glossy sheen
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.10),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.5],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Watermark icon
+                  Positioned(
+                    right: -18,
+                    bottom: -18,
+                    child: Opacity(
+                      opacity: 0.10,
+                      child: Icon(widget.icon, size: 100, color: Colors.white),
+                    ),
+                  ),
 
-              // Card Content
-              InkWell(
-                onTap: widget.hasSelection ? null : widget.onTap,
-                onHighlightChanged: (highlighted) {
-                  if (!widget.hasSelection) {
-                    setState(() {
-                      _isHovered = highlighted;
-                    });
-                  }
-                },
-                splashColor: Colors.white.withValues(alpha: 0.12),
-                highlightColor: Colors.white.withValues(alpha: 0.06),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header Row: Icon and Title inline
-                      Row(
+                  InkWell(
+                    onTap: widget.hasSelection ? null : widget.onTap,
+                    onHighlightChanged: (highlighted) {
+                      if (!widget.hasSelection) {
+                        setState(() => _isHovered = highlighted);
+                      }
+                    },
+                    splashColor: Colors.white.withValues(alpha: 0.12),
+                    highlightColor: Colors.white.withValues(alpha: 0.06),
+                    child: Padding(
+                      padding: const EdgeInsets.all(Sp.md),
+                      child: Row(
                         children: [
                           Container(
-                            width: 38,
-                            height: 38,
+                            width: 52,
+                            height: 52,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.20),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.2),
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.22),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.2),
                             ),
-                            child: Icon(
-                              widget.icon,
-                              color: Colors.white,
-                              size: 20,
+                            child: Icon(widget.icon, color: Colors.white, size: 24),
+                          ),
+                          const SizedBox(width: Sp.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.title,
+                                  style: AppTextStyles.h3().copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  widget.subtitle,
+                                  style: AppTextStyles.caption().copyWith(
+                                    color: Colors.white.withValues(alpha: 0.88),
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(width: Sp.sm),
-                          Expanded(
-                            child: Text(
-                              widget.title,
-                              style: AppTextStyles.h3().copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                              ),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.18),
                             ),
+                            child: const Icon(LucideIcons.arrowRight, color: Colors.white, size: 15),
                           ),
                         ],
                       ),
-                      const SizedBox(height: Sp.sm),
-
-                      // Card Subtitle
-                      Text(
-                        widget.subtitle,
-                        style: AppTextStyles.caption().copyWith(
-                          color: Colors.white.withValues(alpha: 0.90),
-                          height: 1.3,
-                        ),
-                      ),
-                      const SizedBox(height: Sp.md),
-
-                      // Button CTA
-                      Container(
-                        width: double.infinity,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                widget.buttonText,
-                                style: AppTextStyles.labelBold().copyWith(
-                                  color: widget.accent.colors.last,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(width: Sp.xs),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                color: widget.accent.colors.last,
-                                size: 14,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+
+          // Selection badge
+          if (widget.isSelected)
+            Positioned(
+              top: -8,
+              right: -8,
+              child: Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: accentColor, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(color: accentColor.withValues(alpha: 0.4), blurRadius: 8),
+                  ],
+                ),
+                child: Icon(LucideIcons.check, color: accentColor, size: 15),
+              ).animate().scale(begin: const Offset(0.4, 0.4), curve: Curves.easeOutBack, duration: 250.ms),
+            ),
+        ],
       ),
     );
   }

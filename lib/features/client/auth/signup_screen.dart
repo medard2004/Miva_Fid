@@ -1,0 +1,184 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:simple_icons/simple_icons.dart';
+import 'package:miva_fid/features/client/core/theme/app_colors.dart';
+import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
+import 'package:miva_fid/l10n/gen/app_localizations.dart';
+import 'package:miva_fid/features/client/models/user.dart';
+import 'package:miva_fid/features/client/providers/app_providers.dart';
+import 'package:miva_fid/features/client/providers/settings_provider.dart';
+import 'package:miva_fid/features/client/widgets/components/components.dart';
+import 'package:miva_fid/features/client/widgets/shared/phone_input_with_country_picker.dart';
+
+/// Formulaire d'inscription complet : Nom · Date de naissance · Téléphone → /wallet
+class SignupScreen extends ConsumerStatefulWidget {
+  const SignupScreen({super.key});
+
+  @override
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends ConsumerState<SignupScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
+  final _phoneInputKey = GlobalKey<PhoneInputWithCountryPickerState>();
+  final _phoneController = TextEditingController();
+  DateTime? _birthDate;
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+
+    final fullPhone = _phoneInputKey.currentState?.fullPhoneNumber ??
+        _phoneController.text.trim();
+
+    ref.read(signupFlowProvider.notifier).startPhoneSignup(
+          fullName: _fullNameController.text.trim(),
+          phone: fullPhone,
+          birthDate: _birthDate,
+        );
+
+    final flow = ref.read(signupFlowProvider);
+    ref.read(authProvider.notifier).completeSignupOtp(flow);
+
+    context.go('/client/wallet');
+  }
+
+  void _goToLogin() {
+    context.go('/client/auth');
+  }
+
+  void _continueWithGoogle() {
+    ref
+        .read(signupFlowProvider.notifier)
+        .startSocialSignup(provider: AuthProvider.google);
+    ref.read(authProvider.notifier).completeSocialLogin(AuthProvider.google);
+    context.go('/client/complete-social-profile');
+  }
+
+  void _continueWithApple() {
+    ref
+        .read(signupFlowProvider.notifier)
+        .startSocialSignup(provider: AuthProvider.apple);
+    ref.read(authProvider.notifier).completeSocialLogin(AuthProvider.apple);
+    context.go('/client/complete-social-profile');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
+    final t = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: ConstrainedBox(
+                constraints:
+                    BoxConstraints(minHeight: constraints.maxHeight - 32),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.authSignupTitle, style: AppTextStyles.displayXL()),
+                      const SizedBox(height: 20),
+                      Text(t.editProfileFullName, style: AppTextStyles.label()),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _fullNameController,
+                        keyboardType: TextInputType.name,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? t.editProfileFullNameError
+                            : null,
+                        decoration: InputDecoration(
+                            hintText: t.editProfileFullNameHint),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(t.editProfileBirthDate,
+                          style: AppTextStyles.label()),
+                      const SizedBox(height: 6),
+                      AppDatePickerField(
+                        value: _birthDate,
+                        onChanged: (date) => setState(() => _birthDate = date),
+                        validator: (_) =>
+                            _birthDate == null ? t.authBirthDateError : null,
+                      ),
+                      const SizedBox(height: 14),
+                      Text(t.commonPhoneLabel, style: AppTextStyles.label()),
+                      const SizedBox(height: 6),
+                      PhoneInputWithCountryPicker(
+                        key: _phoneInputKey,
+                        controller: _phoneController,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return t.authPhoneRequiredError;
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      AppButton(label: t.authSignupButton, onTap: _submit),
+                      const SizedBox(height: 18),
+                      const OrDivider(),
+                      const SizedBox(height: 18),
+                      AppButton(
+                        label: t.authSignupGoogle,
+                        variant: AppButtonVariant.outline,
+                        leading: SvgPicture.asset(
+                            'assets/icons/google_logo.svg',
+                            width: 18,
+                            height: 18),
+                        onTap: _continueWithGoogle,
+                      ),
+                      const SizedBox(height: 10),
+                      AppButton(
+                        label: t.authSignupApple,
+                        variant: AppButtonVariant.outline,
+                        icon: SimpleIcons.apple,
+                        onTap: _continueWithApple,
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: AppTapScale(
+                          onTap: _goToLogin,
+                          scaleDown: 0.95,
+                          child: Text.rich(
+                            TextSpan(
+                              text: t.authHasAccountPrefix,
+                              style: AppTextStyles.bodyMedium(
+                                  color: AppColors.inkMuted(opacity: 0.55)),
+                              children: [
+                                TextSpan(
+                                  text: t.profileSignIn,
+                                  style: AppTextStyles.bodyMedium(
+                                          color: AppColors.primary)
+                                      .copyWith(fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

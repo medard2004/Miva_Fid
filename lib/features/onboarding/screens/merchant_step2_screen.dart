@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -10,41 +9,34 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../providers/onboarding_provider.dart';
-import '../widgets/color_palette_picker.dart';
-import '../widgets/loyalty_card_preview.dart';
 import '../widgets/onboarding_progress_bar.dart';
+import '../widgets/stamp_stepper.dart';
 
 class MerchantStep2Screen extends ConsumerStatefulWidget {
   const MerchantStep2Screen({super.key});
 
   @override
-  ConsumerState<MerchantStep2Screen> createState() => _MerchantStep2ScreenState();
+  ConsumerState<MerchantStep2Screen> createState() =>
+      _MerchantStep2ScreenState();
 }
 
 class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
-  late final TextEditingController _descCtrl;
+  late final TextEditingController _rewardCtrl;
+  late final TextEditingController _reviewUrlCtrl;
 
   @override
   void initState() {
     super.initState();
-    _descCtrl = TextEditingController(
-      text: ref.read(onboardingNotifierProvider).description,
-    );
+    final state = ref.read(onboardingNotifierProvider);
+    _rewardCtrl = TextEditingController(text: state.rewardDescription);
+    _reviewUrlCtrl = TextEditingController(text: state.googleReviewUrl);
   }
 
   @override
   void dispose() {
-    _descCtrl.dispose();
+    _rewardCtrl.dispose();
+    _reviewUrlCtrl.dispose();
     super.dispose();
-  }
-
-
-  Future<void> _pickLogo() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (file != null) {
-      ref.read(onboardingNotifierProvider.notifier).setLogoUrl(file.path);
-    }
   }
 
   @override
@@ -57,7 +49,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
       body: SafeArea(
         child: Column(
           children: [
-            const OnboardingProgressBar(current: 2, total: 4),
+            const OnboardingProgressBar(current: 2, total: 3),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(Sp.md),
@@ -66,272 +58,204 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                   children: [
                     const SizedBox(height: Sp.md),
                     Text(
-                      'Étape 2 sur 4',
-                      style: AppTextStyles.caption()
-                          .copyWith(color: AppColors.textSecondary),
-                    ),
-                    Text('Personnalisez votre carte', style: AppTextStyles.h1()),
-                    const SizedBox(height: Sp.xs),
-                    Text(
-                      'Votre carte en temps réel avec votre logo',
-                      style: AppTextStyles.bodyMd()
-                          .copyWith(color: AppColors.primary),
-                    ),
-                    const SizedBox(height: Sp.lg),
-                    // Live card preview
-                    const LoyaltyCardPreview(previewStamps: 4),
-                    const SizedBox(height: Sp.xl),
-
-                    // Logo Uploader
-                    Text(
-                      'Logo de votre commerce',
-                      style: AppTextStyles.labelBold(),
-                    ),
-                    const SizedBox(height: Sp.sm),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _pickLogo,
-                            icon: const Icon(Icons.upload_outlined, size: 18),
-                            label: const Text('Uploader mon logo'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              side: const BorderSide(color: AppColors.border, width: 1.5),
-                              shape: const RoundedRectangleBorder(borderRadius: Rd.button),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: Sp.sm),
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primaryTint,
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(28),
-                            child: state.logoUrl == null || state.logoUrl!.isEmpty
-                                ? const Icon(Icons.image_outlined, color: AppColors.primaryLight)
-                                : Builder(builder: (context) {
-                                    final url = state.logoUrl!;
-                                    if (url.startsWith('http')) {
-                                      return Image.network(url, fit: BoxFit.cover);
-                                    }
-                                    return Image.file(File(url), fit: BoxFit.cover);
-                                  }),
-                          ),
-                        ),
-                      ],
+                      'Votre programme',
+                      style: AppTextStyles.h1().copyWith(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: Sp.lg),
 
-                    // Colors
-                    Text(
-                      'Couleur principale de votre marque',
-                      style: AppTextStyles.labelBold(),
-                    ),
-                    const SizedBox(height: Sp.sm),
-                    ColorPalettePicker(
-                      selected: state.colorPrimary,
-                      onColorSelected: notifier.setColorPrimary,
-                    ),
-                    const SizedBox(height: Sp.lg),
-
-                    // Gradient Type Selection
-                    Text(
-                      'Type de dégradé de la carte',
-                      style: AppTextStyles.labelBold(),
-                    ),
-                    const SizedBox(height: Sp.sm),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildSegmentButton(
-                            label: 'Linéaire',
-                            isSelected: state.cardGradientType == 'linear',
-                            onTap: () => notifier.setCardGradientType('linear'),
-                          ),
-                        ),
-                        const SizedBox(width: Sp.sm),
-                        Expanded(
-                          child: _buildSegmentButton(
-                            label: 'Radial',
-                            isSelected: state.cardGradientType == 'radial',
-                            onTap: () => notifier.setCardGradientType('radial'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: Sp.lg),
-
-                    // Background Pattern Selection
-                    Text(
-                      'Motif de fond de la carte',
-                      style: AppTextStyles.labelBold(),
-                    ),
+                    // Mode de récompense
+                    Text('Mode de récompense', style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.sm),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _buildSegmentButton(
-                            label: 'Uni / Aucun',
-                            isSelected: state.cardDecorationPattern == 'none',
-                            onTap: () => notifier.setCardDecorationPattern('none'),
+                          _buildModeButton(
+                            label: 'Tampons',
+                            icon: LucideIcons.layoutGrid,
+                            isSelected: state.loyaltyMode == 'stamps',
+                            onTap: () {
+                              notifier.setLoyaltyMode('stamps');
+                              if (state.stampsRequired > 25) {
+                                notifier.setStampsRequired(10);
+                              }
+                            },
                           ),
                           const SizedBox(width: Sp.xs),
-                          _buildSegmentButton(
-                            label: 'Lignes',
-                            isSelected: state.cardDecorationPattern == 'lines',
-                            onTap: () => notifier.setCardDecorationPattern('lines'),
-                          ),
-                          const SizedBox(width: Sp.xs),
-                          _buildSegmentButton(
-                            label: 'Vagues',
-                            isSelected: state.cardDecorationPattern == 'waves',
-                            onTap: () => notifier.setCardDecorationPattern('waves'),
-                          ),
-                          const SizedBox(width: Sp.xs),
-                          _buildSegmentButton(
+                          _buildModeButton(
                             label: 'Points',
-                            isSelected: state.cardDecorationPattern == 'dots',
-                            onTap: () => notifier.setCardDecorationPattern('dots'),
+                            icon: LucideIcons.sparkles,
+                            isSelected: state.loyaltyMode == 'points',
+                            onTap: () {
+                              notifier.setLoyaltyMode('points');
+                              notifier.setStampsRequired(100);
+                            },
+                          ),
+                          const SizedBox(width: Sp.xs),
+                          _buildModeButton(
+                            label: 'Achat',
+                            icon: LucideIcons.shoppingCart,
+                            isSelected: state.loyaltyMode == 'spend',
+                            onTap: () {
+                              notifier.setLoyaltyMode('spend');
+                              notifier.setStampsRequired(500);
+                            },
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: Sp.lg),
 
-                    // Stamp Design Selection
-                    Text(
-                      'Symbole des tampons',
-                      style: AppTextStyles.labelBold(),
-                    ),
-                    const SizedBox(height: Sp.sm),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildSegmentButton(
-                            label: 'Coche ✓',
-                            isSelected: state.stampDesignType == 'check',
-                            onTap: () => notifier.setStampDesignType('check'),
-                          ),
-                        ),
-                        const SizedBox(width: Sp.xs),
-                        Expanded(
-                          child: _buildSegmentButton(
-                            label: 'Icône',
-                            isSelected: state.stampDesignType == 'icon',
-                            onTap: () => notifier.setStampDesignType('icon'),
-                          ),
-                        ),
-                        const SizedBox(width: Sp.xs),
-                        Expanded(
-                          child: _buildSegmentButton(
-                            label: 'Emoji',
-                            isSelected: state.stampDesignType == 'emoji',
-                            onTap: () => notifier.setStampDesignType('emoji'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: Sp.sm),
-
-                    // Suboptions for custom stamps (icons or emoji)
-                    if (state.stampDesignType == 'icon') ...[
-                      const SizedBox(height: Sp.xs),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            'check_rounded',
-                            'star_rounded',
-                            'favorite_rounded',
-                            'local_cafe_rounded',
-                            'card_giftcard_rounded',
-                            'auto_awesome_rounded',
-                            'emoji_emotions_rounded',
-                            'diamond_rounded',
-                          ].map((iconName) {
-                            final isSelected = state.stampIcon == iconName;
-                            return GestureDetector(
-                              onTap: () => notifier.setStampIcon(iconName),
-                              child: Container(
-                                margin: const EdgeInsets.only(right: Sp.sm),
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? AppColors.primaryTint : Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected ? AppColors.primary : AppColors.border,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Icon(
-                                  _getIconData(iconName),
-                                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                                  size: 20,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
+                    // Conditional inputs based on loyaltyMode
+                    if (state.loyaltyMode == 'stamps') ...[
+                      Text('Nombre de tampons requis', style: AppTextStyles.labelBold()),
+                      const SizedBox(height: Sp.sm),
+                      StampStepper(
+                        value: state.stampsRequired,
+                        onChanged: notifier.setStampsRequired,
                       ),
-                      const SizedBox(height: Sp.md),
-                    ],
-
-                    if (state.stampDesignType == 'emoji') ...[
-                      const SizedBox(height: Sp.xs),
+                      const SizedBox(height: Sp.lg),
+                    ] else if (state.loyaltyMode == 'points') ...[
+                      Text('Seuil de points requis', style: AppTextStyles.labelBold()),
+                      const SizedBox(height: Sp.sm),
                       Row(
-                        children: [
-                          Expanded(
-                            child: AppInput(
-                              label: 'Saisir un emoji personnalisé',
-                              hint: '✨ ou ☕ ou ⭐',
-                              onChanged: (v) {
-                                if (v.isNotEmpty) {
-                                  notifier.setStampEmoji(v.characters.first);
-                                }
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: Sp.sm),
-                          ...['✨', '☕', '⭐', '❤️', '💎', '🍕'].map((e) {
-                            final isSelected = state.stampEmoji == e;
-                            return GestureDetector(
-                              onTap: () => notifier.setStampEmoji(e),
+                        children: [100, 250, 500, 1000].map((pts) {
+                          final isSelected = state.stampsRequired == pts;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => notifier.setStampsRequired(pts),
                               child: Container(
                                 margin: const EdgeInsets.only(right: 6),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppColors.primaryTint : Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
+                                  color: isSelected ? AppColors.merchant : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isSelected ? AppColors.primary : AppColors.border,
+                                    color: isSelected ? AppColors.merchant : AppColors.border,
                                     width: 1.5,
                                   ),
                                 ),
-                                child: Text(e, style: const TextStyle(fontSize: 16)),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '$pts pts',
+                                  style: AppTextStyles.bodyMd().copyWith(
+                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                            );
-                          }),
-                        ],
+                            ),
+                          );
+                        }).toList(),
                       ),
-                      const SizedBox(height: Sp.md),
+                      const SizedBox(height: Sp.lg),
+                    ] else ...[
+                      Text('Objectif de points d\'achat', style: AppTextStyles.labelBold()),
+                      const SizedBox(height: Sp.sm),
+                      Row(
+                        children: [300, 500, 1000, 2000].map((pts) {
+                          final isSelected = state.stampsRequired == pts;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => notifier.setStampsRequired(pts),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.merchant : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.merchant : AppColors.border,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '$pts pts',
+                                  style: AppTextStyles.bodyMd().copyWith(
+                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: Sp.lg),
+                      Container(
+                        padding: const EdgeInsets.all(Sp.md),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.banknote,
+                              color: AppColors.merchant,
+                              size: 20,
+                            ),
+                            const SizedBox(width: Sp.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '1 point par 500 FCFA d\'achat',
+                                    style: AppTextStyles.bodyMd().copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Exemple : Un achat de 2 500 FCFA donne 5 points.',
+                                    style: AppTextStyles.caption().copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: Sp.lg),
                     ],
 
-                    // Description
                     AppInput(
-                      label: 'Description de votre commerce',
-                      hint: 'Décrivez votre commerce en quelques mots...',
-                      controller: _descCtrl,
-                      maxLines: 3,
-                      onChanged: notifier.setDescription,
+                      label: 'Votre récompense',
+                      hint: 'Ex : 1 café offert, 10% de réduction',
+                      controller: _rewardCtrl,
+                      onChanged: notifier.setRewardDescription,
+                      prefixIcon: LucideIcons.gift,
                     ),
+                    const SizedBox(height: Sp.sm),
+                    SwitchListTile.adaptive(
+                      value: state.showReviewButton,
+                      onChanged: notifier.setShowReviewButton,
+                      title: Text(
+                        "Afficher le bouton 'Laisser un avis'",
+                        style: AppTextStyles.bodyMd(),
+                      ),
+                      activeThumbColor: Colors.white,
+                      activeTrackColor: AppColors.merchant,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    if (state.showReviewButton) ...[
+                      const SizedBox(height: Sp.sm),
+                      AppInput(
+                        label: "Lien d'avis clients",
+                        hint: 'https://g.page/...',
+                        controller: _reviewUrlCtrl,
+                        onChanged: notifier.setGoogleReviewUrl,
+                        prefixIcon: LucideIcons.link,
+                        keyboardType: TextInputType.url,
+                      ),
+                    ],
+                    const SizedBox(height: Sp.lg),
                   ],
                 ),
               ),
@@ -348,19 +272,17 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                   Expanded(
                     child: AppButton.ghost(
                       'Retour',
+                      color: AppColors.merchant,
                       onPressed: () => context.go('/auth/merchant/step1'),
                     ),
                   ),
                   const SizedBox(width: Sp.sm),
                   Expanded(
                     flex: 2,
-                    child: AppButton.primary(
+                    child: AppButton.merchant(
                       'Continuer',
-                      onPressed: () {
-                        notifier.setDescription(_descCtrl.text.trim());
-                        context.go('/auth/merchant/step3');
-                      },
-                      icon: Icons.arrow_forward_rounded,
+                      icon: LucideIcons.arrowRight,
+                      onPressed: () => context.go('/auth/merchant/step3'),
                     ),
                   ),
                 ],
@@ -372,8 +294,9 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     );
   }
 
-  Widget _buildSegmentButton({
+  Widget _buildModeButton({
     required String label,
+    required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
@@ -381,47 +304,44 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? AppColors.merchant : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? AppColors.merchant : AppColors.border,
             width: 1.5,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.merchant.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: AppTextStyles.bodyMd().copyWith(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            fontSize: 13,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTextStyles.bodyMd().copyWith(
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  IconData _getIconData(String name) {
-    switch (name) {
-      case 'star_rounded':
-        return Icons.star_rounded;
-      case 'favorite_rounded':
-        return Icons.favorite_rounded;
-      case 'local_cafe_rounded':
-        return Icons.local_cafe_rounded;
-      case 'card_giftcard_rounded':
-        return Icons.card_giftcard_rounded;
-      case 'auto_awesome_rounded':
-        return Icons.auto_awesome_rounded;
-      case 'emoji_emotions_rounded':
-        return Icons.emoji_emotions_rounded;
-      case 'diamond_rounded':
-        return Icons.diamond_rounded;
-      case 'check_rounded':
-      default:
-        return Icons.check_rounded;
-    }
   }
 }

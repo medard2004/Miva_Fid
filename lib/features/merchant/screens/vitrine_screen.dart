@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -93,7 +94,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                 Text('Aperçu public', style: AppTextStyles.h3()),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(LucideIcons.x),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -162,7 +163,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(Icons.visibility_outlined, color: AppColors.textPrimary, size: 16),
+                    icon: const Icon(LucideIcons.eye, color: AppColors.textPrimary, size: 16),
                     label: Text(
                       'Aperçu',
                       style: AppTextStyles.caption().copyWith(
@@ -193,7 +194,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.language_rounded, color: AppColors.merchant, size: 18),
+                          const Icon(LucideIcons.globe, color: AppColors.merchant, size: 18),
                           const SizedBox(width: 8),
                           Text(
                             'miva.fid/lasaveur',
@@ -202,7 +203,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                             ),
                           ),
                           const Spacer(),
-                          const Icon(Icons.open_in_new_rounded, color: AppColors.textSecondary, size: 16),
+                          const Icon(LucideIcons.externalLink, color: AppColors.textSecondary, size: 16),
                         ],
                       ),
                     ).animate().fadeIn(duration: 400.ms, delay: 150.ms).slideY(begin: 0.08, end: 0),
@@ -223,7 +224,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.camera_alt_outlined, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 28),
+                            Icon(LucideIcons.camera, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 28),
                             const SizedBox(height: 8),
                             Text(
                               'Ajouter une photo',
@@ -254,10 +255,10 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     // Section Contact & adresse
                     _SectionTitle('Contact & adresse').animate().fadeIn(duration: 300.ms, delay: 400.ms),
                     const SizedBox(height: 8),
-                    _buildIconLabel(Icons.phone_outlined, 'TÉLÉPHONE'),
+                    _buildIconLabel(LucideIcons.phone, 'TÉLÉPHONE'),
                     _buildTextField(_phoneCtrl, '+228 90 12 34 56', keyboardType: TextInputType.phone),
                     const SizedBox(height: 12),
-                    _buildIconLabel(Icons.location_on_outlined, 'ADRESSE'),
+                    _buildIconLabel(LucideIcons.mapPin, 'ADRESSE'),
                     _buildTextField(_addrCtrl, 'Rue des Cocotiers, Lomé'),
                     const SizedBox(height: Sp.lg),
 
@@ -317,7 +318,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                           width: 16,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : const Icon(Icons.publish_rounded, color: Colors.white, size: 18),
+                      : const Icon(LucideIcons.upload, color: Colors.white, size: 18),
                   label: Text(
                     'Publier les modifications',
                     style: AppTextStyles.labelBold().copyWith(color: Colors.white),
@@ -519,7 +520,7 @@ class _PreviewWidget extends StatelessWidget {
             height: 120,
             color: AppColors.merchant,
             alignment: Alignment.center,
-            child: const Icon(Icons.restaurant_menu_rounded, color: Colors.white, size: 40),
+            child: const Icon(LucideIcons.utensils, color: Colors.white, size: 40),
           ),
           Padding(
             padding: const EdgeInsets.all(Sp.md),
@@ -550,7 +551,7 @@ class _PreviewWidget extends StatelessWidget {
                 const Divider(height: Sp.lg),
                 Row(
                   children: [
-                    const Icon(Icons.phone_outlined, size: 16, color: AppColors.textSecondary),
+                    const Icon(LucideIcons.phone, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 8),
                     Text(phone, style: AppTextStyles.caption()),
                   ],
@@ -558,7 +559,7 @@ class _PreviewWidget extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
+                    const Icon(LucideIcons.mapPin, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 8),
                     Text(address, style: AppTextStyles.caption()),
                   ],

@@ -56,6 +56,7 @@ class AppButton extends StatefulWidget {
     bool loading = false,
     bool disabled = false,
     bool fullWidth = true,
+    Color? color,
   }) =>
       AppButton._(
         key: key,
@@ -66,6 +67,7 @@ class AppButton extends StatefulWidget {
         loading: loading,
         disabled: disabled,
         fullWidth: fullWidth,
+        color: color,
       );
 
   factory AppButton.danger(
@@ -284,7 +286,7 @@ class _AppButtonState extends State<AppButton> {
       case _ButtonVariant.primary:
         return (AppColors.primary, Colors.white, null);
       case _ButtonVariant.ghost:
-        return (Colors.transparent, AppColors.primary, null);
+        return (Colors.transparent, accent ?? AppColors.primary, null);
       case _ButtonVariant.danger:
         return (AppColors.danger, Colors.white, null);
       case _ButtonVariant.tint:

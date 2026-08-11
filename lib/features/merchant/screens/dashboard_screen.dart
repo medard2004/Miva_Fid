@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -123,7 +124,7 @@ class DashboardScreen extends ConsumerWidget {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: const Icon(
-                                          Icons.qr_code_scanner_rounded,
+                                          LucideIcons.scanLine,
                                           color: Colors.white,
                                           size: 22,
                                         ),
@@ -165,7 +166,7 @@ class DashboardScreen extends ConsumerWidget {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: const Icon(
-                                          Icons.person_add_alt_1_rounded,
+                                          LucideIcons.userPlus,
                                           color: AppColors.merchant,
                                           size: 22,
                                         ),
@@ -195,7 +196,7 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: _KpiCard(
-                                icon: Icons.people_outline_rounded,
+                                icon: LucideIcons.users,
                                 value: stats.totalClients == 0 ? '47' : stats.totalClients.toString(),
                                 label: 'Clients',
                                 trend: '+12',
@@ -205,7 +206,7 @@ class DashboardScreen extends ConsumerWidget {
                             const SizedBox(width: Sp.sm),
                             Expanded(
                               child: _KpiCard(
-                                icon: Icons.check_circle_outline_rounded,
+                                icon: LucideIcons.circleCheck,
                                 value: stats.stampsToday == 0 ? '183' : stats.stampsToday.toString(),
                                 label: 'Tampons',
                                 subtext: 'ce mois',
@@ -214,7 +215,7 @@ class DashboardScreen extends ConsumerWidget {
                             const SizedBox(width: Sp.sm),
                             Expanded(
                               child: _KpiCard(
-                                icon: Icons.card_giftcard_rounded,
+                                icon: LucideIcons.gift,
                                 value: stats.activeRewards == 0 ? '9' : stats.activeRewards.toString(),
                                 label: 'Récomp.',
                                 subtext: 'utilisées',
@@ -320,7 +321,7 @@ class _KpiCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.arrow_upward_rounded,
+                      LucideIcons.arrowUp,
                       color: trendColor ?? AppColors.success,
                       size: 11,
                     ),
@@ -633,7 +634,7 @@ class _RelanceAutoCard extends StatelessWidget {
                   ),
                   const SizedBox(height: Sp.md),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () => context.go('/merchant/clients'),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.merchant),
                       shape: RoundedRectangleBorder(

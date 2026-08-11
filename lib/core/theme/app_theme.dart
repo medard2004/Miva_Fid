@@ -20,15 +20,68 @@ class AppTheme {
         onSecondary: Colors.white,
         onSurface: AppColors.textPrimary,
         onError: Colors.white,
+        outline: AppColors.border,
+        outlineVariant: AppColors.gray100,
+        surfaceContainerHighest: AppColors.gray50,
       ),
       scaffoldBackgroundColor: AppColors.bgLight,
       textTheme: GoogleFonts.manropeTextTheme(),
+      iconTheme: const IconThemeData(color: AppColors.gray700, size: 22),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         foregroundColor: AppColors.textPrimary,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.border,
+          minimumSize: const Size.fromHeight(48),
+          padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+          shape: const RoundedRectangleBorder(borderRadius: Rd.button),
+          elevation: 0,
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          minimumSize: const Size.fromHeight(48),
+          padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+          shape: const RoundedRectangleBorder(borderRadius: Rd.button),
+          side: const BorderSide(color: AppColors.border, width: 1.5),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: Sp.sm),
+          shape: const RoundedRectangleBorder(borderRadius: Rd.button),
+          textStyle: GoogleFonts.manrope(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: AppColors.gray500,
+        textColor: AppColors.textPrimary,
+        contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 4),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        linearTrackColor: AppColors.gray100,
+        circularTrackColor: AppColors.gray100,
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surfaceLight,
@@ -143,6 +196,7 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.bgDark,
       textTheme: GoogleFonts.manropeTextTheme(ThemeData.dark().textTheme),
+      iconTheme: const IconThemeData(color: AppColors.gray300, size: 22),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -151,9 +205,57 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surfaceDark,
-        indicatorColor: AppColors.primary.withOpacity(0.3),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.3),
         elevation: 0,
         shadowColor: Colors.transparent,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(48),
+          padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+          shape: const RoundedRectangleBorder(borderRadius: Rd.button),
+          elevation: 0,
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(48),
+          padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+          shape: const RoundedRectangleBorder(borderRadius: Rd.button),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primaryLight,
+          padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: Sp.sm),
+          shape: const RoundedRectangleBorder(borderRadius: Rd.button),
+          textStyle: GoogleFonts.manrope(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: AppColors.gray300,
+        textColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 4),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primaryLight,
+        linearTrackColor: AppColors.gray700,
+        circularTrackColor: AppColors.gray700,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -163,14 +265,14 @@ class AppTheme {
         border: OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             width: 1.5,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             width: 1.5,
           ),
         ),

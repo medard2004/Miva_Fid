@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -63,17 +64,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (role == 'merchant' || role == 'both') {
         context.go('/merchant');
       } else {
-        context.go('/client');
+        setState(() => _error = 'Les comptes client ne sont pas encore disponibles.');
       }
     } catch (e) {
       debugPrint("Login error: $e");
       if (mounted) {
         final emailLower = _emailCtrl.text.trim().toLowerCase();
-        final role = emailLower.contains('merchant') || emailLower.contains('commercant') ? 'merchant' : 'client';
-        if (role == 'merchant') {
+        final isMerchant = emailLower.contains('merchant') || emailLower.contains('commercant');
+        if (isMerchant) {
           context.go('/merchant');
         } else {
-          context.go('/client');
+          setState(() => _error = 'Les comptes client ne sont pas encore disponibles.');
         }
       }
     } finally {
@@ -87,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: AppColors.bgLight,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: const Icon(LucideIcons.arrowLeft),
           onPressed: () => context.go('/role-select'),
         ),
       ),
@@ -132,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.go('/auth/forgot-password'),
                     child: Text(
                       'Mot de passe oublié ?',
                       style: AppTextStyles.caption()
@@ -150,7 +151,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline,
+                        const Icon(LucideIcons.circleAlert,
                             color: AppColors.danger, size: 16),
                         const SizedBox(width: Sp.xs),
                         Expanded(
@@ -169,7 +170,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   'Se connecter',
                   onPressed: _login,
                   loading: _loading,
-                  icon: Icons.login_rounded,
+                  icon: LucideIcons.logIn,
                 ),
                 const SizedBox(height: Sp.md),
                 Row(

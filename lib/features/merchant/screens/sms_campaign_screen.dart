@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -106,7 +107,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(Icons.add, color: Colors.white, size: 16),
+                    icon: const Icon(LucideIcons.plus, color: Colors.white, size: 16),
                     label: Text(
                       'Nouvelle',
                       style: AppTextStyles.caption().copyWith(
@@ -255,8 +256,8 @@ class _CampaignCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badgeColor = campaign.isSent ? const Color(0xFF10B981) : const Color(0xFFD97706);
-    final badgeBg = campaign.isSent ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7);
+    final badgeColor = campaign.isSent ? AppColors.success : AppColors.warningDark;
+    final badgeBg = campaign.isSent ? AppColors.successTint : AppColors.warningTint;
     final badgeText = campaign.isSent ? 'Envoyée' : 'Planifiée';
 
     return Container(
@@ -327,7 +328,7 @@ class _CampaignCard extends StatelessWidget {
             ),
           ),
           const Icon(
-            Icons.chevron_right_rounded,
+            LucideIcons.chevronRight,
             color: AppColors.textSecondary,
           ),
         ],
@@ -424,7 +425,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  icon: const Icon(LucideIcons.x, color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -500,7 +501,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                       style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
                     ),
                     const Spacer(),
-                    const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary),
+                    const Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
                   ],
                 ),
               ),
@@ -574,7 +575,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(Icons.send_rounded, color: Colors.white, size: 16),
+                icon: const Icon(LucideIcons.send, color: Colors.white, size: 16),
                 label: _sending
                     ? const SizedBox(
                         height: 16,

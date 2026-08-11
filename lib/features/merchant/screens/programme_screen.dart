@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -53,14 +54,23 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     ref.read(onboardingNotifierProvider.notifier).setStampsRequired(_stamps);
-    await ref.read(merchantNotifierProvider.notifier).updateProgramme({
-      'stamps_required': _stamps,
-      'reward_description': _rewardCtrl.text.trim(),
-    });
-    setState(() => _saving = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Programme mis à jour')));
+    try {
+      await ref.read(merchantNotifierProvider.notifier).updateProgramme({
+        'stamps_required': _stamps,
+        'reward_description': _rewardCtrl.text.trim(),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Programme mis à jour')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -106,7 +116,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                         label: 'Récompense',
                         hint: 'Ex : 1 café offert, 10% de réduction',
                         controller: _rewardCtrl,
-                        prefixIcon: Icons.card_giftcard_outlined,
+                        prefixIcon: LucideIcons.gift,
                       ),
                       if (merchant != null && !merchant.isPro) ...[
                         const SizedBox(height: Sp.md),
@@ -118,7 +128,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.lock_outline,
+                              const Icon(LucideIcons.lock,
                                   color: AppColors.warning, size: 18),
                               const SizedBox(width: Sp.sm),
                               Expanded(
@@ -143,7 +153,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     Sp.md,
                     MediaQuery.of(context).padding.bottom + Sp.md),
                 child: AppButton.primary('Enregistrer',
-                    icon: Icons.save_outlined,
+                    icon: LucideIcons.save,
                     onPressed: _save,
                     loading: _saving),
               ),

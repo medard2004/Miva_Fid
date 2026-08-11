@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -40,7 +41,7 @@ class ValidationSuccessOverlay extends StatelessWidget {
                 gradient: LinearGradient(
                     colors: [AppColors.primary, AppColors.merchant]),
               ),
-              child: const Icon(Icons.check_rounded, color: Colors.white, size: 44),
+              child: const Icon(LucideIcons.check, color: Colors.white, size: 44),
             )
                 .animate()
                 .scale(

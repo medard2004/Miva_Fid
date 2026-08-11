@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -75,6 +76,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     await AppHaptics.medium();
     if (!mounted) return;
     final merchant = await ref.read(merchantNotifierProvider.future);
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -102,6 +104,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       return;
     }
     final merchant = await ref.read(merchantNotifierProvider.future);
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -174,7 +177,7 @@ class _ScannerTab extends StatelessWidget {
           IconButton.filled(
             style: ButtonStyle(
               backgroundColor: WidgetStatePropertyAll(Colors.black.withValues(alpha: 0.12))),
-            icon: const Icon(Icons.flashlight_on, color: Colors.white),
+            icon: const Icon(LucideIcons.flashlight, color: Colors.white),
             onPressed: controller.toggleTorch,
           ),
           const SizedBox(height: Sp.md),

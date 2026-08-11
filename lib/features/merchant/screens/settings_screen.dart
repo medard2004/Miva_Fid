@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../models/merchant_model.dart';
 import '../providers/merchant_provider.dart';
 
@@ -266,13 +268,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
-          _buildTabItem(0, Icons.person_outline_rounded, Icons.person_rounded, 'Profil'),
+          _buildTabItem(0, LucideIcons.user, LucideIcons.user, 'Profil'),
           const SizedBox(width: Sp.sm),
-          _buildTabItem(1, Icons.credit_card_outlined, Icons.credit_card_rounded, 'Abonnement'),
+          _buildTabItem(1, LucideIcons.creditCard, LucideIcons.creditCard, 'Abonnement'),
           const SizedBox(width: Sp.sm),
-          _buildTabItem(2, Icons.notifications_none_rounded, Icons.notifications_rounded, 'Notifs'),
+          _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs'),
           const SizedBox(width: Sp.sm),
-          _buildTabItem(3, Icons.people_outline_rounded, Icons.people_rounded, 'Équipe'),
+          _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe'),
         ],
       ),
     );
@@ -282,13 +284,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildTabItem(0, Icons.person_outline_rounded, Icons.person_rounded, 'Profil', isVertical: true),
+        _buildTabItem(0, LucideIcons.user, LucideIcons.user, 'Profil', isVertical: true),
         const SizedBox(height: Sp.sm),
-        _buildTabItem(1, Icons.credit_card_outlined, Icons.credit_card_rounded, 'Abonnement', isVertical: true),
+        _buildTabItem(1, LucideIcons.creditCard, LucideIcons.creditCard, 'Abonnement', isVertical: true),
         const SizedBox(height: Sp.sm),
-        _buildTabItem(2, Icons.notifications_none_rounded, Icons.notifications_rounded, 'Notifs', isVertical: true),
+        _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs', isVertical: true),
         const SizedBox(height: Sp.sm),
-        _buildTabItem(3, Icons.people_outline_rounded, Icons.people_rounded, 'Équipe', isVertical: true),
+        _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe', isVertical: true),
       ],
     );
   }
@@ -453,7 +455,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: Sp.xs),
             DropdownButtonFormField<String>(
               initialValue: _selectedLanguage,
-              icon: const Icon(Icons.arrow_drop_down_rounded, color: AppColors.textSecondary),
+              icon: const Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
               style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
               decoration: const InputDecoration(
                 fillColor: AppColors.bgLight,
@@ -898,7 +900,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (isActif) ...[
-                          const Icon(Icons.check_rounded, color: AppColors.success, size: 12),
+                          const Icon(LucideIcons.check, color: AppColors.success, size: 12),
                           const SizedBox(width: 4),
                         ],
                         Text(
@@ -913,7 +915,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(width: Sp.sm),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 18),
+                    icon: const Icon(LucideIcons.trash, color: AppColors.danger, size: 18),
                     onPressed: () => _removeTeamMember(index),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -1012,7 +1014,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: Sp.xs),
                   DropdownButtonFormField<String>(
                     initialValue: selectedRole,
-                    icon: const Icon(Icons.arrow_drop_down_rounded),
+                    icon: const Icon(LucideIcons.chevronDown),
                     style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
                     decoration: const InputDecoration(
                       fillColor: AppColors.bgLight,
@@ -1107,7 +1109,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Column(
         children: [
           _buildCommonTile(
-            icon: Icons.shield_outlined,
+            icon: LucideIcons.shield,
             label: 'Sécurité & confidentialité',
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1117,7 +1119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const Divider(height: 0, indent: Sp.md),
           _buildCommonTile(
-            icon: Icons.help_outline_rounded,
+            icon: LucideIcons.circleHelp,
             label: 'Aide & support',
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1127,11 +1129,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const Divider(height: 0, indent: Sp.md),
           _buildCommonTile(
-            icon: Icons.logout_rounded,
+            icon: LucideIcons.logOut,
             label: 'Se déconnecter',
             textColor: AppColors.danger,
             iconColor: AppColors.danger,
             onTap: () async {
+              final confirmed = await AppDialog.confirm(
+                context,
+                title: 'Se déconnecter ?',
+                message: 'Vous devrez vous reconnecter pour accéder à votre espace marchand.',
+                confirmLabel: 'Se déconnecter',
+                destructive: true,
+              );
+              if (!confirmed) return;
               await Supabase.instance.client.auth.signOut();
               if (context.mounted) context.go('/role-select');
             },
@@ -1158,7 +1168,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
       trailing: Icon(
-        Icons.arrow_forward_ios_rounded,
+        LucideIcons.arrowRight,
         size: 14,
         color: textColor ?? AppColors.textSecondary,
       ),

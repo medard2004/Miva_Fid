@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -20,12 +21,12 @@ class CommerceTypeGrid extends StatefulWidget {
 
 class _CommerceTypeGridState extends State<CommerceTypeGrid> {
   static const _types = [
-    ('Restaurant', Icons.restaurant_outlined),
-    ('Hôtel', Icons.hotel_outlined),
-    ('Salon', Icons.content_cut_outlined),
-    ('Boutique', Icons.shopping_bag_outlined),
-    ('Café', Icons.coffee_outlined),
-    ('Autre', Icons.apps_outlined),
+    ('Restaurant', LucideIcons.utensils),
+    ('Hôtel', LucideIcons.bedDouble),
+    ('Salon', LucideIcons.scissors),
+    ('Boutique', LucideIcons.shoppingBag),
+    ('Café', LucideIcons.coffee),
+    ('Autre', LucideIcons.layoutGrid),
   ];
 
   String? _selected;

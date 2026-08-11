@@ -1,7 +1,8 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=C:\Users\medard\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\Users\medard\Downloads\miva_fid\miva_fid"
+export "FLUTTER_ROOT=C:\flutter\flutter"
+export "FLUTTER_APPLICATION_PATH=D:\PROGRAMMATION\Projet_Mobile\Miva_Fid"
+export "FLUTTER_FRAMEWORK_SWIFT_PACKAGE_PATH=D:\PROGRAMMATION\Projet_Mobile\Miva_Fid\ios\Flutter\ephemeral\Packages\.packages\FlutterFramework"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib\main.dart"
 export "FLUTTER_BUILD_DIR=build"

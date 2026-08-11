@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_colors.dart';
@@ -119,8 +120,8 @@ class _AppInputState extends State<AppInput> {
                   ? IconButton(
                       icon: Icon(
                         _obscure
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                            ? LucideIcons.eye
+                            : LucideIcons.eyeOff,
                         size: 18,
                         color: AppColors.textSecondary,
                       ),

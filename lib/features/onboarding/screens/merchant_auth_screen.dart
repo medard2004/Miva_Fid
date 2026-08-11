@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:simple_icons/simple_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -9,6 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../providers/onboarding_provider.dart';
 
 class MerchantAuthScreen extends ConsumerStatefulWidget {
@@ -107,76 +111,39 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Header Row (Logo + Text side-by-side)
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: Sp.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Miva-Fid',
-                            style: AppTextStyles.h3().copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            'Fidélité digitale pour commerçants',
-                            style: AppTextStyles.caption().copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ).animate().fadeIn(duration: 350.ms),
+                // 1. Back Button
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  icon: const Icon(
+                    LucideIcons.arrowLeft,
+                    size: 20,
+                    color: AppColors.textPrimary,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/role-select');
+                    }
+                  },
+                ),
 
-                const SizedBox(height: Sp.xl),
+                const SizedBox(height: Sp.md),
 
-                // 2. Title & Subtitle
+                // 2. Title (Reduced size, no subtitle description)
                 Text(
                   _isLogin ? 'Bon retour !' : 'Créer votre compte',
-                  style: AppTextStyles.h1().copyWith(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 26,
+                  style: AppTextStyles.h2().copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    color: AppColors.textPrimary,
                   ),
                 )
                     .animate(key: ValueKey('title_$_isLogin'))
                     .fadeIn(duration: 200.ms),
-                const SizedBox(height: 4),
-                Text(
-                  _isLogin
-                      ? 'Connectez-vous pour accéder à votre tableau de bord.'
-                      : 'Quelques infos et votre programme est prêt.',
-                  style: AppTextStyles.bodyMd().copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13.5,
-                  ),
-                )
-                    .animate(key: ValueKey('subtitle_$_isLogin'))
-                    .fadeIn(duration: 200.ms),
 
-                const SizedBox(height: Sp.xl),
+                const SizedBox(height: Sp.md),
 
                 // 3. Segmented Capsule Control
                 Container(
@@ -290,7 +257,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   label: 'EMAIL',
                   hint: 'vous@exemple.com',
                   controller: _emailCtrl,
-                  prefixIcon: Icons.mail_outline_rounded,
+                  prefixIcon: LucideIcons.mail,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   validator: (v) => (v == null || v.trim().isEmpty)
@@ -304,7 +271,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   label: 'MOT DE PASSE',
                   hint: '••••••••',
                   controller: _passwordCtrl,
-                  prefixIcon: Icons.lock_outline_rounded,
+                  prefixIcon: LucideIcons.lock,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
                   validator: (v) => (v == null || v.length < 6)
@@ -350,7 +317,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline_rounded,
+                        const Icon(LucideIcons.circleAlert,
                             color: AppColors.danger, size: 18),
                         const SizedBox(width: Sp.sm),
                         Expanded(
@@ -373,7 +340,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 // 5. Submit Button
                 AppButton.merchant(
                   _isLogin ? 'Se connecter' : 'Créer mon compte',
-                  icon: Icons.arrow_forward_rounded,
+                  icon: LucideIcons.arrowRight,
                   loading: _loading,
                   onPressed: _handleSubmit,
                 ).animate().fadeIn(duration: 400.ms),
@@ -402,61 +369,18 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
 
                 const SizedBox(height: Sp.md),
 
-                // Google button
-                Container(
-                  width: double.infinity,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: InkWell(
-                    onTap: () {
-                      // Handle Google Sign In
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 18,
-                            height: 18,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.red.shade400, width: 1.5),
-                            ),
-                            child: Text(
-                              'G',
-                              style: TextStyle(
-                                color: Colors.red.shade600,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: Sp.sm),
-                          Text(
-                            'Continuer avec Google',
-                            style: AppTextStyles.labelBold().copyWith(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                // Google & Apple buttons
+                _SocialAuthButton(
+                  label: 'Continuer avec Google',
+                  leading: SvgPicture.asset('assets/icons/google_logo.svg', width: 18, height: 18),
+                  onTap: () => AppToast.info(context, 'Connexion Google bientôt disponible'),
                 ).animate().fadeIn(duration: 400.ms),
+                const SizedBox(height: Sp.sm),
+                _SocialAuthButton(
+                  label: 'Continuer avec Apple',
+                  leading: const Icon(SimpleIcons.apple, size: 18, color: Colors.black),
+                  onTap: () => AppToast.info(context, 'Connexion Apple bientôt disponible'),
+                ).animate().fadeIn(duration: 450.ms),
 
                 const SizedBox(height: Sp.xl),
 
@@ -496,6 +420,61 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
 
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bouton de connexion sociale (Google/Apple) — même style que le module
+/// client (fond blanc, bordure fine, ombre légère), icône fournie par
+/// l'appelant.
+class _SocialAuthButton extends StatelessWidget {
+  const _SocialAuthButton({
+    required this.label,
+    required this.leading,
+    required this.onTap,
+  });
+
+  final String label;
+  final Widget leading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              leading,
+              const SizedBox(width: Sp.sm),
+              Text(
+                label,
+                style: AppTextStyles.labelBold().copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ),
       ),

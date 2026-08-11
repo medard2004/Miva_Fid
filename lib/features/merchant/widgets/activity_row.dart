@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -19,16 +20,16 @@ class ActivityRow extends StatelessWidget {
     final Color badgeFg;
     if (hash % 3 == 0) {
       tier = 'Or';
-      badgeBg = const Color(0xFFFEF3C7);
-      badgeFg = const Color(0xFFD97706);
+      badgeBg = AppColors.warningTint;
+      badgeFg = AppColors.warningDark;
     } else if (hash % 3 == 1) {
       tier = 'Argent';
-      badgeBg = const Color(0xFFF3F4F6);
-      badgeFg = const Color(0xFF4B5563);
+      badgeBg = AppColors.gray100;
+      badgeFg = AppColors.gray600;
     } else {
       tier = 'Platine';
-      badgeBg = const Color(0xFFF3E8FF);
-      badgeFg = const Color(0xFF7C3AED);
+      badgeBg = AppColors.merchantTint;
+      badgeFg = AppColors.merchant;
     }
 
     // Determine stamps progress or reward status
@@ -107,7 +108,7 @@ class ActivityRow extends StatelessWidget {
               if (isReward) ...[
                 const SizedBox(width: 4),
                 const Icon(
-                  Icons.check_circle_rounded,
+                  LucideIcons.circleCheck,
                   color: AppColors.success,
                   size: 14,
                 ),

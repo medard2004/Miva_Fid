@@ -21,6 +21,7 @@ build/
 # Android
 android/local.properties
 android/.gradle/
+android/app/.gradle/
 android/captures/
 android/gradlew
 android/gradlew.bat
@@ -32,6 +33,7 @@ ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 ios/Runner.xcworkspace/
+ios/Flutter/ephemeral/
 
 # macOS
 macos/Flutter/GeneratedPluginRegistrant.swift

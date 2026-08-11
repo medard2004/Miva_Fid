@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -135,17 +136,17 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.merchant],
+                        colors: [AppColors.merchant, AppColors.merchantDark],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryLight.withValues(alpha: 0.4),
+                          color: AppColors.merchant.withValues(alpha: 0.4),
                           blurRadius: 40,
                           spreadRadius: 8,
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 52),
+                    child: const Icon(LucideIcons.check, color: Colors.white, size: 52),
                   )
                       .animate()
                       .scale(
@@ -190,7 +191,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                           size: 200,
                           eyeStyle: const QrEyeStyle(
                             eyeShape: QrEyeShape.square,
-                            color: AppColors.primary,
+                            color: AppColors.merchant,
                           ),
                         ),
                         const SizedBox(height: Sp.sm),
@@ -199,7 +200,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            AppBadge('QR Code'),
+                            AppBadge('QR Code', color: AppColors.merchant),
                             SizedBox(width: Sp.sm),
                             AppBadge('NFC', color: AppColors.success),
                           ],
@@ -212,15 +213,15 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: Sp.md),
                     child: Column(
                       children: [
-                        AppButton.primary(
+                        AppButton.merchant(
                           'Télécharger ma feuille comptoir',
-                          icon: Icons.download_outlined,
+                          icon: LucideIcons.download,
                           onPressed: _generatePdf,
                         ),
                         const SizedBox(height: Sp.sm),
                         AppButton.success(
                           'Partager sur WhatsApp',
-                          icon: Icons.share_outlined,
+                          icon: LucideIcons.share,
                           onPressed: _shareWhatsApp,
                         ),
                         const SizedBox(height: Sp.md),
@@ -229,7 +230,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                           child: Text(
                             'Accéder à mon espace →',
                             style: AppTextStyles.bodyMd().copyWith(
-                              color: AppColors.primary,
+                              color: AppColors.merchant,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

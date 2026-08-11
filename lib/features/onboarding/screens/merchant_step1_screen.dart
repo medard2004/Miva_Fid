@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_input.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
 
@@ -61,7 +63,12 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
   late final _phoneCtrl = TextEditingController();
   late final _addressCtrl = TextEditingController();
   late final _customCategoryCtrl = TextEditingController();
+  late final _whatsappCtrl = TextEditingController();
+  late final _instagramCtrl = TextEditingController();
+  late final _facebookCtrl = TextEditingController();
+  late final _tiktokCtrl = TextEditingController();
   bool _isCustomCategory = false;
+  bool _socialsExpanded = false;
 
   // Country code picker state — Togo by default
   _CountryCode _selectedCountry = _countryList.first;
@@ -85,6 +92,14 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     _nameCtrl.text = state.commerceName;
     _phoneCtrl.text = state.phone;
     _addressCtrl.text = state.address;
+    _whatsappCtrl.text = state.whatsapp;
+    _instagramCtrl.text = state.instagram;
+    _facebookCtrl.text = state.facebook;
+    _tiktokCtrl.text = state.tiktok;
+    _socialsExpanded = state.whatsapp.isNotEmpty ||
+        state.instagram.isNotEmpty ||
+        state.facebook.isNotEmpty ||
+        state.tiktok.isNotEmpty;
   }
 
   @override
@@ -93,6 +108,10 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
     _customCategoryCtrl.dispose();
+    _whatsappCtrl.dispose();
+    _instagramCtrl.dispose();
+    _facebookCtrl.dispose();
+    _tiktokCtrl.dispose();
     super.dispose();
   }
 
@@ -104,6 +123,10 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     // Save phone with dial code prefix
     notifier.setPhone('${_selectedCountry.dialCode} ${_phoneCtrl.text.trim()}');
     notifier.setAddress(_addressCtrl.text.trim());
+    notifier.setWhatsapp(_whatsappCtrl.text.trim());
+    notifier.setInstagram(_instagramCtrl.text.trim());
+    notifier.setFacebook(_facebookCtrl.text.trim());
+    notifier.setTiktok(_tiktokCtrl.text.trim());
     // If the user typed a custom category, use it instead of "Autre"
     if (_isCustomCategory && _customCategoryCtrl.text.trim().isNotEmpty) {
       notifier.setCommerceType(_customCategoryCtrl.text.trim());
@@ -157,7 +180,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                         ),
                         const Spacer(),
                         IconButton(
-                          icon: const Icon(Icons.close, size: 20),
+                          icon: const Icon(LucideIcons.x, size: 20),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -187,7 +210,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                           color: AppColors.textSecondary,
                         ),
                         prefixIcon: const Icon(
-                          Icons.search_rounded,
+                          LucideIcons.search,
                           color: AppColors.textSecondary,
                           size: 20,
                         ),
@@ -246,7 +269,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                               if (isSelected) ...[
                                 const SizedBox(width: 6),
                                 const Icon(
-                                  Icons.check_circle_rounded,
+                                  LucideIcons.circleCheck,
                                   color: AppColors.primary,
                                   size: 18,
                                 ),
@@ -333,7 +356,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
           key: _formKey,
           child: Column(
             children: [
-              const OnboardingProgressBar(current: 1, total: 4),
+              const OnboardingProgressBar(current: 1, total: 3),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(Sp.md),
@@ -342,22 +365,9 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                     children: [
                       const SizedBox(height: Sp.md),
                       Text(
-                        'Étape 1 sur 4',
-                        style: AppTextStyles.caption()
-                            .copyWith(color: AppColors.textSecondary),
-                      ),
-                      Text(
-                        'Présentez votre commerce',
+                        'Votre commerce',
                         style: AppTextStyles.h1().copyWith(
                           fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: Sp.xs),
-                      Text(
-                        'Vos infos apparaîtront sur la carte fidélité.',
-                        style: AppTextStyles.bodyMd().copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: Sp.lg),
@@ -368,6 +378,9 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                         controller: _nameCtrl,
                         textInputAction: TextInputAction.next,
                         style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
+                        onChanged: (v) => ref
+                            .read(onboardingNotifierProvider.notifier)
+                            .setCommerceName(v.trim()),
                         decoration: inputDecorationTheme.copyWith(
                           hintText: 'Ex : Restaurant La Belle',
                           hintStyle: AppTextStyles.bodyMd().copyWith(
@@ -408,7 +421,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                           ),
                         ),
                         icon: const Icon(
-                          Icons.keyboard_arrow_down_rounded,
+                          LucideIcons.chevronDown,
                           color: AppColors.textSecondary,
                         ),
                         validator: (v) => v == null
@@ -442,7 +455,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                         color: AppColors.textSecondary.withValues(alpha: 0.6),
                                       ),
                                       prefixIcon: const Icon(
-                                        Icons.edit_outlined,
+                                        LucideIcons.pencil,
                                         size: 18,
                                         color: AppColors.primary,
                                       ),
@@ -525,7 +538,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                     ),
                                   ),
                                   const Icon(
-                                    Icons.keyboard_arrow_down_rounded,
+                                    LucideIcons.chevronDown,
                                     size: 14,
                                     color: AppColors.textSecondary,
                                   ),
@@ -566,6 +579,80 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                             ? 'Veuillez renseigner la ville de votre commerce'
                             : null,
                       ),
+                      const SizedBox(height: Sp.lg),
+
+                      // 5. Réseaux sociaux — optionnel, replié par défaut
+                      GestureDetector(
+                        onTap: () => setState(() => _socialsExpanded = !_socialsExpanded),
+                        child: Row(
+                          children: [
+                            const Icon(LucideIcons.share2, size: 16, color: AppColors.merchant),
+                            const SizedBox(width: Sp.xs),
+                            Expanded(
+                              child: Text(
+                                'Réseaux sociaux',
+                                style: AppTextStyles.labelBold(),
+                              ),
+                            ),
+                            Text(
+                              'Optionnel',
+                              style: AppTextStyles.caption().copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: Sp.xs),
+                            AnimatedRotation(
+                              turns: _socialsExpanded ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 200),
+                              child: const Icon(
+                                LucideIcons.chevronDown,
+                                size: 18,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: _socialsExpanded
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: Sp.sm),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    AppInput(
+                                      label: 'WhatsApp',
+                                      hint: '+228 90 00 00 00',
+                                      controller: _whatsappCtrl,
+                                      prefixIcon: LucideIcons.messageCircle,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                    AppInput(
+                                      label: 'Instagram',
+                                      hint: '@votre_commerce',
+                                      controller: _instagramCtrl,
+                                      prefixIcon: LucideIcons.camera,
+                                    ),
+                                    AppInput(
+                                      label: 'Facebook',
+                                      hint: 'facebook.com/votre-page',
+                                      controller: _facebookCtrl,
+                                      prefixIcon: LucideIcons.globe,
+                                    ),
+                                    AppInput(
+                                      label: 'TikTok',
+                                      hint: '@votre_compte',
+                                      controller: _tiktokCtrl,
+                                      prefixIcon: LucideIcons.music,
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
                     ],
                   ),
                 ),
@@ -580,7 +667,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                 child: AppButton.merchant(
                   'Continuer',
                   onPressed: _next,
-                  icon: Icons.arrow_forward_rounded,
+                  icon: LucideIcons.arrowRight,
                 ),
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -26,25 +27,25 @@ class MoreScreen extends StatelessWidget {
             const SizedBox(height: Sp.md),
             _buildMenuItem(
               context: context,
-              icon: Icons.workspace_premium_outlined,
+              icon: LucideIcons.award,
               label: 'Programme de fidélité',
               route: '/merchant/more/programme',
             ),
             _buildMenuItem(
               context: context,
-              icon: Icons.qr_code_outlined,
+              icon: LucideIcons.qrCode,
               label: 'Mon QR Code',
               route: '/merchant/more/qrcode',
             ),
             _buildMenuItem(
               context: context,
-              icon: Icons.public_outlined,
+              icon: LucideIcons.globe,
               label: 'Ma Vitrine',
               route: '/merchant/more/vitrine',
             ),
             _buildMenuItem(
               context: context,
-              icon: Icons.settings_outlined,
+              icon: LucideIcons.settings,
               label: 'Paramètres',
               route: '/merchant/more/settings',
             ),
@@ -76,7 +77,7 @@ class MoreScreen extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon, color: AppColors.merchant),
         title: Text(label, style: AppTextStyles.bodyMd()),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+        trailing: const Icon(LucideIcons.chevronRight, color: AppColors.textSecondary),
         onTap: () => context.go(route),
       ),
     );
