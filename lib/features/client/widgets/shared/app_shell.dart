@@ -27,7 +27,7 @@ class AppShell extends ConsumerWidget {
     // thème change ailleurs dans l'app (ex. depuis l'écran Paramètres,
     // plusieurs niveaux de navigation plus loin). On observe explicitement
     // le thème pour garantir une mise à jour immédiate de la bottom bar.
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _indexForLocation(location);
     final isWide = MediaQuery.of(context).size.width > 620;

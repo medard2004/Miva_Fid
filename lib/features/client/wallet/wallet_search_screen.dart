@@ -52,7 +52,7 @@ class _WalletSearchScreenState extends ConsumerState<WalletSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final cards = ref.watch(walletProvider);
     final results = _filtered(cards);

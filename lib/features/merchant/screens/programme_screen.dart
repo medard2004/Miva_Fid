@@ -12,6 +12,7 @@ import '../../onboarding/providers/onboarding_provider.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../../onboarding/widgets/stamp_stepper.dart';
 import '../providers/merchant_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class ProgrammeScreen extends ConsumerStatefulWidget {
   const ProgrammeScreen({super.key});
@@ -76,10 +77,15 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: merchantAsync.when(
           loading: () => const Padding(

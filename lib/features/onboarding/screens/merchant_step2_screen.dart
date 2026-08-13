@@ -11,6 +11,7 @@ import '../../../core/widgets/app_input.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../widgets/stamp_stepper.dart';
+import '../../client/providers/settings_provider.dart';
 
 class MerchantStep2Screen extends ConsumerStatefulWidget {
   const MerchantStep2Screen({super.key});
@@ -41,11 +42,16 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final state = ref.watch(onboardingNotifierProvider);
     final notifier = ref.read(onboardingNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [

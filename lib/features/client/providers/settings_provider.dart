@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../core/theme/app_colors.dart' as core_colors;
+import '../core/theme/app_colors.dart';
+
 /// Langues prises en charge par l'app.
 const List<Locale> supportedLocales = [Locale('fr'), Locale('en')];
 
@@ -77,6 +80,64 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
 );
+
+/// Luminosité imposée par le système, tenue à jour en direct.
+///
+/// On passe par un [WidgetsBindingObserver] plutôt que par
+/// `PlatformDispatcher.onPlatformBrightnessChanged` : ce callback n'a
+/// qu'un seul emplacement, déjà occupé par Flutter lui-même, et l'écraser
+/// casserait la mise à jour de `MediaQuery`.
+class PlatformBrightnessNotifier extends StateNotifier<Brightness>
+    with WidgetsBindingObserver {
+  PlatformBrightnessNotifier()
+    : super(WidgetsBinding.instance.platformDispatcher.platformBrightness) {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    state = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+}
+
+final platformBrightnessProvider =
+    StateNotifierProvider<PlatformBrightnessNotifier, Brightness>(
+      (ref) => PlatformBrightnessNotifier(),
+    );
+
+/// Luminosité effective de l'app : le mode choisi, résolu contre la
+/// luminosité système quand le mode vaut [ThemeMode.system].
+///
+/// C'est ce provider — et non [themeModeProvider] — que doivent observer
+/// les écrans du module client : ils peignent leurs couleurs via les
+/// tokens statiques d'`AppColors`, invisibles pour le mécanisme de
+/// dépendance de Flutter, donc leur seul déclencheur de reconstruction est
+/// cette valeur. Observer [themeModeProvider] ne les réveillait que sur un
+/// changement manuel, jamais sur une bascule clair/sombre du système.
+///
+/// La synchronisation des deux palettes statiques de l'app — celle du
+/// module client et celle partagée par l'onboarding et le module
+/// commerçant — est faite ici, à la source, pour garantir que les tokens
+/// soient déjà à jour quel que soit l'ordre de reconstruction des widgets
+/// abonnés.
+final appBrightnessProvider = Provider<Brightness>((ref) {
+  final mode = ref.watch(themeModeProvider);
+  final platformBrightness = ref.watch(platformBrightnessProvider);
+  final brightness = switch (mode) {
+    ThemeMode.light => Brightness.light,
+    ThemeMode.dark => Brightness.dark,
+    ThemeMode.system => platformBrightness,
+  };
+  AppColors.setBrightness(brightness);
+  core_colors.AppColors.setBrightness(brightness);
+  return brightness;
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Langue de l'application

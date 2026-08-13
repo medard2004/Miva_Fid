@@ -34,7 +34,7 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final notifications = ref.watch(notificationsProvider);
 

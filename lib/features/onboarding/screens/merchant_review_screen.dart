@@ -12,6 +12,7 @@ import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_button.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/loyalty_card_preview.dart';
+import '../../client/providers/settings_provider.dart';
 
 class MerchantReviewScreen extends ConsumerStatefulWidget {
   const MerchantReviewScreen({super.key});
@@ -58,6 +59,11 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final state = ref.watch(onboardingNotifierProvider);
     final hasSocials = state.whatsapp.isNotEmpty ||
         state.instagram.isNotEmpty ||
@@ -65,7 +71,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
         state.tiktok.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -75,7 +81,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                 children: [
                   IconButton(
                     onPressed: () => context.go('/auth/merchant/step3'),
-                    icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
+                    icon: Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
                   ),
                 ],
               ),

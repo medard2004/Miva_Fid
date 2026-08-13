@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../client/providers/settings_provider.dart';
 
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Cet écran peint via les tokens statiques d'AppColors, invisibles pour
+    // le système de dépendances de Flutter : observer la luminosité
+    // effective est son seul déclencheur de rebuild sur une bascule
+    // clair/sombre.
+    ref.watch(appBrightnessProvider);
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(Sp.md),
         child: Column(
@@ -77,7 +84,7 @@ class MoreScreen extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon, color: AppColors.merchant),
         title: Text(label, style: AppTextStyles.bodyMd()),
-        trailing: const Icon(LucideIcons.chevronRight, color: AppColors.textSecondary),
+        trailing: Icon(LucideIcons.chevronRight, color: AppColors.textSecondary),
         onTap: () => context.go(route),
       ),
     );

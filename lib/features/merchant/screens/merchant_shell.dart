@@ -14,6 +14,7 @@ import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/app_toast.dart';
 
 import '../providers/merchant_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class MerchantShell extends ConsumerWidget {
   const MerchantShell({super.key, required this.navigationShell});
@@ -227,6 +228,11 @@ class MerchantShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final int currentIndex = navigationShell.currentIndex;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
     final merchant = ref.watch(merchantNotifierProvider).value;
@@ -245,7 +251,7 @@ class MerchantShell extends ConsumerWidget {
               preferredSize: const Size.fromHeight(64),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
+                  color: AppColors.surface,
                   border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
                 ),
                 child: SafeArea(
@@ -301,7 +307,7 @@ class MerchantShell extends ConsumerWidget {
       bottomNavigationBar: Container(
         height: 66 + bottomPadding,
         decoration: BoxDecoration(
-          color: AppColors.surfaceLight,
+          color: AppColors.surface,
           border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
         ),
         child: Column(

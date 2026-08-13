@@ -54,6 +54,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context)!;
     final themeMode = ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final locale = ref.watch(localeProvider);
     final cards = ref.watch(walletProvider);
 

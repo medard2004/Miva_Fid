@@ -16,7 +16,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.showBack = true,
     this.onBack,
     this.actions,
-    this.accentColor = AppColors.textPrimary,
+    this.accentColor,
   });
 
   final String title;
@@ -24,7 +24,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
   final VoidCallback? onBack;
   final List<Widget>? actions;
-  final Color accentColor;
+  /// `null` = couleur de texte par défaut, résolue au build : la valeur
+  /// dépend du mode clair/sombre, donc elle ne peut pas servir de valeur
+  /// par défaut de paramètre (qui doit être constante).
+  final Color? accentColor;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -55,7 +58,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   children: [
                     Text(
                       title,
-                      style: AppTextStyles.h3().copyWith(color: accentColor),
+                      style: AppTextStyles.h3()
+                          .copyWith(color: accentColor ?? AppColors.textPrimary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -14,6 +14,7 @@ import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
 import 'package:miva_fid/features/client/widgets/shared/notification_bell_button.dart';
 import 'package:miva_fid/features/client/widgets/shared/phone_input_with_country_picker.dart';
+import 'package:miva_fid/features/client/widgets/shared/user_avatar.dart';
 
 /// Profil — juste l'essentiel : identité, un coup d'œil chiffré, code de
 /// parrainage, et un accès unique vers Paramètres pour tout le reste
@@ -23,18 +24,11 @@ import 'package:miva_fid/features/client/widgets/shared/phone_input_with_country
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  void _openEditProfileModal(
-      BuildContext context, WidgetRef ref, AppUser user) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => _EditProfileModal(user: user),
-    );
-  }
+  
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final user = ref.watch(authProvider).user;
     final cards = ref.watch(walletProvider);
@@ -83,23 +77,11 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              width: 64,
-                              height: 64,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.primary,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  user.fullName.isNotEmpty
-                                      ? user.fullName[0].toUpperCase()
-                                      : '?',
-                                  style: AppTextStyles.displayMedium(
-                                          color: Colors.white)
-                                      .copyWith(fontSize: 26),
-                                ),
-                              ),
+                            UserAvatar(
+                              fullName: user.fullName,
+                              photoUrl: user.photoUrl,
+                              localImage: ref.watch(authProvider).localAvatar,
+                              radius: 32,
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -141,8 +123,11 @@ class ProfileScreen extends ConsumerWidget {
                           variant: AppButtonVariant.outline,
                           icon: LucideIcons.pencil,
                           height: 46,
-                          onTap: () =>
-                              _openEditProfileModal(context, ref, user),
+                          // Écran plein et non plus feuille modale : l'édition
+                          // porte désormais la photo de profil et l'accès au
+                          // changement de mot de passe, qui poussent leurs
+                          // propres écrans.
+                          onTap: () => context.push('/client/profile/edit'),
                         ),
                       ],
                     ),

@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../client/providers/settings_provider.dart';
 
-class RoleSelectionScreen extends StatefulWidget {
+class RoleSelectionScreen extends ConsumerStatefulWidget {
   const RoleSelectionScreen({super.key});
 
   @override
-  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+  ConsumerState<RoleSelectionScreen> createState() =>
+      _RoleSelectionScreenState();
 }
 
-class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   String? _selectedRole;
   bool _navigating = false;
 
@@ -33,6 +36,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Cet écran peint via les tokens statiques d'AppColors, invisibles pour
+    // le système de dépendances de Flutter : observer la luminosité
+    // effective est son seul déclencheur de rebuild sur une bascule
+    // clair/sombre.
+    ref.watch(appBrightnessProvider);
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     final bool isClientSelected = _selectedRole == 'client';
@@ -40,7 +48,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final bool hasSelection = _selectedRole != null;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Soft ambient glow behind the content

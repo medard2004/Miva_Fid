@@ -658,4 +658,344 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get phonePickerSearchHint => 'Rechercher un pays ou un indicatif...';
+
+  @override
+  String get authPasswordLabel => 'Mot de passe';
+
+  @override
+  String get authForgotPasswordLink => 'Mot de passe oublié ?';
+
+  @override
+  String get authLoadingLogin => 'Connexion en cours...';
+
+  @override
+  String get authLoadingGoogle => 'Connexion via Google...';
+
+  @override
+  String get authLoadingApple => 'Connexion via Apple...';
+
+  @override
+  String get authLoadingSignup => 'Création du compte...';
+
+  @override
+  String get createPasswordTitle => 'Créez votre mot de passe';
+
+  @override
+  String get createPasswordSubtitle =>
+      'Dernière étape pour sécuriser votre compte.';
+
+  @override
+  String get createPasswordConfirmLabel => 'Confirmez le mot de passe';
+
+  @override
+  String get createPasswordRuleMinLength => 'Au moins 8 caractères';
+
+  @override
+  String get createPasswordRuleUppercase => 'Une majuscule';
+
+  @override
+  String get createPasswordRuleDigit => 'Un chiffre';
+
+  @override
+  String get createPasswordButton => 'Créer mon compte';
+
+  @override
+  String get forgotPasswordTitle => 'Mot de passe oublié';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'Indiquez votre numéro : nous vous enverrons un code de vérification.';
+
+  @override
+  String get forgotPasswordButton => 'Envoyer le code';
+
+  @override
+  String get resetPasswordTitle => 'Nouveau mot de passe';
+
+  @override
+  String get resetPasswordSubtitle =>
+      'Choisissez un nouveau mot de passe pour votre compte.';
+
+  @override
+  String get resetPasswordButton => 'Réinitialiser';
+
+  @override
+  String get resetPasswordLoading => 'Réinitialisation...';
+
+  @override
+  String get otpVerifyLoading => 'Vérification du code...';
+
+  @override
+  String get splashLoading => 'Chargement...';
+
+  @override
+  String get forgotPasswordUseEmail => 'Utiliser mon adresse e-mail';
+
+  @override
+  String get forgotPasswordUsePhone => 'Utiliser mon numéro de téléphone';
+
+  @override
+  String get forgotPasswordEmailLabel => 'Adresse e-mail';
+
+  @override
+  String get forgotPasswordEmailHint => 'vous@exemple.com';
+
+  @override
+  String get forgotPasswordSubtitleEmail =>
+      'Indiquez votre adresse e-mail : nous vous enverrons un code de vérification.';
+
+  @override
+  String get forgotPasswordSending => 'Envoi du code...';
+
+  @override
+  String get errNoInternet =>
+      'Vous semblez hors ligne. Vérifiez votre connexion, puis réessayez.';
+
+  @override
+  String get errServerUnreachable =>
+      'Nous n\'arrivons pas à joindre nos serveurs. Réessayez dans quelques instants.';
+
+  @override
+  String get errServerError =>
+      'Le service est momentanément indisponible. Réessayez dans quelques instants.';
+
+  @override
+  String get errUnexpected => 'Une erreur est survenue. Réessayez.';
+
+  @override
+  String get errTooManyAttempts =>
+      'Trop de tentatives. Patientez quelques instants avant de réessayer.';
+
+  @override
+  String get errSessionExpired =>
+      'Votre session a expiré. Reconnectez-vous pour continuer.';
+
+  @override
+  String get errMissingRequiredFields =>
+      'Veuillez renseigner tous les champs obligatoires.';
+
+  @override
+  String get errLoginInvalidCredentials =>
+      'Numéro de téléphone ou mot de passe incorrect.';
+
+  @override
+  String get errLoginAccountNotFound => 'Ce compte n\'existe pas encore.';
+
+  @override
+  String get errLoginFailed =>
+      'Impossible de vous connecter pour le moment. Réessayez.';
+
+  @override
+  String get errLoginSuccess => 'Vous êtes connecté.';
+
+  @override
+  String get errSocialCancelled => 'Connexion annulée.';
+
+  @override
+  String get errSocialFailedGoogle =>
+      'Impossible de vous connecter avec Google. Réessayez.';
+
+  @override
+  String get errSocialFailedApple =>
+      'Impossible de vous connecter avec Apple. Réessayez.';
+
+  @override
+  String get errSocialAccountNotFound =>
+      'Aucun compte n\'est associé à ce profil. Créez d\'abord un compte.';
+
+  @override
+  String get errSignupPhoneTaken =>
+      'Ce numéro de téléphone est déjà associé à un compte.';
+
+  @override
+  String get errSignupEmailTaken => 'Cette adresse e-mail est déjà utilisée.';
+
+  @override
+  String get errSignupFailed =>
+      'Impossible de créer votre compte pour le moment. Réessayez.';
+
+  @override
+  String get errSignupSuccess => 'Votre compte a bien été créé.';
+
+  @override
+  String get errForgotAccountNotFound =>
+      'Aucun compte n\'est associé à ce numéro de téléphone.';
+
+  @override
+  String get errForgotCodeSent =>
+      'Un code de réinitialisation vient d\'être envoyé.';
+
+  @override
+  String get errForgotSendFailed =>
+      'Impossible d\'envoyer le code. Réessayez dans quelques instants.';
+
+  @override
+  String get errOtpInvalid =>
+      'Ce code est incorrect. Vérifiez-le et réessayez.';
+
+  @override
+  String get errOtpExpired =>
+      'Ce code a expiré. Demandez-en un nouveau pour continuer.';
+
+  @override
+  String get errResetSessionExpired =>
+      'Votre demande a expiré. Recommencez la réinitialisation.';
+
+  @override
+  String get errResetFailed =>
+      'Impossible de réinitialiser votre mot de passe. Réessayez.';
+
+  @override
+  String get errResetSuccess => 'Votre mot de passe a bien été modifié.';
+
+  @override
+  String get errProfileSaveFailed =>
+      'Impossible d\'enregistrer les modifications. Réessayez.';
+
+  @override
+  String get errProfileSaveSuccess =>
+      'Les informations ont bien été enregistrées.';
+
+  @override
+  String get errProfileCompleteFailed =>
+      'Impossible d\'enregistrer votre profil. Réessayez.';
+
+  @override
+  String get errAvatarUpdateFailed =>
+      'Impossible de mettre à jour la photo de profil. Réessayez.';
+
+  @override
+  String get errAvatarUpdateSuccess => 'Photo de profil mise à jour.';
+
+  @override
+  String get errAvatarRemoveSuccess => 'Photo de profil supprimée.';
+
+  @override
+  String get errAvatarInvalid =>
+      'Cette image ne peut pas être utilisée. Essayez-en une autre.';
+
+  @override
+  String get errPasswordCurrentIncorrect =>
+      'Le mot de passe actuel est incorrect.';
+
+  @override
+  String get errPasswordChangeSuccess =>
+      'Votre mot de passe a bien été modifié.';
+
+  @override
+  String get errPasswordChangeFailed =>
+      'Impossible de modifier votre mot de passe. Réessayez.';
+
+  @override
+  String get errFieldRequired => 'Veuillez renseigner ce champ.';
+
+  @override
+  String get errPhoneInvalid => 'Le numéro de téléphone n\'est pas valide.';
+
+  @override
+  String get errPhoneTaken =>
+      'Ce numéro de téléphone est déjà associé à un compte.';
+
+  @override
+  String get errPhoneRisky =>
+      'Ce numéro ne peut pas être utilisé. Essayez-en un autre.';
+
+  @override
+  String get errEmailInvalid => 'L\'adresse e-mail n\'est pas valide.';
+
+  @override
+  String get errEmailTaken => 'Cette adresse e-mail est déjà utilisée.';
+
+  @override
+  String get errPasswordTooShort =>
+      'Le mot de passe doit contenir au moins 8 caractères.';
+
+  @override
+  String get errPasswordMismatch =>
+      'Les deux mots de passe ne correspondent pas.';
+
+  @override
+  String get errPasswordNeedsUppercase =>
+      'Le mot de passe doit contenir au moins une majuscule.';
+
+  @override
+  String get errPasswordNeedsDigit =>
+      'Le mot de passe doit contenir au moins un chiffre.';
+
+  @override
+  String get errPasswordMustDiffer =>
+      'Le nouveau mot de passe doit être différent de l\'actuel.';
+
+  @override
+  String get errPasswordIncorrect => 'Mot de passe incorrect.';
+
+  @override
+  String get errNameInvalid => 'Ce nom n\'est pas valide.';
+
+  @override
+  String get errBirthdateInvalid =>
+      'Cette date de naissance n\'est pas valide.';
+
+  @override
+  String get errBirthdateRequired =>
+      'Veuillez indiquer votre date de naissance.';
+
+  @override
+  String get errReferralCodeInvalid => 'Ce code de parrainage n\'existe pas.';
+
+  @override
+  String get errOtpFieldInvalid => 'Ce code n\'est pas valide.';
+
+  @override
+  String get errFieldInvalid => 'Cette information n\'est pas valide.';
+
+  @override
+  String get changePasswordTitle => 'Modifier le mot de passe';
+
+  @override
+  String get changePasswordVerifySubtitle =>
+      'Confirmez votre mot de passe actuel pour continuer.';
+
+  @override
+  String get changePasswordCurrentLabel => 'Mot de passe actuel';
+
+  @override
+  String get changePasswordVerifying => 'Vérification...';
+
+  @override
+  String get changePasswordContinue => 'Continuer';
+
+  @override
+  String get changePasswordNewTitle => 'Nouveau mot de passe';
+
+  @override
+  String get changePasswordNewSubtitle =>
+      'Choisissez un mot de passe différent de l\'actuel.';
+
+  @override
+  String get changePasswordNewLabel => 'Nouveau mot de passe';
+
+  @override
+  String get changePasswordSaving => 'Modification...';
+
+  @override
+  String get changePasswordSubmit => 'Enregistrer';
+
+  @override
+  String get editProfileCity => 'Ville';
+
+  @override
+  String get editProfileCityHint => 'Lomé';
+
+  @override
+  String get editProfileSaving => 'Enregistrement...';
+
+  @override
+  String get editProfilePhotoChange => 'Changer la photo';
+
+  @override
+  String get editProfilePhotoRemove => 'Supprimer la photo';
+
+  @override
+  String get editProfileSecurity => 'Sécurité';
 }

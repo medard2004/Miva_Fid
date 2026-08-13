@@ -16,6 +16,7 @@ class AppUser {
   final int friendsInvited;
   final int friendsJoined;
   final String? city;
+  final String? country;
   final String? neighborhood;
   final AuthProvider authProvider;
   final bool profileCompleted;
@@ -33,10 +34,69 @@ class AppUser {
     this.friendsInvited = 0,
     this.friendsJoined = 0,
     this.city,
+    this.country,
     this.neighborhood,
     this.authProvider = AuthProvider.phone,
     this.profileCompleted = false,
   });
+
+  /// Construit un [AppUser] depuis la charge utile `client` renvoyée par
+  /// l'API Laravel (`ClientAuthController::clientData()`).
+  ///
+  /// Le backend sépare `first_name` et `last_name` alors que l'app manipule un
+  /// `fullName` unique : on recompose ici, et [firstName] fait le chemin
+  /// inverse pour les écrans qui n'affichent que le prénom.
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    final firstName = (json['first_name'] as String?)?.trim() ?? '';
+    final lastName = (json['last_name'] as String?)?.trim() ?? '';
+    final full = [firstName, lastName].where((e) => e.isNotEmpty).join(' ');
+
+    final birthDate = json['birthdate'] != null
+        ? DateTime.tryParse(json['birthdate'].toString())
+        : null;
+
+    return AppUser(
+      // `uuid` est l'identifiant public stable ; `id` (auto-incrément) sert de
+      // repli si le backend ne l'expose pas.
+      id: json['uuid']?.toString() ?? json['id']?.toString() ?? '',
+      fullName: full,
+      phoneNumber: json['phone']?.toString() ?? '',
+      age: birthDate != null ? _ageFrom(birthDate) : null,
+      birthDate: birthDate,
+      // `created_at` n'est renvoyé que par les versions récentes de l'API :
+      // sans lui, "Membre depuis" retombe sur la date du jour.
+      joinDate: json['created_at'] != null
+          ? (DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      email: json['email'] as String?,
+      photoUrl: json['avatar_url'] as String?,
+      referralCode: json['referral_code']?.toString() ?? '',
+      city: json['city'] as String?,
+      country: json['country'] as String?,
+      neighborhood: json['neighborhood'] as String?,
+      authProvider: _parseProvider(json['oauth_provider']),
+      profileCompleted: json['is_profile_complete'] as bool? ?? false,
+    );
+  }
+
+  static AuthProvider _parseProvider(dynamic raw) {
+    return switch (raw?.toString()) {
+      'google' => AuthProvider.google,
+      'apple' => AuthProvider.apple,
+      _ => AuthProvider.phone,
+    };
+  }
+
+  /// Âge révolu — calcul calendaire, et non une division par 365 qui dérive
+  /// d'un jour tous les quatre ans.
+  static int _ageFrom(DateTime birthDate) {
+    final now = DateTime.now();
+    var age = now.year - birthDate.year;
+    final hasHadBirthdayThisYear = now.month > birthDate.month ||
+        (now.month == birthDate.month && now.day >= birthDate.day);
+    if (!hasHadBirthdayThisYear) age--;
+    return age;
+  }
 
   /// Rétro-compatibilité : expose `firstName` comme premier prénom (avant le premier espace).
   String get firstName {
@@ -78,6 +138,7 @@ class AppUser {
     String? email,
     String? photoUrl,
     String? city,
+    String? country,
     String? neighborhood,
     AuthProvider? authProvider,
     bool? profileCompleted,
@@ -101,6 +162,7 @@ class AppUser {
       friendsInvited: friendsInvited,
       friendsJoined: friendsJoined,
       city: city ?? this.city,
+      country: country ?? this.country,
       neighborhood: neighborhood ?? this.neighborhood,
       authProvider: authProvider ?? this.authProvider,
       profileCompleted: profileCompleted ?? this.profileCompleted,

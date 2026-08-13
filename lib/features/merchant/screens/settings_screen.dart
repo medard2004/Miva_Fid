@@ -12,6 +12,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../models/merchant_model.dart';
 import '../providers/merchant_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -69,6 +70,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final merchant = ref.watch(merchantNotifierProvider).value;
 
     if (merchant != null && !_initialized) {
@@ -83,7 +89,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     if (isWide) {
       return Scaffold(
-        backgroundColor: AppColors.bgLight,
+        backgroundColor: AppColors.background,
         body: SafeArea(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +126,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ),
-              const VerticalDivider(width: 1, color: AppColors.border, thickness: 1),
+              VerticalDivider(width: 1, color: AppColors.border, thickness: 1),
               // Right Column (Details Panel)
               Expanded(
                 child: SingleChildScrollView(
@@ -146,7 +152,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     // Narrow layout (Mobile)
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(Sp.md),
         child: Column(
@@ -405,8 +411,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             TextFormField(
               controller: _nameController,
               style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                fillColor: AppColors.bgLight,
+              decoration: InputDecoration(
+                fillColor: AppColors.background,
                 filled: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
                 border: OutlineInputBorder(
@@ -424,7 +430,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               enabled: false,
               style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
               decoration: InputDecoration(
-                fillColor: AppColors.bgLight.withValues(alpha: 0.5),
+                fillColor: AppColors.background.withValues(alpha: 0.5),
                 filled: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
                 border: const OutlineInputBorder(
@@ -440,8 +446,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               controller: _phoneController,
               style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                fillColor: AppColors.bgLight,
+              decoration: InputDecoration(
+                fillColor: AppColors.background,
                 filled: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
                 border: OutlineInputBorder(
@@ -455,10 +461,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: Sp.xs),
             DropdownButtonFormField<String>(
               initialValue: _selectedLanguage,
-              icon: const Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
+              icon: Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
               style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                fillColor: AppColors.bgLight,
+              decoration: InputDecoration(
+                fillColor: AppColors.background,
                 filled: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
                 border: OutlineInputBorder(
@@ -998,8 +1004,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   TextField(
                     controller: nameController,
                     style: AppTextStyles.bodyMd(),
-                    decoration: const InputDecoration(
-                      fillColor: AppColors.bgLight,
+                    decoration: InputDecoration(
+                      fillColor: AppColors.background,
                       filled: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
                       border: OutlineInputBorder(
@@ -1016,8 +1022,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     initialValue: selectedRole,
                     icon: const Icon(LucideIcons.chevronDown),
                     style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      fillColor: AppColors.bgLight,
+                    decoration: InputDecoration(
+                      fillColor: AppColors.background,
                       filled: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
                       border: OutlineInputBorder(
@@ -1042,7 +1048,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Annuler', style: TextStyle(color: AppColors.textSecondary)),
+                  child: Text('Annuler', style: TextStyle(color: AppColors.textSecondary)),
                 ),
                 ElevatedButton(
                   onPressed: () {

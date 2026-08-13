@@ -1249,6 +1249,600 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Rechercher un pays ou un indicatif...'**
   String get phonePickerSearchHint;
+
+  /// No description provided for @authPasswordLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe'**
+  String get authPasswordLabel;
+
+  /// No description provided for @authForgotPasswordLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe oublié ?'**
+  String get authForgotPasswordLink;
+
+  /// No description provided for @authLoadingLogin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion en cours...'**
+  String get authLoadingLogin;
+
+  /// No description provided for @authLoadingGoogle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion via Google...'**
+  String get authLoadingGoogle;
+
+  /// No description provided for @authLoadingApple.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion via Apple...'**
+  String get authLoadingApple;
+
+  /// No description provided for @authLoadingSignup.
+  ///
+  /// In fr, this message translates to:
+  /// **'Création du compte...'**
+  String get authLoadingSignup;
+
+  /// No description provided for @createPasswordTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créez votre mot de passe'**
+  String get createPasswordTitle;
+
+  /// No description provided for @createPasswordSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière étape pour sécuriser votre compte.'**
+  String get createPasswordSubtitle;
+
+  /// No description provided for @createPasswordConfirmLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmez le mot de passe'**
+  String get createPasswordConfirmLabel;
+
+  /// No description provided for @createPasswordRuleMinLength.
+  ///
+  /// In fr, this message translates to:
+  /// **'Au moins 8 caractères'**
+  String get createPasswordRuleMinLength;
+
+  /// No description provided for @createPasswordRuleUppercase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une majuscule'**
+  String get createPasswordRuleUppercase;
+
+  /// No description provided for @createPasswordRuleDigit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un chiffre'**
+  String get createPasswordRuleDigit;
+
+  /// No description provided for @createPasswordButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer mon compte'**
+  String get createPasswordButton;
+
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe oublié'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @forgotPasswordSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Indiquez votre numéro : nous vous enverrons un code de vérification.'**
+  String get forgotPasswordSubtitle;
+
+  /// No description provided for @forgotPasswordButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le code'**
+  String get forgotPasswordButton;
+
+  /// No description provided for @resetPasswordTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau mot de passe'**
+  String get resetPasswordTitle;
+
+  /// No description provided for @resetPasswordSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un nouveau mot de passe pour votre compte.'**
+  String get resetPasswordSubtitle;
+
+  /// No description provided for @resetPasswordButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialiser'**
+  String get resetPasswordButton;
+
+  /// No description provided for @resetPasswordLoading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialisation...'**
+  String get resetPasswordLoading;
+
+  /// No description provided for @otpVerifyLoading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérification du code...'**
+  String get otpVerifyLoading;
+
+  /// No description provided for @splashLoading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement...'**
+  String get splashLoading;
+
+  /// No description provided for @forgotPasswordUseEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser mon adresse e-mail'**
+  String get forgotPasswordUseEmail;
+
+  /// No description provided for @forgotPasswordUsePhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser mon numéro de téléphone'**
+  String get forgotPasswordUsePhone;
+
+  /// No description provided for @forgotPasswordEmailLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail'**
+  String get forgotPasswordEmailLabel;
+
+  /// No description provided for @forgotPasswordEmailHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'vous@exemple.com'**
+  String get forgotPasswordEmailHint;
+
+  /// No description provided for @forgotPasswordSubtitleEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Indiquez votre adresse e-mail : nous vous enverrons un code de vérification.'**
+  String get forgotPasswordSubtitleEmail;
+
+  /// No description provided for @forgotPasswordSending.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoi du code...'**
+  String get forgotPasswordSending;
+
+  /// No description provided for @errNoInternet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous semblez hors ligne. Vérifiez votre connexion, puis réessayez.'**
+  String get errNoInternet;
+
+  /// No description provided for @errServerUnreachable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nous n\'arrivons pas à joindre nos serveurs. Réessayez dans quelques instants.'**
+  String get errServerUnreachable;
+
+  /// No description provided for @errServerError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le service est momentanément indisponible. Réessayez dans quelques instants.'**
+  String get errServerError;
+
+  /// No description provided for @errUnexpected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une erreur est survenue. Réessayez.'**
+  String get errUnexpected;
+
+  /// No description provided for @errTooManyAttempts.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop de tentatives. Patientez quelques instants avant de réessayer.'**
+  String get errTooManyAttempts;
+
+  /// No description provided for @errSessionExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre session a expiré. Reconnectez-vous pour continuer.'**
+  String get errSessionExpired;
+
+  /// No description provided for @errMissingRequiredFields.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veuillez renseigner tous les champs obligatoires.'**
+  String get errMissingRequiredFields;
+
+  /// No description provided for @errLoginInvalidCredentials.
+  ///
+  /// In fr, this message translates to:
+  /// **'Numéro de téléphone ou mot de passe incorrect.'**
+  String get errLoginInvalidCredentials;
+
+  /// No description provided for @errLoginAccountNotFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce compte n\'existe pas encore.'**
+  String get errLoginAccountNotFound;
+
+  /// No description provided for @errLoginFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de vous connecter pour le moment. Réessayez.'**
+  String get errLoginFailed;
+
+  /// No description provided for @errLoginSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes connecté.'**
+  String get errLoginSuccess;
+
+  /// No description provided for @errSocialCancelled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion annulée.'**
+  String get errSocialCancelled;
+
+  /// No description provided for @errSocialFailedGoogle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de vous connecter avec Google. Réessayez.'**
+  String get errSocialFailedGoogle;
+
+  /// No description provided for @errSocialFailedApple.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de vous connecter avec Apple. Réessayez.'**
+  String get errSocialFailedApple;
+
+  /// No description provided for @errSocialAccountNotFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun compte n\'est associé à ce profil. Créez d\'abord un compte.'**
+  String get errSocialAccountNotFound;
+
+  /// No description provided for @errSignupPhoneTaken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce numéro de téléphone est déjà associé à un compte.'**
+  String get errSignupPhoneTaken;
+
+  /// No description provided for @errSignupEmailTaken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette adresse e-mail est déjà utilisée.'**
+  String get errSignupEmailTaken;
+
+  /// No description provided for @errSignupFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de créer votre compte pour le moment. Réessayez.'**
+  String get errSignupFailed;
+
+  /// No description provided for @errSignupSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre compte a bien été créé.'**
+  String get errSignupSuccess;
+
+  /// No description provided for @errForgotAccountNotFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun compte n\'est associé à ce numéro de téléphone.'**
+  String get errForgotAccountNotFound;
+
+  /// No description provided for @errForgotCodeSent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un code de réinitialisation vient d\'être envoyé.'**
+  String get errForgotCodeSent;
+
+  /// No description provided for @errForgotSendFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'envoyer le code. Réessayez dans quelques instants.'**
+  String get errForgotSendFailed;
+
+  /// No description provided for @errOtpInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce code est incorrect. Vérifiez-le et réessayez.'**
+  String get errOtpInvalid;
+
+  /// No description provided for @errOtpExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce code a expiré. Demandez-en un nouveau pour continuer.'**
+  String get errOtpExpired;
+
+  /// No description provided for @errResetSessionExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre demande a expiré. Recommencez la réinitialisation.'**
+  String get errResetSessionExpired;
+
+  /// No description provided for @errResetFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de réinitialiser votre mot de passe. Réessayez.'**
+  String get errResetFailed;
+
+  /// No description provided for @errResetSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre mot de passe a bien été modifié.'**
+  String get errResetSuccess;
+
+  /// No description provided for @errProfileSaveFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'enregistrer les modifications. Réessayez.'**
+  String get errProfileSaveFailed;
+
+  /// No description provided for @errProfileSaveSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les informations ont bien été enregistrées.'**
+  String get errProfileSaveSuccess;
+
+  /// No description provided for @errProfileCompleteFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'enregistrer votre profil. Réessayez.'**
+  String get errProfileCompleteFailed;
+
+  /// No description provided for @errAvatarUpdateFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de mettre à jour la photo de profil. Réessayez.'**
+  String get errAvatarUpdateFailed;
+
+  /// No description provided for @errAvatarUpdateSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photo de profil mise à jour.'**
+  String get errAvatarUpdateSuccess;
+
+  /// No description provided for @errAvatarRemoveSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photo de profil supprimée.'**
+  String get errAvatarRemoveSuccess;
+
+  /// No description provided for @errAvatarInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette image ne peut pas être utilisée. Essayez-en une autre.'**
+  String get errAvatarInvalid;
+
+  /// No description provided for @errPasswordCurrentIncorrect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le mot de passe actuel est incorrect.'**
+  String get errPasswordCurrentIncorrect;
+
+  /// No description provided for @errPasswordChangeSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre mot de passe a bien été modifié.'**
+  String get errPasswordChangeSuccess;
+
+  /// No description provided for @errPasswordChangeFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de modifier votre mot de passe. Réessayez.'**
+  String get errPasswordChangeFailed;
+
+  /// No description provided for @errFieldRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veuillez renseigner ce champ.'**
+  String get errFieldRequired;
+
+  /// No description provided for @errPhoneInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le numéro de téléphone n\'est pas valide.'**
+  String get errPhoneInvalid;
+
+  /// No description provided for @errPhoneTaken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce numéro de téléphone est déjà associé à un compte.'**
+  String get errPhoneTaken;
+
+  /// No description provided for @errPhoneRisky.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce numéro ne peut pas être utilisé. Essayez-en un autre.'**
+  String get errPhoneRisky;
+
+  /// No description provided for @errEmailInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'adresse e-mail n\'est pas valide.'**
+  String get errEmailInvalid;
+
+  /// No description provided for @errEmailTaken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette adresse e-mail est déjà utilisée.'**
+  String get errEmailTaken;
+
+  /// No description provided for @errPasswordTooShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le mot de passe doit contenir au moins 8 caractères.'**
+  String get errPasswordTooShort;
+
+  /// No description provided for @errPasswordMismatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les deux mots de passe ne correspondent pas.'**
+  String get errPasswordMismatch;
+
+  /// No description provided for @errPasswordNeedsUppercase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le mot de passe doit contenir au moins une majuscule.'**
+  String get errPasswordNeedsUppercase;
+
+  /// No description provided for @errPasswordNeedsDigit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le mot de passe doit contenir au moins un chiffre.'**
+  String get errPasswordNeedsDigit;
+
+  /// No description provided for @errPasswordMustDiffer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le nouveau mot de passe doit être différent de l\'actuel.'**
+  String get errPasswordMustDiffer;
+
+  /// No description provided for @errPasswordIncorrect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe incorrect.'**
+  String get errPasswordIncorrect;
+
+  /// No description provided for @errNameInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce nom n\'est pas valide.'**
+  String get errNameInvalid;
+
+  /// No description provided for @errBirthdateInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette date de naissance n\'est pas valide.'**
+  String get errBirthdateInvalid;
+
+  /// No description provided for @errBirthdateRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veuillez indiquer votre date de naissance.'**
+  String get errBirthdateRequired;
+
+  /// No description provided for @errReferralCodeInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce code de parrainage n\'existe pas.'**
+  String get errReferralCodeInvalid;
+
+  /// No description provided for @errOtpFieldInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce code n\'est pas valide.'**
+  String get errOtpFieldInvalid;
+
+  /// No description provided for @errFieldInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette information n\'est pas valide.'**
+  String get errFieldInvalid;
+
+  /// No description provided for @changePasswordTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier le mot de passe'**
+  String get changePasswordTitle;
+
+  /// No description provided for @changePasswordVerifySubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmez votre mot de passe actuel pour continuer.'**
+  String get changePasswordVerifySubtitle;
+
+  /// No description provided for @changePasswordCurrentLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe actuel'**
+  String get changePasswordCurrentLabel;
+
+  /// No description provided for @changePasswordVerifying.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérification...'**
+  String get changePasswordVerifying;
+
+  /// No description provided for @changePasswordContinue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get changePasswordContinue;
+
+  /// No description provided for @changePasswordNewTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau mot de passe'**
+  String get changePasswordNewTitle;
+
+  /// No description provided for @changePasswordNewSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un mot de passe différent de l\'actuel.'**
+  String get changePasswordNewSubtitle;
+
+  /// No description provided for @changePasswordNewLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau mot de passe'**
+  String get changePasswordNewLabel;
+
+  /// No description provided for @changePasswordSaving.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modification...'**
+  String get changePasswordSaving;
+
+  /// No description provided for @changePasswordSubmit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer'**
+  String get changePasswordSubmit;
+
+  /// No description provided for @editProfileCity.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ville'**
+  String get editProfileCity;
+
+  /// No description provided for @editProfileCityHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lomé'**
+  String get editProfileCityHint;
+
+  /// No description provided for @editProfileSaving.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrement...'**
+  String get editProfileSaving;
+
+  /// No description provided for @editProfilePhotoChange.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer la photo'**
+  String get editProfilePhotoChange;
+
+  /// No description provided for @editProfilePhotoRemove.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer la photo'**
+  String get editProfilePhotoRemove;
+
+  /// No description provided for @editProfileSecurity.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sécurité'**
+  String get editProfileSecurity;
 }
 
 class _AppLocalizationsDelegate

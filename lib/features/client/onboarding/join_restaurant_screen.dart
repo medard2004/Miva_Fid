@@ -35,7 +35,7 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final code = widget.scannedCode;
     final card = code != null ? MockData.findJoinableByCode(code) : null;

@@ -132,15 +132,15 @@ class _AppInputState extends State<AppInput> {
               counterText: '',
               filled: true,
               fillColor: widget.enabled
-                  ? AppColors.surfaceLight
-                  : AppColors.bgLight,
+                  ? AppColors.surface
+                  : AppColors.background,
               border: OutlineInputBorder(
                 borderRadius: Rd.input,
-                borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                borderSide: BorderSide(color: AppColors.border, width: 1.5),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: Rd.input,
-                borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                borderSide: BorderSide(color: AppColors.border, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: Rd.input,
@@ -156,7 +156,7 @@ class _AppInputState extends State<AppInput> {
               ),
               disabledBorder: OutlineInputBorder(
                 borderRadius: Rd.input,
-                borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                borderSide: BorderSide(color: AppColors.border, width: 1.5),
               ),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

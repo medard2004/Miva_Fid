@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../client/providers/settings_provider.dart';
 
 class OnboardingSlide {
   const OnboardingSlide({
@@ -18,14 +20,16 @@ class OnboardingSlide {
   final String description;
 }
 
-class ProfileOnboardingScreen extends StatefulWidget {
+class ProfileOnboardingScreen extends ConsumerStatefulWidget {
   const ProfileOnboardingScreen({super.key});
 
   @override
-  State<ProfileOnboardingScreen> createState() => _ProfileOnboardingScreenState();
+  ConsumerState<ProfileOnboardingScreen> createState() =>
+      _ProfileOnboardingScreenState();
 }
 
-class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
+class _ProfileOnboardingScreenState
+    extends ConsumerState<ProfileOnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -69,6 +73,11 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Cet écran peint via les tokens statiques d'AppColors, invisibles pour
+    // le système de dépendances de Flutter : observer la luminosité
+    // effective est son seul déclencheur de rebuild sur une bascule
+    // clair/sombre.
+    ref.watch(appBrightnessProvider);
     const themeColor = AppColors.merchant;
     const gradient = LinearGradient(
       colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
@@ -77,7 +86,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -89,13 +98,13 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                 children: [
                   IconButton(
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.surface,
                       shape: const CircleBorder(),
                       side: BorderSide(
                         color: AppColors.border.withValues(alpha: 0.6),
                       ),
                     ),
-                    icon: const Icon(LucideIcons.arrowLeft, size: 18, color: AppColors.textPrimary),
+                    icon: Icon(LucideIcons.arrowLeft, size: 18, color: AppColors.textPrimary),
                     onPressed: () {
                       HapticFeedback.lightImpact();
                       if (context.canPop()) {
@@ -384,7 +393,7 @@ class _MerchantMinimalGraphic extends StatelessWidget {
           height: 120,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
             boxShadow: [

@@ -11,7 +11,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.merchant,
         surface: AppColors.surfaceLight,
@@ -27,7 +27,7 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.bgLight,
       textTheme: GoogleFonts.manropeTextTheme(),
       iconTheme: const IconThemeData(color: AppColors.gray700, size: 22),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
@@ -55,7 +55,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(48),
           padding: const EdgeInsets.symmetric(horizontal: Sp.md),
           shape: const RoundedRectangleBorder(borderRadius: Rd.button),
-          side: const BorderSide(color: AppColors.border, width: 1.5),
+          side: BorderSide(color: AppColors.border, width: 1.5),
           textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -73,7 +73,7 @@ class AppTheme {
           ),
         ),
       ),
-      listTileTheme: const ListTileThemeData(
+      listTileTheme: ListTileThemeData(
         iconColor: AppColors.gray500,
         textColor: AppColors.textPrimary,
         contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 4),
@@ -104,7 +104,7 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.primary);
           }
-          return const IconThemeData(color: AppColors.textSecondary);
+          return IconThemeData(color: AppColors.textSecondary);
         }),
         elevation: 0,
         shadowColor: Colors.transparent,
@@ -116,11 +116,11 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: Rd.input,
@@ -135,7 +135,7 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.danger, width: 2),
         ),
       ),
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: AppColors.border,
         thickness: 1,
         space: 0,
@@ -144,12 +144,12 @@ class AppTheme {
         backgroundColor: AppColors.bgLight,
         selectedColor: AppColors.primaryTint,
         checkmarkColor: AppColors.primary,
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
         shape: const RoundedRectangleBorder(borderRadius: Rd.pill),
         labelStyle: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w500),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-      tabBarTheme: const TabBarThemeData(
+      tabBarTheme: TabBarThemeData(
         indicatorSize: TabBarIndicatorSize.tab,
         labelColor: Colors.white,
         unselectedLabelColor: AppColors.textSecondary,

@@ -27,7 +27,7 @@ class CardDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final card = ref.watch(walletProvider.select((cards) {
       try {

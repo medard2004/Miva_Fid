@@ -85,7 +85,7 @@ class _StepperBtn extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: enabled ? AppColors.primaryTint : AppColors.bgLight,
+          color: enabled ? AppColors.primaryTint : AppColors.background,
           shape: BoxShape.circle,
         ),
         child: Icon(

@@ -11,6 +11,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../widgets/client_row.dart';
+import '../../client/providers/settings_provider.dart';
 
 class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
@@ -25,6 +26,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final clientsAsync = ref.watch(clientsNotifierProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
 
@@ -32,7 +38,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -84,13 +90,13 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => AppToast.info(context, 'Export bientôt disponible'),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: AppColors.border),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      icon: const Icon(LucideIcons.fileDown, color: AppColors.textPrimary, size: 18),
+                      icon: Icon(LucideIcons.fileDown, color: AppColors.textPrimary, size: 18),
                       label: Text(
                         'Exporter',
                         style: AppTextStyles.labelBold().copyWith(
@@ -134,18 +140,18 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               child: TextField(
                 onChanged: (q) => ref.read(clientsNotifierProvider.notifier).search(q),
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 20),
+                  prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 20),
                   hintText: 'Rechercher un client...',
                   hintStyle: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: Rd.input,
-                    borderSide: const BorderSide(color: AppColors.border, width: 1),
+                    borderSide: BorderSide(color: AppColors.border, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: Rd.input,
-                    borderSide: const BorderSide(color: AppColors.border, width: 1),
+                    borderSide: BorderSide(color: AppColors.border, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: Rd.input,
@@ -254,7 +260,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
             // 7. Footer Pagination
             Container(
               padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border(
                   top: BorderSide(color: AppColors.border, width: 0.5),
@@ -277,7 +283,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   OutlinedButton(
                     onPressed: null, // Disabled in mockup
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.border),
+                      side: BorderSide(color: AppColors.border),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       minimumSize: Size.zero,
                       shape: RoundedRectangleBorder(
@@ -293,7 +299,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   OutlinedButton(
                     onPressed: null, // Pagination pas encore implémentée côté requête
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.border),
+                      side: BorderSide(color: AppColors.border),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       minimumSize: Size.zero,
                       shape: RoundedRectangleBorder(
@@ -308,7 +314,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 2),
-                        const Icon(LucideIcons.chevronRight, size: 14, color: AppColors.textSecondary),
+                        Icon(LucideIcons.chevronRight, size: 14, color: AppColors.textSecondary),
                       ],
                     ),
                   ),

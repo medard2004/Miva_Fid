@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:miva_fid/core/api/providers/api_providers.dart';
+import 'package:miva_fid/core/api/repositories/auth_repository.dart';
 import 'package:miva_fid/features/client/data/mock_data.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/models/app_notification.dart';
@@ -181,177 +185,380 @@ final signupFlowProvider =
 // Utilisateur / Auth
 // ─────────────────────────────────────────────────────────────────────────────
 
+
 class AuthState {
   final bool isAuthenticated;
   final AppUser? user;
 
-  const AuthState({this.isAuthenticated = false, this.user});
+  /// Dernière erreur remontée par l'API, brute.
+  ///
+  /// Volontairement non traduite ici : c'est [ErrorTranslator], côté écran,
+  /// qui décide si elle s'affiche sous un champ ou dans un toast.
+  final Object? lastError;
 
-  AuthState copyWith({bool? isAuthenticated, AppUser? user}) => AuthState(
+  /// Avatar choisi localement, affiché en attendant que l'upload aboutisse.
+  final File? localAvatar;
+
+  const AuthState({
+    this.isAuthenticated = false,
+    this.user,
+    this.lastError,
+    this.localAvatar,
+  });
+
+  AuthState copyWith({
+    bool? isAuthenticated,
+    AppUser? user,
+    Object? lastError,
+    bool clearError = false,
+    File? localAvatar,
+    bool clearLocalAvatar = false,
+  }) =>
+      AuthState(
         isAuthenticated: isAuthenticated ?? this.isAuthenticated,
         user: user ?? this.user,
+        lastError: clearError ? null : (lastError ?? this.lastError),
+        localAvatar: clearLocalAvatar ? null : (localAvatar ?? this.localAvatar),
       );
 }
 
+/// Session client, adossée à l'API Laravel via [AuthRepository].
+///
+/// Convention de retour : les méthodes renvoient un booléen de succès et
+/// déposent l'erreur dans `state.lastError` plutôt que de la propager. Les
+/// écrans lisent `lastError` et le passent à [ErrorTranslator], ce qui évite
+/// un `try/catch` dans chaque formulaire. Les exceptions ne sont relancées
+/// que là où l'appelant doit réagir (avatar, mise à jour de profil).
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState());
+  final AuthRepository _authRepository;
 
-  // ── Connexion par téléphone (OTP validé) ──────────────────────────────────
+  AuthNotifier(this._authRepository) : super(const AuthState());
 
-  /// Connexion classique : crée la session avec le numéro de téléphone.
-  void completeLogin({String phone = ''}) {
-    state = AuthState(
-      isAuthenticated: true,
-      user:
-          MockData.user.copyWith(phoneNumber: phone.isNotEmpty ? phone : null),
-    );
+  // ── Session ───────────────────────────────────────────────────────────────
+
+  /// Installe une session déjà validée — utilisé par `appStartupProvider`
+  /// après un `GET /auth/me` réussi au démarrage.
+  void setAuthenticated(AppUser user) {
+    state = AuthState(isAuthenticated: true, user: user);
   }
 
-  /// Rétro-compatibilité : utilisé par OtpScreen en mode connexion simple.
-  void completeOtp() => completeLogin();
-
-  // ── Inscription par téléphone ──────────────────────────────────────────────
-
-  /// Crée le compte après validation OTP lors d'une inscription par téléphone.
-  void completeSignupOtp(SignupFlowData flow) {
-    state = AuthState(
-      isAuthenticated: true,
-      user: AppUser(
-        id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-        fullName: flow.fullName,
-        phoneNumber: flow.phone,
-        birthDate: flow.birthDate,
-        age: flow.age,
-        joinDate: DateTime.now(),
-        referralCode: _generateReferralCode(flow.fullName),
-        authProvider: AuthProvider.phone,
-        profileCompleted: false,
-      ),
-    );
+  /// Vide la session locale sans appeler l'API.
+  ///
+  /// Déclenché par [AuthInterceptor] sur un 401 : le token est déjà rejeté
+  /// par le serveur, un `POST /auth/logout` échouerait de la même façon.
+  void clearSession() {
+    state = const AuthState();
   }
 
-  // ── Connexion/Inscription sociale ──────────────────────────────────────────
+  // ── Connexion par téléphone ───────────────────────────────────────────────
 
-  /// Connexion sociale (Google/Apple) — crée une session partielle,
-  /// le profil doit être complété avant d'accéder au wallet.
-  void completeSocialLogin(AuthProvider provider) {
-    state = AuthState(
-      isAuthenticated: true,
-      user: AppUser(
-        id: 'u_social_${DateTime.now().millisecondsSinceEpoch}',
-        fullName: '',
-        phoneNumber: '',
-        joinDate: DateTime.now(),
-        referralCode: '',
-        authProvider: provider,
-        profileCompleted: false,
-      ),
-    );
+  Future<bool> login(String phone, String password) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final user = await _authRepository.login(phone, password);
+      state = AuthState(isAuthenticated: true, user: user);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
   }
 
-  // ── Complétion du profil ───────────────────────────────────────────────────
+  // ── Inscription ───────────────────────────────────────────────────────────
 
-  /// Complète le profil post-inscription téléphone (Ville + Quartier + Email).
-  void completeProfile({
+  /// Pré-valide l'étape 1 (nom, téléphone, date de naissance) avant d'afficher
+  /// l'écran mot de passe.
+  ///
+  /// Le serveur y fait tourner `FraudRiskService` et l'unicité du numéro :
+  /// mieux vaut échouer ici que de faire saisir un mot de passe pour rien.
+  Future<bool> validateRegisterStep1(SignupFlowData flow) async {
+    state = state.copyWith(clearError: true);
+    try {
+      await _authRepository.validateRegisterStep1({
+        'first_name': flow.fullName,
+        'phone': flow.phone,
+        if (flow.birthDate != null) 'birthdate': _asDate(flow.birthDate!),
+      });
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  Future<bool> register(SignupFlowData flow, String password) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final user = await _authRepository.register({
+        'first_name': flow.fullName,
+        'phone': flow.phone,
+        'password': password,
+        'password_confirmation': password,
+        if (flow.birthDate != null) 'birthdate': _asDate(flow.birthDate!),
+      });
+      state = AuthState(isAuthenticated: true, user: user);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  // ── Réinitialisation du mot de passe ──────────────────────────────────────
+
+  Future<bool> forgotPassword(String identifier) async {
+    state = state.copyWith(clearError: true);
+    try {
+      await _authRepository.forgotPassword(identifier);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  /// Renvoie le `reset_token` si l'OTP est bon, `null` sinon.
+  Future<String?> verifyResetOtp(String identifier, String otp) async {
+    state = state.copyWith(clearError: true);
+    try {
+      return await _authRepository.verifyResetOtp(identifier, otp);
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return null;
+    }
+  }
+
+  Future<bool> resetPassword(
+      String identifier, String token, String password) async {
+    state = state.copyWith(clearError: true);
+    try {
+      await _authRepository.resetPassword(identifier, token, password);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  // ── Connexion sociale ─────────────────────────────────────────────────────
+
+  /// Échange un `id_token` Google/Apple contre une session.
+  ///
+  /// `needs_profile_completion` vaut `true` quand le fournisseur n'a pas donné
+  /// de numéro de téléphone : l'écran de complétion doit alors s'intercaler
+  /// avant le wallet.
+  Future<({bool success, bool needsProfileCompletion})> socialLogin(
+    AuthProvider provider,
+    String idToken, {
+    String action = 'login',
+  }) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final providerName =
+          provider == AuthProvider.google ? 'google' : 'apple';
+      final response = await _authRepository.socialLogin(
+        providerName,
+        idToken,
+        action: action,
+      );
+
+      state = AuthState(
+        isAuthenticated: true,
+        user: response['client'] as AppUser,
+      );
+
+      return (
+        success: true,
+        needsProfileCompletion:
+            response['needs_profile_completion'] as bool? ?? false,
+      );
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return (success: false, needsProfileCompletion: false);
+    }
+  }
+
+  // ── Complétion du profil ──────────────────────────────────────────────────
+
+  /// Complète le profil après une inscription par téléphone
+  /// (ville, quartier, e-mail).
+  Future<bool> completeProfile({
     String? city,
+    String? country,
     String? neighborhood,
     String? email,
-  }) {
-    if (state.user == null) return;
-    state = state.copyWith(
-      user: state.user!.copyWith(
-        city: city,
-        neighborhood: neighborhood,
-        email: email,
-        profileCompleted: true,
-      ),
-    );
+  }) async {
+    if (state.user == null) return false;
+    state = state.copyWith(clearError: true);
+    try {
+      final user = await _authRepository.updateProfile({
+        if (city != null) 'city': city,
+        if (country != null) 'country': country,
+        if (neighborhood != null) 'neighborhood': neighborhood,
+        if (email != null) 'email': email,
+      });
+      state = state.copyWith(user: user);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
   }
 
-  /// Complète le profil post-connexion sociale (Nom + Téléphone + Birthdate + Ville + …).
-  void completeSocialProfile({
+  /// Complète le profil après une connexion sociale
+  /// (nom, téléphone, date de naissance).
+  Future<bool> completeSocialProfile({
     required String fullName,
     required String phone,
     DateTime? birthDate,
     String? city,
+    String? country,
     String? neighborhood,
     String? email,
-  }) {
-    if (state.user == null) return;
-    final code = _generateReferralCode(fullName);
-    state = state.copyWith(
-      user: state.user!
-          .copyWith(
-            fullName: fullName,
-            phoneNumber: phone,
-            birthDate: birthDate,
-            city: city,
-            neighborhood: neighborhood,
-            email: email,
-            profileCompleted: true,
-          )
-          .copyWith(
-              // referralCode ne peut pas être changé via copyWith standard ; on le sette ici via reconstruction.
-              ),
-    );
-    // Reconstruire avec le referralCode si vide.
-    if (state.user!.referralCode.isEmpty) {
-      state = state.copyWith(
-        user: AppUser(
-          id: state.user!.id,
-          fullName: fullName,
-          phoneNumber: phone,
-          birthDate: birthDate,
-          joinDate: state.user!.joinDate,
-          city: city,
-          neighborhood: neighborhood,
-          email: email,
-          referralCode: code,
-          authProvider: state.user!.authProvider,
-          profileCompleted: true,
-        ),
-      );
+  }) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final user = await _authRepository.completeSocialProfile({
+        'first_name': fullName,
+        'phone': phone,
+        if (birthDate != null) 'birthdate': _asDate(birthDate),
+        if (city != null) 'city': city,
+        if (country != null) 'country': country,
+        if (neighborhood != null) 'neighborhood': neighborhood,
+        if (email != null) 'email': email,
+      });
+      state = AuthState(isAuthenticated: true, user: user);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
     }
   }
 
-  // ── Misc ──────────────────────────────────────────────────────────────────
+  // ── Mot de passe (session ouverte) ────────────────────────────────────────
 
-  void updateProfile({String? firstName, String? email}) {
-    if (state.user == null) return;
-    state = state.copyWith(
-      user: state.user!.copyWith(fullName: firstName, email: email),
-    );
+  Future<bool> verifyPassword(String currentPassword) async {
+    state = state.copyWith(clearError: true);
+    try {
+      return await _authRepository.verifyPassword(currentPassword);
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
   }
 
-  void updateFullProfile({
+  Future<bool> changePassword(
+      String currentPassword, String newPassword) async {
+    state = state.copyWith(clearError: true);
+    try {
+      await _authRepository.changePassword(currentPassword, newPassword);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  // ── Profil ────────────────────────────────────────────────────────────────
+
+  /// Met à jour le profil, en optimiste puis en corrigeant avec la réponse
+  /// serveur. En cas d'échec l'état précédent est restauré : afficher des
+  /// données non persistées induirait l'utilisateur en erreur.
+  Future<void> updateFullProfile({
     String? fullName,
     String? phoneNumber,
     DateTime? birthDate,
     String? email,
-  }) {
+    String? city,
+    String? country,
+    String? neighborhood,
+  }) async {
     if (state.user == null) return;
+
+    final previousUser = state.user!;
+
     state = state.copyWith(
-      user: state.user!.copyWith(
+      user: previousUser.copyWith(
         fullName: fullName,
         phoneNumber: phoneNumber,
         birthDate: birthDate,
         email: email,
+        city: city,
+        country: country,
+        neighborhood: neighborhood,
         profileCompleted: true,
       ),
     );
+
+    try {
+      final data = <String, dynamic>{};
+
+      // L'API stocke prénom et nom séparément.
+      if (fullName != null) {
+        final parts = fullName.trim().split(RegExp(r'\s+'));
+        data['first_name'] = parts.first;
+        data['last_name'] = parts.skip(1).join(' ');
+      }
+      if (phoneNumber != null) data['phone'] = phoneNumber;
+      if (email != null) data['email'] = email;
+      if (city != null) data['city'] = city;
+      if (country != null) data['country'] = country;
+      if (neighborhood != null) data['neighborhood'] = neighborhood;
+      if (birthDate != null) data['birthdate'] = _asDate(birthDate);
+
+      if (data.isNotEmpty) {
+        state = state.copyWith(user: await _authRepository.updateProfile(data));
+      }
+    } catch (e) {
+      state = state.copyWith(user: previousUser, lastError: e);
+      rethrow;
+    }
   }
 
-  void signOut() => state = const AuthState();
-
-  // ── Helpers privés ────────────────────────────────────────────────────────
-
-  String _generateReferralCode(String fullName) {
-    final base = fullName.trim().split(' ').first.toUpperCase();
-    final suffix = (DateTime.now().millisecondsSinceEpoch % 10000).toString();
-    return '${base.length >= 4 ? base.substring(0, 4) : base}-$suffix';
+  /// Affiche immédiatement le fichier choisi, puis le remplace par l'URL
+  /// renvoyée par le serveur une fois l'upload terminé.
+  Future<void> updateAvatar(File file) async {
+    if (state.user == null) return;
+    state = state.copyWith(localAvatar: file);
+    try {
+      state = state.copyWith(user: await _authRepository.uploadAvatar(file));
+    } catch (e) {
+      state = state.copyWith(clearLocalAvatar: true, lastError: e);
+      rethrow;
+    }
   }
+
+  Future<void> removeAvatar() async {
+    if (state.user == null) return;
+    state = state.copyWith(clearLocalAvatar: true);
+    state = state.copyWith(user: await _authRepository.deleteAvatar());
+  }
+
+  // ── Déconnexion ───────────────────────────────────────────────────────────
+
+  Future<void> signOut() async {
+    state = state.copyWith(clearError: true);
+    try {
+      await _authRepository.logout();
+    } catch (_) {
+      // Un échec réseau ou un token déjà invalide ne doit pas empêcher la
+      // déconnexion : le token local est purgé dans tous les cas.
+    } finally {
+      state = const AuthState();
+    }
+  }
+
+  void clearError() {
+    if (state.lastError != null) {
+      state = state.copyWith(clearError: true);
+    }
+  }
+
+  /// Formate une date au format attendu par Laravel (`Y-m-d`).
+  static String _asDate(DateTime date) =>
+      date.toIso8601String().split('T').first;
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
-  (ref) => AuthNotifier(),
-);
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  return AuthNotifier(ref.watch(authRepositoryProvider));
+});

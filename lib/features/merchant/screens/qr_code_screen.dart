@@ -16,16 +16,22 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 import '../providers/merchant_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class QrCodeScreen extends ConsumerWidget {
   const QrCodeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: merchantAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => const Center(child: Text('Erreur')),
@@ -90,11 +96,11 @@ class QrCodeScreen extends ConsumerWidget {
                             child: QrImageView(
                               data: qrData,
                               size: 200,
-                              eyeStyle: const QrEyeStyle(
+                              eyeStyle: QrEyeStyle(
                                 eyeShape: QrEyeShape.square,
                                 color: AppColors.textPrimary,
                               ),
-                              dataModuleStyle: const QrDataModuleStyle(
+                              dataModuleStyle: QrDataModuleStyle(
                                 dataModuleShape: QrDataModuleShape.square,
                                 color: AppColors.textPrimary,
                               ),
@@ -185,7 +191,7 @@ class QrCodeScreen extends ConsumerWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(LucideIcons.copy, color: AppColors.textSecondary, size: 20),
+                          icon: Icon(LucideIcons.copy, color: AppColors.textSecondary, size: 20),
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: directLink));
                             ScaffoldMessenger.of(context).showSnackBar(

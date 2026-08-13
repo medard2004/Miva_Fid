@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miva_fid/core/errors/app_error.dart';
+import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -10,28 +12,23 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/otp_input_row.dart';
 
-/// Contexte d'utilisation de l'OTP, transmis via `extra` du router.
-/// - `login`        → connexion classique, redirige vers /wallet
-/// - `signup`       → inscription téléphone, redirige vers /complete-profile
-/// - `social`       → vérification du numéro lors du profil social,
-///                    redirige vers /wallet (le profil est déjà saisi)
-enum OtpContext { login, signup, social }
-
+/// Saisie du code reçu lors d'une réinitialisation de mot de passe.
+///
+/// C'est le seul usage de l'OTP dans l'application : l'API ne vérifie pas le
+/// numéro à l'inscription ni à la connexion, qui reposent sur un mot de passe.
+/// Le code est produit par `POST /auth/forgot-password` et validé par
+/// `POST /auth/verify-otp`, qui renvoie le `reset_token` attendu par l'écran
+/// suivant.
 class OtpScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
-  final OtpContext otpContext;
 
-  const OtpScreen({
-    super.key,
-    required this.phoneNumber,
-    this.otpContext = OtpContext.login,
-  });
+  const OtpScreen({super.key, required this.phoneNumber});
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends ConsumerState<OtpScreen> {
+class _OtpScreenState extends ConsumerState<OtpScreen> with FormErrorHandler {
   int _secondsLeft = 30;
   Timer? _timer;
 
@@ -59,45 +56,43 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     super.dispose();
   }
 
-  void _onCompleted(String code) {
-    switch (widget.otpContext) {
-      case OtpContext.login:
-        ref
-            .read(authProvider.notifier)
-            .completeLogin(phone: widget.phoneNumber);
-        context.go('/client/wallet');
+  Future<void> _onCompleted(String code) async {
+    final t = AppLocalizations.of(context)!;
 
-      case OtpContext.signup:
-        final flow = ref.read(signupFlowProvider);
-        ref.read(authProvider.notifier).completeSignupOtp(flow);
-        context.go('/client/complete-profile');
+    final resetToken = await runGuarded(
+      () => ref
+          .read(authProvider.notifier)
+          .verifyResetOtp(widget.phoneNumber, code),
+      useOverlay: true,
+      loadingMessage: t.otpVerifyLoading,
+    );
 
-      case OtpContext.social:
-        // Le profil social est déjà entièrement saisi dans CompleteSocialProfileScreen.
-        // On arrive ici après la vérif du téléphone → on termine l'enregistrement.
-        final flow = ref.read(signupFlowProvider);
-        ref.read(authProvider.notifier).completeSocialProfile(
-              fullName: flow.fullName,
-              phone: flow.phone,
-              birthDate: flow.birthDate,
-            );
-        context.go('/client/wallet');
+    if (!mounted) return;
+
+    // `runGuarded` renvoie null s'il était déjà occupé, le notifier renvoie
+    // null si le code est refusé. Dans les deux cas il n'y a rien à router ;
+    // l'erreur éventuelle attend dans `lastError`.
+    if (resetToken == null) {
+      handleError(
+        ref.read(authProvider).lastError,
+        context: ErrorContext.verifyOtp,
+      );
+      return;
     }
+
+    context.push('/client/reset-password', extra: {
+      'identifier': widget.phoneNumber,
+      'reset_token': resetToken,
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
-    final contextLabel = switch (widget.otpContext) {
-      OtpContext.login => t.otpContextLogin,
-      OtpContext.signup => t.otpContextSignup,
-      OtpContext.social => t.otpContextSocial,
-    };
-
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppDetailBar(title: contextLabel),
+      appBar: AppDetailBar(title: t.forgotPasswordTitle),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Column(

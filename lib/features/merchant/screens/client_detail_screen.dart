@@ -13,6 +13,7 @@ import '../../../core/widgets/skeleton_loader.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../widgets/stamp_grid_widget.dart';
+import '../../client/providers/settings_provider.dart';
 
 class ClientDetailScreen extends ConsumerWidget {
   const ClientDetailScreen({super.key, required this.clientId});
@@ -20,10 +21,15 @@ class ClientDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),

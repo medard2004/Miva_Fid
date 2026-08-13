@@ -14,6 +14,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../providers/onboarding_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class MerchantAuthScreen extends ConsumerStatefulWidget {
   const MerchantAuthScreen({super.key});
@@ -100,8 +101,13 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding:
@@ -115,7 +121,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 IconButton(
                   padding: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,
-                  icon: const Icon(
+                  icon: Icon(
                     LucideIcons.arrowLeft,
                     size: 20,
                     color: AppColors.textPrimary,
@@ -393,7 +399,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                         color: AppColors.textSecondary,
                         fontSize: 11.5,
                       ),
-                      children: const [
+                      children: [
                         TextSpan(text: 'En continuant, vous acceptez les '),
                         TextSpan(
                           text: 'CGU',

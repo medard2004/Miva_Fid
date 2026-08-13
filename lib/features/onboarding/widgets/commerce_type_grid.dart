@@ -69,7 +69,7 @@ class _CommerceTypeGridState extends State<CommerceTypeGrid> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primaryTint
-                      : AppColors.surfaceLight,
+                      : AppColors.surface,
                   borderRadius: Rd.button,
                   border: Border.all(
                     color: isSelected ? AppColors.primary : AppColors.border,

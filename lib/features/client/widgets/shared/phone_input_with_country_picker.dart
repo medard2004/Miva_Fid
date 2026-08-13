@@ -113,13 +113,23 @@ class PhoneInputWithCountryPickerState
       keyboardType: TextInputType.phone,
       validator: widget.validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
+      style: AppTextStyles.bodyMedium().copyWith(letterSpacing: 1.2),
       decoration: InputDecoration(
         hintText: widget.hintText,
+        // Sans style explicite, le placeholder héritait de la couleur du texte
+        // saisi : le champ paraissait déjà rempli d'un numéro.
+        hintStyle: AppTextStyles.bodyMedium(
+          color: AppColors.inkMuted(opacity: 0.35),
+        ).copyWith(letterSpacing: 1.2),
+        filled: true,
+        fillColor: AppColors.surfaceMuted,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         prefixIcon: GestureDetector(
           onTap: _showCountryPicker,
           child: Container(
-            padding: const EdgeInsets.only(left: 12, right: 8),
-            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(left: 14, right: 10),
+            margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
             decoration: BoxDecoration(
               border:
                   Border(right: BorderSide(color: AppColors.border, width: 1)),

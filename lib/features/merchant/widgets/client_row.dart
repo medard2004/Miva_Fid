@@ -80,7 +80,7 @@ class ClientRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: Sp.sm),
         padding: const EdgeInsets.all(Sp.md),
         decoration: BoxDecoration(
-          color: AppColors.surfaceLight,
+          color: AppColors.surface,
           borderRadius: Rd.card,
           boxShadow: [
             BoxShadow(

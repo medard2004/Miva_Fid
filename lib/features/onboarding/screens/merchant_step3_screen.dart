@@ -13,6 +13,7 @@ import '../providers/onboarding_provider.dart';
 import '../widgets/color_palette_picker.dart';
 import '../widgets/loyalty_card_preview.dart';
 import '../widgets/onboarding_progress_bar.dart';
+import '../../client/providers/settings_provider.dart';
 
 class MerchantStep3Screen extends ConsumerStatefulWidget {
   const MerchantStep3Screen({super.key});
@@ -33,11 +34,16 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final state = ref.watch(onboardingNotifierProvider);
     final notifier = ref.read(onboardingNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -174,7 +180,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.primary,
-                    border: Border.all(color: AppColors.bgLight, width: 2),
+                    border: Border.all(color: AppColors.background, width: 2),
                   ),
                   child: const Icon(LucideIcons.pencil, size: 12, color: Colors.white),
                 ),

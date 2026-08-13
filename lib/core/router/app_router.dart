@@ -6,6 +6,11 @@ import '../../features/client/core/router/app_route_observer.dart' as client_rou
 import '../../features/client/core/router/tab_transition_direction.dart';
 import '../../features/client/core/theme/app_motion.dart' as client_motion;
 import '../../features/client/auth/auth_screen.dart';
+import '../../features/client/auth/create_password_screen.dart';
+import '../../features/client/auth/forgot_password_screen.dart' as client_forgot;
+import '../../features/client/auth/reset_password_screen.dart';
+import '../../features/client/splash/splash_screen.dart';
+import '../../features/client/providers/app_providers.dart';
 import '../../features/client/auth/otp_screen.dart';
 import '../../features/client/auth/signup_screen.dart';
 import '../../features/client/auth/complete_profile_screen.dart';
@@ -19,6 +24,9 @@ import '../../features/client/card_detail/card_detail_screen.dart';
 import '../../features/client/rewards/rewards_screen.dart';
 import '../../features/client/referral/referral_screen.dart';
 import '../../features/client/profile/profile_screen.dart';
+import '../../features/client/profile/edit_profile_screen.dart';
+import '../../features/client/profile/verify_current_password_screen.dart';
+import '../../features/client/profile/set_new_password_screen.dart';
 import '../../features/client/settings/settings_screen.dart' as client_settings;
 import '../../features/client/notifications/notifications_screen.dart';
 import '../../features/client/widgets/shared/app_shell.dart';
@@ -77,37 +85,110 @@ CustomTransitionPage<void> _clientTabFadePage(GoRouterState state, Widget child)
   );
 }
 
-/// Construit un [OtpScreen] depuis les données `extra` du router.
+/// Construit l'écran OTP depuis les données `extra` du router.
+///
+/// L'OTP ne sert plus qu'à la réinitialisation du mot de passe : le seul
+/// paramètre attendu est le numéro auquel le code a été envoyé.
 OtpScreen _buildClientOtpScreen(GoRouterState state) {
   final extra = state.extra;
-  String phone = '';
-  OtpContext otpContext = OtpContext.login;
-
-  if (extra is Map<String, dynamic>) {
-    phone = extra['phone'] as String? ?? '';
-    final ctx = extra['context'] as String? ?? 'login';
-    otpContext = switch (ctx) {
-      'signup' => OtpContext.signup,
-      'social' => OtpContext.social,
-      _ => OtpContext.login,
-    };
-  } else if (extra is String) {
-    phone = extra;
-  }
-
-  return OtpScreen(phoneNumber: phone, otpContext: otpContext);
+  final phone = switch (extra) {
+    {'phone': final String p} => p,
+    final String p => p,
+    _ => '',
+  };
+  return OtpScreen(phoneNumber: phone);
 }
+
+/// Construit l'écran de nouveau mot de passe depuis les données `extra`.
+///
+/// `identifier` et `reset_token` viennent de l'écran OTP. Sans eux l'appel
+/// serait refusé par le serveur : on renvoie alors vers le début du parcours.
+Widget _buildClientResetPasswordScreen(GoRouterState state) {
+  final extra = state.extra;
+  if (extra is Map &&
+      extra['identifier'] is String &&
+      extra['reset_token'] is String) {
+    return ResetPasswordScreen(
+      identifier: extra['identifier'] as String,
+      resetToken: extra['reset_token'] as String,
+    );
+  }
+  return const client_forgot.ForgotPasswordScreen();
+}
+
+/// Clé du navigateur racine.
+///
+/// Nécessaire à [ToastService] et [LoadingOverlayService], qui doivent insérer
+/// une entrée d'overlay depuis en dehors de l'arbre de widgets (typiquement
+/// depuis un provider, en réponse à une erreur réseau).
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Passerelle entre Riverpod et `go_router` : traduit un changement de session
+/// en notification que le routeur sait écouter.
+class _AuthRefreshNotifier extends ChangeNotifier {
+  _AuthRefreshNotifier(AppRouterRef ref) {
+    ref.listen<AuthState>(
+      authProvider,
+      (previous, next) {
+        if (previous?.isAuthenticated != next.isAuthenticated) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
+/// Routes du module client accessibles sans session.
+const _clientPublicRoutes = {
+  '/client/auth',
+  '/client/login',
+  '/client/signup',
+  '/client/create-password',
+  '/client/otp',
+  '/client/forgot-password',
+  '/client/reset-password',
+  '/client/onboarding',
+};
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(AppRouterRef ref) {
   return GoRouter(
-    initialLocation: '/role-select',
+    navigatorKey: rootNavigatorKey,
+    initialLocation: '/splash',
     observers: [client_router.routeObserver],
+    // Réévalue les redirections dès que la session change : c'est ce qui fait
+    // sortir l'utilisateur du wallet quand un 401 vide l'état.
+    refreshListenable: _AuthRefreshNotifier(ref),
     redirect: (context, state) {
-      // Auth redirect logic — simplified for now
+      final location = state.matchedLocation;
+
+      // Le module marchand a son propre parcours, adossé à Supabase : cette
+      // garde ne couvre que le module client.
+      if (!location.startsWith('/client/')) return null;
+
+      final isAuthenticated = ref.read(authProvider).isAuthenticated;
+      final isPublicRoute = _clientPublicRoutes.contains(location) ||
+          location.startsWith('/client/onboarding');
+
+      if (!isAuthenticated) {
+        return isPublicRoute ? null : '/client/auth';
+      }
+
+      // Déjà connecté : les écrans d'entrée n'ont plus lieu d'être. On laisse
+      // passer la réinitialisation de mot de passe, légitime en session.
+      if (isPublicRoute &&
+          location != '/client/reset-password' &&
+          location != '/client/otp') {
+        return '/client/wallet';
+      }
+
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (_, __) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/role-select',
         pageBuilder: (_, __) => _slide(const RoleSelectionScreen()),
@@ -190,6 +271,18 @@ GoRouter appRouter(AppRouterRef ref) {
         builder: (_, state) => _buildClientOtpScreen(state),
       ),
       GoRoute(
+        path: '/client/create-password',
+        builder: (_, __) => const CreatePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/client/forgot-password',
+        builder: (_, __) => const client_forgot.ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/client/reset-password',
+        builder: (_, state) => _buildClientResetPasswordScreen(state),
+      ),
+      GoRoute(
         path: '/client/complete-profile',
         builder: (_, __) => const CompleteProfileScreen(),
       ),
@@ -250,6 +343,20 @@ GoRouter appRouter(AppRouterRef ref) {
         },
       ),
 
+      GoRoute(
+        path: '/client/profile/edit',
+        builder: (_, __) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/client/profile/verify-password',
+        builder: (_, __) => const VerifyCurrentPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/client/profile/set-new-password',
+        builder: (_, state) => SetNewPasswordScreen(
+          currentPassword: state.extra is String ? state.extra as String : '',
+        ),
+      ),
       GoRoute(
         path: '/client/notifications',
         builder: (_, __) => const NotificationsScreen(),

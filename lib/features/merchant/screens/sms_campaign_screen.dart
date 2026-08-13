@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class SmsCampaignScreen extends ConsumerStatefulWidget {
   const SmsCampaignScreen({super.key});
@@ -61,11 +62,16 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     ref.watch(merchantNotifierProvider); // reserved for future merchant-specific UI
     final smsAsync = ref.watch(smsNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -327,7 +333,7 @@ class _CampaignCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
+          Icon(
             LucideIcons.chevronRight,
             color: AppColors.textSecondary,
           ),
@@ -425,7 +431,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(LucideIcons.x, color: AppColors.textSecondary),
+                  icon: Icon(LucideIcons.x, color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -449,15 +455,15 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                 hintText: 'Ex. Promo week-end',
                 hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
                 filled: true,
-                fillColor: AppColors.bgLight.withValues(alpha: 0.5),
+                fillColor: AppColors.background.withValues(alpha: 0.5),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1),
+                  borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1),
+                  borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -490,7 +496,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.bgLight.withValues(alpha: 0.5),
+                  color: AppColors.background.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
@@ -501,7 +507,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                       style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
                     ),
                     const Spacer(),
-                    const Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
+                    Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
                   ],
                 ),
               ),
@@ -528,16 +534,16 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
                 hintText: 'Écrivez votre message...',
                 hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
                 filled: true,
-                fillColor: AppColors.bgLight.withValues(alpha: 0.5),
+                fillColor: AppColors.background.withValues(alpha: 0.5),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 counterText: '', // Hide default counter
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1),
+                  borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1),
+                  borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -594,7 +600,7 @@ class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.border),
+                  side: BorderSide(color: AppColors.border),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

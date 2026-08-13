@@ -18,6 +18,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_badge.dart';
 import '../../../core/widgets/app_button.dart';
 import '../providers/onboarding_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class QrSuccessScreen extends ConsumerStatefulWidget {
   const QrSuccessScreen({super.key});
@@ -103,6 +104,11 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final state = ref.watch(onboardingNotifierProvider);
     final qrPayload = _buildQrPayload();
 

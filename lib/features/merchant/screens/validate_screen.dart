@@ -13,6 +13,7 @@ import '../providers/validate_provider.dart';
 import '../widgets/client_card_sheet.dart';
 import '../widgets/scan_frame_widget.dart';
 import '../widgets/validation_success_overlay.dart';
+import '../../client/providers/settings_provider.dart';
 
 class ValidateScreen extends ConsumerStatefulWidget {
   const ValidateScreen({super.key});
@@ -119,10 +120,15 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.bgLight,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text('Valider un achat', style: AppTextStyles.h3()),
           bottom: TabBar(

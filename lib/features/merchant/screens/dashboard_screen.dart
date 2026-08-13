@@ -11,17 +11,23 @@ import '../../../core/widgets/skeleton_loader.dart';
 import '../providers/dashboard_stats_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../widgets/activity_row.dart';
+import '../../client/providers/settings_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
     final statsAsync = ref.watch(dashboardStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: merchantAsync.when(
         loading: () => const _DashboardLoadingSkeleton(),
         error: (err, _) => Center(

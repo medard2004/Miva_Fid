@@ -11,6 +11,20 @@ class AppTextStyles {
 
   // --- Display / titres — Cormorant, serif éditorial ---
 
+  /// Titre pleine page des écrans du parcours de compte (connexion,
+  /// inscription, mot de passe).
+  ///
+  /// Ces écrans n'affichent qu'une seule accroche, sans concurrence visuelle :
+  /// elle porte donc plus grand que [displayXL], réservé aux titres de
+  /// contenu où d'autres éléments coexistent.
+  static TextStyle displayHero({Color? color}) => GoogleFonts.cormorant(
+        fontSize: 48,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.ink,
+        height: 1.05,
+        letterSpacing: -0.5,
+      );
+
   static TextStyle displayXL({Color? color}) => GoogleFonts.cormorant(
         fontSize: 34,
         fontWeight: FontWeight.w700,

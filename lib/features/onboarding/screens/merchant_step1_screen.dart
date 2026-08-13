@@ -11,6 +11,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
+import '../../client/providers/settings_provider.dart';
 
 // ── Country code model ────────────────────────────────────────────────────────
 class _CountryCode {
@@ -209,13 +210,13 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                         hintStyle: AppTextStyles.bodyMd().copyWith(
                           color: AppColors.textSecondary,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           LucideIcons.search,
                           color: AppColors.textSecondary,
                           size: 20,
                         ),
                         filled: true,
-                        fillColor: AppColors.bgLight,
+                        fillColor: AppColors.background,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 10,
@@ -321,9 +322,14 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final state = ref.watch(onboardingNotifierProvider);
 
-    const inputDecorationTheme = InputDecoration(
+    final inputDecorationTheme = InputDecoration(
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
       fillColor: Colors.white,
@@ -350,7 +356,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -420,7 +426,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                             color: AppColors.textSecondary.withValues(alpha: 0.6),
                           ),
                         ),
-                        icon: const Icon(
+                        icon: Icon(
                           LucideIcons.chevronDown,
                           color: AppColors.textSecondary,
                         ),
@@ -516,7 +522,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.bgLight,
+                                color: AppColors.background,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -537,7 +543,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                       fontSize: 13,
                                     ),
                                   ),
-                                  const Icon(
+                                  Icon(
                                     LucideIcons.chevronDown,
                                     size: 14,
                                     color: AppColors.textSecondary,
@@ -604,7 +610,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                             AnimatedRotation(
                               turns: _socialsExpanded ? 0.5 : 0,
                               duration: const Duration(milliseconds: 200),
-                              child: const Icon(
+                              child: Icon(
                                 LucideIcons.chevronDown,
                                 size: 18,
                                 color: AppColors.textSecondary,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/errors/app_error.dart';
+import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -18,7 +20,8 @@ class CompleteProfileScreen extends ConsumerStatefulWidget {
       _CompleteProfileScreenState();
 }
 
-class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
+class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
+    with FormErrorHandler {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   DateTime? _birthDate;
@@ -30,31 +33,40 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
     super.dispose();
   }
 
-  void _complete() {
-    ref.read(authProvider.notifier).updateProfile(
-          firstName: _fullNameController.text.trim().isNotEmpty
-              ? _fullNameController.text.trim()
-              : null,
-          email: _emailController.text.trim().isNotEmpty
-              ? _emailController.text.trim()
-              : null,
-        );
-    ref.read(authProvider.notifier).completeProfile(
-          email: _emailController.text.trim().isNotEmpty
-              ? _emailController.text.trim()
-              : null,
-        );
-    context.go('/client/wallet');
+  Future<void> _complete() async {
+    FocusScope.of(context).unfocus();
+    clearAllFieldErrors();
+
+    final fullName = _fullNameController.text.trim();
+    final email = _emailController.text.trim();
+
+    try {
+      await runGuarded(
+        () => ref.read(authProvider.notifier).updateFullProfile(
+              fullName: fullName.isNotEmpty ? fullName : null,
+              email: email.isNotEmpty ? email : null,
+              birthDate: _birthDate,
+            ),
+        useOverlay: true,
+      );
+      if (!mounted) return;
+      context.go('/client/wallet');
+    } catch (e) {
+      if (mounted) {
+        handleError(e, context: ErrorContext.completeProfile);
+      }
+    }
   }
 
+  /// Passer l'étape n'écrit rien : ces champs sont facultatifs et le compte
+  /// existe déjà côté serveur depuis `POST /auth/register`.
   void _skip() {
-    ref.read(authProvider.notifier).completeProfile();
     context.go('/client/wallet');
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final user = ref.watch(authProvider).user;
 

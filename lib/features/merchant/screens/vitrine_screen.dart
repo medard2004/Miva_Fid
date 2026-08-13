@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/merchant_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class VitrineScreen extends ConsumerStatefulWidget {
   const VitrineScreen({super.key});
@@ -117,6 +118,11 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
     final merchant = merchantAsync.value;
 
@@ -124,7 +130,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
 
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           const SizedBox(height: Sp.sm),
@@ -157,13 +163,13 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                   OutlinedButton.icon(
                     onPressed: () => _showPreviewSheet(context, merchant),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.border),
+                      side: BorderSide(color: AppColors.border),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(LucideIcons.eye, color: AppColors.textPrimary, size: 16),
+                    icon: Icon(LucideIcons.eye, color: AppColors.textPrimary, size: 16),
                     label: Text(
                       'Aperçu',
                       style: AppTextStyles.caption().copyWith(
@@ -203,7 +209,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                             ),
                           ),
                           const Spacer(),
-                          const Icon(LucideIcons.externalLink, color: AppColors.textSecondary, size: 16),
+                          Icon(LucideIcons.externalLink, color: AppColors.textSecondary, size: 16),
                         ],
                       ),
                     ).animate().fadeIn(duration: 400.ms, delay: 150.ms).slideY(begin: 0.08, end: 0),
@@ -293,7 +299,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
             // 4. Sticky Bottom Action Button
             Container(
               padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border(
                   top: BorderSide(color: AppColors.border, width: 0.5),
@@ -381,15 +387,15 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
         hintText: hint,
         hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.4)),
         filled: true,
-        fillColor: AppColors.bgLight.withValues(alpha: 0.3),
+        fillColor: AppColors.background.withValues(alpha: 0.3),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(color: AppColors.border, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(color: AppColors.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -551,7 +557,7 @@ class _PreviewWidget extends StatelessWidget {
                 const Divider(height: Sp.lg),
                 Row(
                   children: [
-                    const Icon(LucideIcons.phone, size: 16, color: AppColors.textSecondary),
+                    Icon(LucideIcons.phone, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 8),
                     Text(phone, style: AppTextStyles.caption()),
                   ],
@@ -559,7 +565,7 @@ class _PreviewWidget extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(LucideIcons.mapPin, size: 16, color: AppColors.textSecondary),
+                    Icon(LucideIcons.mapPin, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 8),
                     Text(address, style: AppTextStyles.caption()),
                   ],

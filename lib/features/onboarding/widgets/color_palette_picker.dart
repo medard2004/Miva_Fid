@@ -144,8 +144,8 @@ class _CustomColorSheetState extends State<_CustomColorSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(Sp.md),
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceLight,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(

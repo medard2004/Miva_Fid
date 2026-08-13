@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miva_fid/core/errors/app_error.dart';
+import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -20,7 +22,7 @@ class CompleteSocialProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _CompleteSocialProfileScreenState
-    extends ConsumerState<CompleteSocialProfileScreen> {
+    extends ConsumerState<CompleteSocialProfileScreen> with FormErrorHandler {
   final _formKey = GlobalKey<FormState>();
 
   final _fullNameController = TextEditingController();
@@ -36,25 +38,45 @@ class _CompleteSocialProfileScreenState
     super.dispose();
   }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+  /// Renseigne les informations que Google/Apple ne fournissent pas.
+  ///
+  /// Le compte existe déjà (créé par `POST /auth/social`) et la session est
+  /// ouverte : cet appel complète le profil via
+  /// `POST /auth/social/complete-profile`.
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    clearAllFieldErrors();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final fullPhone = _phoneInputKey.currentState?.fullPhoneNumber ??
         _phoneController.text.trim();
 
-    ref.read(authProvider.notifier).completeSocialProfile(
-          fullName: _fullNameController.text.trim(),
-          phone: fullPhone,
-          birthDate: _birthDate,
-        );
+    final success = await runGuarded(
+      () => ref.read(authProvider.notifier).completeSocialProfile(
+            fullName: _fullNameController.text.trim(),
+            phone: fullPhone,
+            birthDate: _birthDate,
+          ),
+      useOverlay: true,
+    );
 
-    ref.read(signupFlowProvider.notifier).reset();
-    context.go('/client/wallet');
+    if (!mounted || success == null) return;
+
+    if (success) {
+      ref.read(signupFlowProvider.notifier).reset();
+      context.go('/client/wallet');
+    } else {
+      handleError(
+        ref.read(authProvider).lastError,
+        context: ErrorContext.completeProfile,
+        formKey: _formKey,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(themeModeProvider);
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -107,7 +129,10 @@ class _CompleteSocialProfileScreenState
                             _birthDate == null ? t.authBirthDateError : null,
                       ),
                       const SizedBox(height: 28),
-                      AppButton(label: t.completeProfileSubmit, onTap: _submit),
+                      AppButton(
+                        label: t.completeProfileSubmit,
+                        onTap: isBusy ? null : _submit,
+                      ),
                     ],
                   ),
                 ),

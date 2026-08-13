@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
+import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
@@ -15,14 +17,14 @@ const _kScanChrome = Color(0xFF0E0F12);
 
 /// Écran de scan QR — caméra réelle (mobile_scanner) sous un cadre net et
 /// neutre, avec repli de saisie manuelle si la caméra est indisponible.
-class QrScanScreen extends StatefulWidget {
+class QrScanScreen extends ConsumerStatefulWidget {
   const QrScanScreen({super.key});
 
   @override
-  State<QrScanScreen> createState() => _QrScanScreenState();
+  ConsumerState<QrScanScreen> createState() => _QrScanScreenState();
 }
 
-class _QrScanScreenState extends State<QrScanScreen>
+class _QrScanScreenState extends ConsumerState<QrScanScreen>
     with TickerProviderStateMixin {
   late final AnimationController _scanController;
   late final AnimationController _pulseController;
@@ -130,6 +132,11 @@ class _QrScanScreenState extends State<QrScanScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Cet écran peint via les tokens statiques d'AppColors, invisibles pour
+    // le système de dépendances de Flutter : observer la luminosité
+    // effective est son seul déclencheur de rebuild sur une bascule
+    // clair/sombre.
+    ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
     final frameW = size.width * 0.76;

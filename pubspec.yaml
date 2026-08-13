@@ -37,12 +37,20 @@ dependencies:
   printing: ^5.12.0
 
   # Push notifications
-  firebase_core: ^3.4.1
-  firebase_messaging: ^15.2.10
+  firebase_core: ^4.12.1
+  firebase_messaging: ^16.0.0
   flutter_local_notifications: ^17.2.2
+
+  # Auth (API Laravel + fournisseurs sociaux)
+  firebase_auth: ^6.5.6
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^8.1.0
+  country_picker: ^2.0.28
+  country_flags: ^1.1.1
 
   # Images
   image_picker: ^1.1.2
+  image_cropper: ^12.2.1
   cached_network_image: ^3.3.1
 
   # Utils
