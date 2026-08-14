@@ -31,8 +31,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   @override
   void dispose() {
     _scanCtrl.dispose();
-    for (final c in _otpCtrl) c.dispose();
-    for (final f in _otpFocus) f.dispose();
+    for (final c in _otpCtrl) {
+      c.dispose();
+    }
+    for (final f in _otpFocus) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -125,14 +129,14 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         backgroundColor: AppColors.bgLight,
         appBar: AppBar(
           title: Text('Valider un achat', style: AppTextStyles.h3()),
-          bottom: TabBar(
-            indicator: const BoxDecoration(
+          bottom: const TabBar(
+            indicator: BoxDecoration(
               color: AppColors.merchant,
               borderRadius: Rd.pill,
             ),
             labelColor: Colors.white,
             unselectedLabelColor: AppColors.textSecondary,
-            tabs: const [
+            tabs: [
               Tab(text: 'Scanner QR'),
               Tab(text: 'Code manuel'),
             ],
@@ -217,7 +221,7 @@ class _ManualTab extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   maxLength: 1,
                   style: AppTextStyles.monoLg(),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     counterText: '',
                     border: OutlineInputBorder(borderRadius: Rd.input),
                   ),

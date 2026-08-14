@@ -231,6 +231,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       controller: _rewardCtrl,
                       onChanged: notifier.setRewardDescription,
                       prefixIcon: LucideIcons.gift,
+                      accentColor: AppColors.merchant,
                     ),
                     const SizedBox(height: Sp.sm),
                     SwitchListTile.adaptive(
@@ -253,6 +254,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                         onChanged: notifier.setGoogleReviewUrl,
                         prefixIcon: LucideIcons.link,
                         keyboardType: TextInputType.url,
+                        accentColor: AppColors.merchant,
                       ),
                     ],
                     const SizedBox(height: Sp.lg),

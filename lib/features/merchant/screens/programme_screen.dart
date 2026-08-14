@@ -122,7 +122,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                         const SizedBox(height: Sp.md),
                         Container(
                           padding: const EdgeInsets.all(Sp.md),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppColors.warningTint,
                             borderRadius: Rd.card,
                           ),

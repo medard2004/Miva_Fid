@@ -210,7 +210,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     const SizedBox(height: Sp.lg),
 
                     // Section Photo de couverture
-                    _SectionTitle('Photo de couverture').animate().fadeIn(duration: 300.ms, delay: 220.ms),
+                    const _SectionTitle('Photo de couverture').animate().fadeIn(duration: 300.ms, delay: 220.ms),
                     const SizedBox(height: 6),
                     CustomPaint(
                       painter: _DashedBorderPainter(
@@ -240,7 +240,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     const SizedBox(height: Sp.lg),
 
                     // Section Informations
-                    _SectionTitle('Informations').animate().fadeIn(duration: 300.ms, delay: 330.ms),
+                    const _SectionTitle('Informations').animate().fadeIn(duration: 300.ms, delay: 330.ms),
                     const SizedBox(height: 8),
                     _buildInputLabel('NOM DU COMMERCE'),
                     _buildTextField(_nameCtrl, 'Restaurant La Saveur'),
@@ -253,7 +253,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     const SizedBox(height: Sp.lg),
 
                     // Section Contact & adresse
-                    _SectionTitle('Contact & adresse').animate().fadeIn(duration: 300.ms, delay: 400.ms),
+                    const _SectionTitle('Contact & adresse').animate().fadeIn(duration: 300.ms, delay: 400.ms),
                     const SizedBox(height: 8),
                     _buildIconLabel(LucideIcons.phone, 'TÉLÉPHONE'),
                     _buildTextField(_phoneCtrl, '+228 90 12 34 56', keyboardType: TextInputType.phone),
@@ -263,7 +263,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     const SizedBox(height: Sp.lg),
 
                     // Section Horaires
-                    _SectionTitle('Horaires').animate().fadeIn(duration: 300.ms, delay: 460.ms),
+                    const _SectionTitle('Horaires').animate().fadeIn(duration: 300.ms, delay: 460.ms),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(Sp.md),
@@ -272,8 +272,8 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: Column(
-                        children: const [
+                      child: const Column(
+                        children: [
                           _HourRow(day: 'Lundi', hours: '08:00 - 22:00'),
                           _HourRow(day: 'Mardi', hours: '08:00 - 22:00'),
                           _HourRow(day: 'Mercredi', hours: '08:00 - 22:00'),
@@ -532,7 +532,7 @@ class _PreviewWidget extends StatelessWidget {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: AppColors.merchant.withValues(alpha: 0.1),
-                      child: Text(initials, style: TextStyle(color: AppColors.merchant, fontWeight: FontWeight.bold)),
+                      child: Text(initials, style: const TextStyle(color: AppColors.merchant, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: Sp.sm),
                     Expanded(

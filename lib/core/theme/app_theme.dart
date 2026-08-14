@@ -109,30 +109,30 @@ class AppTheme {
         elevation: 0,
         shadowColor: Colors.transparent,
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceLight,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.danger, width: 2),
+          borderSide: BorderSide(color: AppColors.danger, width: 2),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -276,9 +276,9 @@ class AppTheme {
             width: 1.5,
           ),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(

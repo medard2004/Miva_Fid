@@ -7,6 +7,9 @@ import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Le splash natif se ferme automatiquement dès la première frame Flutter
+  // peinte (comportement par défaut, fiable) — SplashScreen prend le relais
+  // avec son animation dès cet instant.
 
   // Hive init
   await Hive.initFlutter();
@@ -20,7 +23,7 @@ Future<void> main() async {
       'SUPABASE_URL',
       defaultValue: 'https://YOUR_PROJECT.supabase.co',
     ),
-    anonKey: const String.fromEnvironment(
+    publishableKey: const String.fromEnvironment(
       'SUPABASE_ANON_KEY',
       defaultValue: 'YOUR_ANON_KEY',
     ),

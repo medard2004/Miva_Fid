@@ -44,7 +44,7 @@ class StampStepper extends StatelessWidget {
               ),
               Text(
                 value.toString(),
-                style: AppTextStyles.monoXl().copyWith(color: AppColors.primary),
+                style: AppTextStyles.monoXl().copyWith(color: AppColors.merchant),
               ),
               _StepperBtn(
                 icon: LucideIcons.plus,
@@ -85,13 +85,13 @@ class _StepperBtn extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: enabled ? AppColors.primaryTint : AppColors.bgLight,
+          color: enabled ? AppColors.merchantTint : AppColors.bgLight,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
           size: 20,
-          color: enabled ? AppColors.primary : AppColors.textSecondary,
+          color: enabled ? AppColors.merchant : AppColors.textSecondary,
         ),
       ),
     );

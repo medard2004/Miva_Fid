@@ -46,8 +46,10 @@ class DashboardStats {
 @riverpod
 Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
   final merchant = await ref.watch(merchantNotifierProvider.future);
-  if (merchant == null) return const DashboardStats(
+  if (merchant == null) {
+    return const DashboardStats(
     totalClients: 0, stampsToday: 0, activeRewards: 0, recentActivity: []);
+  }
 
   final now = DateTime.now();
   final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();

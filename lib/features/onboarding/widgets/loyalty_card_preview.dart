@@ -8,28 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/onboarding_provider.dart';
+import '../utils/commerce_icons.dart';
 import 'premium_card_surface.dart';
 import 'stamp_grid_widget_preview.dart';
-
-IconData _iconForCommerceType(String type) {
-  switch (type) {
-    case 'Restaurant':
-      return LucideIcons.utensils;
-    case 'Hôtel':
-      return LucideIcons.bedDouble;
-    case 'Salon':
-    case 'Salon de coiffure':
-    case 'Salon de beauté':
-      return LucideIcons.scissors;
-    case 'Boutique':
-      return LucideIcons.shoppingBag;
-    case 'Café':
-    case 'Pâtisserie':
-      return LucideIcons.coffee;
-    default:
-      return LucideIcons.store;
-  }
-}
 
 class LoyaltyCardPreview extends ConsumerWidget {
   const LoyaltyCardPreview({super.key, this.previewStamps = 7});
@@ -167,7 +148,7 @@ class _CardTopGroup extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(_iconForCommerceType(commerceType), size: 10, color: Colors.white),
+                  Icon(iconForCommerceType(commerceType), size: 10, color: Colors.white),
                   const SizedBox(width: 5),
                   Text(
                     (commerceType.isEmpty ? 'Commerce' : commerceType).toUpperCase(),
@@ -193,7 +174,7 @@ class _CardTopGroup extends StatelessWidget {
                   child: Builder(builder: (context) {
                     final url = logoUrl!;
                     Widget fallback() => Icon(
-                          _iconForCommerceType(commerceType),
+                          iconForCommerceType(commerceType),
                           size: 13,
                           color: primaryColor,
                         );
@@ -214,7 +195,7 @@ class _CardTopGroup extends StatelessWidget {
               CircleAvatar(
                 radius: 13,
                 backgroundColor: Colors.white.withValues(alpha: 0.16),
-                child: Icon(_iconForCommerceType(commerceType), size: 13, color: Colors.white),
+                child: Icon(iconForCommerceType(commerceType), size: 13, color: Colors.white),
               ),
           ],
         ),

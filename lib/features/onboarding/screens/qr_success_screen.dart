@@ -81,7 +81,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
               pw.Text(state.phone, style: const pw.TextStyle(fontSize: 12)),
             pw.SizedBox(height: 12),
             pw.Text('Powered by Miva-Fid',
-                style: pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
+                style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
           ],
         ),
       ),
@@ -197,9 +197,9 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                         const SizedBox(height: Sp.sm),
                         Text(state.commerceName, style: AppTextStyles.h3()),
                         const SizedBox(height: Sp.sm),
-                        Row(
+                        const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             AppBadge('QR Code', color: AppColors.merchant),
                             SizedBox(width: Sp.sm),
                             AppBadge('NFC', color: AppColors.success),

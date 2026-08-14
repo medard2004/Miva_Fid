@@ -65,7 +65,7 @@ class ClientDetailScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: Rd.card20,
-                    boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08),
+                    boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.08),
                         blurRadius: 16, offset: const Offset(0, 4))],
                   ),
                   child: Column(

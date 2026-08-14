@@ -9,7 +9,7 @@ class StampGridWidgetPreview extends StatelessWidget {
     required this.total,
     this.stampSize = 26,
     this.gap = 6,
-    this.designType = 'check',
+    this.designType = 'icon',
     this.emoji = '✨',
     this.iconName = 'check_rounded',
     required this.primaryColor,
@@ -23,6 +23,11 @@ class StampGridWidgetPreview extends StatelessWidget {
   final String emoji;
   final String iconName;
   final Color primaryColor;
+
+  /// Nombre maximum de pastilles réellement dessinées — au-delà, un badge
+  /// "+N" résume le reste. Évite tout débordement sur la carte compacte
+  /// quand le commerçant choisit un objectif élevé (ex. 20+ tampons).
+  static const int _maxVisibleDots = 10;
 
   IconData _getIconData(String name) {
     switch (name) {
@@ -49,74 +54,97 @@ class StampGridWidgetPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clampedFilled = filled.clamp(0, total);
+    final hasOverflow = total > _maxVisibleDots;
+    final dotsToRender = hasOverflow ? _maxVisibleDots - 1 : total;
+    final overflowCount = total - dotsToRender;
+
     return Wrap(
       spacing: gap,
       runSpacing: gap,
-      children: List.generate(total, (i) {
-        final isFilled = i < clampedFilled;
-        if (isFilled) {
-          Widget child;
-          if (designType == 'emoji') {
-            child = Center(
-              child: Text(
-                emoji,
-                style: TextStyle(fontSize: stampSize * 0.55),
-              ),
-            );
-          } else if (designType == 'icon') {
-            child = Center(
-              child: Icon(
-                _getIconData(iconName),
-                color: primaryColor,
-                size: stampSize * 0.55,
-              ),
-            );
-          } else {
-            child = Center(
-              child: Icon(
-                LucideIcons.check,
-                color: primaryColor,
-                size: stampSize * 0.55,
-              ),
-            );
-          }
+      children: [
+        ...List.generate(dotsToRender, (i) {
+          final isFilled = i < clampedFilled;
+          if (isFilled) {
+            Widget child;
+            if (designType == 'emoji') {
+              child = Center(
+                child: Text(
+                  emoji,
+                  style: TextStyle(fontSize: stampSize * 0.55),
+                ),
+              );
+            } else if (designType == 'icon') {
+              child = Center(
+                child: Icon(
+                  _getIconData(iconName),
+                  color: primaryColor,
+                  size: stampSize * 0.55,
+                ),
+              );
+            } else {
+              child = Center(
+                child: Icon(
+                  LucideIcons.check,
+                  color: primaryColor,
+                  size: stampSize * 0.55,
+                ),
+              );
+            }
 
+            return Container(
+              width: stampSize,
+              height: stampSize,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: child,
+            )
+                .animate()
+                .scale(
+                  begin: const Offset(0, 0),
+                  end: const Offset(1.15, 1.15),
+                  curve: Curves.elasticOut,
+                  duration: 400.ms,
+                  delay: (i * 40).ms,
+                )
+                .then()
+                .scale(
+                  end: const Offset(1.0, 1.0),
+                  duration: 100.ms,
+                );
+          }
           return Container(
             width: stampSize,
             height: stampSize,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.55),
+                width: 2.2,
+              ),
             ),
-            child: child,
-          )
-              .animate()
-              .scale(
-                begin: const Offset(0, 0),
-                end: const Offset(1.15, 1.15),
-                curve: Curves.elasticOut,
-                duration: 400.ms,
-                delay: (i * 40).ms,
-              )
-              .then()
-              .scale(
-                end: const Offset(1.0, 1.0),
-                duration: 100.ms,
-              );
-        }
-        return Container(
-          width: stampSize,
-          height: stampSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.4),
-              width: 1.5,
+          );
+        }),
+        if (hasOverflow)
+          Container(
+            width: stampSize,
+            height: stampSize,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.18),
+            ),
+            child: Text(
+              '+$overflowCount',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: stampSize * 0.36,
+              ),
             ),
           ),
-        );
-      }),
+      ],
     );
   }
 }
-

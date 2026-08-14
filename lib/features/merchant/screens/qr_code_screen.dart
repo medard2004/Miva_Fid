@@ -406,7 +406,7 @@ class QrCodeScreen extends ConsumerWidget {
           if (address.isNotEmpty) pw.Text(address, style: const pw.TextStyle(fontSize: 12)),
           if (phone.isNotEmpty) pw.Text(phone, style: const pw.TextStyle(fontSize: 12)),
           pw.SizedBox(height: 12),
-          pw.Text('Powered by Miva-Fid', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
+          pw.Text('Powered by Miva-Fid', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
         ],
       ),
     ));

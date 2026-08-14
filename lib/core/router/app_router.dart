@@ -35,6 +35,7 @@ import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/onboarding/screens/login_screen.dart';
+import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
 import '../../features/onboarding/screens/merchant_auth_screen.dart';
 import '../../features/onboarding/screens/merchant_step1_screen.dart';
@@ -101,13 +102,17 @@ OtpScreen _buildClientOtpScreen(GoRouterState state) {
 @Riverpod(keepAlive: true)
 GoRouter appRouter(AppRouterRef ref) {
   return GoRouter(
-    initialLocation: '/role-select',
+    initialLocation: '/splash',
     observers: [client_router.routeObserver],
     redirect: (context, state) {
       // Auth redirect logic — simplified for now
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        pageBuilder: (_, __) => _fade(const SplashScreen()),
+      ),
       GoRoute(
         path: '/role-select',
         pageBuilder: (_, __) => _slide(const RoleSelectionScreen()),

@@ -23,7 +23,7 @@ class OnboardingState {
     this.rewardDescription = '',
     this.showReviewButton = false,
     this.googleReviewUrl = '',
-    this.stampDesignType = 'check',
+    this.stampDesignType = 'icon',
     this.stampEmoji = '✨',
     this.stampIcon = 'check_rounded',
     this.cardDecorationPattern = 'none',

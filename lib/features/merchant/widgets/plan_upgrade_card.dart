@@ -14,8 +14,8 @@ class PlanUpgradeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [AppColors.merchant, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

@@ -111,12 +111,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
           // Icon
           Container(
-            width: 52,
-            height: 52,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: AppColors.merchantTint,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.merchant.withValues(alpha: 0.16), width: 1.2),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               LucideIcons.keyRound,
@@ -137,16 +136,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             ),
           ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.12, end: 0),
 
-          const SizedBox(height: Sp.xs),
-
-          Text(
-            'Recevez un lien pour réinitialiser votre accès.',
-            style: AppTextStyles.bodyMd().copyWith(
-              color: AppColors.textSecondary,
-              height: 1.45,
-            ),
-          ).animate(delay: 50.ms).fadeIn(duration: 350.ms),
-
           const SizedBox(height: Sp.md),
 
           // Email field
@@ -155,6 +144,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             hint: 'vous@exemple.com',
             controller: _emailCtrl,
             prefixIcon: LucideIcons.mail,
+            accentColor: AppColors.merchant,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             validator: (v) {
@@ -216,11 +206,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           Container(
             padding: const EdgeInsets.all(Sp.md),
             decoration: BoxDecoration(
-              color: AppColors.merchantTint.withValues(alpha: 0.45),
-              borderRadius: BorderRadius.circular(14),
+              color: AppColors.merchantTint.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.merchant.withValues(alpha: 0.16),
-                width: 1.2,
+                color: AppColors.merchant.withValues(alpha: 0.15),
+                width: 1.5,
               ),
             ),
             child: Row(
@@ -236,7 +226,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   child: Text(
                     'Vérifiez votre dossier spam si vous ne recevez pas l\'email dans les prochaines minutes.',
                     style: AppTextStyles.caption().copyWith(
-                      color: AppColors.merchantDark,
+                      color: AppColors.merchant,
                       height: 1.5,
                       fontWeight: FontWeight.w500,
                     ),

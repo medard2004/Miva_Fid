@@ -21,7 +21,7 @@ class AppBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = backgroundColor ?? (color ?? AppColors.primary).withOpacity(0.12);
+    final bg = backgroundColor ?? (color ?? AppColors.primary).withValues(alpha: 0.12);
     final fg = textColor ?? (color ?? AppColors.primary);
 
     return Container(

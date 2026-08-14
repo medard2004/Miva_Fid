@@ -422,7 +422,7 @@ class _ActivityChartCard extends StatelessWidget {
                             val,
                             style: AppTextStyles.caption().copyWith(
                               fontSize: 10,
-                              color: AppColors.textSecondary.withOpacity(0.6),
+                              color: AppColors.textSecondary.withValues(alpha: 0.6),
                             ),
                           ))
                       .toList(),
@@ -441,7 +441,7 @@ class _ActivityChartCard extends StatelessWidget {
                             5,
                             (_) => Container(
                               height: 1,
-                              color: AppColors.border.withOpacity(0.35),
+                              color: AppColors.border.withValues(alpha: 0.35),
                             ),
                           ),
                         ),
@@ -675,10 +675,10 @@ class _DashboardLoadingSkeleton extends StatelessWidget {
             children: [
               SkeletonLoader(width: 40, height: 40, borderRadius: BorderRadius.circular(20)),
               const SizedBox(width: Sp.sm),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     SkeletonLoader(width: 120, height: 16),
                     SizedBox(height: 6),
                     SkeletonLoader(width: 80, height: 12),
