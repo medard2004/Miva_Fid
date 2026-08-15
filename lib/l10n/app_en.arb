@@ -50,7 +50,7 @@
 
   "editProfileTitle": "Edit profile",
   "editProfileFullName": "Full name",
-  "editProfileFullNameHint": "First Last",
+  "editProfileFullNameHint": "Kokou John",
   "editProfileFullNameError": "Please enter your full name",
   "editProfilePhone": "Phone number",
   "editProfileBirthDate": "Date of birth",
@@ -273,6 +273,8 @@
 
   "phonePickerTitle": "Select a dial code",
   "phonePickerSearchHint": "Search a country or dial code...",
+  "countryPickerTitle": "Select a country",
+  "countryPickerSearchHint": "Search a country...",
 
   "authPasswordLabel": "Password",
   "authForgotPasswordLink": "Forgot password?",
@@ -280,6 +282,7 @@
   "authLoadingGoogle": "Signing in with Google...",
   "authLoadingApple": "Signing in with Apple...",
   "authLoadingSignup": "Creating your account...",
+  "authLoadingSignOut": "Signing out...",
   "createPasswordTitle": "Create your password",
   "createPasswordSubtitle": "One last step to secure your account.",
   "createPasswordConfirmLabel": "Confirm password",
@@ -314,11 +317,14 @@
   "errLoginInvalidCredentials": "Incorrect phone number or password.",
   "errLoginAccountNotFound": "This account doesn't exist yet.",
   "errLoginFailed": "We can't sign you in right now. Try again.",
+  "errAccountUsesGoogle": "This account uses Google sign-in. Sign in with Google to access your account.",
+  "errAccountUsesApple": "This account uses Apple sign-in. Sign in with Apple to access your account.",
   "errLoginSuccess": "You're signed in.",
   "errSocialCancelled": "Sign-in cancelled.",
   "errSocialFailedGoogle": "We couldn't sign you in with Google. Try again.",
   "errSocialFailedApple": "We couldn't sign you in with Apple. Try again.",
   "errSocialAccountNotFound": "No account is linked to this profile. Create an account first.",
+  "errSocialEmailUsesPassword": "An account already exists with this email and uses a password. Sign in with your password instead.",
   "errSignupPhoneTaken": "This phone number is already linked to an account.",
   "errSignupEmailTaken": "This email address is already in use.",
   "errSignupFailed": "We can't create your account right now. Try again.",
@@ -372,8 +378,17 @@
   "changePasswordSubmit": "Save",
   "editProfileCity": "City",
   "editProfileCityHint": "Lomé",
+  "editProfileCountry": "Country",
+  "editProfileCountryHint": "Togo",
   "editProfileSaving": "Saving...",
   "editProfilePhotoChange": "Change photo",
   "editProfilePhotoRemove": "Remove photo",
-  "editProfileSecurity": "Security"
+  "editProfileSecurity": "Security",
+  "editProfileNotSet": "Not set",
+  "editProfilePhotoLabel": "Profile photo",
+  "editProfileAuthMethod": "Sign-in method",
+  "editProfileConnectedVia": "Connected via {provider}",
+  "@editProfileConnectedVia": {
+    "placeholders": { "provider": { "type": "String" } }
+  }
 }

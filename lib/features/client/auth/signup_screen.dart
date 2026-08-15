@@ -58,10 +58,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
           birthDate: _birthDate,
         );
 
+    final t = AppLocalizations.of(context)!;
     final valid = await runGuarded(
       () => ref
           .read(authProvider.notifier)
           .validateRegisterStep1(ref.read(signupFlowProvider)),
+      useOverlay: true,
+      loadingMessage: t.authLoadingSignup,
     );
 
     if (!mounted || valid == null) return;
@@ -157,8 +160,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                           requiredMessage: t.editProfileFullNameError,
                         ),
                         onChanged: (_) => clearFieldError('first_name'),
+                        style: AppTextStyles.bodyMedium(),
                         decoration: InputDecoration(
-                            hintText: t.editProfileFullNameHint),
+                          hintText: t.editProfileFullNameHint,
+                          hintStyle: AppTextStyles.bodyMedium(
+                              color: AppColors.inkMuted(opacity: 0.4)),
+                          filled: true,
+                          fillColor: AppColors.surfaceMuted,
+                        ),
                       ),
                       const SizedBox(height: 14),
                       Text(t.editProfileBirthDate,

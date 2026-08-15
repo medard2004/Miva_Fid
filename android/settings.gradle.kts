@@ -21,6 +21,10 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "9.0.1" apply false
     id("org.jetbrains.kotlin.android") version "2.3.20" apply false
+    // Lit `app/google-services.json` et injecte la configuration Firebase dans
+    // l'APK. Sans ce plugin, `Firebase.initializeApp()` échoue au démarrage et
+    // la connexion Google ne peut pas aboutir.
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 include(":app")

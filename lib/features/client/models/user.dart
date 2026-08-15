@@ -122,6 +122,14 @@ class AppUser {
   bool get isSocialUser =>
       authProvider == AuthProvider.google || authProvider == AuthProvider.apple;
 
+  /// Nom lisible du fournisseur social, pour l'affichage dans les paramètres
+  /// du compte (`null` pour un compte classique téléphone/mot de passe).
+  String? get socialProviderLabel => switch (authProvider) {
+        AuthProvider.google => 'Google',
+        AuthProvider.apple => 'Apple',
+        AuthProvider.phone => null,
+      };
+
   /// Date d'inscription formatée ("mars 2024" / "March 2024") — le préfixe
   /// ("Membre depuis"/"Member since") vient d'[AppLocalizations] côté UI.
   String memberSinceDate(String dateFormatLocale) {

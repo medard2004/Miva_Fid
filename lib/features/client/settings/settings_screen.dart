@@ -8,6 +8,7 @@ import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/providers/wallet_provider.dart';
+import 'package:miva_fid/core/utils/loading_overlay_service.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 
@@ -38,10 +39,12 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(minimumSize: const Size(0, 40)),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ref.read(authProvider.notifier).signOut();
-              context.go('/client/auth');
+              LoadingOverlayService.show(message: t.authLoadingSignOut);
+              await ref.read(authProvider.notifier).signOut();
+              await LoadingOverlayService.hide();
+              if (context.mounted) context.go('/client/auth');
             },
             child: Text(t.settingsSignOut),
           ),

@@ -156,7 +156,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
                         controller: _passwordController,
                         obscure: _obscurePassword,
                         textInputAction: TextInputAction.done,
-                        autofillHints: const [AutofillHints.password],
                         onToggle: () => setState(
                             () => _obscurePassword = !_obscurePassword),
                         onSubmitted: (_) => isBusy ? null : _continueWithPhone(),

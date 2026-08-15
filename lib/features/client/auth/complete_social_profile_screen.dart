@@ -105,8 +105,14 @@ class _CompleteSocialProfileScreenState
                         validator: (v) => (v == null || v.trim().isEmpty)
                             ? t.editProfileFullNameError
                             : null,
+                        style: AppTextStyles.bodyMedium(),
                         decoration: InputDecoration(
-                            hintText: t.editProfileFullNameHint),
+                          hintText: t.editProfileFullNameHint,
+                          hintStyle: AppTextStyles.bodyMedium(
+                              color: AppColors.inkMuted(opacity: 0.4)),
+                          filled: true,
+                          fillColor: AppColors.surfaceMuted,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(t.commonPhoneLabel, style: AppTextStyles.label()),

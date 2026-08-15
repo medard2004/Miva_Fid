@@ -34,6 +34,7 @@ class MivaFidApp extends ConsumerWidget {
     ref.listen<int>(sessionExpiredProvider, (previous, next) {
       if (previous != null && next > previous) {
         ref.read(authProvider.notifier).clearSession();
+        ToastService.showError(ErrorMessages.sessionExpired);
       }
     });
 

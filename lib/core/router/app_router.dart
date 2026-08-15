@@ -25,6 +25,8 @@ import '../../features/client/rewards/rewards_screen.dart';
 import '../../features/client/referral/referral_screen.dart';
 import '../../features/client/profile/profile_screen.dart';
 import '../../features/client/profile/edit_profile_screen.dart';
+import '../../features/client/profile/edit_field_screen.dart';
+import '../../features/client/profile/edit_birthdate_screen.dart';
 import '../../features/client/profile/verify_current_password_screen.dart';
 import '../../features/client/profile/set_new_password_screen.dart';
 import '../../features/client/settings/settings_screen.dart' as client_settings;
@@ -346,6 +348,30 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/client/profile/edit',
         builder: (_, __) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/client/profile/edit/name',
+        builder: (_, __) =>
+            const EditFieldScreen(field: ProfileEditableField.fullName),
+      ),
+      GoRoute(
+        path: '/client/profile/edit/email',
+        builder: (_, __) =>
+            const EditFieldScreen(field: ProfileEditableField.email),
+      ),
+      GoRoute(
+        path: '/client/profile/edit/city',
+        builder: (_, __) =>
+            const EditFieldScreen(field: ProfileEditableField.city),
+      ),
+      GoRoute(
+        path: '/client/profile/edit/country',
+        builder: (_, __) =>
+            const EditFieldScreen(field: ProfileEditableField.country),
+      ),
+      GoRoute(
+        path: '/client/profile/edit/birthdate',
+        builder: (_, __) => const EditBirthDateScreen(),
       ),
       GoRoute(
         path: '/client/profile/verify-password',

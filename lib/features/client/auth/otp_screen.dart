@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
+import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -86,6 +87,30 @@ class _OtpScreenState extends ConsumerState<OtpScreen> with FormErrorHandler {
     });
   }
 
+  /// Redemande un OTP au serveur — le bouton "Renvoyer" ne redémarrait
+  /// auparavant que le décompte local sans jamais réémettre de code.
+  Future<void> _resend() async {
+    final t = AppLocalizations.of(context)!;
+
+    final sent = await runGuarded(
+      () => ref.read(authProvider.notifier).forgotPassword(widget.phoneNumber),
+      useOverlay: true,
+      loadingMessage: t.forgotPasswordSending,
+    );
+
+    if (!mounted || sent == null) return;
+
+    if (sent) {
+      showSuccessToast(ErrorMessages.forgotCodeSent);
+      _startCountdown();
+    } else {
+      handleError(
+        ref.read(authProvider).lastError,
+        context: ErrorContext.forgotPassword,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
@@ -119,7 +144,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> with FormErrorHandler {
                       style: AppTextStyles.monoSmall(),
                     )
                   : TextButton(
-                      onPressed: _startCountdown,
+                      onPressed: isBusy ? null : _resend,
                       child: Text(t.otpResendButton,
                           style: AppTextStyles.bodyMedium(
                               color: AppColors.primary)),

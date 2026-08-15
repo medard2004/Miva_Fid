@@ -51,6 +51,10 @@ class ErrorMessages {
 
   static String get loginFailed => _t?.errLoginFailed ?? 'Impossible de vous connecter pour le moment. Réessayez.';
 
+  static String get accountUsesGoogle => _t?.errAccountUsesGoogle ?? 'Ce compte utilise une connexion Google. Connectez-vous avec Google pour accéder à votre compte.';
+
+  static String get accountUsesApple => _t?.errAccountUsesApple ?? 'Ce compte utilise une connexion Apple. Connectez-vous avec Apple pour accéder à votre compte.';
+
   static String get loginSuccess => _t?.errLoginSuccess ?? 'Vous êtes connecté.';
 
   // ── Connexion sociale ──
@@ -61,6 +65,8 @@ class ErrorMessages {
   static String get socialFailedApple => _t?.errSocialFailedApple ?? 'Impossible de vous connecter avec Apple. Réessayez.';
 
   static String get socialAccountNotFound => _t?.errSocialAccountNotFound ?? 'Aucun compte n\'est associé à ce profil. Créez d\'abord un compte.';
+
+  static String get socialEmailUsesPassword => _t?.errSocialEmailUsesPassword ?? 'Un compte existe déjà avec cet e-mail et utilise un mot de passe. Connectez-vous avec votre mot de passe.';
 
   // ── Inscription ──
   static String get signupPhoneTaken => _t?.errSignupPhoneTaken ?? 'Ce numéro de téléphone est déjà associé à un compte.';

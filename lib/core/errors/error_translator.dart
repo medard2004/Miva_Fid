@@ -19,7 +19,7 @@ class ErrorTranslator {
       return _fromValidation(error, context);
     }
     if (error is UnauthorizedException) {
-      return AppError.general(_unauthorizedMessage(context));
+      return AppError.general(_unauthorizedMessage(context, error.message));
     }
     if (error is NetworkException) {
       return AppError.general(ErrorMessages.noInternet);
@@ -46,6 +46,17 @@ class ErrorTranslator {
     }
 
     if (fields.isEmpty) {
+      // Certains endpoints (verify-password, change-password) renvoient un
+      // 422 « plat » — un message sans sac `errors` par champ — pour un mot
+      // de passe actuel incorrect. Sans ce repli, le message générique du
+      // contexte masquerait un message pourtant clair et déjà en catalogue.
+      final raw = _normalize(e.message);
+      if (_has(raw, ['mot de passe est incorrect', 'mot de passe actuel'])) {
+        return AppError.general(ErrorMessages.passwordCurrentIncorrect);
+      }
+      if (_has(raw, ['doit etre different'])) {
+        return AppError.general(ErrorMessages.passwordMustDiffer);
+      }
       return AppError.general(_fallbackMessage(context));
     }
 
@@ -157,10 +168,15 @@ class ErrorTranslator {
 
   // ── 401 ────────────────────────────────────────────────────────────────────
 
-  static String _unauthorizedMessage(ErrorContext context) {
+  static String _unauthorizedMessage(ErrorContext context, String rawMessage) {
     switch (context) {
       case ErrorContext.login:
-        return ErrorMessages.loginInvalidCredentials;
+        // Le backend distingue déjà « aucun compte » (guide vers l'inscription)
+        // de « mot de passe incorrect » (identifiants à revérifier) : les deux
+        // sont volontairement affichés différemment plutôt que fusionnés.
+        return _has(_normalize(rawMessage), ['aucun compte'])
+            ? ErrorMessages.loginAccountNotFound
+            : ErrorMessages.loginInvalidCredentials;
       case ErrorContext.socialLogin:
         return ErrorMessages.socialAccountNotFound;
       case ErrorContext.verifyPassword:
@@ -180,8 +196,17 @@ class ErrorTranslator {
     if (status == 429 || _has(raw, ['trop de tentatives', 'too many'])) {
       return AppError.general(ErrorMessages.tooManyAttempts);
     }
+    if (_has(raw, ['connexion google', 'utilise google'])) {
+      return AppError.general(ErrorMessages.accountUsesGoogle);
+    }
+    if (_has(raw, ['connexion apple', 'utilise apple'])) {
+      return AppError.general(ErrorMessages.accountUsesApple);
+    }
+    if (_has(raw, ['utilise un mot de passe'])) {
+      return AppError.general(ErrorMessages.socialEmailUsesPassword);
+    }
     if (status == 401 || status == 403) {
-      return AppError.general(_unauthorizedMessage(context));
+      return AppError.general(_unauthorizedMessage(context, e.message));
     }
 
     // Compte inexistant : formulé selon l'écran.

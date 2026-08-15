@@ -142,7 +142,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editProfileFullName => 'Nom complet';
 
   @override
-  String get editProfileFullNameHint => 'Prénom Nom';
+  String get editProfileFullNameHint => 'Kokou John';
 
   @override
   String get editProfileFullNameError => 'Veuillez saisir votre nom complet';
@@ -660,6 +660,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get phonePickerSearchHint => 'Rechercher un pays ou un indicatif...';
 
   @override
+  String get countryPickerTitle => 'Sélectionnez un pays';
+
+  @override
+  String get countryPickerSearchHint => 'Rechercher un pays...';
+
+  @override
   String get authPasswordLabel => 'Mot de passe';
 
   @override
@@ -676,6 +682,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get authLoadingSignup => 'Création du compte...';
+
+  @override
+  String get authLoadingSignOut => 'Déconnexion en cours...';
 
   @override
   String get createPasswordTitle => 'Créez votre mot de passe';
@@ -786,6 +795,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de vous connecter pour le moment. Réessayez.';
 
   @override
+  String get errAccountUsesGoogle =>
+      'Ce compte utilise une connexion Google. Connectez-vous avec Google pour accéder à votre compte.';
+
+  @override
+  String get errAccountUsesApple =>
+      'Ce compte utilise une connexion Apple. Connectez-vous avec Apple pour accéder à votre compte.';
+
+  @override
   String get errLoginSuccess => 'Vous êtes connecté.';
 
   @override
@@ -802,6 +819,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errSocialAccountNotFound =>
       'Aucun compte n\'est associé à ce profil. Créez d\'abord un compte.';
+
+  @override
+  String get errSocialEmailUsesPassword =>
+      'Un compte existe déjà avec cet e-mail et utilise un mot de passe. Connectez-vous avec votre mot de passe.';
 
   @override
   String get errSignupPhoneTaken =>
@@ -988,6 +1009,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editProfileCityHint => 'Lomé';
 
   @override
+  String get editProfileCountry => 'Pays';
+
+  @override
+  String get editProfileCountryHint => 'Togo';
+
+  @override
   String get editProfileSaving => 'Enregistrement...';
 
   @override
@@ -998,4 +1025,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get editProfileSecurity => 'Sécurité';
+
+  @override
+  String get editProfileNotSet => 'Non renseigné';
+
+  @override
+  String get editProfilePhotoLabel => 'Photo de profil';
+
+  @override
+  String get editProfileAuthMethod => 'Méthode de connexion';
+
+  @override
+  String editProfileConnectedVia(String provider) {
+    return 'Connecté via $provider';
+  }
 }

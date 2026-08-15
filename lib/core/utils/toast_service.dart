@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../router/app_router.dart';
 import '../../features/client/core/theme/app_colors.dart';
@@ -42,43 +41,44 @@ class ToastService {
 
     hideCurrent();
 
+    // Fond teinté doux (même famille que les badges de statut) plutôt qu'un
+    // aplat saturé : le texte et l'icône reprennent la couleur sémantique
+    // pleine, ce qui reste lisible dans les deux thèmes — contrairement à
+    // l'ancien fond rouge vif + texte clair/sombre selon le thème, illisible
+    // en mode sombre.
     final Color backgroundColor;
+    final Color accentColor;
     final IconData iconData;
-    final Color iconColor;
 
     switch (type) {
       case ToastType.success:
-        backgroundColor = AppColors.success.withValues(alpha: 0.85);
-        iconData = Icons.check_circle_outline_rounded;
-        iconColor = AppColors.surfaceCard;
+        backgroundColor = AppColors.successTint;
+        accentColor = AppColors.success;
+        iconData = Icons.check_circle_rounded;
         break;
       case ToastType.error:
-        backgroundColor = AppColors.error.withValues(alpha: 0.9);
-        iconData = Icons.error_outline_rounded;
-        iconColor = AppColors.surfaceCard;
+        backgroundColor = AppColors.errorTint;
+        accentColor = AppColors.error;
+        iconData = Icons.error_rounded;
         break;
       case ToastType.warning:
-        backgroundColor = AppColors.primary.withValues(alpha: 0.9);
-        iconData = Icons.warning_amber_rounded;
-        iconColor = AppColors.ink;
+        backgroundColor = AppColors.warningTint;
+        accentColor = AppColors.warning;
+        iconData = Icons.warning_rounded;
         break;
       case ToastType.info:
-        backgroundColor = AppColors.ink.withValues(alpha: 0.85);
-        iconData = Icons.info_outline_rounded;
-        iconColor = AppColors.surfaceCard;
+        backgroundColor = AppColors.primaryTint;
+        accentColor = AppColors.primary;
+        iconData = Icons.info_rounded;
         break;
     }
-
-    final textColor =
-        (type == ToastType.warning) ? AppColors.ink : AppColors.surfaceCard;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => _ToastWidget(
         message: message,
         backgroundColor: backgroundColor,
+        accentColor: accentColor,
         iconData: iconData,
-        iconColor: iconColor,
-        textColor: textColor,
         onDismiss: hideCurrent,
       ),
     );
@@ -119,17 +119,15 @@ class ToastService {
 class _ToastWidget extends StatefulWidget {
   final String message;
   final Color backgroundColor;
+  final Color accentColor;
   final IconData iconData;
-  final Color iconColor;
-  final Color textColor;
   final VoidCallback onDismiss;
 
   const _ToastWidget({
     required this.message,
     required this.backgroundColor,
+    required this.accentColor,
     required this.iconData,
-    required this.iconColor,
-    required this.textColor,
     required this.onDismiss,
   });
 
@@ -190,70 +188,56 @@ class _ToastWidgetState extends State<_ToastWidget>
             position: _offsetAnimation,
             child: FadeTransition(
               opacity: _opacityAnimation,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: widget.backgroundColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: widget.iconColor.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(widget.iconData,
-                              color: widget.iconColor, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              widget.message,
-                              style: AppTextStyles.bodyMedium(
-                                      color: widget.textColor)
-                                  .copyWith(
-                                height: 1.3,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: widget.onDismiss,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Icon(
-                              Icons.close_rounded,
-                              color: widget.iconColor.withValues(alpha: 0.6),
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: widget.backgroundColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: widget.accentColor.withValues(alpha: 0.22),
+                    width: 1,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(widget.iconData, color: widget.accentColor, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Text(
+                          widget.message,
+                          style: AppTextStyles.bodyMedium(
+                                  color: widget.accentColor)
+                              .copyWith(
+                            height: 1.3,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: widget.onDismiss,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: widget.accentColor.withValues(alpha: 0.5),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

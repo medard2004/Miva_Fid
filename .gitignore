@@ -41,3 +41,7 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 # Misc
 *.log
 .DS_Store
+
+# Firebase (identifiants propres au projet)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist

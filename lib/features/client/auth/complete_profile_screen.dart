@@ -109,8 +109,14 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
               TextField(
                 controller: _fullNameController,
                 keyboardType: TextInputType.name,
-                decoration:
-                    InputDecoration(hintText: t.editProfileFullNameHint),
+                style: AppTextStyles.bodyMedium(),
+                decoration: InputDecoration(
+                  hintText: t.editProfileFullNameHint,
+                  hintStyle: AppTextStyles.bodyMedium(
+                      color: AppColors.inkMuted(opacity: 0.4)),
+                  filled: true,
+                  fillColor: AppColors.surfaceMuted,
+                ),
               ),
               const SizedBox(height: 16),
               Text(t.editProfileBirthDate, style: AppTextStyles.label()),
@@ -134,7 +140,10 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                 decoration: InputDecoration(hintText: t.editProfileEmailHint),
               ),
               const SizedBox(height: 28),
-              AppButton(label: t.completeProfileSubmit, onTap: _complete),
+              AppButton(
+                label: t.completeProfileSubmit,
+                onTap: isBusy ? null : _complete,
+              ),
               const SizedBox(height: 10),
               Center(
                 child: TextButton(

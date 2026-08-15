@@ -353,7 +353,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProfileFullNameHint.
   ///
   /// In fr, this message translates to:
-  /// **'Prénom Nom'**
+  /// **'Kokou John'**
   String get editProfileFullNameHint;
 
   /// No description provided for @editProfileFullNameError.
@@ -1250,6 +1250,18 @@ abstract class AppLocalizations {
   /// **'Rechercher un pays ou un indicatif...'**
   String get phonePickerSearchHint;
 
+  /// No description provided for @countryPickerTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionnez un pays'**
+  String get countryPickerTitle;
+
+  /// No description provided for @countryPickerSearchHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher un pays...'**
+  String get countryPickerSearchHint;
+
   /// No description provided for @authPasswordLabel.
   ///
   /// In fr, this message translates to:
@@ -1285,6 +1297,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Création du compte...'**
   String get authLoadingSignup;
+
+  /// No description provided for @authLoadingSignOut.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déconnexion en cours...'**
+  String get authLoadingSignOut;
 
   /// No description provided for @createPasswordTitle.
   ///
@@ -1478,6 +1496,18 @@ abstract class AppLocalizations {
   /// **'Impossible de vous connecter pour le moment. Réessayez.'**
   String get errLoginFailed;
 
+  /// No description provided for @errAccountUsesGoogle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce compte utilise une connexion Google. Connectez-vous avec Google pour accéder à votre compte.'**
+  String get errAccountUsesGoogle;
+
+  /// No description provided for @errAccountUsesApple.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce compte utilise une connexion Apple. Connectez-vous avec Apple pour accéder à votre compte.'**
+  String get errAccountUsesApple;
+
   /// No description provided for @errLoginSuccess.
   ///
   /// In fr, this message translates to:
@@ -1507,6 +1537,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun compte n\'est associé à ce profil. Créez d\'abord un compte.'**
   String get errSocialAccountNotFound;
+
+  /// No description provided for @errSocialEmailUsesPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un compte existe déjà avec cet e-mail et utilise un mot de passe. Connectez-vous avec votre mot de passe.'**
+  String get errSocialEmailUsesPassword;
 
   /// No description provided for @errSignupPhoneTaken.
   ///
@@ -1820,6 +1856,18 @@ abstract class AppLocalizations {
   /// **'Lomé'**
   String get editProfileCityHint;
 
+  /// No description provided for @editProfileCountry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pays'**
+  String get editProfileCountry;
+
+  /// No description provided for @editProfileCountryHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Togo'**
+  String get editProfileCountryHint;
+
   /// No description provided for @editProfileSaving.
   ///
   /// In fr, this message translates to:
@@ -1843,6 +1891,30 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Sécurité'**
   String get editProfileSecurity;
+
+  /// No description provided for @editProfileNotSet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non renseigné'**
+  String get editProfileNotSet;
+
+  /// No description provided for @editProfilePhotoLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photo de profil'**
+  String get editProfilePhotoLabel;
+
+  /// No description provided for @editProfileAuthMethod.
+  ///
+  /// In fr, this message translates to:
+  /// **'Méthode de connexion'**
+  String get editProfileAuthMethod;
+
+  /// No description provided for @editProfileConnectedVia.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté via {provider}'**
+  String editProfileConnectedVia(String provider);
 }
 
 class _AppLocalizationsDelegate

@@ -113,7 +113,20 @@ class _VerifyCurrentPasswordScreenState
                     requiredMessage: ErrorMessages.fieldRequired,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: AppTapScale(
+                    onTap: () => context.push('/client/forgot-password'),
+                    scaleDown: 0.95,
+                    child: Text(
+                      t.authForgotPasswordLink,
+                      style: AppTextStyles.bodySmall(color: AppColors.primary)
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 AppButton(
                   label: t.changePasswordContinue,
                   onTap: isBusy ? null : _submit,

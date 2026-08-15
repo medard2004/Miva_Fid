@@ -139,7 +139,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfileFullName => 'Full name';
 
   @override
-  String get editProfileFullNameHint => 'First Last';
+  String get editProfileFullNameHint => 'Kokou John';
 
   @override
   String get editProfileFullNameError => 'Please enter your full name';
@@ -647,6 +647,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phonePickerSearchHint => 'Search a country or dial code...';
 
   @override
+  String get countryPickerTitle => 'Select a country';
+
+  @override
+  String get countryPickerSearchHint => 'Search a country...';
+
+  @override
   String get authPasswordLabel => 'Password';
 
   @override
@@ -663,6 +669,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authLoadingSignup => 'Creating your account...';
+
+  @override
+  String get authLoadingSignOut => 'Signing out...';
 
   @override
   String get createPasswordTitle => 'Create your password';
@@ -769,6 +778,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errLoginFailed => 'We can\'t sign you in right now. Try again.';
 
   @override
+  String get errAccountUsesGoogle =>
+      'This account uses Google sign-in. Sign in with Google to access your account.';
+
+  @override
+  String get errAccountUsesApple =>
+      'This account uses Apple sign-in. Sign in with Apple to access your account.';
+
+  @override
   String get errLoginSuccess => 'You\'re signed in.';
 
   @override
@@ -785,6 +802,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errSocialAccountNotFound =>
       'No account is linked to this profile. Create an account first.';
+
+  @override
+  String get errSocialEmailUsesPassword =>
+      'An account already exists with this email and uses a password. Sign in with your password instead.';
 
   @override
   String get errSignupPhoneTaken =>
@@ -961,6 +982,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfileCityHint => 'Lomé';
 
   @override
+  String get editProfileCountry => 'Country';
+
+  @override
+  String get editProfileCountryHint => 'Togo';
+
+  @override
   String get editProfileSaving => 'Saving...';
 
   @override
@@ -971,4 +998,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editProfileSecurity => 'Security';
+
+  @override
+  String get editProfileNotSet => 'Not set';
+
+  @override
+  String get editProfilePhotoLabel => 'Profile photo';
+
+  @override
+  String get editProfileAuthMethod => 'Sign-in method';
+
+  @override
+  String editProfileConnectedVia(String provider) {
+    return 'Connected via $provider';
+  }
 }

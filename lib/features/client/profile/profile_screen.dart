@@ -6,14 +6,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
-import 'package:miva_fid/features/client/models/user.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/providers/wallet_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
 import 'package:miva_fid/features/client/widgets/shared/notification_bell_button.dart';
-import 'package:miva_fid/features/client/widgets/shared/phone_input_with_country_picker.dart';
 import 'package:miva_fid/features/client/widgets/shared/user_avatar.dart';
 
 /// Profil — juste l'essentiel : identité, un coup d'œil chiffré, code de
@@ -285,140 +283,6 @@ class ProfileScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Modal d'édition du profil
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _EditProfileModal extends StatefulWidget {
-  final AppUser user;
-  const _EditProfileModal({required this.user});
-
-  @override
-  State<_EditProfileModal> createState() => _EditProfileModalState();
-}
-
-class _EditProfileModalState extends State<_EditProfileModal> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _fullNameController;
-  late GlobalKey<PhoneInputWithCountryPickerState> _phoneInputKey;
-  late TextEditingController _phoneController;
-  late TextEditingController _emailController;
-  DateTime? _birthDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _fullNameController = TextEditingController(text: widget.user.fullName);
-    _phoneInputKey = GlobalKey<PhoneInputWithCountryPickerState>();
-    _phoneController = TextEditingController(
-      text: widget.user.phoneNumber.replaceFirst(RegExp(r'^\+\d+\s*'), ''),
-    );
-    _emailController = TextEditingController(text: widget.user.email ?? '');
-    _birthDate = widget.user.birthDate;
-  }
-
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _phoneController.dispose();
-    _emailController.dispose();
-    super.dispose();
-  }
-
-  void _save(WidgetRef ref, AppLocalizations t) {
-    if (!_formKey.currentState!.validate()) return;
-
-    final fullPhone = _phoneInputKey.currentState?.fullPhoneNumber ??
-        _phoneController.text.trim();
-
-    ref.read(authProvider.notifier).updateFullProfile(
-          fullName: _fullNameController.text.trim(),
-          phoneNumber: fullPhone,
-          birthDate: _birthDate,
-          email: _emailController.text.trim().isNotEmpty
-              ? _emailController.text.trim()
-              : null,
-        );
-
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t.editProfileSaveSuccess)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final t = AppLocalizations.of(context)!;
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.8,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  controller: scrollController,
-                  children: [
-                    Text(t.editProfileTitle,
-                        style: AppTextStyles.displayMedium()),
-                    const SizedBox(height: 20),
-                    Text(t.editProfileFullName, style: AppTextStyles.label()),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _fullNameController,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? t.editProfileFullNameError
-                          : null,
-                      decoration:
-                          InputDecoration(hintText: t.editProfileFullNameHint),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(t.editProfilePhone, style: AppTextStyles.label()),
-                    const SizedBox(height: 6),
-                    PhoneInputWithCountryPicker(
-                      key: _phoneInputKey,
-                      controller: _phoneController,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(t.editProfileBirthDate, style: AppTextStyles.label()),
-                    const SizedBox(height: 6),
-                    AppDatePickerField(
-                      value: _birthDate,
-                      lastDate: DateTime.now(),
-                      onChanged: (picked) =>
-                          setState(() => _birthDate = picked),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(t.editProfileEmail, style: AppTextStyles.label()),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration:
-                          InputDecoration(hintText: t.editProfileEmailHint),
-                    ),
-                    const SizedBox(height: 28),
-                    AppButton(
-                      label: t.commonSave,
-                      onTap: () => _save(ref, t),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
   }
 }

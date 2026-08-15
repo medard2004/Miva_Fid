@@ -50,7 +50,7 @@
 
   "editProfileTitle": "Modifier le profil",
   "editProfileFullName": "Nom complet",
-  "editProfileFullNameHint": "Prénom Nom",
+  "editProfileFullNameHint": "Kokou John",
   "editProfileFullNameError": "Veuillez saisir votre nom complet",
   "editProfilePhone": "Numéro de téléphone",
   "editProfileBirthDate": "Date de naissance",
@@ -273,6 +273,8 @@
 
   "phonePickerTitle": "Sélectionnez un indicatif",
   "phonePickerSearchHint": "Rechercher un pays ou un indicatif...",
+  "countryPickerTitle": "Sélectionnez un pays",
+  "countryPickerSearchHint": "Rechercher un pays...",
 
   "authPasswordLabel": "Mot de passe",
   "authForgotPasswordLink": "Mot de passe oublié ?",
@@ -280,6 +282,7 @@
   "authLoadingGoogle": "Connexion via Google...",
   "authLoadingApple": "Connexion via Apple...",
   "authLoadingSignup": "Création du compte...",
+  "authLoadingSignOut": "Déconnexion en cours...",
   "createPasswordTitle": "Créez votre mot de passe",
   "createPasswordSubtitle": "Dernière étape pour sécuriser votre compte.",
   "createPasswordConfirmLabel": "Confirmez le mot de passe",
@@ -314,11 +317,14 @@
   "errLoginInvalidCredentials": "Numéro de téléphone ou mot de passe incorrect.",
   "errLoginAccountNotFound": "Ce compte n'existe pas encore.",
   "errLoginFailed": "Impossible de vous connecter pour le moment. Réessayez.",
+  "errAccountUsesGoogle": "Ce compte utilise une connexion Google. Connectez-vous avec Google pour accéder à votre compte.",
+  "errAccountUsesApple": "Ce compte utilise une connexion Apple. Connectez-vous avec Apple pour accéder à votre compte.",
   "errLoginSuccess": "Vous êtes connecté.",
   "errSocialCancelled": "Connexion annulée.",
   "errSocialFailedGoogle": "Impossible de vous connecter avec Google. Réessayez.",
   "errSocialFailedApple": "Impossible de vous connecter avec Apple. Réessayez.",
   "errSocialAccountNotFound": "Aucun compte n'est associé à ce profil. Créez d'abord un compte.",
+  "errSocialEmailUsesPassword": "Un compte existe déjà avec cet e-mail et utilise un mot de passe. Connectez-vous avec votre mot de passe.",
   "errSignupPhoneTaken": "Ce numéro de téléphone est déjà associé à un compte.",
   "errSignupEmailTaken": "Cette adresse e-mail est déjà utilisée.",
   "errSignupFailed": "Impossible de créer votre compte pour le moment. Réessayez.",
@@ -372,8 +378,17 @@
   "changePasswordSubmit": "Enregistrer",
   "editProfileCity": "Ville",
   "editProfileCityHint": "Lomé",
+  "editProfileCountry": "Pays",
+  "editProfileCountryHint": "Togo",
   "editProfileSaving": "Enregistrement...",
   "editProfilePhotoChange": "Changer la photo",
   "editProfilePhotoRemove": "Supprimer la photo",
-  "editProfileSecurity": "Sécurité"
+  "editProfileSecurity": "Sécurité",
+  "editProfileNotSet": "Non renseigné",
+  "editProfilePhotoLabel": "Photo de profil",
+  "editProfileAuthMethod": "Méthode de connexion",
+  "editProfileConnectedVia": "Connecté via {provider}",
+  "@editProfileConnectedVia": {
+    "placeholders": { "provider": { "type": "String" } }
+  }
 }

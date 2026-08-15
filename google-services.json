@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "829928583492",
+    "project_id": "mivafid-app",
+    "storage_bucket": "mivafid-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829928583492:android:5988a18238034517dee711",
+        "android_client_info": {
+          "package_name": "com.mivafid.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "829928583492-koouc54lk37g9mq5jsmq1cbbecub2qfa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mivafid.app",
+            "certificate_hash": "2a3961f0409ed60e04a460324597d8be50f432e4"
+          }
+        },
+        {
+          "client_id": "829928583492-98upa68avrk6r20bqkg62p8ffrcqmt5m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcRz8UQvHj7SoEkFvKeaxLl0z3PUjjm-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "829928583492-98upa68avrk6r20bqkg62p8ffrcqmt5m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "829928583492-enssc3ga29a9cp6pdbjkqqoj206p87dj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mivafid.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -21,7 +21,6 @@ dependencies:
   supabase_flutter: ^2.5.0
 
   # Local storage
-  hive_ce_flutter: ^2.0.0
   flutter_secure_storage: ^9.0.0
 
   # QR
@@ -57,7 +56,6 @@ dependencies:
   intl: ^0.20.2
   url_launcher: ^6.3.0
   dio: ^5.4.3
-  connectivity_plus: ^6.0.3
   flutter_haptic_feedback: ^1.0.1
   path_provider: ^2.1.6
   share_plus: ^10.1.4
@@ -82,7 +80,6 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   riverpod_generator: ^2.4.4
   build_runner: ^2.4.9
-  hive_ce_generator: ^1.0.0
   json_serializable: ^6.8.0
 
 flutter:

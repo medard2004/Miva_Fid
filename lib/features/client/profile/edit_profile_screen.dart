@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
@@ -17,8 +18,9 @@ import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/user_avatar.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
-/// Modification du profil : identité, coordonnées, photo, et accès au
-/// changement de mot de passe.
+/// Modification du profil : photo, puis chaque information (nom, date de
+/// naissance, email, ville, mot de passe) sur sa propre ligne — un tap
+/// redirige vers l'écran dédié à ce champ, plutôt qu'un formulaire unique.
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -28,65 +30,6 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     with FormErrorHandler {
-  final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _cityController = TextEditingController();
-  DateTime? _birthDate;
-  bool _prefilled = false;
-
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _emailController.dispose();
-    _cityController.dispose();
-    super.dispose();
-  }
-
-  /// Pré-remplit les champs une seule fois.
-  ///
-  /// Refaire l'affectation à chaque build écraserait la saisie en cours dès
-  /// que le provider émet (par exemple après un upload d'avatar).
-  void _prefillOnce(dynamic user) {
-    if (_prefilled || user == null) return;
-    _fullNameController.text = user.fullName as String;
-    _emailController.text = (user.email as String?) ?? '';
-    _cityController.text = (user.city as String?) ?? '';
-    _birthDate = user.birthDate as DateTime?;
-    _prefilled = true;
-  }
-
-  Future<void> _save() async {
-    FocusScope.of(context).unfocus();
-    clearAllFieldErrors();
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    final t = AppLocalizations.of(context)!;
-    final email = _emailController.text.trim();
-    final city = _cityController.text.trim();
-
-    try {
-      await runGuarded(
-        () => ref.read(authProvider.notifier).updateFullProfile(
-              fullName: _fullNameController.text.trim(),
-              email: email.isNotEmpty ? email : null,
-              city: city.isNotEmpty ? city : null,
-              birthDate: _birthDate,
-            ),
-        useOverlay: true,
-        loadingMessage: t.editProfileSaving,
-      );
-      if (!mounted) return;
-      showSuccessToast(ErrorMessages.profileSaveSuccess);
-      context.pop();
-    } catch (e) {
-      if (mounted) {
-        handleError(e,
-            context: ErrorContext.updateProfile, formKey: _formKey);
-      }
-    }
-  }
-
   Future<void> _pickAvatar() async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -121,12 +64,57 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     }
   }
 
+  void _showPhotoOptions(bool hasPhoto) {
+    final t = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(LucideIcons.image, color: AppColors.ink),
+                title: Text(t.editProfilePhotoChange,
+                    style: AppTextStyles.bodyMedium()),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _pickAvatar();
+                },
+              ),
+              if (hasPhoto)
+                ListTile(
+                  leading: const Icon(LucideIcons.trash2, color: Colors.red),
+                  title: Text(
+                    t.editProfilePhotoRemove,
+                    style: AppTextStyles.bodyMedium(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _removeAvatar();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final auth = ref.watch(authProvider);
-    _prefillOnce(auth.user);
+    final user = auth.user;
+    final dateFormatLocale =
+        Localizations.localeOf(context).languageCode == 'fr'
+            ? 'fr_FR'
+            : 'en_US';
+    final birthDateLabel = user?.birthDate != null
+        ? DateFormat('d MMM yyyy', dateFormatLocale).format(user!.birthDate!)
+        : t.editProfileNotSet;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -134,125 +122,167 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Column(
-                    children: [
-                      UserAvatar(
-                        fullName: auth.user?.fullName ?? '',
-                        photoUrl: auth.user?.photoUrl,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _InfoRow(
+                      leading: UserAvatar(
+                        fullName: user?.fullName ?? '',
+                        photoUrl: user?.photoUrl,
                         localImage: auth.localAvatar,
-                        radius: 48,
+                        radius: 19,
                         isLoading: isBusy,
                       ),
-                      const SizedBox(height: 12),
-                      TextButton(
-                        onPressed: isBusy ? null : _pickAvatar,
-                        child: Text(
-                          t.editProfilePhotoChange,
-                          style: AppTextStyles.bodyMedium(
-                                  color: AppColors.primary)
-                              .copyWith(fontWeight: FontWeight.w600),
-                        ),
+                      label: t.editProfilePhotoLabel,
+                      value: t.editProfilePhotoChange,
+                      onTap: isBusy
+                          ? () {}
+                          : () => _showPhotoOptions(user?.photoUrl != null),
+                    ),
+                    Divider(height: 1, color: AppColors.border),
+                    _InfoRow(
+                      icon: LucideIcons.user,
+                      label: t.editProfileFullName,
+                      value: user?.fullName ?? t.editProfileNotSet,
+                      onTap: () => context.push(
+                        '/client/profile/edit/name',
                       ),
-                      if (auth.user?.photoUrl != null)
-                        TextButton(
-                          onPressed: isBusy ? null : _removeAvatar,
-                          child: Text(
-                            t.editProfilePhotoRemove,
-                            style: AppTextStyles.bodySmall(
-                                color: AppColors.inkMuted(opacity: 0.5)),
-                          ),
+                    ),
+                    Divider(height: 1, color: AppColors.border),
+                    _InfoRow(
+                      icon: LucideIcons.cake,
+                      label: t.editProfileBirthDate,
+                      value: birthDateLabel,
+                      onTap: () =>
+                          context.push('/client/profile/edit/birthdate'),
+                    ),
+                    Divider(height: 1, color: AppColors.border),
+                    _InfoRow(
+                      icon: LucideIcons.mail,
+                      label: t.editProfileEmail,
+                      value: user?.email ?? t.editProfileNotSet,
+                      onTap: () => context.push('/client/profile/edit/email'),
+                    ),
+                    Divider(height: 1, color: AppColors.border),
+                    _InfoRow(
+                      icon: LucideIcons.globe,
+                      label: t.editProfileCountry,
+                      value: user?.country ?? t.editProfileNotSet,
+                      onTap: () =>
+                          context.push('/client/profile/edit/country'),
+                    ),
+                    Divider(height: 1, color: AppColors.border),
+                    _InfoRow(
+                      icon: LucideIcons.mapPin,
+                      label: t.editProfileCity,
+                      value: user?.city ?? t.editProfileNotSet,
+                      onTap: () => context.push('/client/profile/edit/city'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(t.editProfileSecurity,
+                  style: AppTextStyles.label(color: AppColors.primary)
+                      .copyWith(letterSpacing: 0.6)),
+              const SizedBox(height: 8),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    if (user?.isSocialUser ?? false)
+                      _InfoRow(
+                        icon: LucideIcons.link,
+                        label: t.editProfileAuthMethod,
+                        value: t.editProfileConnectedVia(
+                          user!.socialProviderLabel!,
                         ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(t.editProfileFullName, style: AppTextStyles.label()),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _fullNameController,
-                  keyboardType: TextInputType.name,
-                  onChanged: (_) => clearFieldError('first_name'),
-                  validator: fieldValidator(
-                    'first_name',
-                    requiredMessage: t.editProfileFullNameError,
-                  ),
-                  decoration:
-                      InputDecoration(hintText: t.editProfileFullNameHint),
-                ),
-                const SizedBox(height: 16),
-                Text(t.editProfileBirthDate, style: AppTextStyles.label()),
-                const SizedBox(height: 6),
-                AppDatePickerField(
-                  value: _birthDate,
-                  onChanged: (date) => setState(() => _birthDate = date),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(t.editProfileEmail, style: AppTextStyles.label()),
-                    const SizedBox(width: 8),
-                    StatusBadge(label: t.commonOptional),
+                        onTap: () {},
+                      )
+                    else
+                      _InfoRow(
+                        icon: LucideIcons.lock,
+                        label: t.changePasswordTitle,
+                        value: '••••••••',
+                        onTap: () =>
+                            context.push('/client/profile/verify-password'),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  onChanged: (_) => clearFieldError('email'),
-                  validator: fieldValidator(
-                    'email',
-                    extra: (value) => value.contains('@') && value.contains('.')
-                        ? null
-                        : ErrorMessages.emailInvalid,
-                  ),
-                  decoration: InputDecoration(hintText: t.editProfileEmailHint),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(t.editProfileCity, style: AppTextStyles.label()),
-                    const SizedBox(width: 8),
-                    StatusBadge(label: t.commonOptional),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _cityController,
-                  onChanged: (_) => clearFieldError('city'),
-                  validator: fieldValidator('city'),
-                  decoration: InputDecoration(hintText: t.editProfileCityHint),
-                ),
-                const SizedBox(height: 28),
-                AppButton(
-                  label: t.commonSave,
-                  onTap: isBusy ? null : _save,
-                ),
-                const SizedBox(height: 24),
-                Text(t.editProfileSecurity, style: AppTextStyles.label()),
-                const SizedBox(height: 8),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: ListTile(
-                    leading: Icon(LucideIcons.lock,
-                        size: 20, color: AppColors.inkMuted(opacity: 0.7)),
-                    title: Text(t.changePasswordTitle,
-                        style: AppTextStyles.bodyMedium()),
-                    trailing: Icon(LucideIcons.chevronRight,
-                        size: 18, color: AppColors.inkMuted(opacity: 0.4)),
-                    onTap: () =>
-                        context.push('/client/profile/verify-password'),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Ligne d'information cliquable : tap redirige vers l'écran d'édition du
+/// champ affiché, à la manière de la ligne "Paramètres" de l'écran Profil.
+class _InfoRow extends StatelessWidget {
+  final IconData? icon;
+  final Widget? leading;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  const _InfoRow({
+    this.icon,
+    this.leading,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  }) : assert(icon != null || leading != null);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppTapScale(
+      onTap: onTap,
+      scaleDown: 0.99,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            leading ??
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: AppColors.ink),
+                ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label,
+                      style: AppTextStyles.bodySmall(
+                          color: AppColors.inkMuted(opacity: 0.55))),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: AppTextStyles.bodyMedium()
+                        .copyWith(fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.chevronRight,
+                size: 18, color: AppColors.inkMuted(opacity: 0.35)),
+          ],
         ),
       ),
     );
