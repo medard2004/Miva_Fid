@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/api/storage/local_preferences.dart';
+import '../../merchant/providers/merchant_auth_provider.dart';
 import 'app_providers.dart';
 
 /// Résultat de l'amorçage, lu par l'écran de démarrage pour choisir sa
@@ -11,7 +12,11 @@ class AppStartupState {
   /// s'afficher avant l'écran de connexion.
   final bool hasSeenOnboarding;
 
-  const AppStartupState({required this.hasSeenOnboarding});
+  /// Dernier rôle choisi sur l'écran de sélection ('client' ou 'merchant'),
+  /// null si jamais choisi.
+  final String? lastRole;
+
+  const AppStartupState({required this.hasSeenOnboarding, this.lastRole});
 }
 
 /// Restaure la session avant le premier rendu.
@@ -25,6 +30,7 @@ class AppStartupState {
 final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   final prefs = ref.read(localPreferencesProvider);
   final hasSeenOnboarding = await prefs.hasSeenOnboarding();
+  final lastRole = await prefs.getLastRole();
 
   final authRepository = ref.read(authRepositoryProvider);
 
@@ -40,5 +46,17 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
     }
   }
 
-  return AppStartupState(hasSeenOnboarding: hasSeenOnboarding);
+  final merchantAuthRepository = ref.read(merchantAuthRepositoryProvider);
+
+  if (await merchantAuthRepository.isLoggedIn()) {
+    try {
+      ref.read(merchantAuthProvider.notifier).setAuthenticated(
+            await merchantAuthRepository.getMe(),
+          );
+    } catch (_) {
+      await ref.read(merchantAuthProvider.notifier).signOut();
+    }
+  }
+
+  return AppStartupState(hasSeenOnboarding: hasSeenOnboarding, lastRole: lastRole);
 });

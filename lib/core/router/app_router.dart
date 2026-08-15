@@ -11,6 +11,7 @@ import '../../features/client/auth/forgot_password_screen.dart' as client_forgot
 import '../../features/client/auth/reset_password_screen.dart';
 import '../../features/client/splash/splash_screen.dart';
 import '../../features/client/providers/app_providers.dart';
+import '../../features/merchant/providers/merchant_auth_provider.dart';
 import '../../features/client/auth/otp_screen.dart';
 import '../../features/client/auth/signup_screen.dart';
 import '../../features/client/auth/complete_profile_screen.dart';
@@ -51,6 +52,8 @@ import '../../features/onboarding/screens/merchant_step1_screen.dart';
 import '../../features/onboarding/screens/merchant_step2_screen.dart';
 import '../../features/onboarding/screens/merchant_step3_screen.dart';
 import '../../features/onboarding/screens/merchant_review_screen.dart';
+import '../../features/onboarding/screens/merchant_verify_otp_screen.dart';
+import '../../features/onboarding/screens/merchant_reset_password_screen.dart';
 import '../../features/onboarding/screens/qr_success_screen.dart';
 import '../../features/onboarding/screens/profile_onboarding_screen.dart';
 import '../../features/onboarding/screens/role_selection_screen.dart';
@@ -137,6 +140,14 @@ class _AuthRefreshNotifier extends ChangeNotifier {
         }
       },
     );
+    ref.listen<MerchantAuthState>(
+      merchantAuthProvider,
+      (previous, next) {
+        if (previous?.isAuthenticated != next.isAuthenticated) {
+          notifyListeners();
+        }
+      },
+    );
   }
 }
 
@@ -164,8 +175,14 @@ GoRouter appRouter(AppRouterRef ref) {
     redirect: (context, state) {
       final location = state.matchedLocation;
 
-      // Le module marchand a son propre parcours, adossé à Supabase : cette
-      // garde ne couvre que le module client.
+      // Dashboard marchand : accès protégé par le token Sanctum obtenu à
+      // l'inscription/connexion (voir `/auth/merchant/*`).
+      if (location.startsWith('/merchant/') || location == '/merchant') {
+        final isMerchantAuthenticated =
+            ref.read(merchantAuthProvider).isAuthenticated;
+        return isMerchantAuthenticated ? null : '/auth/merchant/auth';
+      }
+
       if (!location.startsWith('/client/')) return null;
 
       final isAuthenticated = ref.read(authProvider).isAuthenticated;
@@ -206,6 +223,23 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/auth/forgot-password',
         pageBuilder: (_, __) => _slide(const ForgotPasswordScreen()),
+      ),
+      GoRoute(
+        path: '/auth/merchant/verify-otp',
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return _slide(MerchantVerifyOtpScreen(email: extra?['email'] as String? ?? ''));
+        },
+      ),
+      GoRoute(
+        path: '/auth/merchant/reset-password',
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return _slide(MerchantResetPasswordScreen(
+            email: extra?['email'] as String? ?? '',
+            resetToken: extra?['reset_token'] as String? ?? '',
+          ));
+        },
       ),
       GoRoute(
         path: '/auth/merchant/step1',

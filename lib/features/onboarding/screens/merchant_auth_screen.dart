@@ -5,16 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:simple_icons/simple_icons.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
-import '../../../core/widgets/app_toast.dart';
+import '../../../core/services/social_auth_service.dart';
 import '../providers/onboarding_provider.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../merchant/providers/merchant_auth_provider.dart';
 
 class MerchantAuthScreen extends ConsumerStatefulWidget {
   const MerchantAuthScreen({super.key});
@@ -39,6 +39,49 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
     super.dispose();
   }
 
+  Future<void> _continueWithSocial(String provider) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final idToken = provider == 'google'
+          ? await SocialAuthService.signInWithGoogle()
+          : await SocialAuthService.signInWithApple();
+
+      // `null` = l'utilisateur a fermé la feuille du fournisseur.
+      if (idToken == null) return;
+
+      final ok = await ref.read(merchantAuthProvider.notifier).socialLogin(
+            provider,
+            idToken,
+            action: _isLogin ? 'login' : 'signup',
+          );
+
+      if (!mounted) return;
+
+      if (!ok) {
+        final error = ref.read(merchantAuthProvider).lastError;
+        throw Exception(error?.toString() ?? 'Connexion échouée.');
+      }
+
+      final restaurant = ref.read(merchantAuthProvider).restaurant;
+      if (restaurant?.hasBusinessInfo ?? false) {
+        context.go('/merchant');
+      } else {
+        context.go('/auth/merchant/step1');
+      }
+    } catch (e) {
+      debugPrint("Merchant social auth error: $e");
+      setState(() {
+        _error = e.toString().replaceAll('Exception:', '').trim();
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _handleSubmit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -47,46 +90,40 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
       _error = null;
     });
 
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
+
     try {
       if (_isLogin) {
         // --- CONNEXION ---
-        final res = await Supabase.instance.client.auth.signInWithPassword(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-        );
-
-        if (!mounted) return;
-        if (res.user == null) throw Exception('Connexion échouée');
-
-        // Check if merchant profile already exists
-        final merchantData = await Supabase.instance.client
-            .from('merchants')
-            .select('user_id')
-            .eq('user_id', res.user!.id)
-            .maybeSingle();
+        final ok =
+            await ref.read(merchantAuthProvider.notifier).login(email, password);
 
         if (!mounted) return;
 
-        if (merchantData != null) {
-          // Profile exists -> dashboard
+        if (!ok) {
+          final error = ref.read(merchantAuthProvider).lastError;
+          throw Exception(error?.toString() ?? 'Connexion échouée.');
+        }
+
+        final restaurant = ref.read(merchantAuthProvider).restaurant;
+        if (restaurant?.hasBusinessInfo ?? false) {
           context.go('/merchant');
         } else {
-          // Profile doesn't exist -> start setup flow
           context.go('/auth/merchant/step1');
         }
       } else {
         // --- INSCRIPTION ---
         final notifier = ref.read(onboardingNotifierProvider.notifier);
-
-        // Sign up & insert user record
-        final ok = await notifier.registerUser();
+        final ok = await notifier.registerUser(email, password);
 
         if (!mounted) return;
 
         if (ok) {
           context.go('/auth/merchant/step1');
         } else {
-          throw Exception("Erreur lors de la création du compte.");
+          final error = ref.read(merchantAuthProvider).lastError;
+          throw Exception(error?.toString() ?? "Erreur lors de la création du compte.");
         }
       }
     } catch (e) {
@@ -379,13 +416,17 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 _SocialAuthButton(
                   label: 'Continuer avec Google',
                   leading: SvgPicture.asset('assets/icons/google_logo.svg', width: 18, height: 18),
-                  onTap: () => AppToast.info(context, 'Connexion Google bientôt disponible'),
+                  onTap: () {
+                    if (!_loading) _continueWithSocial('google');
+                  },
                 ).animate().fadeIn(duration: 400.ms),
                 const SizedBox(height: Sp.sm),
                 _SocialAuthButton(
                   label: 'Continuer avec Apple',
                   leading: const Icon(SimpleIcons.apple, size: 18, color: Colors.black),
-                  onTap: () => AppToast.info(context, 'Connexion Apple bientôt disponible'),
+                  onTap: () {
+                    if (!_loading) _continueWithSocial('apple');
+                  },
                 ).animate().fadeIn(duration: 450.ms),
 
                 const SizedBox(height: Sp.xl),

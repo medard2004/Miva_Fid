@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../merchant/providers/merchant_auth_provider.dart';
 
 part 'onboarding_provider.g.dart';
 
 class OnboardingState {
   const OnboardingState({
-    this.firstName = '',
-    this.lastName = '',
-    this.email = '',
-    this.password = '',
     this.phone = '',
     this.commerceName = '',
     this.commerceType = '',
@@ -36,10 +33,6 @@ class OnboardingState {
     this.error,
   });
 
-  final String firstName;
-  final String lastName;
-  final String email;
-  final String password;
   final String phone;
   final String commerceName;
   final String commerceType;
@@ -65,17 +58,12 @@ class OnboardingState {
   final bool isLoading;
   final String? error;
 
-  String get fullName => '$firstName $lastName'.trim();
   String get colorPrimaryHex =>
       '#${(colorPrimary.toARGB32() & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
   String get colorSecondaryHex =>
       '#${(colorSecondary.toARGB32() & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
   OnboardingState copyWith({
-    String? firstName,
-    String? lastName,
-    String? email,
-    String? password,
     String? phone,
     String? commerceName,
     String? commerceType,
@@ -102,10 +90,6 @@ class OnboardingState {
     String? error,
   }) {
     return OnboardingState(
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      email: email ?? this.email,
-      password: password ?? this.password,
       phone: phone ?? this.phone,
       commerceName: commerceName ?? this.commerceName,
       commerceType: commerceType ?? this.commerceType,
@@ -133,27 +117,34 @@ class OnboardingState {
     );
   }
 
-  Map<String, dynamic> toMerchantJson(String userId) {
+  /// Payload envoyé à `POST /loyalty-programs` (step2/3 + review).
+  Map<String, dynamic> toLoyaltyProgramJson() {
     return {
-      'user_id': userId,
-      'name': commerceName,
-      'category': commerceType,
-      'address': address,
-      'description': description.isEmpty ? null : description,
-      'phone': phone,
-      'color_primary': colorPrimaryHex,
-      'color_secondary': colorSecondaryHex,
-      'stamps_required': stampsRequired,
-      'loyalty_mode': loyaltyMode,
-      'reward_description': rewardDescription,
+      'mode': loyaltyMode,
+      'goal': stampsRequired,
+      'reward_description':
+          rewardDescription.isEmpty ? null : rewardDescription,
       'show_review_button': showReviewButton,
       'google_review_url': googleReviewUrl.isEmpty ? null : googleReviewUrl,
+      'color_primary': colorPrimaryHex,
+      'color_secondary': colorSecondaryHex,
       'stamp_design_type': stampDesignType,
-      'stamp_emoji': stampEmoji,
-      'stamp_icon': stampIcon,
+      'stamp_emoji': stampEmoji.isEmpty ? null : stampEmoji,
+      'stamp_icon': stampIcon.isEmpty ? null : stampIcon,
       'card_decoration_pattern': cardDecorationPattern,
       'card_gradient_type': cardGradientType,
       'logo_url': logoUrl,
+    };
+  }
+
+  /// Payload envoyé à `PUT /auth/merchant/profile` (step1).
+  Map<String, dynamic> toBusinessInfoJson() {
+    return {
+      'name': commerceName,
+      'category': commerceType,
+      'phone': phone,
+      'address': address.isEmpty ? null : address,
+      'description': description.isEmpty ? null : description,
       'whatsapp': whatsapp.isEmpty ? null : whatsapp,
       'instagram': instagram.isEmpty ? null : instagram,
       'facebook': facebook.isEmpty ? null : facebook,
@@ -167,10 +158,6 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   @override
   OnboardingState build() => const OnboardingState();
 
-  void setFirstName(String v) => state = state.copyWith(firstName: v);
-  void setLastName(String v) => state = state.copyWith(lastName: v);
-  void setEmail(String v) => state = state.copyWith(email: v);
-  void setPassword(String v) => state = state.copyWith(password: v);
   void setPhone(String v) => state = state.copyWith(phone: v);
   void setCommerceName(String v) => state = state.copyWith(commerceName: v);
   void setCommerceType(String v) => state = state.copyWith(commerceType: v);
@@ -202,29 +189,22 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   void setFacebook(String v) => state = state.copyWith(facebook: v);
   void setTiktok(String v) => state = state.copyWith(tiktok: v);
 
-  Future<bool> registerUser() async {
+  /// Crée le compte marchand (email + password) via l'API Laravel.
+  Future<bool> registerUser(String email, String password) async {
     state = state.copyWith(isLoading: true);
-    try {
-      final res = await Supabase.instance.client.auth.signUp(
-        email: state.email,
-        password: state.password,
-      );
-      if (res.user == null) throw Exception('Inscription échouée');
+    final ok = await ref.read(merchantAuthProvider.notifier).register(email, password);
+    state = state.copyWith(isLoading: false);
+    return ok;
+  }
 
-      await Supabase.instance.client.from('users').insert({
-        'id': res.user!.id,
-        'name': state.fullName,
-        'phone': state.phone,
-        'role': 'merchant',
-      });
-
-      state = state.copyWith(isLoading: false);
-      return true;
-    } catch (e) {
-      debugPrint("Signup error: $e");
-      state = state.copyWith(isLoading: false);
-      return true;
-    }
+  /// Envoie les infos business (step1) au compte marchand déjà authentifié.
+  Future<bool> submitBusinessInfo() async {
+    state = state.copyWith(isLoading: true);
+    final ok = await ref
+        .read(merchantAuthProvider.notifier)
+        .updateBusinessInfo(state.toBusinessInfoJson());
+    state = state.copyWith(isLoading: false);
+    return ok;
   }
 
   void reset() => state = const OnboardingState();

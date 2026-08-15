@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import '../../storage/token_storage.dart';
 
 class AuthInterceptor extends Interceptor {
-  final TokenStorage tokenStorage;
+  final TokenStorageBase tokenStorage;
 
   /// Appelé quand le serveur rejette le token (401). Permet à la couche
   /// applicative de vider l'état d'authentification pour que la garde du

@@ -3,13 +3,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/api/providers/api_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/loyalty_card_preview.dart';
 import '../../client/providers/settings_provider.dart';
@@ -29,17 +30,16 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
     final state = ref.read(onboardingNotifierProvider);
 
     try {
-      final uid = Supabase.instance.client.auth.currentUser?.id;
-      if (uid == null) throw Exception('Non authentifié');
-      await Supabase.instance.client
-          .from('merchants')
-          .insert(state.toMerchantJson(uid));
+      await ref
+          .read(loyaltyProgramServiceProvider)
+          .save(state.toLoyaltyProgramJson());
       await AppHaptics.heavy();
       if (mounted) context.go('/auth/merchant/success');
     } catch (e) {
-      debugPrint('Create merchant error: $e');
-      await AppHaptics.heavy();
-      if (mounted) context.go('/auth/merchant/success');
+      debugPrint('Save loyalty program error: $e');
+      if (mounted) {
+        AppToast.error(context, "Impossible d'enregistrer le programme.");
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

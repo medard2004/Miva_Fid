@@ -7,6 +7,7 @@ import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/app_startup_provider.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/shared/loading_dots.dart';
+import 'package:miva_fid/features/merchant/providers/merchant_auth_provider.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
 /// Écran d'amorçage : attend la restauration de session avant de router.
@@ -23,14 +24,32 @@ class SplashScreen extends ConsumerWidget {
 
     ref.listen<AsyncValue<AppStartupState>>(appStartupProvider, (_, next) {
       next.whenOrNull(
-        data: (_) {
+        data: (state) {
           // Session restaurée : on court-circuite le choix de rôle.
-          // Sinon on entre par la sélection client / commerçant, qui est le
-          // point d'entrée de Miva_Fid — l'onboarding client vient après,
-          // une fois le rôle choisi.
-          context.go(ref.read(authProvider).isAuthenticated
-              ? '/client/wallet'
-              : '/role-select');
+          if (ref.read(authProvider).isAuthenticated) {
+            context.go('/client/wallet');
+            return;
+          }
+          final merchant = ref.read(merchantAuthProvider);
+          if (merchant.isAuthenticated) {
+            context.go(
+              merchant.restaurant?.hasBusinessInfo ?? false
+                  ? '/merchant'
+                  : '/auth/merchant/step1',
+            );
+            return;
+          }
+          // Onboarding et rôle déjà vus : on saute directement à l'écran de
+          // connexion du rôle mémorisé, plutôt que de tout remontrer.
+          if (state.hasSeenOnboarding && state.lastRole == 'client') {
+            context.go('/client/auth');
+            return;
+          }
+          if (state.hasSeenOnboarding && state.lastRole == 'merchant') {
+            context.go('/auth/merchant/auth');
+            return;
+          }
+          context.go('/role-select');
         },
         // L'amorçage avale déjà ses erreurs (token refusé, backend absent) :
         // ce cas ne se produit qu'en cas de défaillance inattendue, et repart

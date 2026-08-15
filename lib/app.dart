@@ -9,6 +9,7 @@ import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
 import 'features/client/providers/app_providers.dart';
 import 'features/client/providers/settings_provider.dart';
+import 'features/merchant/providers/merchant_auth_provider.dart';
 import 'l10n/gen/app_localizations.dart';
 
 class MivaFidApp extends ConsumerWidget {
@@ -34,6 +35,12 @@ class MivaFidApp extends ConsumerWidget {
     ref.listen<int>(sessionExpiredProvider, (previous, next) {
       if (previous != null && next > previous) {
         ref.read(authProvider.notifier).clearSession();
+        ToastService.showError(ErrorMessages.sessionExpired);
+      }
+    });
+    ref.listen<int>(merchantSessionExpiredProvider, (previous, next) {
+      if (previous != null && next > previous) {
+        ref.read(merchantAuthProvider.notifier).clearSession();
         ToastService.showError(ErrorMessages.sessionExpired);
       }
     });

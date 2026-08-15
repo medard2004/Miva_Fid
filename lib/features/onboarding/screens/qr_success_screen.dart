@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -19,6 +18,7 @@ import '../../../core/widgets/app_badge.dart';
 import '../../../core/widgets/app_button.dart';
 import '../providers/onboarding_provider.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../merchant/providers/merchant_auth_provider.dart';
 
 class QrSuccessScreen extends ConsumerStatefulWidget {
   const QrSuccessScreen({super.key});
@@ -44,8 +44,8 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
   }
 
   String _buildQrPayload() {
-    final uid = Supabase.instance.client.auth.currentUser?.id ?? '';
-    return jsonEncode({'merchantId': uid, 'app': 'mivafid'});
+    final restaurant = ref.read(merchantAuthProvider).restaurant;
+    return jsonEncode({'merchantId': restaurant?.uuid ?? '', 'app': 'mivafid'});
   }
 
   Future<void> _generatePdf() async {

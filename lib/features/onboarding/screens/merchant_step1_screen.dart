@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
@@ -116,7 +117,9 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     super.dispose();
   }
 
-  void _next() {
+  bool _submitting = false;
+
+  Future<void> _next() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final notifier = ref.read(onboardingNotifierProvider.notifier);
@@ -133,7 +136,16 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
       notifier.setCommerceType(_customCategoryCtrl.text.trim());
     }
 
-    context.go('/auth/merchant/step2');
+    setState(() => _submitting = true);
+    final ok = await notifier.submitBusinessInfo();
+    if (!mounted) return;
+    setState(() => _submitting = false);
+
+    if (ok) {
+      context.go('/auth/merchant/step2');
+    } else {
+      AppToast.error(context, "Impossible d'enregistrer les infos du commerce.");
+    }
   }
 
   // ── Country picker bottom sheet ───────────────────────────────────────────
@@ -674,6 +686,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                   'Continuer',
                   onPressed: _next,
                   icon: LucideIcons.arrowRight,
+                  loading: _submitting,
                 ),
               ),
             ],

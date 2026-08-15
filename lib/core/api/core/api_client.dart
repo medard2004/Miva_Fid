@@ -8,7 +8,7 @@ class ApiClient {
   late final Dio _dio;
 
   ApiClient({
-    required TokenStorage tokenStorage,
+    required TokenStorageBase tokenStorage,
     Future<void> Function()? onUnauthorized,
   }) {
     _dio = Dio(BaseOptions(

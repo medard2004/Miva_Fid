@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -11,6 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../merchant/providers/merchant_auth_provider.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -40,9 +40,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _error = null;
     });
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(
-        _emailCtrl.text.trim(),
-      );
+      await ref
+          .read(merchantAuthProvider.notifier)
+          .forgotPassword(_emailCtrl.text.trim());
       if (mounted) setState(() => _sent = true);
     } catch (e) {
       debugPrint('Reset password error: $e');
@@ -284,7 +284,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         const SizedBox(height: Sp.xl),
 
         Text(
-          'Email envoyé !',
+          'Code envoyé !',
           style: AppTextStyles.h1().copyWith(
             fontWeight: FontWeight.w900,
             fontSize: 26,
@@ -295,7 +295,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         const SizedBox(height: Sp.sm),
 
         Text(
-          'Un lien de réinitialisation a été envoyé à :',
+          'Un code de réinitialisation a été envoyé à :',
           style: AppTextStyles.bodyMd().copyWith(
             color: AppColors.textSecondary,
           ),
@@ -339,15 +339,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
               const Divider(height: Sp.lg),
               _buildStep(
-                icon: LucideIcons.link,
-                title: 'Cliquez sur le lien',
-                subtitle: 'Le lien est valide pendant 24h',
+                icon: LucideIcons.keyRound,
+                title: 'Entrez le code reçu',
+                subtitle: 'Valable 10 minutes',
               ),
               const Divider(height: Sp.lg),
               _buildStep(
                 icon: LucideIcons.lock,
                 title: 'Créez un nouveau mot de passe',
-                subtitle: 'Au moins 8 caractères recommandés',
+                subtitle: 'Au moins 6 caractères',
               ),
             ],
           ),
@@ -356,9 +356,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         const SizedBox(height: Sp.xl),
 
         AppButton.merchant(
-          'Retour à la connexion',
-          icon: LucideIcons.arrowLeft,
-          onPressed: () => context.go('/auth/merchant/auth'),
+          'Entrer le code',
+          icon: LucideIcons.arrowRight,
+          onPressed: () => context.push(
+            '/auth/merchant/verify-otp',
+            extra: {'email': _emailCtrl.text.trim()},
+          ),
         ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
 
         const SizedBox(height: Sp.md),
@@ -366,13 +369,26 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         TextButton(
           onPressed: _sendResetLink,
           child: Text(
-            'Renvoyer l\'email',
+            'Renvoyer le code',
             style: AppTextStyles.bodyMd().copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
         ).animate(delay: 450.ms).fadeIn(duration: 400.ms),
+
+        const SizedBox(height: Sp.sm),
+
+        TextButton(
+          onPressed: () => context.go('/auth/merchant/auth'),
+          child: Text(
+            'Retour à la connexion',
+            style: AppTextStyles.bodyMd().copyWith(
+              color: AppColors.merchant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ).animate(delay: 500.ms).fadeIn(duration: 400.ms),
       ],
     );
   }

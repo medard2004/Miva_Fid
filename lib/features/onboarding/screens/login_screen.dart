@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -11,6 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../merchant/providers/merchant_auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -41,42 +41,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      final res = await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text,
-      );
+      final ok = await ref.read(merchantAuthProvider.notifier).login(
+            _emailCtrl.text.trim(),
+            _passwordCtrl.text,
+          );
 
       if (!mounted) return;
 
-      if (res.user == null) {
-        throw Exception('User is null');
+      if (!ok) {
+        setState(() => _error = 'Email ou mot de passe incorrect.');
+        return;
       }
 
-      // Fetch role
-      final userData = await Supabase.instance.client
-          .from('users')
-          .select('role')
-          .eq('id', res.user!.id)
-          .maybeSingle();
-
-      if (!mounted) return;
-
-      final role = userData?['role'] as String? ?? 'client';
-      if (role == 'merchant' || role == 'both') {
+      final restaurant = ref.read(merchantAuthProvider).restaurant;
+      if (restaurant?.hasBusinessInfo ?? false) {
         context.go('/merchant');
       } else {
-        setState(() => _error = 'Les comptes client ne sont pas encore disponibles.');
+        context.go('/auth/merchant/step1');
       }
     } catch (e) {
       debugPrint("Login error: $e");
       if (mounted) {
-        final emailLower = _emailCtrl.text.trim().toLowerCase();
-        final isMerchant = emailLower.contains('merchant') || emailLower.contains('commercant');
-        if (isMerchant) {
-          context.go('/merchant');
-        } else {
-          setState(() => _error = 'Les comptes client ne sont pas encore disponibles.');
-        }
+        setState(() => _error = 'Email ou mot de passe incorrect.');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
