@@ -206,7 +206,7 @@ GoRouter appRouter(AppRouterRef ref) {
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (_, __) => const SplashScreen(),
+        pageBuilder: (_, __) => _fade(const SplashScreen()),
       ),
       GoRoute(
         path: '/role-select',

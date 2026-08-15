@@ -18,7 +18,7 @@ class AppButton extends StatefulWidget {
   const AppButton._({
     super.key,
     required this.label,
-    required this.variant,
+    required _ButtonVariant variant,
     this.onPressed,
     this.icon,
     this.loading = false,
@@ -27,7 +27,7 @@ class AppButton extends StatefulWidget {
     this.color,
     this.backgroundColor,
     this.textColor,
-  });
+  }) : _variant = variant;
 
   factory AppButton.primary(
     String label, {
@@ -198,7 +198,7 @@ class AppButton extends StatefulWidget {
       );
 
   final String label;
-  final _ButtonVariant variant;
+  final _ButtonVariant _variant;
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool loading;
@@ -282,7 +282,7 @@ class _AppButtonState extends State<AppButton> {
 
   (Color, Color, Color?) _resolveColors() {
     final accent = widget.color;
-    switch (widget.variant) {
+    switch (widget._variant) {
       case _ButtonVariant.primary:
         return (AppColors.primary, Colors.white, null);
       case _ButtonVariant.ghost:

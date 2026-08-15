@@ -31,6 +31,7 @@ class AppInput extends StatefulWidget {
     this.autofocus = false,
     this.onTap,
     this.errorText,
+    this.accentColor = AppColors.primary,
   });
 
   final String label;
@@ -55,6 +56,7 @@ class AppInput extends StatefulWidget {
   final bool autofocus;
   final VoidCallback? onTap;
   final String? errorText;
+  final Color accentColor;
 
   @override
   State<AppInput> createState() => _AppInputState();
@@ -100,6 +102,7 @@ class _AppInputState extends State<AppInput> {
             autofocus: widget.autofocus,
             onTap: widget.onTap,
             validator: widget.validator,
+            cursorColor: widget.accentColor,
             style: AppTextStyles.bodyMd().copyWith(
               color: AppColors.textPrimary,
             ),
@@ -144,15 +147,15 @@ class _AppInputState extends State<AppInput> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: Rd.input,
-                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                borderSide: BorderSide(color: widget.accentColor, width: 2),
               ),
-              errorBorder: OutlineInputBorder(
+              errorBorder: const OutlineInputBorder(
                 borderRadius: Rd.input,
-                borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+                borderSide: BorderSide(color: AppColors.danger, width: 1.5),
               ),
-              focusedErrorBorder: OutlineInputBorder(
+              focusedErrorBorder: const OutlineInputBorder(
                 borderRadius: Rd.input,
-                borderSide: const BorderSide(color: AppColors.danger, width: 2),
+                borderSide: BorderSide(color: AppColors.danger, width: 2),
               ),
               disabledBorder: OutlineInputBorder(
                 borderRadius: Rd.input,

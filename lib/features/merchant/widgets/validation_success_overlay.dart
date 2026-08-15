@@ -28,7 +28,7 @@ class ValidationSuccessOverlay extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: Rd.card20),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: Rd.card20),
         padding: const EdgeInsets.all(Sp.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,

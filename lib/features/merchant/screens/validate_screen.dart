@@ -32,8 +32,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   @override
   void dispose() {
     _scanCtrl.dispose();
-    for (final c in _otpCtrl) c.dispose();
-    for (final f in _otpFocus) f.dispose();
+    for (final c in _otpCtrl) {
+      c.dispose();
+    }
+    for (final f in _otpFocus) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -223,7 +227,7 @@ class _ManualTab extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   maxLength: 1,
                   style: AppTextStyles.monoLg(),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     counterText: '',
                     border: OutlineInputBorder(borderRadius: Rd.input),
                   ),

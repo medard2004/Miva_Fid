@@ -124,15 +124,15 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.danger, width: 2),
+          borderSide: BorderSide(color: AppColors.danger, width: 2),
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -276,9 +276,9 @@ class AppTheme {
             width: 1.5,
           ),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(

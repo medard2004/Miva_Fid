@@ -68,7 +68,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       ),
                       child: Text(
                         '${list.length} actifs',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppColors.merchant,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -153,9 +153,9 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     borderRadius: Rd.input,
                     borderSide: BorderSide(color: AppColors.border, width: 1),
                   ),
-                  focusedBorder: OutlineInputBorder(
+                  focusedBorder: const OutlineInputBorder(
                     borderRadius: Rd.input,
-                    borderSide: const BorderSide(color: AppColors.merchant, width: 1.5),
+                    borderSide: BorderSide(color: AppColors.merchant, width: 1.5),
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
@@ -211,7 +211,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Container(
                       height: 100,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.white,
                         borderRadius: Rd.card,
                       ),

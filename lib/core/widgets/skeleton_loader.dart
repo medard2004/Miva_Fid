@@ -31,7 +31,7 @@ class SkeletonLoader extends StatelessWidget {
           .animate(onPlay: (c) => c.repeat())
           .shimmer(
             duration: 1200.ms,
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
           ),
     );
   }
@@ -60,12 +60,12 @@ class SkeletonCard extends StatelessWidget {
             children: [
               SkeletonLoader(height: 40, width: 40, borderRadius: BorderRadius.circular(999)),
               const SizedBox(width: Sp.sm),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SkeletonLoader(height: 14, width: 120),
-                    const SizedBox(height: Sp.xs),
+                    SizedBox(height: Sp.xs),
                     SkeletonLoader(height: 10, width: 80),
                   ],
                 ),
@@ -81,7 +81,7 @@ class SkeletonCard extends StatelessWidget {
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
           duration: 1200.ms,
-          color: Colors.white.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.5),
         );
   }
 }
@@ -97,23 +97,23 @@ class SkeletonListTile extends StatelessWidget {
         children: [
           SkeletonLoader(height: 44, width: 44, borderRadius: BorderRadius.circular(999)),
           const SizedBox(width: Sp.sm),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SkeletonLoader(height: 14, width: 140),
-                const SizedBox(height: Sp.xs),
+                SizedBox(height: Sp.xs),
                 SkeletonLoader(height: 10, width: 100),
               ],
             ),
           ),
-          SkeletonLoader(height: 24, width: 60, borderRadius: Rd.pill),
+          const SkeletonLoader(height: 24, width: 60, borderRadius: Rd.pill),
         ],
       )
           .animate(onPlay: (c) => c.repeat())
           .shimmer(
             duration: 1200.ms,
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
           ),
     );
   }

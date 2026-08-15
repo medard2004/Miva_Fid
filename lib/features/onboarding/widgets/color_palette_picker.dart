@@ -86,7 +86,7 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
           icon: const Icon(LucideIcons.palette, size: 16),
           label: Text(
             'Autre couleur',
-            style: AppTextStyles.caption().copyWith(color: AppColors.primary),
+            style: AppTextStyles.caption().copyWith(color: AppColors.merchant),
           ),
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
@@ -203,7 +203,7 @@ class _CustomColorSheetState extends State<_CustomColorSheet> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.merchant,
                 foregroundColor: Colors.white,
                 shape: const RoundedRectangleBorder(borderRadius: Rd.button),
                 padding: const EdgeInsets.symmetric(vertical: 14),

@@ -11,6 +11,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../providers/onboarding_provider.dart';
+import '../utils/commerce_icons.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
 
@@ -63,7 +64,6 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
   final _formKey = GlobalKey<FormState>();
   late final _nameCtrl = TextEditingController();
   late final _phoneCtrl = TextEditingController();
-  late final _addressCtrl = TextEditingController();
   late final _customCategoryCtrl = TextEditingController();
   late final _whatsappCtrl = TextEditingController();
   late final _instagramCtrl = TextEditingController();
@@ -93,7 +93,6 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     final state = ref.read(onboardingNotifierProvider);
     _nameCtrl.text = state.commerceName;
     _phoneCtrl.text = state.phone;
-    _addressCtrl.text = state.address;
     _whatsappCtrl.text = state.whatsapp;
     _instagramCtrl.text = state.instagram;
     _facebookCtrl.text = state.facebook;
@@ -108,7 +107,6 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
-    _addressCtrl.dispose();
     _customCategoryCtrl.dispose();
     _whatsappCtrl.dispose();
     _instagramCtrl.dispose();
@@ -126,7 +124,6 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     notifier.setCommerceName(_nameCtrl.text.trim());
     // Save phone with dial code prefix
     notifier.setPhone('${_selectedCountry.dialCode} ${_phoneCtrl.text.trim()}');
-    notifier.setAddress(_addressCtrl.text.trim());
     notifier.setWhatsapp(_whatsappCtrl.text.trim());
     notifier.setInstagram(_instagramCtrl.text.trim());
     notifier.setFacebook(_facebookCtrl.text.trim());
@@ -265,7 +262,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: isSelected
-                                  ? AppColors.primary
+                                  ? AppColors.merchant
                                   : AppColors.textPrimary,
                             ),
                           ),
@@ -283,7 +280,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                 const SizedBox(width: 6),
                                 const Icon(
                                   LucideIcons.circleCheck,
-                                  color: AppColors.primary,
+                                  color: AppColors.merchant,
                                   size: 18,
                                 ),
                               ],
@@ -355,7 +352,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: Rd.input,
-        borderSide: BorderSide(color: AppColors.primary, width: 2),
+        borderSide: BorderSide(color: AppColors.merchant, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: Rd.input,
@@ -413,11 +410,41 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                        // 2. Catégorie *
                       _buildFieldLabel('Catégorie'),
                       DropdownButtonFormField<String>(
-                        value: _isCustomCategory
+                        initialValue: _isCustomCategory
                             ? 'Autre'
                             : (state.commerceType.isEmpty ? null : state.commerceType),
                         items: _categories
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                            .map((c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(c),
+                                      Icon(
+                                        iconForCommerceType(c),
+                                        size: 18,
+                                        color: AppColors.merchant,
+                                      ),
+                                    ],
+                                  ),
+                                ))
+                            .toList(),
+                        selectedItemBuilder: (context) => _categories
+                            .map((c) => Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      c,
+                                      style: AppTextStyles.bodyMd()
+                                          .copyWith(color: AppColors.textPrimary),
+                                    ),
+                                    Icon(
+                                      iconForCommerceType(c),
+                                      size: 16,
+                                      color: AppColors.merchant,
+                                    ),
+                                  ],
+                                ))
                             .toList(),
                         onChanged: (v) {
                           if (v != null) {
@@ -475,12 +502,12 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                       prefixIcon: const Icon(
                                         LucideIcons.pencil,
                                         size: 18,
-                                        color: AppColors.primary,
+                                        color: AppColors.merchant,
                                       ),
                                       enabledBorder: const OutlineInputBorder(
                                         borderRadius: Rd.input,
                                         borderSide: BorderSide(
-                                          color: AppColors.primary,
+                                          color: AppColors.merchant,
                                           width: 1.5,
                                         ),
                                       ),
@@ -503,7 +530,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                       TextFormField(
                         controller: _phoneCtrl,
                         keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
+                        textInputAction: TextInputAction.done,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(
@@ -580,23 +607,6 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                           return null;
                         },
                       ),
-
-                      // 4. Ville *
-                      _buildFieldLabel('Ville'),
-                      TextFormField(
-                        controller: _addressCtrl,
-                        textInputAction: TextInputAction.done,
-                        style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-                        decoration: inputDecorationTheme.copyWith(
-                          hintText: 'Ex : Lomé',
-                          hintStyle: AppTextStyles.bodyMd().copyWith(
-                            color: AppColors.textSecondary.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Veuillez renseigner la ville de votre commerce'
-                            : null,
-                      ),
                       const SizedBox(height: Sp.lg),
 
                       // 5. Réseaux sociaux — optionnel, replié par défaut
@@ -647,24 +657,28 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                       controller: _whatsappCtrl,
                                       prefixIcon: LucideIcons.messageCircle,
                                       keyboardType: TextInputType.phone,
+                                      accentColor: AppColors.merchant,
                                     ),
                                     AppInput(
                                       label: 'Instagram',
                                       hint: '@votre_commerce',
                                       controller: _instagramCtrl,
                                       prefixIcon: LucideIcons.camera,
+                                      accentColor: AppColors.merchant,
                                     ),
                                     AppInput(
                                       label: 'Facebook',
                                       hint: 'facebook.com/votre-page',
                                       controller: _facebookCtrl,
                                       prefixIcon: LucideIcons.globe,
+                                      accentColor: AppColors.merchant,
                                     ),
                                     AppInput(
                                       label: 'TikTok',
                                       hint: '@votre_compte',
                                       controller: _tiktokCtrl,
                                       prefixIcon: LucideIcons.music,
+                                      accentColor: AppColors.merchant,
                                     ),
                                   ],
                                 ),
