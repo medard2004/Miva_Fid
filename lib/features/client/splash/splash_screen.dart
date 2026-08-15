@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
@@ -64,7 +65,36 @@ class SplashScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Miva-Fid', style: AppTextStyles.displayXL()),
+            // Séquence d'entrée façon Pinterest (portée depuis le design) :
+            // apparition à taille normale puis léger effet de respiration.
+            // Contrairement à l'écran design d'origine, pas d'envol/fondu de
+            // sortie ici — la navigation réelle est pilotée par
+            // `appStartupProvider` ci-dessus, pas par un minuteur fixe.
+            Image.asset(
+              'assets/images/logo_mivaFid.png',
+              width: 104,
+              height: 104,
+            )
+                .animate()
+                .fadeIn(duration: 300.ms, curve: Curves.easeOut)
+                .scale(
+                  begin: const Offset(0.85, 0.85),
+                  end: const Offset(1.0, 1.0),
+                  duration: 300.ms,
+                  curve: Curves.easeOut,
+                )
+                .then(delay: 150.ms)
+                .scale(
+                  end: const Offset(0.94, 0.94),
+                  duration: 260.ms,
+                  curve: Curves.easeInOut,
+                )
+                .then()
+                .scale(
+                  end: const Offset(1.0, 1.0),
+                  duration: 260.ms,
+                  curve: Curves.easeInOut,
+                ),
             const SizedBox(height: 32),
             const LoadingDots(),
             const SizedBox(height: 16),
