@@ -66,11 +66,10 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                     // Mode de récompense
                     Text('Mode de récompense', style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.sm),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildModeButton(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildModeChip(
                             label: 'Tampons',
                             icon: LucideIcons.layoutGrid,
                             isSelected: state.loyaltyMode == 'stamps',
@@ -81,8 +80,10 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                               }
                             },
                           ),
-                          const SizedBox(width: Sp.xs),
-                          _buildModeButton(
+                        ),
+                        const SizedBox(width: Sp.xs),
+                        Expanded(
+                          child: _buildModeChip(
                             label: 'Points',
                             icon: LucideIcons.sparkles,
                             isSelected: state.loyaltyMode == 'points',
@@ -91,8 +92,10 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                               notifier.setStampsRequired(100);
                             },
                           ),
-                          const SizedBox(width: Sp.xs),
-                          _buildModeButton(
+                        ),
+                        const SizedBox(width: Sp.xs),
+                        Expanded(
+                          child: _buildModeChip(
                             label: 'Achat',
                             icon: LucideIcons.shoppingCart,
                             isSelected: state.loyaltyMode == 'spend',
@@ -101,8 +104,8 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                               notifier.setStampsRequired(500);
                             },
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: Sp.lg),
 
@@ -296,7 +299,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     );
   }
 
-  Widget _buildModeButton({
+  Widget _buildModeChip({
     required String label,
     required IconData icon,
     required bool isSelected,
@@ -306,33 +309,24 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.merchant : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.merchant : AppColors.border,
             width: 1.5,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.merchant.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  )
-                ]
-              : null,
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
               color: isSelected ? Colors.white : AppColors.textSecondary,
-              size: 18,
+              size: 16,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
               label,
               style: AppTextStyles.bodyMd().copyWith(

@@ -72,29 +72,38 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
 
                     Text('Motif de fond', style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.sm),
-                    Wrap(
-                      spacing: Sp.xs,
-                      runSpacing: Sp.xs,
+                    Row(
                       children: [
-                        _buildSegmentButton(
-                          label: 'Aucun',
-                          isSelected: state.cardDecorationPattern == 'none',
-                          onTap: () => notifier.setCardDecorationPattern('none'),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Aucun',
+                            isSelected: state.cardDecorationPattern == 'none',
+                            onTap: () => notifier.setCardDecorationPattern('none'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: 'Traits',
-                          isSelected: state.cardDecorationPattern == 'lines',
-                          onTap: () => notifier.setCardDecorationPattern('lines'),
+                        const SizedBox(width: Sp.xs),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Traits',
+                            isSelected: state.cardDecorationPattern == 'lines',
+                            onTap: () => notifier.setCardDecorationPattern('lines'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: 'Vagues',
-                          isSelected: state.cardDecorationPattern == 'waves',
-                          onTap: () => notifier.setCardDecorationPattern('waves'),
+                        const SizedBox(width: Sp.xs),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Vagues',
+                            isSelected: state.cardDecorationPattern == 'waves',
+                            onTap: () => notifier.setCardDecorationPattern('waves'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: 'Points',
-                          isSelected: state.cardDecorationPattern == 'dots',
-                          onTap: () => notifier.setCardDecorationPattern('dots'),
+                        const SizedBox(width: Sp.xs),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Points',
+                            isSelected: state.cardDecorationPattern == 'dots',
+                            onTap: () => notifier.setCardDecorationPattern('dots'),
+                          ),
                         ),
                       ],
                     ),
@@ -287,10 +296,10 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.merchant : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected ? AppColors.merchant : AppColors.border,
             width: 1.5,
@@ -299,10 +308,11 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
         alignment: Alignment.center,
         child: Text(
           label,
-          style: AppTextStyles.bodyMd().copyWith(
+          textAlign: TextAlign.center,
+          style: AppTextStyles.caption().copyWith(
             color: isSelected ? Colors.white : AppColors.textPrimary,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            fontSize: 13,
+            fontSize: 11.5,
           ),
         ),
       ),

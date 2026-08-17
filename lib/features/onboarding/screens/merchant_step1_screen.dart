@@ -399,9 +399,10 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                             .map((c) => DropdownMenuItem(
                                   value: c,
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(c),
+                                      const SizedBox(width: 10),
                                       Icon(
                                         iconForCommerceType(c),
                                         size: 18,
@@ -413,13 +414,14 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                             .toList(),
                         selectedItemBuilder: (context) => _categories
                             .map((c) => Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
                                       c,
                                       style: AppTextStyles.bodyMd()
                                           .copyWith(color: AppColors.textPrimary),
                                     ),
+                                    const SizedBox(width: 10),
                                     Icon(
                                       iconForCommerceType(c),
                                       size: 16,

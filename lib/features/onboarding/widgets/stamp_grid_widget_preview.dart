@@ -24,11 +24,6 @@ class StampGridWidgetPreview extends StatelessWidget {
   final String iconName;
   final Color primaryColor;
 
-  /// Nombre maximum de pastilles réellement dessinées — au-delà, un badge
-  /// "+N" résume le reste. Évite tout débordement sur la carte compacte
-  /// quand le commerçant choisit un objectif élevé (ex. 20+ tampons).
-  static const int _maxVisibleDots = 10;
-
   IconData _getIconData(String name) {
     switch (name) {
       case 'star_rounded':
@@ -54,15 +49,12 @@ class StampGridWidgetPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clampedFilled = filled.clamp(0, total);
-    final hasOverflow = total > _maxVisibleDots;
-    final dotsToRender = hasOverflow ? _maxVisibleDots - 1 : total;
-    final overflowCount = total - dotsToRender;
 
     return Wrap(
       spacing: gap,
       runSpacing: gap,
       children: [
-        ...List.generate(dotsToRender, (i) {
+        ...List.generate(total, (i) {
           final isFilled = i < clampedFilled;
           if (isFilled) {
             Widget child;
@@ -126,24 +118,6 @@ class StampGridWidgetPreview extends StatelessWidget {
             ),
           );
         }),
-        if (hasOverflow)
-          Container(
-            width: stampSize,
-            height: stampSize,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.18),
-            ),
-            child: Text(
-              '+$overflowCount',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: stampSize * 0.36,
-              ),
-            ),
-          ),
       ],
     );
   }

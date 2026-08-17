@@ -38,47 +38,54 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
     _selected = widget.selected;
   }
 
+  /// Même dérivation que le dégradé réellement appliqué sur la carte
+  /// (cf. `LoyaltyCardPreview`) — les pastilles montrent donc un aperçu
+  /// fidèle du rendu final plutôt qu'une couleur plate abstraite.
+  static Color _deriveSecondary(Color primary) {
+    final hsl = HSLColor.fromColor(primary);
+    return hsl.withLightness((hsl.lightness - 0.15).clamp(0.0, 1.0)).toColor();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: Sp.sm,
-          runSpacing: Sp.sm,
-          children: _presets.map((color) {
-            final isSelected = _selected?.toARGB32() == color.toARGB32();
-            return GestureDetector(
-              onTap: () {
-                setState(() => _selected = color);
-                widget.onColorSelected(color);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: isSelected
-                      ? Border.all(color: Colors.white, width: 2.5)
-                      : null,
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.5),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : null,
+        Row(
+          children: [
+            ..._presets.map((color) {
+              final isSelected = _selected?.toARGB32() == color.toARGB32();
+              return Padding(
+                padding: const EdgeInsets.only(right: Sp.sm),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _selected = color);
+                    widget.onColorSelected(color);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [color, _deriveSecondary(color)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? Border.all(color: AppColors.textPrimary, width: 2)
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: isSelected
+                        ? const Icon(LucideIcons.check, color: Colors.white, size: 14)
+                        : null,
+                  ),
                 ),
-                child: isSelected
-                    ? const Icon(LucideIcons.check, color: Colors.white, size: 16)
-                    : null,
-              ),
-            );
-          }).toList(),
+              );
+            }),
+          ],
         ),
         const SizedBox(height: Sp.xs),
         TextButton.icon(
@@ -165,7 +172,11 @@ class _CustomColorSheetState extends State<_CustomColorSheet> {
           Container(
             height: 56,
             decoration: BoxDecoration(
-              color: _current,
+              gradient: LinearGradient(
+                colors: [_current, _ColorPalettePickerState._deriveSecondary(_current)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: Rd.card,
             ),
           ),

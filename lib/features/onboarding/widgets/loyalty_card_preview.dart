@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
@@ -16,6 +17,10 @@ class LoyaltyCardPreview extends ConsumerWidget {
   const LoyaltyCardPreview({super.key, this.previewStamps = 7});
 
   final int previewStamps;
+
+  /// Même hauteur fixe que la carte du module client
+  /// (`LoyaltyCardWidget.height` par défaut).
+  static const double _cardHeight = 148;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +37,6 @@ class LoyaltyCardPreview extends ConsumerWidget {
     // For stamps mode, calculate progress based on stampsRequired
     // For points mode, simulate 70% progress in preview
     final currentPoints = (state.stampsRequired * 0.7).round();
-    final remainingPoints = state.stampsRequired - currentPoints;
     final progress = isStampsMode
         ? previewStamps / state.stampsRequired
         : currentPoints / state.stampsRequired;
@@ -51,7 +55,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
           );
 
     return PremiumCardSurface(
-      height: 148,
+      height: _cardHeight,
       gradient: gradient,
       shadowColor: primary,
       child: Stack(
@@ -91,9 +95,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
                   previewStamps: previewStamps,
                   stampsRequired: state.stampsRequired,
                   currentPoints: currentPoints,
-                  remainingPoints: remainingPoints,
                   loyaltyMode: state.loyaltyMode,
-                  rewardDescription: state.rewardDescription,
                   progress: progress,
                   stampDesignType: state.stampDesignType,
                   stampEmoji: state.stampEmoji,
@@ -202,7 +204,7 @@ class _CardTopGroup extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           commerceName.isEmpty ? 'Votre Commerce' : commerceName,
-          style: AppTextStyles.cardName().copyWith(color: Colors.white, fontSize: 17, height: 1.0),
+          style: AppTextStyles.cardName().copyWith(color: Colors.white, fontSize: 26, height: 1.0),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -219,9 +221,7 @@ class _CardBottomGroup extends StatelessWidget {
     required this.previewStamps,
     required this.stampsRequired,
     required this.currentPoints,
-    required this.remainingPoints,
     required this.loyaltyMode,
-    required this.rewardDescription,
     required this.progress,
     required this.stampDesignType,
     required this.stampEmoji,
@@ -233,9 +233,7 @@ class _CardBottomGroup extends StatelessWidget {
   final int previewStamps;
   final int stampsRequired;
   final int currentPoints;
-  final int remainingPoints;
   final String loyaltyMode;
-  final String rewardDescription;
   final double progress;
   final String stampDesignType;
   final String stampEmoji;
@@ -250,24 +248,15 @@ class _CardBottomGroup extends StatelessWidget {
       children: [
         if (isStampsMode) ...[
           Text(
-            'TAMPONS',
-            style: AppTextStyles.mono().copyWith(
-              fontSize: 9,
-              color: Colors.white.withValues(alpha: 0.7),
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
             '$previewStamps/$stampsRequired',
             style: AppTextStyles.monoLg().copyWith(color: Colors.white, fontSize: 18),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           StampGridWidgetPreview(
             filled: previewStamps,
             total: stampsRequired,
-            stampSize: 15,
-            gap: 4,
+            stampSize: 20,
+            gap: 5,
             designType: stampDesignType,
             emoji: stampEmoji,
             iconName: stampIcon,
@@ -315,16 +304,6 @@ class _CardBottomGroup extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            'Encore $remainingPoints pour : ${rewardDescription.isEmpty ? "votre récompense" : rewardDescription}',
-            style: AppTextStyles.caption().copyWith(
-              color: Colors.white.withValues(alpha: 0.75),
-              fontSize: 10.5,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
         ],
         const SizedBox(height: 4),
         ClipRRect(
@@ -342,48 +321,68 @@ class _CardBottomGroup extends StatelessWidget {
 }
 
 // ── Custom painter for card background patterns ──────────────────────────────
+/// Motif ancré dans une bande à droite de la carte, avec un fondu progressif
+/// vers sa gauche — le texte (nom, badge, tampons/points) reste toujours sur
+/// un fond propre, plutôt qu'un motif plein cadre qui le traverse.
 class _CardPatternPainter extends CustomPainter {
   const _CardPatternPainter({required this.pattern, required this.color});
   final String pattern;
   final Color color;
 
+  static const double _bandStart = 0.5;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
+    final bandLeft = size.width * _bandStart;
+    final bandRect = Rect.fromLTWH(bandLeft, 0, size.width - bandLeft, size.height);
+
+    canvas.save();
+    canvas.clipRect(bandRect);
+
+    final fadeShader = ui.Gradient.linear(
+      Offset(bandLeft, 0),
+      Offset(bandLeft + (size.width - bandLeft) * 0.55, 0),
+      [color.withValues(alpha: 0), color],
+    );
 
     if (pattern == 'lines') {
-      const step = 24.0;
-      for (double i = -size.height; i < size.width; i += step) {
-        canvas.drawLine(
-          Offset(i, 0),
-          Offset(i + size.height, size.height),
-          paint,
-        );
+      final paint = Paint()
+        ..shader = fadeShader
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+      const step = 20.0;
+      for (double x = bandLeft - size.height; x < size.width; x += step) {
+        canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), paint);
       }
     } else if (pattern == 'waves') {
-      const step = 32.0;
-      for (double y = 8; y < size.height; y += step) {
-        final path = Path()..moveTo(0, y);
-        for (double x = 0; x < size.width; x += 8) {
-          final dy = 5.0 * math.sin(x * 0.04);
+      final paint = Paint()
+        ..shader = fadeShader
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+      const step = 22.0;
+      for (double y = 10; y < size.height; y += step) {
+        final path = Path()..moveTo(bandLeft, y);
+        for (double x = bandLeft; x < size.width; x += 6) {
+          final dy = 4.5 * math.sin((x - bandLeft) * 0.05);
           path.lineTo(x, y + dy);
         }
         canvas.drawPath(path, paint);
       }
     } else if (pattern == 'dots') {
       final dotPaint = Paint()
-        ..color = color
+        ..shader = fadeShader
         ..style = PaintingStyle.fill;
-      const step = 14.0;
-      for (double x = step / 2; x < size.width; x += step) {
+      const step = 13.0;
+      for (double x = bandLeft + step / 2; x < size.width; x += step) {
         for (double y = step / 2; y < size.height; y += step) {
-          canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
+          canvas.drawCircle(Offset(x, y), 1.1, dotPaint);
         }
       }
     }
+
+    canvas.restore();
   }
 
   @override
