@@ -105,15 +105,22 @@ class ActivityRow extends StatelessWidget {
                   color: AppColors.textPrimary,
                 ),
               ),
-              if (isReward) ...[
-                const SizedBox(width: 4),
-                const Icon(
-                  LucideIcons.circleCheck,
-                  color: AppColors.success,
-                  size: 14,
-                ),
+                if (isReward) ...[
+                  const SizedBox(width: 4),
+                  const Icon(
+                    LucideIcons.circleCheck,
+                    color: AppColors.success,
+                    size: 16,
+                  ),
+                ] else ...[
+                  const SizedBox(width: 4),
+                  const Icon(
+                    LucideIcons.chevronRight,
+                    color: AppColors.textSecondary,
+                    size: 16,
+                  ),
+                ],
               ],
-            ],
           ),
         ],
       ),

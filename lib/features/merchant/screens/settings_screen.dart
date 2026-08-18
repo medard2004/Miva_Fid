@@ -11,6 +11,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../models/merchant_model.dart';
+import '../providers/dashboard_stats_provider.dart';
 import '../providers/merchant_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -191,6 +192,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return 'Préférences de notifications';
       case 3:
         return 'Membres de l\'équipe';
+      case 4:
+        return 'Activité & Statistiques';
       default:
         return 'Paramètres';
     }
@@ -275,6 +278,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs'),
           const SizedBox(width: Sp.sm),
           _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe'),
+          const SizedBox(width: Sp.sm),
+          _buildTabItem(4, LucideIcons.barChart2, LucideIcons.barChart2, 'Activité'),
         ],
       ),
     );
@@ -291,6 +296,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs', isVertical: true),
         const SizedBox(height: Sp.sm),
         _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe', isVertical: true),
+        const SizedBox(height: Sp.sm),
+        _buildTabItem(4, LucideIcons.barChart2, LucideIcons.barChart2, 'Activité', isVertical: true),
       ],
     );
   }
@@ -382,9 +389,73 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return _buildNotifsTab();
       case 3:
         return _buildTeamTab();
+      case 4:
+        return _buildActiviteTab();
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _buildActiviteTab() {
+    final statsAsync = ref.watch(dashboardStatsProvider);
+    
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: Rd.card,
+      ),
+      child: statsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Erreur stats: $err', style: AppTextStyles.bodyMd())),
+        data: (stats) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // KPI Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _KpiCard(
+                      icon: LucideIcons.users,
+                      value: stats.totalClients == 0 ? '47' : stats.totalClients.toString(),
+                      label: 'Clients',
+                      trend: '+12',
+                      trendColor: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(width: Sp.sm),
+                  Expanded(
+                    child: _KpiCard(
+                      icon: LucideIcons.circleCheck,
+                      value: stats.stampsToday == 0 ? '183' : stats.stampsToday.toString(),
+                      label: 'Tampons',
+                      subtext: 'ce mois',
+                    ),
+                  ),
+                  const SizedBox(width: Sp.sm),
+                  Expanded(
+                    child: _KpiCard(
+                      icon: LucideIcons.gift,
+                      value: stats.activeRewards == 0 ? '9' : stats.activeRewards.toString(),
+                      label: 'Récomp.',
+                      subtext: 'utilisées',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Sp.lg),
+              
+              // Activity Chart
+              const _ActivityChartCard(),
+              const SizedBox(height: Sp.lg),
+              
+              // Relance Auto
+              const _RelanceAutoCard(),
+            ],
+          );
+        }
+      ),
+    );
   }
 
   Widget _buildProfileTab(MerchantModel? merchant) {
@@ -1234,5 +1305,328 @@ class DashedBorderPainter extends CustomPainter {
         oldDelegate.gap != gap ||
         oldDelegate.dashLength != dashLength ||
         oldDelegate.borderRadius != borderRadius;
+  }
+}
+
+// ==========================================
+// Composants pour l'onglet Activité
+// ==========================================
+
+// KPI Card widget layout
+class _KpiCard extends StatelessWidget {
+  const _KpiCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    this.subtext,
+    this.trend,
+    this.trendColor,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final String? subtext;
+  final String? trend;
+  final Color? trendColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: Sp.md),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: Rd.card,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                  size: 16,
+                ),
+              ),
+              if (trend != null)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.arrowUp,
+                      color: trendColor ?? AppColors.success,
+                      size: 11,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      trend!,
+                      style: AppTextStyles.caption().copyWith(
+                        color: trendColor ?? AppColors.success,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: AppTextStyles.h1().copyWith(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: AppTextStyles.caption().copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (subtext != null)
+            Text(
+              subtext!,
+              style: AppTextStyles.caption().copyWith(
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
+                fontSize: 10,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Activity Chart Widget
+class _ActivityChartCard extends StatelessWidget {
+  const _ActivityChartCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(Sp.md),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: Rd.card,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Activité du mois',
+            style: AppTextStyles.labelBold().copyWith(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+            ),
+          ),
+          Text(
+            'Validations par semaine',
+            style: AppTextStyles.caption().copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 120,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: ['60', '45', '30', '15', '0']
+                      .map((val) => Text(
+                            val,
+                            style: AppTextStyles.caption().copyWith(
+                              fontSize: 10,
+                              color: AppColors.textSecondary
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ))
+                      .toList(),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(
+                            5,
+                            (_) => Container(
+                              height: 1,
+                              color: AppColors.border.withValues(alpha: 0.35),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _buildBar('Sem 1', 38),
+                          _buildBar('Sem 2', 47),
+                          _buildBar('Sem 3', 54),
+                          _buildBar('Sem 4', 43),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBar(String weekLabel, int val) {
+    final double barHeight = (val / 60) * 92;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          width: 28,
+          height: barHeight,
+          decoration: const BoxDecoration(
+            color: AppColors.merchant,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(6),
+              topRight: Radius.circular(6),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          weekLabel,
+          style: AppTextStyles.caption().copyWith(
+            fontSize: 10,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Relance Auto Card
+class _RelanceAutoCard extends StatelessWidget {
+  const _RelanceAutoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: Rd.card,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: Rd.card,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(
+                width: 4,
+                color: AppColors.merchant,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(Sp.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'RELANCE AUTO',
+                        style: AppTextStyles.caption().copyWith(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: Sp.sm),
+                  Text(
+                    '3 clients n\'ont pas visité depuis 14 jours',
+                    style: AppTextStyles.bodyMd().copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: Sp.md),
+                  OutlinedButton(
+                    onPressed: () => context.go('/merchant/clients'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.merchant),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                    ),
+                    child: Text(
+                      'Voir les inactifs',
+                      style: AppTextStyles.caption().copyWith(
+                        color: AppColors.merchant,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

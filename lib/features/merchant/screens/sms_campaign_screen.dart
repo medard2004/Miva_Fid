@@ -66,141 +66,143 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: Sp.sm),
-
-          // 2. Title and "+ Nouvelle" Button Row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SMS',
-                        style: AppTextStyles.h1().copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        'Campagnes & messages',
-                        style: AppTextStyles.caption().copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  ElevatedButton.icon(
-                    onPressed: () => _openNewCampaignSheet(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.merchant,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    icon: const Icon(LucideIcons.plus, color: Colors.white, size: 16),
-                    label: Text(
-                      'Nouvelle',
-                      style: AppTextStyles.caption().copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: Sp.lg),
-
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: Sp.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(value: '12', label: 'Envoyées'),
-                  ),
-                  SizedBox(width: Sp.sm),
-                  Expanded(
-                    child: _StatCard(value: '82%', label: 'Ouverture'),
-                  ),
-                  SizedBox(width: Sp.sm),
-                  Expanded(
-                    child: _StatCard(value: '143', label: 'Atteints'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: Sp.lg),
-
-            // 4. Historique Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-              child: Row(
-                children: [
-                  Text(
-                    'Historique',
-                    style: AppTextStyles.labelBold().copyWith(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '4 campagnes',
-                    style: AppTextStyles.caption().copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const SizedBox(height: Sp.sm),
-
-            // 5. Campaigns List
-            Expanded(
-              child: smsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Erreur: $err')),
-                data: (campaignList) {
-                  // Merge Supabase sent campaigns with mockups for visual excellence
-                  final dbCampaigns = campaignList.map((c) => _MockCampaign(
-                        title: c.message.length > 20 ? '${c.message.substring(0, 20)}...' : c.message,
-                        target: c.recipientType == 'all' ? 'Tous actifs' : 'Sélection',
-                        time: 'Récemment',
-                        stats: '${c.recipientsCount}/${c.recipientsCount} envoyés  •  100% ouverts',
-                        isSent: c.status == 'sent',
-                      ));
-
-                  final displayList = [...dbCampaigns, ..._mockCampaigns];
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-                    itemCount: displayList.length,
-                    itemBuilder: (ctx, i) {
-                      final c = displayList[i];
-                      return _CampaignCard(campaign: c)
-                          .animate()
-                          .fadeIn(
-                            duration: 350.ms,
-                            delay: Duration(milliseconds: 80 * i),
-                          )
-                          .slideY(begin: 0.07, end: 0);
-                    },
-                  );
-                },
+  
+            // 2. Title and "+ Nouvelle" Button Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+                child: Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SMS',
+                          style: AppTextStyles.h1().copyWith(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          'Campagnes & messages',
+                          style: AppTextStyles.caption().copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    ElevatedButton.icon(
+                      onPressed: () => _openNewCampaignSheet(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.merchant,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(LucideIcons.plus, color: Colors.white, size: 16),
+                      label: Text(
+                        'Nouvelle',
+                        style: AppTextStyles.caption().copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: Sp.lg),
+  
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: Sp.md),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(value: '12', label: 'Envoyées'),
+                    ),
+                    SizedBox(width: Sp.sm),
+                    Expanded(
+                      child: _StatCard(value: '82%', label: 'Ouverture'),
+                    ),
+                    SizedBox(width: Sp.sm),
+                    Expanded(
+                      child: _StatCard(value: '143', label: 'Atteints'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.lg),
+  
+              // 4. Historique Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+                child: Row(
+                  children: [
+                    Text(
+                      'Historique',
+                      style: AppTextStyles.labelBold().copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '4 campagnes',
+                      style: AppTextStyles.caption().copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.sm),
+  
+              // 5. Campaigns List
+              Expanded(
+                child: smsAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, _) => Center(child: Text('Erreur: $err')),
+                  data: (campaignList) {
+                    // Merge Supabase sent campaigns with mockups for visual excellence
+                    final dbCampaigns = campaignList.map((c) => _MockCampaign(
+                          title: c.message.length > 20 ? '${c.message.substring(0, 20)}...' : c.message,
+                          target: c.recipientType == 'all' ? 'Tous actifs' : 'Sélection',
+                          time: 'Récemment',
+                          stats: '${c.recipientsCount}/${c.recipientsCount} envoyés  •  100% ouverts',
+                          isSent: c.status == 'sent',
+                        ));
+  
+                    final displayList = [...dbCampaigns, ..._mockCampaigns];
+  
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: Sp.md),
+                      itemCount: displayList.length,
+                      itemBuilder: (ctx, i) {
+                        final c = displayList[i];
+                        return _CampaignCard(campaign: c)
+                            .animate()
+                            .fadeIn(
+                              duration: 350.ms,
+                              delay: Duration(milliseconds: 80 * i),
+                            )
+                            .slideY(begin: 0.07, end: 0);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+      ),
     );
   }
 }
