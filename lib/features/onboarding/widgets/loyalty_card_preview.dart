@@ -55,7 +55,6 @@ class LoyaltyCardPreview extends ConsumerWidget {
           );
 
     return PremiumCardSurface(
-      height: _cardHeight,
       gradient: gradient,
       shadowColor: primary,
       child: Stack(
@@ -80,11 +79,13 @@ class LoyaltyCardPreview extends ConsumerWidget {
           // pour une cohérence visuelle entre les deux parcours.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _CardTopGroup(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: _cardHeight - 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _CardTopGroup(
                   commerceType: state.commerceType,
                   commerceName: state.commerceName,
                   logoUrl: state.logoUrl,
@@ -103,6 +104,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
                   primaryColor: primary,
                 ),
               ],
+            ),
             ),
           ),
         ],
