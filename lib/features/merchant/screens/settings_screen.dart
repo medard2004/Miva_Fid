@@ -1,9 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -12,6 +13,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../models/merchant_model.dart';
 import '../providers/merchant_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -80,7 +82,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (merchant != null && !_initialized) {
       _nameController.text = merchant.name;
       _phoneController.text = merchant.phone ?? '';
-      _emailController.text = Supabase.instance.client.auth.currentUser?.email ?? 'contact@lasaveur.tg';
+      _emailController.text =
+          ref.read(merchantAuthProvider).restaurant?.email ?? '';
       _initialized = true;
     }
 
@@ -197,15 +200,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return 'Préférences de notifications';
       case 3:
         return 'Membres de l\'équipe';
+      case 4:
+        return 'Mon QR Code';
       default:
         return 'Paramètres';
     }
   }
 
   Widget _buildMerchantHeaderCard(MerchantModel? merchant) {
-    final initials = merchant?.initials ?? 'LS';
-    final name = merchant?.name ?? 'Restaurant La Saveur';
-    final email = Supabase.instance.client.auth.currentUser?.email ?? 'contact@lasaveur.tg';
+    final initials = merchant?.initials ?? '?';
+    final name = merchant?.name ?? 'Votre Commerce';
+    // L'email est porté par le compte marchand Laravel, pas par la fiche
+    // commerce : il n'apparaît que dans la session.
+    final email = ref.read(merchantAuthProvider).restaurant?.email ?? '';
 
     return Container(
       padding: const EdgeInsets.all(Sp.md),
@@ -281,6 +288,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs'),
           const SizedBox(width: Sp.sm),
           _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe'),
+          const SizedBox(width: Sp.sm),
+          _buildTabItem(4, LucideIcons.qrCode, LucideIcons.qrCode, 'QR Code'),
         ],
       ),
     );
@@ -297,6 +306,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs', isVertical: true),
         const SizedBox(height: Sp.sm),
         _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe', isVertical: true),
+        const SizedBox(height: Sp.sm),
+        _buildTabItem(4, LucideIcons.qrCode, LucideIcons.qrCode, 'QR Code', isVertical: true),
       ],
     );
   }
@@ -388,6 +399,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return _buildNotifsTab();
       case 3:
         return _buildTeamTab();
+      case 4:
+        return _buildQrTab(merchant);
       default:
         return const SizedBox.shrink();
     }
@@ -1105,6 +1118,121 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  /// Aperçu du QR code du commerce, directement dans les paramètres — le
+  /// même `qr_token` que l'écran dédié (`/merchant/more/qrcode`), qui reste
+  /// la référence pour l'impression/le partage plutôt que de dupliquer
+  /// cette logique ici.
+  Widget _buildQrTab(MerchantModel? merchant) {
+    final restaurant = ref.watch(merchantAuthProvider).restaurant;
+    final qrData = restaurant?.qrToken ?? '';
+    final shortCode = restaurant?.shortCode ?? '';
+    final merchantName = merchant?.name ?? 'Votre Commerce';
+
+    return Container(
+      padding: const EdgeInsets.all(Sp.md),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: Rd.card,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(Sp.md),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.merchant, width: 3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: qrData.isEmpty
+                ? const SizedBox(
+                    width: 180,
+                    height: 180,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : QrImageView(
+                    data: qrData,
+                    size: 180,
+                    eyeStyle: QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: AppColors.textPrimary,
+                    ),
+                    dataModuleStyle: QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: Sp.sm),
+          Text(
+            merchantName,
+            style: AppTextStyles.labelBold().copyWith(
+              color: AppColors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Vos clients le scannent pour rejoindre votre programme',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption().copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: Sp.md),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.gray100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    shortCode.isEmpty ? '—' : shortCode,
+                    style: AppTextStyles.mono().copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(LucideIcons.copy, color: AppColors.textSecondary, size: 20),
+                  onPressed: shortCode.isEmpty
+                      ? null
+                      : () {
+                          Clipboard.setData(ClipboardData(text: shortCode));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Code copié dans le presse-papiers !')),
+                          );
+                        },
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Sp.md),
+          AppButton.merchant(
+            'Imprimer / Partager',
+            icon: LucideIcons.printer,
+            onPressed: () => context.go('/merchant/more/qrcode'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCommonSettingsCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -1148,8 +1276,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 destructive: true,
               );
               if (!confirmed) return;
-              await Supabase.instance.client.auth.signOut();
-              if (context.mounted) context.go('/role-select');
+              await ref.read(merchantAuthProvider.notifier).signOut();
+              if (context.mounted) context.go('/auth/merchant/auth');
             },
           ),
         ],

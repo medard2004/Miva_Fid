@@ -4,7 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/api/providers/api_providers.dart';
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_messages.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -27,18 +29,27 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
 
   Future<void> _createMerchant() async {
     setState(() => _loading = true);
-    final state = ref.read(onboardingNotifierProvider);
 
     try {
-      await ref
-          .read(loyaltyProgramServiceProvider)
-          .save(state.toLoyaltyProgramJson());
+      final ok =
+          await ref.read(onboardingNotifierProvider.notifier).submitLoyaltyProgram();
+      if (!ok) throw Exception('refreshFromApi failed');
       await AppHaptics.heavy();
       if (mounted) context.go('/auth/merchant/success');
     } catch (e) {
       debugPrint('Save loyalty program error: $e');
       if (mounted) {
-        AppToast.error(context, "Impossible d'enregistrer le programme.");
+        final error = ErrorTranslator.translate(
+          e,
+          context: ErrorContext.createLoyaltyProgram,
+        );
+        // Un 422 peut porter plusieurs champs invalides à la fois (step2 et
+        // step3 sont soumis ensemble ici) — les lister tous plutôt que
+        // n'afficher que le premier évite un aller-retour par champ.
+        final message = error.hasFieldErrors
+            ? error.fieldErrors.values.join('\n')
+            : error.displayMessage ?? ErrorMessages.profileSaveFailed;
+        AppToast.error(context, message);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -65,10 +76,8 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
     // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
     final state = ref.watch(onboardingNotifierProvider);
-    final hasSocials = state.whatsapp.isNotEmpty ||
-        state.instagram.isNotEmpty ||
-        state.facebook.isNotEmpty ||
-        state.tiktok.isNotEmpty;
+    final cityCountry =
+        [state.city, state.country].where((v) => v.isNotEmpty).join(', ');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -140,46 +149,105 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                     const SizedBox(height: Sp.lg),
 
                     _ReviewSection(
-                      title: 'Commerce',
+                      stepBadge: 'Étape 1',
+                      title: 'Commerce & Informations',
                       onEdit: () => context.go('/auth/merchant/step1'),
                       rows: [
-                        _ReviewRow(icon: LucideIcons.store, label: state.commerceName.isEmpty ? '—' : state.commerceName),
-                        _ReviewRow(icon: LucideIcons.tag, label: state.commerceType.isEmpty ? '—' : state.commerceType),
-                        _ReviewRow(icon: LucideIcons.mapPin, label: state.address.isEmpty ? '—' : state.address),
-                        _ReviewRow(icon: LucideIcons.phone, label: state.phone.isEmpty ? '—' : state.phone),
-                      ],
-                    ),
-                    const SizedBox(height: Sp.md),
-
-                    if (hasSocials) ...[
-                      _ReviewSection(
-                        title: 'Réseaux sociaux',
-                        onEdit: () => context.go('/auth/merchant/step1'),
-                        rows: [
-                          if (state.whatsapp.isNotEmpty)
-                            _ReviewRow(icon: LucideIcons.messageCircle, label: state.whatsapp),
-                          if (state.instagram.isNotEmpty)
-                            _ReviewRow(icon: LucideIcons.camera, label: state.instagram),
-                          if (state.facebook.isNotEmpty)
-                            _ReviewRow(icon: LucideIcons.globe, label: state.facebook),
-                          if (state.tiktok.isNotEmpty)
-                            _ReviewRow(icon: LucideIcons.music, label: state.tiktok),
-                        ],
-                      ),
-                      const SizedBox(height: Sp.md),
-                    ],
-
-                    _ReviewSection(
-                      title: 'Programme',
-                      onEdit: () => context.go('/auth/merchant/step2'),
-                      rows: [
-                        _ReviewRow(icon: LucideIcons.layoutGrid, label: '$_modeLabel · objectif ${state.stampsRequired}'),
                         _ReviewRow(
-                          icon: LucideIcons.gift,
-                          label: state.rewardDescription.isEmpty ? 'Aucune récompense définie' : state.rewardDescription,
+                          icon: LucideIcons.store,
+                          label: 'Nom',
+                          value: state.commerceName.isEmpty ? '—' : state.commerceName,
+                        ),
+                        _ReviewRow(
+                          icon: LucideIcons.tag,
+                          label: 'Catégorie',
+                          value: state.commerceType.isEmpty ? '—' : state.commerceType,
+                        ),
+                        _ReviewRow(
+                          icon: LucideIcons.phone,
+                          label: 'Téléphone',
+                          value: state.phone.isEmpty ? '—' : state.phone,
                         ),
                       ],
-                    ),
+                    ).animate(delay: 120.ms).fadeIn(duration: 350.ms),
+                    const SizedBox(height: Sp.md),
+
+                    _ReviewSection(
+                      stepBadge: 'Étape 2',
+                      title: 'Localisation du commerce',
+                      onEdit: () => context.go('/auth/merchant/location'),
+                      rows: [
+                        _ReviewRow(
+                          icon: LucideIcons.globe,
+                          label: 'Pays & Ville',
+                          value: cityCountry.isEmpty ? 'Non renseignés' : cityCountry,
+                        ),
+                        _ReviewRow(
+                          icon: LucideIcons.mapPin,
+                          label: 'Adresse / Repère',
+                          value: state.address.isEmpty ? 'Non renseignée' : state.address,
+                        ),
+                        _ReviewRow(
+                          icon: LucideIcons.locateFixed,
+                          label: 'Position GPS',
+                          value: state.latitude != null && state.longitude != null
+                              ? '${state.latitude!.toStringAsFixed(5)}, ${state.longitude!.toStringAsFixed(5)}'
+                              : 'Non définie',
+                        ),
+                      ],
+                    ).animate(delay: 140.ms).fadeIn(duration: 350.ms),
+                    const SizedBox(height: Sp.md),
+
+                    _ReviewSection(
+                      stepBadge: 'Étape 3',
+                      title: 'Réseaux sociaux & Contacts',
+                      onEdit: () => context.go('/auth/merchant/step1'),
+                      rows: [
+                        _ReviewRow(
+                          icon: LucideIcons.messageCircle,
+                          label: 'WhatsApp',
+                          value: state.whatsapp.isEmpty ? 'Non renseigné' : state.whatsapp,
+                        ),
+                        _ReviewRow(
+                          icon: LucideIcons.camera,
+                          label: 'Instagram',
+                          value: state.instagram.isEmpty ? 'Non renseigné' : state.instagram,
+                        ),
+                        _ReviewRow(
+                          icon: LucideIcons.globe,
+                          label: 'Facebook',
+                          value: state.facebook.isEmpty ? 'Non renseigné' : state.facebook,
+                        ),
+                        _ReviewRow(
+                          icon: LucideIcons.music,
+                          label: 'TikTok',
+                          value: state.tiktok.isEmpty ? 'Non renseigné' : state.tiktok,
+                        ),
+                      ],
+                    ).animate(delay: 160.ms).fadeIn(duration: 350.ms),
+                    const SizedBox(height: Sp.md),
+
+                    _ReviewSection(
+                      stepBadge: 'Étape 4',
+                      title: 'Programme & Récompenses',
+                      onEdit: () => context.go('/auth/merchant/step2'),
+                      rows: [
+                        _ReviewRow(
+                          icon: LucideIcons.layoutGrid,
+                          label: 'Mode de fidélité',
+                          value: '$_modeLabel (${state.rewards.length} palier${state.rewards.length > 1 ? 's' : ''})',
+                        ),
+                        ...state.rewards.asMap().entries.map((entry) {
+                          final idx = entry.key;
+                          final reward = entry.value;
+                          return _ReviewRow(
+                            icon: LucideIcons.gift,
+                            label: 'Palier #${idx + 1}',
+                            value: 'À ${reward.goal} : ${reward.rewardDescription.isEmpty ? 'Aucune description' : reward.rewardDescription}',
+                          );
+                        }),
+                      ],
+                    ).animate(delay: 180.ms).fadeIn(duration: 350.ms),
                     const SizedBox(height: Sp.xl),
                   ],
                 ),
@@ -208,11 +276,13 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
 
 class _ReviewSection extends StatelessWidget {
   const _ReviewSection({
+    required this.stepBadge,
     required this.title,
     required this.rows,
     required this.onEdit,
   });
 
+  final String stepBadge;
   final String title;
   final List<_ReviewRow> rows;
   final VoidCallback onEdit;
@@ -226,26 +296,66 @@ class _ReviewSection extends StatelessWidget {
         color: Colors.white,
         borderRadius: Rd.card,
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: AppTextStyles.labelBold())),
-              GestureDetector(
-                onTap: onEdit,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.merchantTint,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Text(
-                  'Modifier',
+                  stepBadge,
                   style: AppTextStyles.caption().copyWith(
                     color: AppColors.merchant,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              const SizedBox(width: Sp.xs),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTextStyles.labelBold().copyWith(fontSize: 14),
+                ),
+              ),
+              InkWell(
+                onTap: onEdit,
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.pencil, size: 12, color: AppColors.merchant),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Modifier',
+                        style: AppTextStyles.caption().copyWith(
+                          color: AppColors.merchant,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: Sp.sm),
+          const SizedBox(height: Sp.xs),
+          Divider(height: 16, color: AppColors.border),
           ...rows,
         ],
       ),
@@ -254,10 +364,15 @@ class _ReviewSection extends StatelessWidget {
 }
 
 class _ReviewRow extends StatelessWidget {
-  const _ReviewRow({required this.icon, required this.label});
+  const _ReviewRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   final IconData icon;
   final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
@@ -268,10 +383,23 @@ class _ReviewRow extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: AppColors.textSecondary),
           const SizedBox(width: Sp.sm),
-          Expanded(
+          SizedBox(
+            width: 110,
             child: Text(
               label,
-              style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.caption().copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTextStyles.bodyMd().copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

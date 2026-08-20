@@ -34,6 +34,8 @@
 	<string>Miva-Fid peut accéder à vos contacts pour faciliter l'envoi de SMS.</string>
 	<key>NFCReaderUsageDescription</key>
 	<string>Miva-Fid utilise le NFC pour scanner les badges de fidélité.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Miva-Fid utilise votre position pour localiser votre commerce sur la carte.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

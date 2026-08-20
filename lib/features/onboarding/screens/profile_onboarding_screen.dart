@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/storage/local_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -62,6 +65,8 @@ class _ProfileOnboardingScreenState
 
   void _finish() {
     HapticFeedback.lightImpact();
+    unawaited(ref.read(localPreferencesProvider).setHasSeenOnboarding(true));
+    ref.read(hasSeenOnboardingProvider.notifier).state = true;
     context.go('/auth/merchant/auth');
   }
 
@@ -259,29 +264,6 @@ class _ProfileOnboardingScreenState
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 2),
-
-                  // Login Link
-                  TextButton(
-                    onPressed: _finish,
-                    child: RichText(
-                      text: TextSpan(
-                        style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary, fontSize: 12),
-                        children: const [
-                          TextSpan(text: 'Déjà commerçant ? '),
-                          TextSpan(
-                            text: 'Se connecter',
-                            style: TextStyle(
-                              color: AppColors.merchant,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ),

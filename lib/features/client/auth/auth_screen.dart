@@ -229,6 +229,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: AppTapScale(
+                          onTap: () => context.go('/role-select'),
+                          scaleDown: 0.95,
+                          child: Text(
+                            'Pas client ? Changer de profil',
+                            style: AppTextStyles.bodySmall(
+                                    color: const Color(0xFF7C3AED))
+                                .copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

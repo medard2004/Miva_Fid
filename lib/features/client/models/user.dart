@@ -5,6 +5,13 @@ enum AuthProvider { phone, google, apple }
 
 class AppUser {
   final String id;
+
+  /// Identifiant numérique brut (`clients.id`) — distinct de [id] (l'uuid
+  /// public). Nécessaire pour le canal Reverb `loyalty.{id}` : l'autorisation
+  /// côté Laravel (`routes/channels.php`) compare `(int) $user->id`, jamais
+  /// l'uuid. `null` si le backend ne l'a pas renvoyé (ne devrait pas arriver).
+  final int? backendId;
+
   final String fullName;
   final String phoneNumber;
   final int? age;
@@ -23,6 +30,7 @@ class AppUser {
 
   const AppUser({
     required this.id,
+    this.backendId,
     required this.fullName,
     required this.phoneNumber,
     this.age,
@@ -59,6 +67,7 @@ class AppUser {
       // `uuid` est l'identifiant public stable ; `id` (auto-incrément) sert de
       // repli si le backend ne l'expose pas.
       id: json['uuid']?.toString() ?? json['id']?.toString() ?? '',
+      backendId: (json['id'] as num?)?.toInt(),
       fullName: full,
       phoneNumber: json['phone']?.toString() ?? '',
       age: birthDate != null ? _ageFrom(birthDate) : null,
@@ -112,6 +121,20 @@ class AppUser {
     return '$prefix •• •• $visibleEnd';
   }
 
+  /// Vrai si un des champs affichés dans l'écran d'édition manque encore —
+  /// recalculé à partir des champs eux-mêmes plutôt que du flag serveur
+  /// `profileCompleted`, qui peut rester figé à `true` après l'édition d'un
+  /// seul champ alors que d'autres restent vides.
+  bool get isProfileIncomplete =>
+      fullName.isEmpty ||
+      birthDate == null ||
+      email == null ||
+      email!.isEmpty ||
+      country == null ||
+      country!.isEmpty ||
+      city == null ||
+      city!.isEmpty;
+
   /// Vrai si l'anniversaire tombe dans le mois en cours (bloc anniversaire).
   bool get isBirthdayMonth {
     if (birthDate == null) return false;
@@ -153,6 +176,7 @@ class AppUser {
   }) {
     return AppUser(
       id: id,
+      backendId: backendId,
       // Si `fullName` est fourni, on le prend directement.
       // Si seulement `firstName` est fourni (compatibilité), on substitue.
       fullName: fullName ??

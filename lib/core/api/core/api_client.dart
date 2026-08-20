@@ -6,6 +6,7 @@ import '../storage/token_storage.dart';
 
 class ApiClient {
   late final Dio _dio;
+  late final AuthInterceptor _authInterceptor;
 
   ApiClient({
     required TokenStorageBase tokenStorage,
@@ -18,9 +19,8 @@ class ApiClient {
       responseType: ResponseType.json,
     ));
 
-    _dio.interceptors.add(
-      AuthInterceptor(tokenStorage, onUnauthorized: onUnauthorized),
-    );
+    _authInterceptor = AuthInterceptor(tokenStorage, onUnauthorized: onUnauthorized);
+    _dio.interceptors.add(_authInterceptor);
 
     // Journalisation réservée au développement. En release, `requestBody`
     // recracherait les mots de passe en clair et `responseBody` les tokens
@@ -40,4 +40,8 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+
+  /// Coupe le signal "session expirée" le temps d'une déconnexion volontaire
+  /// — voir [AuthInterceptor.suppressUnauthorized].
+  set suppressUnauthorized(bool value) => _authInterceptor.suppressUnauthorized = value;
 }

@@ -11,6 +11,7 @@ import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
@@ -37,8 +38,9 @@ class CardDetailScreen extends ConsumerWidget {
         return null;
       }
     }));
-    final rewards =
-        ref.watch(rewardsProvider).where((r) => r.cardId == cardId).toList();
+    final rewards = card == null
+        ? const <Reward>[]
+        : ref.watch(rewardsProvider).where((r) => r.cardId == card.id).toList();
 
     if (card == null) {
       return Scaffold(body: Center(child: Text(t.cardDetailNotFound)));
@@ -102,17 +104,7 @@ class CardDetailScreen extends ConsumerWidget {
                         ),
                       )
                     else
-                      _DetailedRewardCard(
-                        reward: Reward(
-                          id: 'default',
-                          cardId: 'default',
-                          restaurantName: t.cardDetailDefaultOfferRestaurant,
-                          title: t.cardDetailDefaultOfferTitle,
-                          description: t.cardDetailDefaultOfferMessage,
-                          status: RewardStatus.locked,
-                        ),
-                        t: t,
-                      ),
+                      _DefaultOfferCard(t: t),
 
                     const SizedBox(height: 16),
 
@@ -275,6 +267,9 @@ class _TopQrPlateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Plaque : padding 16*2 (container) + 12*2 (cadre QR) = 56 de marge fixe
+    // avant le QR — sur un écran étroit, un QR figé à 170 déborderait sinon.
+    final qrSize = (MediaQuery.sizeOf(context).width - 56).clamp(0.0, 170.0);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(top: 20, bottom: 16, left: 16, right: 16),
@@ -295,13 +290,7 @@ class _TopQrPlateCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.border),
               ),
-              child: SizedBox(
-                width: 170,
-                height: 170,
-                child: CustomPaint(
-                  painter: _QrPainter(seed: card.fallbackId),
-                ),
-              ),
+              child: _CardQr(card: card, size: qrSize),
             ),
           ),
           const SizedBox(height: 12),
@@ -322,9 +311,13 @@ class _TopQrPlateCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                card.fallbackId.replaceAll('-', ' - '),
-                style: AppTextStyles.monoMedium(color: AppColors.ink),
+              Flexible(
+                child: Text(
+                  card.fallbackId.replaceAll('-', ' - '),
+                  style: AppTextStyles.monoMedium(color: AppColors.ink),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(width: 4),
               GestureDetector(
@@ -357,6 +350,11 @@ class _TopQrPlateCard extends StatelessWidget {
 /// Affiche le QR Code en plein écran dans un modal.
 void _showFullScreenQrDialog(
     BuildContext context, LoyaltyCard card, AppLocalizations t) {
+  // Dialog : insetPadding 24*2 + padding contenu 24*2 + padding cadre QR
+  // 20*2 = 136 de marge fixe avant le QR — sur un écran étroit (~320dp), un
+  // QR figé à 230 déborderait sinon.
+  final qrSize =
+      (MediaQuery.sizeOf(context).width - 136).clamp(0.0, 230.0);
   showDialog(
     context: context,
     builder: (context) {
@@ -370,9 +368,14 @@ void _showFullScreenQrDialog(
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    card.restaurantName,
-                    style: AppTextStyles.displayMedium().copyWith(fontSize: 18),
+                  Flexible(
+                    child: Text(
+                      card.restaurantName,
+                      style:
+                          AppTextStyles.displayMedium().copyWith(fontSize: 18),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -388,19 +391,15 @@ void _showFullScreenQrDialog(
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: SizedBox(
-                  width: 230,
-                  height: 230,
-                  child: CustomPaint(
-                    painter: _QrPainter(seed: card.fallbackId),
-                  ),
-                ),
+                child: _CardQr(card: card, size: qrSize),
               ),
               const SizedBox(height: 20),
               Text(
                 card.fallbackId.replaceAll('-', ' - '),
                 style: AppTextStyles.monoMedium(color: AppColors.ink)
                     .copyWith(fontSize: 16),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 10),
               Text(
@@ -421,11 +420,15 @@ class _MiddleCardWidget extends StatelessWidget {
   final LoyaltyCard card;
   const _MiddleCardWidget({required this.card});
 
-  bool get _isDark => card.liningColor.computeLuminance() < 0.45;
-
   @override
   Widget build(BuildContext context) {
-    final textColor = _isDark ? Colors.white : AppColors.ink;
+    // Texte toujours blanc — même convention que l'aperçu marchand, qui
+    // n'adapte pas la couleur du texte à la luminosité du dégradé.
+    const textColor = Colors.white;
+    // Responsive height: match ~0.42 aspect ratio (148/full-width) like
+    // the merchant preview, with a sensible min/max.
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardHeight = (screenWidth * 0.42).clamp(130.0, 180.0);
 
     return Hero(
       tag: 'card_${card.id}',
@@ -433,9 +436,12 @@ class _MiddleCardWidget extends StatelessWidget {
         type: MaterialType.transparency,
         child: GradientCardSurface(
           color: card.liningColor,
+          secondaryColor: card.secondaryColor,
+          gradientType: card.gradientType,
+          decorationPattern: card.decorationPattern,
           width: double.infinity,
-          height: 140,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          height: cardHeight,
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
           child:
               CardFaceContent(card: card, textColor: textColor, compact: true),
         ),
@@ -452,8 +458,7 @@ class _DetailedRewardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLocked = reward.status == RewardStatus.locked;
-    final isReady = reward.status == RewardStatus.active;
+    final isReady = reward.isRedeemable;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -470,15 +475,9 @@ class _DetailedRewardCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   StatusBadge(
-                    label: isReady
-                        ? t.rewardStatusReady
-                        : (isLocked
-                            ? t.rewardStatusLocked
-                            : t.rewardStatusUsed),
+                    label: isReady ? t.rewardStatusReady : t.rewardStatusUsed,
                     tone: isReady ? StatusTone.success : StatusTone.neutral,
-                    icon: isReady
-                        ? LucideIcons.circleCheckBig
-                        : (isLocked ? LucideIcons.lock : null),
+                    icon: isReady ? LucideIcons.circleCheckBig : null,
                   ),
                 ],
               ),
@@ -486,26 +485,62 @@ class _DetailedRewardCard extends StatelessWidget {
               Text(
                 reward.title,
                 style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                reward.restaurantName,
+                style: AppTextStyles.bodySmall(
+                    color: AppColors.inkMuted(opacity: 0.7)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Aperçu générique affiché tant que la carte n'a débloqué aucune
+/// récompense — pas de véritable [Reward] tant que rien n'est débloqué.
+class _DefaultOfferCard extends StatelessWidget {
+  final AppLocalizations t;
+  const _DefaultOfferCard({required this.t});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: 250,
+        child: AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              StatusBadge(
+                label: t.rewardStatusLocked,
+                tone: StatusTone.neutral,
+                icon: LucideIcons.lock,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                t.cardDetailDefaultOfferTitle,
+                style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 3),
               Text(
-                reward.description,
+                t.cardDetailDefaultOfferMessage,
                 style: AppTextStyles.bodySmall(
                     color: AppColors.inkMuted(opacity: 0.7)),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (isLocked && reward.lockedCondition != null) ...[
-                const SizedBox(height: 8),
-                Divider(height: 1, color: AppColors.border),
-                const SizedBox(height: 6),
-                Text(
-                  reward.lockedCondition!,
-                  style: AppTextStyles.monoSmall(color: AppColors.primary),
-                ),
-              ],
             ],
           ),
         ),
@@ -544,6 +579,7 @@ class _HistoryAccordionBarState extends State<_HistoryAccordionBar> {
         }
         break;
       case LoyaltyMechanic.points:
+      case LoyaltyMechanic.spend:
         entries.add(_HistoryEntry(
             date: now.subtract(const Duration(days: 4)),
             detail: t.historyPointsEntry(80)));
@@ -672,76 +708,40 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-/// CustomPainter d'un QR code stylisé — modules nets, sans texture.
-class _QrPainter extends CustomPainter {
-  final String seed;
-  const _QrPainter({required this.seed});
+/// QR code scannable de la carte — encode le `card_code`, l'identifiant que
+/// `GET /merchant/clients/lookup` accepte côté marchand pour retrouver la
+/// carte et accorder un tampon. Remplace l'ancien motif décoratif, qui
+/// ressemblait à un QR sans en être un et n'était donc pas scannable.
+class _CardQr extends StatelessWidget {
+  final LoyaltyCard card;
+  final double size;
+
+  const _CardQr({required this.card, required this.size});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    // La plaque QR reste blanche dans les deux thèmes (lisibilité/scan) —
-    // inkSolid, pas ink qui passerait en quasi-blanc en mode sombre et
-    // rendrait les modules invisibles sur leur fond blanc fixe.
-    final paint = Paint()
-      ..color = AppColors.inkSolid
-      ..style = PaintingStyle.fill;
-
-    final cellWidth = size.width / 21;
-    final cellHeight = size.height / 21;
-
-    final hash = seed.codeUnits.fold<int>(0, (prev, elem) => prev + elem);
-
-    for (int r = 0; r < 21; r++) {
-      for (int c = 0; c < 21; c++) {
-        if ((r < 7 && c < 7) || (r < 7 && c > 13) || (r > 13 && c < 7)) {
-          continue;
-        }
-        final isFilled =
-            ((r * 21 + c + hash) % 3) == 0 || ((r * c + hash) % 5) == 0;
-        if (isFilled) {
-          final rect = Rect.fromLTWH(
-            c * cellWidth + cellWidth * 0.06,
-            r * cellHeight + cellHeight * 0.06,
-            cellWidth * 0.88,
-            cellHeight * 0.88,
-          );
-          canvas.drawRRect(
-            RRect.fromRectAndRadius(rect, Radius.circular(cellWidth * 0.14)),
-            paint,
-          );
-        }
-      }
+  Widget build(BuildContext context) {
+    if (card.fallbackId.isEmpty) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: const Center(child: CircularProgressIndicator()),
+      );
     }
 
-    _drawFinderPattern(canvas, 0, 0, cellWidth, cellHeight, paint);
-    _drawFinderPattern(canvas, 14 * cellWidth, 0, cellWidth, cellHeight, paint);
-    _drawFinderPattern(
-        canvas, 0, 14 * cellHeight, cellWidth, cellHeight, paint);
-  }
-
-  void _drawFinderPattern(
-      Canvas canvas, double x, double y, double cw, double ch, Paint paint) {
-    final outerRect = Rect.fromLTWH(x, y, 7 * cw, 7 * ch);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(outerRect, Radius.circular(cw * 0.9)),
-      paint,
-    );
-
-    final innerWhite = Rect.fromLTWH(x + cw, y + ch, 5 * cw, 5 * ch);
-    final whitePaint = Paint()..color = Colors.white;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(innerWhite, Radius.circular(cw * 0.6)),
-      whitePaint,
-    );
-
-    final centerRect = Rect.fromLTWH(x + 2 * cw, y + 2 * ch, 3 * cw, 3 * ch);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(centerRect, Radius.circular(cw * 0.5)),
-      paint,
+    return QrImageView(
+      data: card.fallbackId,
+      size: size,
+      backgroundColor: Colors.white,
+      // La plaque reste blanche dans les deux thèmes (lisibilité au scan) :
+      // `inkSolid`, pas `ink` qui passerait en quasi-blanc en mode sombre.
+      eyeStyle: const QrEyeStyle(
+        eyeShape: QrEyeShape.square,
+        color: AppColors.inkSolid,
+      ),
+      dataModuleStyle: const QrDataModuleStyle(
+        dataModuleShape: QrDataModuleShape.square,
+        color: AppColors.inkSolid,
+      ),
     );
   }
-
-  @override
-  bool shouldRepaint(covariant _QrPainter oldDelegate) =>
-      oldDelegate.seed != seed;
 }

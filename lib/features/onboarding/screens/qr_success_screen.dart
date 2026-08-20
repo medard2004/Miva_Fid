@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -43,9 +42,11 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
     super.dispose();
   }
 
+  /// Le QR encode directement le `qr_token` du restaurant — c'est ce que
+  /// `POST /loyalty-cards/join` attend côté client (scan ou saisie manuelle).
   String _buildQrPayload() {
     final restaurant = ref.read(merchantAuthProvider).restaurant;
-    return jsonEncode({'merchantId': restaurant?.uuid ?? '', 'app': 'mivafid'});
+    return restaurant?.qrToken ?? '';
   }
 
   Future<void> _generatePdf() async {

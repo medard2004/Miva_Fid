@@ -560,6 +560,12 @@ abstract class AppLocalizations {
   /// **'PTS'**
   String get cardPointsSuffix;
 
+  /// No description provided for @cardSpendLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'OBJECTIF ACHAT'**
+  String get cardSpendLabel;
+
   /// No description provided for @cardCashbackLabel.
   ///
   /// In fr, this message translates to:
@@ -655,6 +661,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Utiliser'**
   String get rewardsUseButton;
+
+  /// No description provided for @rewardsShowQrInstruction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Présentez ce code au marchand pour l\'utiliser. Valable une seule fois.'**
+  String get rewardsShowQrInstruction;
 
   /// No description provided for @walletGreetingMorning.
   ///
@@ -998,6 +1010,48 @@ abstract class AppLocalizations {
   /// **'Déjà membre ? '**
   String get authHasAccountPrefix;
 
+  /// No description provided for @authAcceptPrefix.
+  ///
+  /// In fr, this message translates to:
+  /// **'En continuant, vous acceptez les '**
+  String get authAcceptPrefix;
+
+  /// No description provided for @authTermsLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'CGU'**
+  String get authTermsLink;
+
+  /// No description provided for @authAcceptAnd.
+  ///
+  /// In fr, this message translates to:
+  /// **' et la '**
+  String get authAcceptAnd;
+
+  /// No description provided for @authPrivacyLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'politique de confidentialité'**
+  String get authPrivacyLink;
+
+  /// No description provided for @legalTermsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conditions Générales d\'Utilisation'**
+  String get legalTermsTitle;
+
+  /// No description provided for @legalPrivacyTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Politique de confidentialité'**
+  String get legalPrivacyTitle;
+
+  /// No description provided for @authTermsRequiredError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veuillez accepter les CGU et la politique de confidentialité pour continuer.'**
+  String get authTermsRequiredError;
+
   /// No description provided for @otpContextLogin.
   ///
   /// In fr, this message translates to:
@@ -1163,13 +1217,13 @@ abstract class AppLocalizations {
   /// No description provided for @qrManualEntryHint.
   ///
   /// In fr, this message translates to:
-  /// **'Le code figure sous le QR affiché par l\'établissement.'**
+  /// **'Le code unique à 8 caractères figure sous le QR affiché par l\'établissement.'**
   String get qrManualEntryHint;
 
   /// No description provided for @qrManualEntryPlaceholder.
   ///
   /// In fr, this message translates to:
-  /// **'Ex. JARDIN-2024'**
+  /// **'Ex. 8XKQ2P9Z'**
   String get qrManualEntryPlaceholder;
 
   /// No description provided for @qrCameraUnavailableTitle.
@@ -1238,6 +1292,18 @@ abstract class AppLocalizations {
   /// **'Carte créée !'**
   String get joinCardCreatedTitle;
 
+  /// No description provided for @joinCardAlreadyMemberTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà membre !'**
+  String get joinCardAlreadyMemberTitle;
+
+  /// No description provided for @joinCardAlreadyMemberMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes déjà membre de ce programme de fidélité.'**
+  String get joinCardAlreadyMemberMessage;
+
   /// No description provided for @phonePickerTitle.
   ///
   /// In fr, this message translates to:
@@ -1249,6 +1315,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Rechercher un pays ou un indicatif...'**
   String get phonePickerSearchHint;
+
+  /// No description provided for @phoneDigitsError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le numéro doit contenir {count} chiffres pour {country}.'**
+  String phoneDigitsError(int count, String country);
 
   /// No description provided for @countryPickerTitle.
   ///

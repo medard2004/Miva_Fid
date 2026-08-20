@@ -124,6 +124,8 @@ class ErrorTranslator {
         return ErrorMessages.phoneTaken;
       case 'email':
         return ErrorMessages.emailTaken;
+      case 'name':
+        return ErrorMessages.commerceNameTaken;
       default:
         return ErrorMessages.fieldInvalid;
     }
@@ -282,6 +284,8 @@ class ErrorTranslator {
       case ErrorContext.verifyPassword:
       case ErrorContext.changePassword:
         return ErrorMessages.passwordChangeFailed;
+      case ErrorContext.createLoyaltyProgram:
+        return ErrorMessages.profileSaveFailed;
     }
   }
 

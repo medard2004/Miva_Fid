@@ -260,6 +260,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cardPointsSuffix => 'PTS';
 
   @override
+  String get cardSpendLabel => 'OBJECTIF ACHAT';
+
+  @override
   String get cardCashbackLabel => 'CASHBACK';
 
   @override
@@ -313,6 +316,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rewardsUseButton => 'Utiliser';
+
+  @override
+  String get rewardsShowQrInstruction =>
+      'Présentez ce code au marchand pour l\'utiliser. Valable une seule fois.';
 
   @override
   String get walletGreetingMorning => 'BONJOUR';
@@ -518,6 +525,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authHasAccountPrefix => 'Déjà membre ? ';
 
   @override
+  String get authAcceptPrefix => 'En continuant, vous acceptez les ';
+
+  @override
+  String get authTermsLink => 'CGU';
+
+  @override
+  String get authAcceptAnd => ' et la ';
+
+  @override
+  String get authPrivacyLink => 'politique de confidentialité';
+
+  @override
+  String get legalTermsTitle => 'Conditions Générales d\'Utilisation';
+
+  @override
+  String get legalPrivacyTitle => 'Politique de confidentialité';
+
+  @override
+  String get authTermsRequiredError =>
+      'Veuillez accepter les CGU et la politique de confidentialité pour continuer.';
+
+  @override
   String get otpContextLogin => 'Connexion';
 
   @override
@@ -611,10 +640,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get qrManualEntryHint =>
-      'Le code figure sous le QR affiché par l\'établissement.';
+      'Le code unique à 8 caractères figure sous le QR affiché par l\'établissement.';
 
   @override
-  String get qrManualEntryPlaceholder => 'Ex. JARDIN-2024';
+  String get qrManualEntryPlaceholder => 'Ex. 8XKQ2P9Z';
 
   @override
   String get qrCameraUnavailableTitle => 'Caméra indisponible';
@@ -654,10 +683,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get joinCardCreatedTitle => 'Carte créée !';
 
   @override
+  String get joinCardAlreadyMemberTitle => 'Déjà membre !';
+
+  @override
+  String get joinCardAlreadyMemberMessage =>
+      'Vous êtes déjà membre de ce programme de fidélité.';
+
+  @override
   String get phonePickerTitle => 'Sélectionnez un indicatif';
 
   @override
   String get phonePickerSearchHint => 'Rechercher un pays ou un indicatif...';
+
+  @override
+  String phoneDigitsError(int count, String country) {
+    return 'Le numéro doit contenir $count chiffres pour $country.';
+  }
 
   @override
   String get countryPickerTitle => 'Sélectionnez un pays';

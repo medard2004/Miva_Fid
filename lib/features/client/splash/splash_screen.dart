@@ -9,6 +9,7 @@ import 'package:miva_fid/features/client/providers/app_startup_provider.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/shared/loading_dots.dart';
 import 'package:miva_fid/features/merchant/providers/merchant_auth_provider.dart';
+import 'package:miva_fid/features/onboarding/providers/onboarding_provider.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
 /// Écran d'amorçage : attend la restauration de session avant de router.
@@ -33,11 +34,23 @@ class SplashScreen extends ConsumerWidget {
           }
           final merchant = ref.read(merchantAuthProvider);
           if (merchant.isAuthenticated) {
-            context.go(
-              merchant.restaurant?.hasBusinessInfo ?? false
-                  ? '/merchant'
-                  : '/auth/merchant/step1',
-            );
+            final restaurant = merchant.restaurant;
+            // Reprise d'une session déjà authentifiée sans passer par l'écran
+            // de connexion (donc sans son propre appel à `hydrateFrom`) :
+            // sans ceci, `OnboardingState` repart vide et l'étape localisation
+            // (ou la revue) affiche des champs vierges malgré des données déjà
+            // enregistrées côté serveur.
+            ref.read(onboardingNotifierProvider.notifier).hydrateFrom(restaurant);
+            context.go(switch ((
+              restaurant?.hasLoyaltyProgram ?? false,
+              restaurant?.hasLocation ?? false,
+              restaurant?.hasBusinessInfo ?? false,
+            )) {
+              (true, _, _) => '/merchant',
+              (false, true, _) => '/auth/merchant/step2',
+              (false, false, true) => '/auth/merchant/location',
+              _ => '/auth/merchant/step1',
+            });
             return;
           }
           // Onboarding et rôle déjà vus : on saute directement à l'écran de

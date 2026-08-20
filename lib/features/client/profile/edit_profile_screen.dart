@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
@@ -41,14 +43,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     );
     if (picked == null || !mounted) return;
 
+    // image_picker rend un fichier dans le cache tmp de l'OS, purgeable à
+    // tout moment : on le copie dans le répertoire documents de l'app pour
+    // que l'aperçu local reste valide le temps de l'upload.
+    final ext = picked.path.contains('.') ? picked.path.split('.').last : 'jpg';
+    final docsDir = await getApplicationDocumentsDirectory();
+    final persisted = await File(picked.path).copy(
+      '${docsDir.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.$ext',
+    );
+    if (!mounted) return;
+
     try {
       await runGuarded(
-        () => ref.read(authProvider.notifier).updateAvatar(File(picked.path)),
+        () => ref.read(authProvider.notifier).updateAvatar(persisted),
         useOverlay: true,
       );
       if (mounted) showSuccessToast(ErrorMessages.avatarUpdateSuccess);
     } catch (e) {
       if (mounted) handleError(e, context: ErrorContext.updateAvatar);
+    } finally {
+      // Sert seulement d'aperçu optimiste le temps de l'upload : une fois
+      // celui-ci résolu (succès ou échec), l'état ne référence plus ce
+      // fichier — inutile de le laisser traîner dans les documents.
+      unawaited(persisted.delete().catchError((_) => persisted));
     }
   }
 
@@ -148,6 +165,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                       icon: LucideIcons.user,
                       label: t.editProfileFullName,
                       value: user?.fullName ?? t.editProfileNotSet,
+                      isIncomplete: user?.fullName == null || user!.fullName.isEmpty,
                       onTap: () => context.push(
                         '/client/profile/edit/name',
                       ),
@@ -157,6 +175,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                       icon: LucideIcons.cake,
                       label: t.editProfileBirthDate,
                       value: birthDateLabel,
+                      isIncomplete: user?.birthDate == null,
                       onTap: () =>
                           context.push('/client/profile/edit/birthdate'),
                     ),
@@ -165,6 +184,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                       icon: LucideIcons.mail,
                       label: t.editProfileEmail,
                       value: user?.email ?? t.editProfileNotSet,
+                      isIncomplete: user?.email == null || user!.email!.isEmpty,
                       onTap: () => context.push('/client/profile/edit/email'),
                     ),
                     Divider(height: 1, color: AppColors.border),
@@ -172,6 +192,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                       icon: LucideIcons.globe,
                       label: t.editProfileCountry,
                       value: user?.country ?? t.editProfileNotSet,
+                      isIncomplete: user?.country == null || user!.country!.isEmpty,
                       onTap: () =>
                           context.push('/client/profile/edit/country'),
                     ),
@@ -180,6 +201,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                       icon: LucideIcons.mapPin,
                       label: t.editProfileCity,
                       value: user?.city ?? t.editProfileNotSet,
+                      isIncomplete: user?.city == null || user!.city!.isEmpty,
                       onTap: () => context.push('/client/profile/edit/city'),
                     ),
                   ],
@@ -230,6 +252,7 @@ class _InfoRow extends StatelessWidget {
   final Widget? leading;
   final String label;
   final String value;
+  final bool isIncomplete;
   final VoidCallback onTap;
 
   const _InfoRow({
@@ -237,6 +260,7 @@ class _InfoRow extends StatelessWidget {
     this.leading,
     required this.label,
     required this.value,
+    this.isIncomplete = false,
     required this.onTap,
   }) : assert(icon != null || leading != null);
 
@@ -266,9 +290,18 @@ class _InfoRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(label,
-                      style: AppTextStyles.bodySmall(
-                          color: AppColors.inkMuted(opacity: 0.55))),
+                  Row(
+                    children: [
+                      Text(label,
+                          style: AppTextStyles.bodySmall(
+                              color: AppColors.inkMuted(opacity: 0.55))),
+                      if (isIncomplete) ...[
+                        const SizedBox(width: 4),
+                        const Icon(LucideIcons.triangleAlert,
+                            size: 12, color: AppColors.warning),
+                      ],
+                    ],
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     value,

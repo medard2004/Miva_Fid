@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/api/core/api_exceptions.dart';
+import 'package:miva_fid/core/errors/error_messages.dart';
+import 'package:miva_fid/core/utils/toast_service.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
-import 'package:miva_fid/features/client/data/mock_data.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
@@ -24,53 +26,100 @@ class JoinRestaurantScreen extends ConsumerStatefulWidget {
 
 class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
     with SingleTickerProviderStateMixin {
-  bool _joining = false;
+  bool _revealing = false;
+  LoyaltyCard? _realCard;
+  bool _isNewCard = true;
+  String? _realError;
 
-  Future<void> _join(LoyaltyCard card) async {
-    setState(() => _joining = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    ref.read(walletProvider.notifier).joinRestaurant(card);
-    if (mounted) context.go('/client/wallet');
+  @override
+  void initState() {
+    super.initState();
+    // Un code scanné (QR réel) rejoint directement via le backend — pas de
+    // pré-visualisation possible sans un second endpoint, donc pas d'étape
+    // "Rejoindre" intermédiaire ici.
+    final code = widget.scannedCode;
+    if (code != null) {
+      _joinReal(code);
+    } else {
+      // Cet écran n'a de sens qu'avec un code scanné : sans lui, il n'y a
+      // rien à rejoindre. On renvoie vers le scan plutôt que d'afficher un
+      // parcours de démonstration déconnecté du backend.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/client/onboarding/scan');
+      });
+    }
+  }
+
+  Future<void> _joinReal(String qrToken) async {
+    try {
+      final result =
+          await ref.read(walletProvider.notifier).joinByQrToken(qrToken);
+      if (!mounted) return;
+
+      if (!result.isNew) {
+        // Carte déjà existante — pas de doublon, pas de ré-adhésion : on
+        // redirige immédiatement vers la fiche carte plutôt que de rejouer
+        // l'animation de création, avec un message clair sur pourquoi.
+        final t = AppLocalizations.of(context)!;
+        ToastService.showInfo(t.joinCardAlreadyMemberMessage);
+        context.pushReplacement('/client/card/${result.card.id}');
+        return;
+      }
+
+      setState(() {
+        _revealing = true;
+        _realCard = result.card;
+        _isNewCard = result.isNew;
+      });
+      // Même respiration que l'ancienne animation de révélation avant de
+      // partir sur la fiche carte.
+      await Future.delayed(const Duration(milliseconds: 900));
+      if (mounted) context.pushReplacement('/client/card/${result.card.id}');
+    } catch (e) {
+      if (!mounted) return;
+      // Les messages 404 du contrôleur (`ServerException`) sont déjà rédigés
+      // pour l'utilisateur ("Ce code n'est associé à aucun commerce.") — les
+      // afficher tels quels plutôt que de les faire passer par le catalogue
+      // générique d'erreurs, pensé pour l'auth.
+      final message = e is ServerException
+          ? e.message
+          : ErrorMessages.serverUnreachable;
+      setState(() => _realError = message);
+      ToastService.showError(message);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
-    final t = AppLocalizations.of(context)!;
     final code = widget.scannedCode;
-    final card = code != null ? MockData.findJoinableByCode(code) : null;
 
-    if (code != null && card == null) {
-      return _UnrecognizedCodeScreen(code: code);
+    if (code == null) {
+      // Redirection déclenchée dans `initState` — écran de transition le
+      // temps qu'elle s'exécute.
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    // Repli si l'écran est atteint sans code (ex. navigation directe) :
-    // propose le seul établissement démo découvrable.
-    final resolvedCard = card ?? MockData.joinableRestaurants.first;
-
+    if (_realError != null) {
+      return _UnrecognizedCodeScreen(code: code, message: _realError);
+    }
     return Scaffold(
+      backgroundColor: AppColors.surface,
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 600),
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.06),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
+          child: child,
         ),
-        child: _joining
-            ? _CardRevealScreen(
-                key: const ValueKey('reveal'), card: resolvedCard)
-            : _JoinScreen(
-                key: const ValueKey('join'),
-                card: resolvedCard,
-                offerDetail: t.joinOfferDetail,
-                onJoin: () => _join(resolvedCard),
+        child: _revealing && _realCard != null
+            ? _CardRevealScreen(key: const ValueKey('reveal'), card: _realCard!)
+            : const Center(
+                key: ValueKey('loading'),
+                child: CircularProgressIndicator(),
               ),
       ),
     );
@@ -81,7 +130,12 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
 /// établissement partenaire connu.
 class _UnrecognizedCodeScreen extends StatelessWidget {
   final String code;
-  const _UnrecognizedCodeScreen({required this.code});
+
+  /// Message précis renvoyé par le backend (ex. "programme pas encore
+  /// activé"), affiché à la place du message générique si fourni.
+  final String? message;
+
+  const _UnrecognizedCodeScreen({required this.code, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +147,7 @@ class _UnrecognizedCodeScreen extends StatelessWidget {
           child: EmptyState(
             icon: LucideIcons.qrCode,
             title: t.joinUnrecognizedTitle,
-            message: t.joinUnrecognizedMessage(code),
+            message: message ?? t.joinUnrecognizedMessage(code),
             action: Column(
               children: [
                 AppButton(
@@ -111,163 +165,6 @@ class _UnrecognizedCodeScreen extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Écran principal : rejoindre
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _JoinScreen extends StatefulWidget {
-  final LoyaltyCard card;
-  final String offerDetail;
-  final VoidCallback onJoin;
-
-  const _JoinScreen({
-    super.key,
-    required this.card,
-    required this.offerDetail,
-    required this.onJoin,
-  });
-
-  @override
-  State<_JoinScreen> createState() => _JoinScreenState();
-}
-
-class _JoinScreenState extends State<_JoinScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _fade;
-  late final Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    )..forward();
-
-    _fade = CurvedAnimation(
-        parent: _ctrl, curve: const Interval(0, 0.7, curve: Curves.easeOut));
-    _slide = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context)!;
-    return Container(
-      color: AppColors.surface,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 8, top: 4),
-              child: IconButton(
-                onPressed: () => context.go('/client/wallet'),
-                icon:
-                    Icon(LucideIcons.arrowLeft, color: AppColors.ink, size: 22),
-              ),
-            ),
-            FadeTransition(
-              opacity: _fade,
-              child: SlideTransition(
-                position: _slide,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      SectionEyebrow(t.joinEyebrow),
-                      const SizedBox(height: 10),
-                      Text(
-                        widget.card.restaurantName,
-                        style: AppTextStyles.displayXL().copyWith(height: 1.05),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        widget.card.restaurantCategory,
-                        style: AppTextStyles.bodyMedium(
-                            color: AppColors.inkMuted(opacity: 0.7)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 36),
-            FadeTransition(
-              opacity: CurvedAnimation(
-                parent: _ctrl,
-                curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
-              ),
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.12),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: _ctrl,
-                  curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
-                )),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: AppCard(
-                    elevated: true,
-                    padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SectionEyebrow(t.joinWelcomeOfferEyebrow),
-                        const SizedBox(height: 14),
-                        Text(
-                          widget.card.welcomeOffer,
-                          style: AppTextStyles.displayMedium()
-                              .copyWith(height: 1.2),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          widget.offerDetail,
-                          style: AppTextStyles.bodyMedium(
-                                  color: AppColors.inkMuted(opacity: 0.65))
-                              .copyWith(height: 1.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const Spacer(),
-            FadeTransition(
-              opacity: CurvedAnimation(
-                parent: _ctrl,
-                curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-                child: AppButton(
-                  label: t.joinButton,
-                  height: 58,
-                  onTap: widget.onJoin,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -319,6 +216,11 @@ class _CardRevealScreenState extends State<_CardRevealScreen>
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    // Texte toujours blanc — même convention que le reste de l'app (pile
+    // wallet, détail carte, aperçu marchand) : la carte doit rendre
+    // exactement ce que le marchand a configuré/prévisualisé.
+    const textColor = Colors.white;
+    final subtextColor = textColor.withValues(alpha: 0.8);
     return Container(
       color: AppColors.surface,
       child: SafeArea(
@@ -336,23 +238,26 @@ class _CardRevealScreenState extends State<_CardRevealScreen>
                     children: [
                       GradientCardSurface(
                         color: widget.card.liningColor,
+                        secondaryColor: widget.card.secondaryColor,
+                        gradientType: widget.card.gradientType,
+                        decorationPattern: widget.card.decorationPattern,
                         height: 200,
                         width: double.infinity,
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(LucideIcons.circleCheckBig,
-                                  color: Colors.white, size: 34),
+                              Icon(LucideIcons.circleCheckBig,
+                                  color: textColor, size: 34),
                               const SizedBox(height: 10),
                               Text(t.joinCardCreatedTitle,
                                   style: AppTextStyles.displayMedium(
-                                      color: Colors.white)),
+                                      color: textColor)),
                               const SizedBox(height: 6),
                               Text(
                                 widget.card.restaurantName,
                                 style: AppTextStyles.bodyMedium(
-                                    color: Colors.white.withValues(alpha: 0.8)),
+                                    color: subtextColor),
                               ),
                             ],
                           ),

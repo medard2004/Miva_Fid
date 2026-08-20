@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -68,6 +69,13 @@ class CardFaceContent extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                _CardLogo(
+                  logoUrl: card.logoUrl,
+                  restaurantName: card.restaurantName,
+                  textColor: textColor,
+                  compact: compact,
+                ),
+                SizedBox(width: compact ? 8 : 10),
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerLeft,
@@ -125,9 +133,88 @@ class CardFaceContent extends StatelessWidget {
             ),
           ],
         ),
-        _MechanicStat(
-            card: card, textColor: textColor, subtextColor: subtextColor),
+        _MechanicStat(card: card, textColor: textColor, subtextColor: subtextColor),
       ],
+    );
+  }
+}
+
+/// Logo de l'enseigne, en médaillon en tête de carte. Sans logo configuré
+/// côté marchand (ou en cas d'échec de chargement), retombe sur un
+/// monogramme — jamais sur l'icône de catégorie, déjà affichée dans le badge
+/// juste à côté : les deux répétaient le même glyphe sur les boutiques sans
+/// logo.
+class _CardLogo extends StatelessWidget {
+  final String? logoUrl;
+  final String restaurantName;
+  final Color textColor;
+  final bool compact;
+
+  const _CardLogo({
+    required this.logoUrl,
+    required this.restaurantName,
+    required this.textColor,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = compact ? 30.0 : 38.0;
+    return Container(
+      width: size,
+      height: size,
+      padding: const EdgeInsets.all(1.4),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.55),
+            Colors.white.withValues(alpha: 0.08),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child: DecoratedBox(
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.14)),
+          child: _content(size),
+        ),
+      ),
+    );
+  }
+
+  Widget _content(double size) {
+    if (logoUrl == null || logoUrl!.isEmpty) return _monogram(size);
+    return CachedNetworkImage(
+      imageUrl: logoUrl!,
+      fit: BoxFit.cover,
+      width: size,
+      height: size,
+      placeholder: (context, url) => _monogram(size),
+      errorWidget: (context, url, error) => _monogram(size),
+    );
+  }
+
+  Widget _monogram(double size) {
+    final letter =
+        restaurantName.trim().isNotEmpty ? restaurantName.trim()[0].toUpperCase() : '?';
+    return Center(
+      child: Text(
+        letter,
+        style: AppTextStyles.displayMedium(color: textColor).copyWith(
+          fontSize: size * 0.42,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
+      ),
     );
   }
 }
@@ -179,20 +266,36 @@ class _MechanicStat extends StatelessWidget {
           ],
         );
       case LoyaltyMechanic.cashback:
-        return _valueRow(
-            t.cardCashbackLabel,
-            formatGroupedNumber(card.cashbackBalanceFcfa),
-            t.cardCashbackSuffix);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _valueRow(
+                t.cardCashbackLabel,
+                formatGroupedNumber(card.cashbackBalanceFcfa),
+                t.cardCashbackSuffix),
+            _levelRow(),
+          ],
+        );
       case LoyaltyMechanic.points:
         return _valueRow(t.cardPointsLabel,
             formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix);
+      // Mode "Achat" : même compteur que "Points" côté données, mais un
+      // libellé distinct (existait déjà dans l10n, jamais câblé) pour que
+      // les deux mécaniques ne se ressemblent pas au premier coup d'œil.
+      case LoyaltyMechanic.spend:
+        return _valueRow(t.cardSpendLabel,
+            formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix,
+            percent: card.percent);
       case LoyaltyMechanic.stamps:
         return _valueRow(t.cardStampsLabel,
-            '${card.stampsCurrent}/${card.stampsGoal}', null);
+            '${card.stampsCurrent}/${card.stampsGoal}', null,
+            percent: card.percent);
     }
   }
 
-  Widget _valueRow(String label, String value, String? suffix) {
+  Widget _valueRow(String label, String value, String? suffix,
+      {int? percent}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -203,15 +306,45 @@ class _MechanicStat extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(value, style: AppTextStyles.monoLarge(color: textColor)),
+            Flexible(
+              child: Text(
+                value,
+                style: AppTextStyles.monoLarge(color: textColor),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             if (suffix != null) ...[
               const SizedBox(width: 6),
               Text(suffix,
                   style: AppTextStyles.monoMedium(color: subtextColor)),
             ],
+            if (percent != null) ...[
+              const SizedBox(width: 6),
+              Text('$percent%',
+                  style: AppTextStyles.monoSmall(color: subtextColor)),
+            ],
           ],
         ),
       ],
+    );
+  }
+
+  /// Niveau de fidélité (Cashback) : jamais le montant cumulé dépensé/gagné,
+  /// uniquement le nom du niveau et le pourcentage vers le suivant — calculés
+  /// côté serveur (`LoyaltyLevelService`).
+  Widget _levelRow() {
+    if (card.levelName == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        card.isMaxLevel
+            ? '${card.levelName} · niveau maximum'
+            : '${card.levelName} · ${card.levelPercentToNext ?? 0}% vers le niveau suivant',
+        style: AppTextStyles.monoSmall(color: subtextColor),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -12,6 +13,10 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../../../core/services/social_auth_service.dart';
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_messages.dart';
+import '../../../core/errors/error_translator.dart';
+import '../../../core/utils/toast_service.dart';
 import '../providers/onboarding_provider.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
@@ -27,23 +32,32 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = false; // false = Inscription, true = Connexion
   bool _loading = false;
-  String? _error;
+  bool _acceptedTerms = false;
+  bool _showTermsError = false;
 
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  late final _termsTap = TapGestureRecognizer()
+    ..onTap = () => context.push('/client/legal/terms');
+  late final _privacyTap = TapGestureRecognizer()
+    ..onTap = () => context.push('/client/legal/privacy');
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _termsTap.dispose();
+    _privacyTap.dispose();
     super.dispose();
   }
 
   Future<void> _continueWithSocial(String provider) async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (!_isLogin && !_acceptedTerms) {
+      setState(() => _showTermsError = true);
+      return;
+    }
+
+    setState(() => _loading = true);
 
     try {
       final idToken = provider == 'google'
@@ -62,33 +76,50 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
       if (!mounted) return;
 
       if (!ok) {
-        final error = ref.read(merchantAuthProvider).lastError;
-        throw Exception(error?.toString() ?? 'Connexion échouée.');
+        ToastService.showError(_translatedError(
+          ErrorContext.socialLogin,
+          fallback: ErrorMessages.socialFailedGoogle,
+        ));
+        return;
       }
 
       final restaurant = ref.read(merchantAuthProvider).restaurant;
-      if (restaurant?.hasBusinessInfo ?? false) {
+      // Repart du compte réel : évite de rejouer les saisies d'un parcours
+      // précédent, et préremplit un onboarding repris en cours de route.
+      ref.read(onboardingNotifierProvider.notifier).hydrateFrom(restaurant);
+      if (restaurant?.hasLoyaltyProgram ?? false) {
         context.go('/merchant');
       } else {
         context.go('/auth/merchant/step1');
       }
     } catch (e) {
       debugPrint("Merchant social auth error: $e");
-      setState(() {
-        _error = e.toString().replaceAll('Exception:', '').trim();
-      });
+      if (ErrorTranslator.isUserCancellation(e)) return;
+      ToastService.showError(ErrorTranslator.translate(
+            e,
+            context: ErrorContext.socialLogin,
+          ).displayMessage ??
+          ErrorMessages.socialFailedGoogle);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  /// Traduit la dernière erreur du provider marchand en message affichable.
+  String _translatedError(ErrorContext context, {required String fallback}) {
+    final error = ref.read(merchantAuthProvider).lastError;
+    return ErrorTranslator.translate(error, context: context).displayMessage ??
+        fallback;
+  }
+
   Future<void> _handleSubmit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_isLogin && !_acceptedTerms) {
+      setState(() => _showTermsError = true);
+      return;
+    }
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _loading = true);
 
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
@@ -102,8 +133,11 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
         if (!mounted) return;
 
         if (!ok) {
-          final error = ref.read(merchantAuthProvider).lastError;
-          throw Exception(error?.toString() ?? 'Connexion échouée.');
+          ToastService.showError(_translatedError(
+            ErrorContext.login,
+            fallback: ErrorMessages.loginFailed,
+          ));
+          return;
         }
 
         final restaurant = ref.read(merchantAuthProvider).restaurant;
@@ -120,17 +154,24 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
         if (!mounted) return;
 
         if (ok) {
+          // Compte neuf : on repart d'un état vierge plutôt que des valeurs
+          // laissées par un parcours précédent de la même session.
+          ref.read(onboardingNotifierProvider.notifier).reset();
           context.go('/auth/merchant/step1');
         } else {
-          final error = ref.read(merchantAuthProvider).lastError;
-          throw Exception(error?.toString() ?? "Erreur lors de la création du compte.");
+          ToastService.showError(_translatedError(
+            ErrorContext.signup,
+            fallback: ErrorMessages.signupFailed,
+          ));
         }
       }
     } catch (e) {
       debugPrint("Merchant auth error: $e");
-      setState(() {
-        _error = e.toString().replaceAll('Exception:', '').trim();
-      });
+      ToastService.showError(ErrorTranslator.translate(
+            e,
+            context: _isLogin ? ErrorContext.login : ErrorContext.signup,
+          ).displayMessage ??
+          (_isLogin ? ErrorMessages.loginFailed : ErrorMessages.signupFailed));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -205,10 +246,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                         child: GestureDetector(
                           onTap: () {
                             if (_isLogin) {
-                              setState(() {
-                                _isLogin = false;
-                                _error = null;
-                              });
+                              setState(() => _isLogin = false);
                             }
                           },
                           child: Container(
@@ -249,10 +287,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                         child: GestureDetector(
                           onTap: () {
                             if (!_isLogin) {
-                              setState(() {
-                                _isLogin = true;
-                                _error = null;
-                              });
+                              setState(() => _isLogin = true);
                             }
                           },
                           child: Container(
@@ -303,9 +338,14 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   prefixIcon: LucideIcons.mail,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? "Veuillez entrer votre adresse email"
-                      : null,
+                  validator: (v) {
+                    final value = v?.trim() ?? '';
+                    if (value.isEmpty) return "Veuillez entrer votre adresse email";
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                      return "Adresse email invalide";
+                    }
+                    return null;
+                  },
                 )
                     .animate(key: ValueKey('email_$_isLogin'))
                     .fadeIn(duration: 300.ms),
@@ -317,9 +357,25 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   prefixIcon: LucideIcons.lock,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
-                  validator: (v) => (v == null || v.length < 6)
-                      ? 'Le mot de passe doit contenir au moins 6 caractères'
-                      : null,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return 'Le mot de passe est requis';
+                    }
+                    // À la connexion, un compte existant a pu être créé sous
+                    // l'ancienne règle (6 caractères) : on ne bloque que la
+                    // saisie vide, la complexité n'est exigée qu'à l'inscription.
+                    if (_isLogin) return null;
+                    if (v.length < 8) {
+                      return 'Le mot de passe doit contenir au moins 8 caractères';
+                    }
+                    if (!v.contains(RegExp(r'[A-Z]'))) {
+                      return 'Le mot de passe doit contenir une majuscule';
+                    }
+                    if (!v.contains(RegExp(r'[0-9]'))) {
+                      return 'Le mot de passe doit contenir un chiffre';
+                    }
+                    return null;
+                  },
                 )
                     .animate(key: ValueKey('pass_$_isLogin'))
                     .fadeIn(duration: 300.ms),
@@ -348,37 +404,75 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   const SizedBox(height: Sp.md),
                 ],
 
-                // Error Banner
-                if (_error != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: Sp.md, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.dangerTint,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(LucideIcons.circleAlert,
-                            color: AppColors.danger, size: 18),
-                        const SizedBox(width: Sp.sm),
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: AppTextStyles.caption().copyWith(
-                              color: AppColors.danger,
-                              fontWeight: FontWeight.w600,
+                const SizedBox(height: Sp.md),
+
+                // Consentement CGU / confidentialité — inscription uniquement.
+                if (!_isLogin) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: _acceptedTerms,
+                          onChanged: (value) => setState(() {
+                            _acceptedTerms = value ?? false;
+                            if (_acceptedTerms) _showTermsError = false;
+                          }),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => setState(() {
+                            _acceptedTerms = !_acceptedTerms;
+                            if (_acceptedTerms) _showTermsError = false;
+                          }),
+                          child: RichText(
+                            text: TextSpan(
+                              style: AppTextStyles.caption().copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                              children: [
+                                const TextSpan(text: 'J\'accepte les '),
+                                TextSpan(
+                                  text: 'CGU',
+                                  style: AppTextStyles.caption().copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer: _termsTap,
+                                ),
+                                const TextSpan(text: ' et la '),
+                                TextSpan(
+                                  text: 'politique de confidentialité',
+                                  style: AppTextStyles.caption().copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer: _privacyTap,
+                                ),
+                                const TextSpan(text: '.'),
+                              ],
                             ),
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  if (_showTermsError) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Vous devez accepter les CGU et la politique de confidentialité.',
+                      style: AppTextStyles.caption().copyWith(color: AppColors.danger),
                     ),
-                  ).animate().shake(duration: 300.ms),
+                  ],
                   const SizedBox(height: Sp.md),
                 ],
-
-                const SizedBox(height: Sp.md),
 
                 // 5. Submit Button
                 AppButton.merchant(
@@ -431,39 +525,43 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
 
                 const SizedBox(height: Sp.xl),
 
-                // 6. Footer Links
-                Center(
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: AppTextStyles.caption().copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 11.5,
+                // 6. Footer Links — inscription : déjà couvert par la case à
+                // cocher ci-dessus. Connexion : simple rappel, pas de re-consentement.
+                if (_isLogin)
+                  Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: AppTextStyles.caption().copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11.5,
+                        ),
+                        children: [
+                          TextSpan(text: 'En continuant, vous acceptez les '),
+                          TextSpan(
+                            text: 'CGU',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: _termsTap,
+                          ),
+                          TextSpan(text: ' et la '),
+                          TextSpan(
+                            text: 'politique de confidentialité',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: _privacyTap,
+                          ),
+                          TextSpan(text: '.'),
+                        ],
                       ),
-                      children: [
-                        TextSpan(text: 'En continuant, vous acceptez les '),
-                        TextSpan(
-                          text: 'CGU',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        TextSpan(text: ' et la '),
-                        TextSpan(
-                          text: 'politique de confidentialité',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        TextSpan(text: '.'),
-                      ],
                     ),
-                  ),
-                ).animate().fadeIn(duration: 450.ms),
+                  ).animate().fadeIn(duration: 450.ms),
 
               ],
             ),

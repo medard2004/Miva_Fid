@@ -65,8 +65,6 @@ class _CreatePasswordScreenState extends ConsumerState<CreatePasswordScreen>
     if (success) {
       ref.read(signupFlowProvider.notifier).reset();
       showSuccessToast(ErrorMessages.signupSuccess);
-      // Le profil reste incomplet (ville, quartier, e-mail) : la garde du
-      // routeur enverra vers l'écran de complétion.
       context.go('/client/wallet');
     } else {
       handleError(

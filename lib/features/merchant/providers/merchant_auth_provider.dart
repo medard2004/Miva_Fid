@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/providers/api_providers.dart';
@@ -94,10 +96,63 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
+  /// Recharge le compte depuis `GET /auth/merchant/me`.
+  ///
+  /// Indispensable après une écriture qui ne renvoie pas le restaurant
+  /// (création du programme de fidélité) : sans ça `hasLoyaltyProgram` et la
+  /// config carte restent sur leur valeur d'avant l'onboarding.
+  Future<bool> refreshFromApi() async {
+    try {
+      final restaurant = await _authRepository.getMe();
+      state = MerchantAuthState(isAuthenticated: true, restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  /// Change la formule d'abonnement (`PUT /auth/merchant/plan`).
+  Future<bool> updatePlan(String planSlug) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final restaurant = await _authRepository.updatePlan(planSlug);
+      state = state.copyWith(restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
   Future<bool> updateBusinessInfo(Map<String, dynamic> data) async {
     state = state.copyWith(clearError: true);
     try {
       final restaurant = await _authRepository.updateBusinessInfo(data);
+      state = state.copyWith(restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  Future<bool> uploadLogo(File file) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final restaurant = await _authRepository.uploadLogo(file);
+      state = state.copyWith(restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  Future<bool> deleteLogo() async {
+    state = state.copyWith(clearError: true);
+    try {
+      final restaurant = await _authRepository.deleteLogo();
       state = state.copyWith(restaurant: restaurant);
       return true;
     } catch (e) {

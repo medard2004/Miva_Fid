@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/api/storage/local_preferences.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -51,8 +54,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         curve: Curves.easeInOutCubic,
       );
     } else {
-      context.go('/client/auth');
+      _completeOnboarding();
     }
+  }
+
+  void _completeOnboarding() {
+    unawaited(ref.read(localPreferencesProvider).setHasSeenOnboarding(true));
+    ref.read(hasSeenOnboardingProvider.notifier).state = true;
+    context.go('/client/auth');
   }
 
   @override
@@ -86,7 +95,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         color: AppColors.inkMuted(opacity: 0.5)),
                   ),
                   TextButton(
-                    onPressed: () => context.go('/client/auth'),
+                    onPressed: _completeOnboarding,
                     child: Text(t.onboardingSkip,
                         style: AppTextStyles.bodyMedium(
                             color: AppColors.inkMuted(opacity: 0.6))),

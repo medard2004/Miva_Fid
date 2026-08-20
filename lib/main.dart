@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/services/notification_service.dart';
@@ -32,20 +31,6 @@ Future<void> main() async {
       debugPrintStack(stackTrace: stackTrace);
     }
   }
-
-  // Supabase : encore utilisé par le module marchand et son parcours
-  // d'inscription. Le module client, lui, passe désormais par l'API Laravel
-  // (voir lib/core/api/). À retirer quand les endpoints marchand existeront.
-    await Supabase.initialize(
-    url: const String.fromEnvironment(
-      'SUPABASE_URL',
-      defaultValue: 'https://YOUR_PROJECT.supabase.co',
-    ),
-    publishableKey: const String.fromEnvironment(
-      'SUPABASE_ANON_KEY',
-      defaultValue: 'YOUR_ANON_KEY',
-    ),
-  );
 
   runApp(const ProviderScope(child: MivaFidApp()));
 }

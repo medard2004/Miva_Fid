@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -49,18 +50,12 @@ class UserAvatar extends StatelessWidget {
                     fit: BoxFit.cover,
                     width: size,
                     height: size,
-                    errorBuilder: (context, error, stackTrace) => _initials(),
+                    // Le fichier local peut disparaître (cache OS purgé) : on
+                    // retombe sur l'URL serveur plutôt que les initiales.
+                    errorBuilder: (context, error, stackTrace) =>
+                        _networkOrInitials(size),
                   )
-                : (photoUrl != null && photoUrl!.isNotEmpty)
-                    ? Image.network(
-                        photoUrl!,
-                        fit: BoxFit.cover,
-                        width: size,
-                        height: size,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _initials(),
-                      )
-                    : _initials(),
+                : _networkOrInitials(size),
           ),
         ),
         if (isLoading)
@@ -83,6 +78,27 @@ class UserAvatar extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _networkOrInitials(double size) {
+    if (photoUrl == null || photoUrl!.isEmpty) return _initials();
+    return CachedNetworkImage(
+      imageUrl: photoUrl!,
+      fit: BoxFit.cover,
+      width: size,
+      height: size,
+      placeholder: (context, url) => Center(
+        child: SizedBox(
+          width: size * 0.35,
+          height: size * 0.35,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.surfaceCard,
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => _initials(),
     );
   }
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
 import 'package:miva_fid/features/client/widgets/components/gradient_card_surface.dart';
 import 'card_face_content.dart';
@@ -25,15 +24,20 @@ class LoyaltyCardWidget extends StatelessWidget {
     this.compact,
   });
 
-  bool get _isDark => card.liningColor.computeLuminance() < 0.45;
-
   @override
   Widget build(BuildContext context) {
-    final textColor = _isDark ? Colors.white : AppColors.ink;
+    // Texte toujours blanc — même convention que l'aperçu marchand
+    // (onboarding/widgets/loyalty_card_preview.dart), qui n'adapte pas la
+    // couleur du texte à la luminosité du dégradé : la carte reçue par le
+    // client doit rendre exactement ce que le marchand a configuré/prévisualisé.
+    const textColor = Colors.white;
     final isCompact = compact ?? height < 160;
 
     return GradientCardSurface(
       color: card.liningColor,
+      secondaryColor: card.secondaryColor,
+      gradientType: card.gradientType,
+      decorationPattern: card.decorationPattern,
       height: height,
       padding:
           EdgeInsets.symmetric(horizontal: 20, vertical: isCompact ? 14 : 18),

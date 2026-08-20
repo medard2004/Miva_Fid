@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/api/storage/local_preferences.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 import 'app_providers.dart';
+import 'wallet_provider.dart';
 
 /// Résultat de l'amorçage, lu par l'écran de démarrage pour choisir sa
 /// destination.
@@ -30,6 +32,7 @@ class AppStartupState {
 final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   final prefs = ref.read(localPreferencesProvider);
   final hasSeenOnboarding = await prefs.hasSeenOnboarding();
+  ref.read(hasSeenOnboardingProvider.notifier).state = hasSeenOnboarding;
   final lastRole = await prefs.getLastRole();
 
   final authRepository = ref.read(authRepositoryProvider);
@@ -39,10 +42,25 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
       ref.read(authProvider.notifier).setAuthenticated(
             await authRepository.getMe(),
           );
-    } catch (_) {
-      // Token refusé ou backend injoignable : on repart déconnecté plutôt que
-      // de laisser l'utilisateur sur un écran bloqué.
+      // Repeuple le wallet avant que l'écran de démarrage ne route vers lui
+      // — sinon la pile affiche brièvement l'état "aucune carte" pendant
+      // l'appel réseau. Un échec ici (backend injoignable) ne doit pas
+      // empêcher l'accès au wallet : les cartes resteront simplement vides
+      // jusqu'au prochain chargement réussi.
+      try {
+        await ref.read(walletProvider.notifier).loadMine();
+      } catch (_) {}
+    } on UnauthorizedException {
+      // Token vraiment rejeté par le serveur : on repart déconnecté plutôt
+      // que de laisser l'utilisateur sur un écran bloqué. (L'intercepteur a
+      // déjà purgé le token sur le 401 — `signOut()` aligne juste l'état
+      // `authProvider` en mémoire dessus.)
       await ref.read(authProvider.notifier).signOut();
+    } catch (_) {
+      // Backend injoignable (réseau instable au démarrage à froid, timeout) :
+      // le token reste valide, on ne déconnecte pas. La session reste
+      // simplement non authentifiée pour cette ouverture ; le prochain
+      // lancement retentera avec le même token.
     }
   }
 

@@ -79,7 +79,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
     _handled = true;
     HapticFeedback.mediumImpact();
     _cameraController.stop();
-    context.go('/client/onboarding/join', extra: {'code': value});
+    context.pushReplacement('/client/onboarding/join', extra: {'code': value});
   }
 
   Future<void> _openManualEntry() async {
@@ -111,13 +111,17 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
               controller: controller,
               autofocus: true,
               textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(hintText: t.qrManualEntryPlaceholder),
-              onSubmitted: (v) => Navigator.pop(sheetContext, v),
+              maxLength: 8,
+              decoration: InputDecoration(
+                hintText: t.qrManualEntryPlaceholder,
+                counterText: '',
+              ),
+              onSubmitted: (v) => Navigator.pop(sheetContext, v.trim()),
             ),
             const SizedBox(height: 16),
             AppButton(
               label: t.commonValidate,
-              onTap: () => Navigator.pop(sheetContext, controller.text),
+              onTap: () => Navigator.pop(sheetContext, controller.text.trim()),
             ),
           ],
         ),
@@ -126,7 +130,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
 
     if (code != null && code.trim().isNotEmpty && mounted) {
       _handled = true;
-      context.go('/client/onboarding/join', extra: {'code': code});
+      context.pushReplacement('/client/onboarding/join', extra: {'code': code});
     }
   }
 

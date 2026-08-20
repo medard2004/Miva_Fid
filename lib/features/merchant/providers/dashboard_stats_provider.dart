@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'merchant_provider.dart';
+import '../../../core/api/providers/api_providers.dart';
+import 'merchant_auth_provider.dart';
 
 part 'dashboard_stats_provider.g.dart';
 
@@ -43,48 +43,29 @@ class DashboardStats {
       ];
 }
 
+/// Statistiques du dashboard marchand (`GET /merchant/stats`) : clientèle,
+/// tampons du jour, récompenses en attente et dernières validations.
 @riverpod
 Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
-  final merchant = await ref.watch(merchantNotifierProvider.future);
-  if (merchant == null) {
+  final restaurant = ref.watch(
+    merchantAuthProvider.select((s) => s.restaurant),
+  );
+  if (restaurant == null) {
     return const DashboardStats(
-    totalClients: 0, stampsToday: 0, activeRewards: 0, recentActivity: []);
+        totalClients: 0, stampsToday: 0, activeRewards: 0, recentActivity: []);
   }
 
-  final now = DateTime.now();
-  final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
+  final data = await ref.read(merchantDashboardServiceProvider).stats();
 
-  final clients = await Supabase.instance.client
-      .from('loyalty_cards')
-      .select('id')
-      .eq('merchant_id', merchant.id);
-
-  final todayStamps = await Supabase.instance.client
-      .from('stamps')
-      .select('id')
-      .eq('merchant_id', merchant.id)
-      .gte('validated_at', todayStart);
-
-  final rewards = await Supabase.instance.client
-      .from('rewards')
-      .select('id')
-      .eq('merchant_id', merchant.id)
-      .eq('status', 'available');
-
-  final recentStamps = await Supabase.instance.client
-      .from('stamps')
-      .select('validated_at, users(name)')
-      .eq('merchant_id', merchant.id)
-      .order('validated_at', ascending: false)
-      .limit(10);
-
-  final activity = (recentStamps as List).map((s) {
-    final name = (s['users'] as Map?)?['name'] as String? ?? 'Client';
+  final activity = ((data['recent_activity'] as List?) ?? []).map((raw) {
+    final entry = (raw as Map).cast<String, dynamic>();
+    final name = entry['client_name'] as String? ?? 'Client';
     final parts = name.trim().split(' ');
     final initials = parts.length >= 2
         ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
         : (name.isNotEmpty ? name[0].toUpperCase() : '?');
-    final dt = DateTime.tryParse(s['validated_at'] as String? ?? '') ?? DateTime.now();
+    final dt =
+        DateTime.tryParse(entry['at']?.toString() ?? '') ?? DateTime.now();
     final diff = DateTime.now().difference(dt);
     final timeStr = diff.inMinutes < 60
         ? 'il y a ${diff.inMinutes} min'
@@ -93,16 +74,16 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
             : 'hier';
     return ActivityItem(
       clientName: name,
-      action: 'Tampon accordé',
+      action: entry['action'] as String? ?? 'Tampon accordé',
       time: timeStr,
       initials: initials,
     );
   }).toList();
 
   return DashboardStats(
-    totalClients: (clients as List).length,
-    stampsToday: (todayStamps as List).length,
-    activeRewards: (rewards as List).length,
+    totalClients: data['total_clients'] as int? ?? 0,
+    stampsToday: data['stamps_today'] as int? ?? 0,
+    activeRewards: data['active_rewards'] as int? ?? 0,
     recentActivity: activity,
   );
 }

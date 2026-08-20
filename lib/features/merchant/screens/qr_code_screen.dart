@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -16,6 +14,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 import '../providers/merchant_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
 class QrCodeScreen extends ConsumerWidget {
@@ -36,13 +35,15 @@ class QrCodeScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => const Center(child: Text('Erreur')),
         data: (merchant) {
-          final uid = Supabase.instance.client.auth.currentUser?.id ?? '';
-          final qrData = jsonEncode({'merchantId': uid, 'app': 'mivafid'});
+          // Le QR encode le `qr_token` Laravel réel (celui que
+          // `joinByQrToken` vérifie côté client) — jamais un identifiant
+          // Supabase, obsolète depuis la migration de l'auth marchand.
+          final restaurant = ref.watch(merchantAuthProvider).restaurant;
+          final qrData = restaurant?.qrToken ?? '';
+          final shortCode = restaurant?.shortCode ?? '';
           final merchantName = merchant?.name ?? 'Votre Commerce';
           final merchantAddress = merchant?.address ?? '';
           final merchantPhone = merchant?.phone ?? '';
-          final slug = merchantName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-          final directLink = 'miva.fid/r/$slug';
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(Sp.md),
@@ -93,18 +94,24 @@ class QrCodeScreen extends ConsumerWidget {
                               border: Border.all(color: AppColors.merchant, width: 3),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: QrImageView(
-                              data: qrData,
-                              size: 200,
-                              eyeStyle: QrEyeStyle(
-                                eyeShape: QrEyeShape.square,
-                                color: AppColors.textPrimary,
-                              ),
-                              dataModuleStyle: QrDataModuleStyle(
-                                dataModuleShape: QrDataModuleShape.square,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
+                            child: qrData.isEmpty
+                                ? const SizedBox(
+                                    width: 200,
+                                    height: 200,
+                                    child: Center(child: CircularProgressIndicator()),
+                                  )
+                                : QrImageView(
+                                    data: qrData,
+                                    size: 200,
+                                    eyeStyle: QrEyeStyle(
+                                      eyeShape: QrEyeShape.square,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    dataModuleStyle: QrDataModuleStyle(
+                                      dataModuleShape: QrDataModuleShape.square,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
                           ),
                           Container(
                             width: 36,
@@ -169,9 +176,10 @@ class QrCodeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: Sp.md),
 
-                // LIEN DIRECT Section Card
+                // CODE UNIQUE Section Card — alternative à taper à la main
+                // quand le client ne peut pas scanner le QR.
                 _buildSectionContainer(
-                  title: 'LIEN DIRECT',
+                  title: 'CODE UNIQUE',
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
@@ -182,22 +190,25 @@ class QrCodeScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            directLink,
+                            shortCode.isEmpty ? '—' : shortCode,
                             style: AppTextStyles.mono().copyWith(
                               color: AppColors.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2,
                             ),
                           ),
                         ),
                         IconButton(
                           icon: Icon(LucideIcons.copy, color: AppColors.textSecondary, size: 20),
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: directLink));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Lien copié dans le presse-papiers !')),
-                            );
-                          },
+                          onPressed: shortCode.isEmpty
+                              ? null
+                              : () {
+                                  Clipboard.setData(ClipboardData(text: shortCode));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Code copié dans le presse-papiers !')),
+                                  );
+                                },
                           constraints: const BoxConstraints(),
                           padding: EdgeInsets.zero,
                         ),

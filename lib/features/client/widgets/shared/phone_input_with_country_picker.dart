@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -11,38 +12,46 @@ class CountryInfo {
   final String dialCode;
   final String flag;
 
+  /// Nombre de chiffres attendu pour le numéro local (hors indicatif).
+  ///
+  /// `null` pour les pays dont la longueur varie trop pour qu'un contrôle
+  /// strict soit fiable côté client — la validation finale reste de toute
+  /// façon faite par le serveur (`phone:AUTO,INTERNATIONAL`).
+  final int? digitCount;
+
   const CountryInfo({
     required this.name,
     required this.code,
     required this.dialCode,
     required this.flag,
+    this.digitCount,
   });
 }
 
 const List<CountryInfo> kCountries = [
-  CountryInfo(name: 'Togo', code: 'TG', dialCode: '+228', flag: '🇹🇬'),
-  CountryInfo(name: 'France', code: 'FR', dialCode: '+33', flag: '🇫🇷'),
+  CountryInfo(name: 'Togo', code: 'TG', dialCode: '+228', flag: '🇹🇬', digitCount: 8),
+  CountryInfo(name: 'France', code: 'FR', dialCode: '+33', flag: '🇫🇷', digitCount: 9),
   CountryInfo(
-      name: 'Côte d\'Ivoire', code: 'CI', dialCode: '+225', flag: '🇨🇮'),
-  CountryInfo(name: 'Sénégal', code: 'SN', dialCode: '+221', flag: '🇸🇳'),
-  CountryInfo(name: 'Bénin', code: 'BJ', dialCode: '+229', flag: '🇧🇯'),
-  CountryInfo(name: 'Cameroun', code: 'CM', dialCode: '+237', flag: '🇨🇲'),
-  CountryInfo(name: 'Mali', code: 'ML', dialCode: '+223', flag: '🇲🇱'),
-  CountryInfo(name: 'Burkina Faso', code: 'BF', dialCode: '+226', flag: '🇧🇫'),
+      name: 'Côte d\'Ivoire', code: 'CI', dialCode: '+225', flag: '🇨🇮', digitCount: 10),
+  CountryInfo(name: 'Sénégal', code: 'SN', dialCode: '+221', flag: '🇸🇳', digitCount: 9),
+  CountryInfo(name: 'Bénin', code: 'BJ', dialCode: '+229', flag: '🇧🇯', digitCount: 8),
+  CountryInfo(name: 'Cameroun', code: 'CM', dialCode: '+237', flag: '🇨🇲', digitCount: 9),
+  CountryInfo(name: 'Mali', code: 'ML', dialCode: '+223', flag: '🇲🇱', digitCount: 8),
+  CountryInfo(name: 'Burkina Faso', code: 'BF', dialCode: '+226', flag: '🇧🇫', digitCount: 8),
   CountryInfo(name: 'Gabon', code: 'GA', dialCode: '+241', flag: '🇬🇦'),
-  CountryInfo(name: 'Congo', code: 'CG', dialCode: '+242', flag: '🇨🇬'),
-  CountryInfo(name: 'RDC', code: 'CD', dialCode: '+243', flag: '🇨🇩'),
-  CountryInfo(name: 'Niger', code: 'NE', dialCode: '+227', flag: '🇳🇪'),
+  CountryInfo(name: 'Congo', code: 'CG', dialCode: '+242', flag: '🇨🇬', digitCount: 9),
+  CountryInfo(name: 'RDC', code: 'CD', dialCode: '+243', flag: '🇨🇩', digitCount: 9),
+  CountryInfo(name: 'Niger', code: 'NE', dialCode: '+227', flag: '🇳🇪', digitCount: 8),
   CountryInfo(name: 'Guinée', code: 'GN', dialCode: '+224', flag: '🇬🇳'),
-  CountryInfo(name: 'Ghana', code: 'GH', dialCode: '+233', flag: '🇬🇭'),
-  CountryInfo(name: 'Nigeria', code: 'NG', dialCode: '+234', flag: '🇳🇬'),
-  CountryInfo(name: 'Maroc', code: 'MA', dialCode: '+212', flag: '🇲🇦'),
-  CountryInfo(name: 'Algérie', code: 'DZ', dialCode: '+213', flag: '🇩ℤ'),
-  CountryInfo(name: 'Tunisie', code: 'TN', dialCode: '+216', flag: '🇹🇳'),
-  CountryInfo(name: 'États-Unis', code: 'US', dialCode: '+1', flag: '🇺🇸'),
-  CountryInfo(name: 'Canada', code: 'CA', dialCode: '+1', flag: '🇨🇦'),
+  CountryInfo(name: 'Ghana', code: 'GH', dialCode: '+233', flag: '🇬🇭', digitCount: 9),
+  CountryInfo(name: 'Nigeria', code: 'NG', dialCode: '+234', flag: '🇳🇬', digitCount: 10),
+  CountryInfo(name: 'Maroc', code: 'MA', dialCode: '+212', flag: '🇲🇦', digitCount: 9),
+  CountryInfo(name: 'Algérie', code: 'DZ', dialCode: '+213', flag: '🇩ℤ', digitCount: 9),
+  CountryInfo(name: 'Tunisie', code: 'TN', dialCode: '+216', flag: '🇹🇳', digitCount: 8),
+  CountryInfo(name: 'États-Unis', code: 'US', dialCode: '+1', flag: '🇺🇸', digitCount: 10),
+  CountryInfo(name: 'Canada', code: 'CA', dialCode: '+1', flag: '🇨🇦', digitCount: 10),
   CountryInfo(name: 'Royaume-Uni', code: 'GB', dialCode: '+44', flag: '🇬🇧'),
-  CountryInfo(name: 'Belgique', code: 'BE', dialCode: '+32', flag: '🇧🇪'),
+  CountryInfo(name: 'Belgique', code: 'BE', dialCode: '+32', flag: '🇧🇪', digitCount: 9),
   CountryInfo(name: 'Suisse', code: 'CH', dialCode: '+41', flag: '🇨🇭'),
   CountryInfo(name: 'Allemagne', code: 'DE', dialCode: '+49', flag: '🇩🇪'),
 ];
@@ -111,7 +120,18 @@ class PhoneInputWithCountryPickerState
     return TextFormField(
       controller: widget.controller,
       keyboardType: TextInputType.phone,
-      validator: widget.validator,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      validator: (value) {
+        final parentError = widget.validator?.call(value);
+        if (parentError != null) return parentError;
+        final digits = value?.trim() ?? '';
+        final expected = selectedCountry.digitCount;
+        if (digits.isNotEmpty && expected != null && digits.length != expected) {
+          return AppLocalizations.of(context)!
+              .phoneDigitsError(expected, selectedCountry.name);
+        }
+        return null;
+      },
       autovalidateMode: AutovalidateMode.onUserInteraction,
       style: AppTextStyles.bodyMedium().copyWith(letterSpacing: 1.2),
       decoration: InputDecoration(

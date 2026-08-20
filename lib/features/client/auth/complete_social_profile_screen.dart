@@ -32,6 +32,12 @@ class _CompleteSocialProfileScreenState
   DateTime? _birthDate;
 
   @override
+  void initState() {
+    super.initState();
+    _fullNameController.text = ref.read(authProvider).user?.fullName ?? '';
+  }
+
+  @override
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();

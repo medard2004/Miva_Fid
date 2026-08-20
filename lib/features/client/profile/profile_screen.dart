@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -75,11 +74,44 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            UserAvatar(
-                              fullName: user.fullName,
-                              photoUrl: user.photoUrl,
-                              localImage: ref.watch(authProvider).localAvatar,
-                              radius: 32,
+                            AppTapScale(
+                              onTap: user.isProfileIncomplete
+                                  ? () => context.push('/client/profile/edit')
+                                  : null,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  UserAvatar(
+                                    fullName: user.fullName,
+                                    photoUrl: user.photoUrl,
+                                    localImage:
+                                        ref.watch(authProvider).localAvatar,
+                                    radius: 32,
+                                  ),
+                                  if (user.isProfileIncomplete)
+                                    Positioned(
+                                      right: -2,
+                                      bottom: -2,
+                                      child: Container(
+                                        width: 18,
+                                        height: 18,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.warning,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                              color: AppColors.surface,
+                                              width: 2),
+                                        ),
+                                        child: const Icon(
+                                          LucideIcons.triangleAlert,
+                                          size: 10,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -142,12 +174,6 @@ class ProfileScreen extends ConsumerWidget {
                         child: StatTile(
                             value: '${rewards.length}', label: t.profileOffers),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: StatTile(
-                            value: '${user.friendsJoined}',
-                            label: t.profileReferrals),
-                      ),
                     ],
                   ),
                   if (user.isBirthdayMonth) ...[
@@ -183,59 +209,6 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  AppCard(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.profileReferralCode,
-                                style: AppTextStyles.bodySmall(
-                                    color: AppColors.inkMuted(opacity: 0.6)),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                user.referralCode.isNotEmpty
-                                    ? user.referralCode
-                                    : 'CARTE-MEMBRE',
-                                style: AppTextStyles.monoMedium(
-                                        color: AppColors.primaryDark)
-                                    .copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15),
-                              ),
-                            ],
-                          ),
-                        ),
-                        AppTapScale(
-                          onTap: () {
-                            Clipboard.setData(
-                                ClipboardData(text: user.referralCode));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(t.profileReferralCodeCopied)),
-                            );
-                          },
-                          child: Container(
-                            width: 38,
-                            height: 38,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(LucideIcons.copy,
-                                size: 15, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
                   AppCard(
                     onTap: () => context.push('/client/settings'),
                     padding:

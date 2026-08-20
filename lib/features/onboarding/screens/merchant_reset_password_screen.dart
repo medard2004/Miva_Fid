@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,7 +8,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
-import '../../../core/widgets/app_toast.dart';
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_messages.dart';
+import '../../../core/errors/error_translator.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 
@@ -35,7 +37,6 @@ class _MerchantResetPasswordScreenState
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   bool _loading = false;
-  String? _error;
 
   @override
   void dispose() {
@@ -46,10 +47,7 @@ class _MerchantResetPasswordScreenState
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _loading = true);
 
     final ok = await ref.read(merchantAuthProvider.notifier).resetPassword(
           widget.email,
@@ -61,10 +59,15 @@ class _MerchantResetPasswordScreenState
     setState(() => _loading = false);
 
     if (ok) {
-      AppToast.success(context, 'Mot de passe réinitialisé.');
+      ToastService.showSuccess(ErrorMessages.resetSuccess);
       context.go('/auth/merchant/auth');
     } else {
-      setState(() => _error = 'La session a expiré. Recommencez.');
+      final error = ref.read(merchantAuthProvider).lastError;
+      ToastService.showError(ErrorTranslator.translate(
+            error,
+            context: ErrorContext.resetPassword,
+          ).displayMessage ??
+          ErrorMessages.resetFailed);
     }
   }
 
@@ -107,9 +110,21 @@ class _MerchantResetPasswordScreenState
                   prefixIcon: LucideIcons.lock,
                   obscureText: true,
                   textInputAction: TextInputAction.next,
-                  validator: (v) => (v == null || v.length < 6)
-                      ? 'Le mot de passe doit contenir au moins 6 caractères'
-                      : null,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return 'Le mot de passe est requis';
+                    }
+                    if (v.length < 8) {
+                      return 'Le mot de passe doit contenir au moins 8 caractères';
+                    }
+                    if (!v.contains(RegExp(r'[A-Z]'))) {
+                      return 'Le mot de passe doit contenir une majuscule';
+                    }
+                    if (!v.contains(RegExp(r'[0-9]'))) {
+                      return 'Le mot de passe doit contenir un chiffre';
+                    }
+                    return null;
+                  },
                 ),
                 AppInput(
                   label: 'CONFIRMER LE MOT DE PASSE',
@@ -122,30 +137,6 @@ class _MerchantResetPasswordScreenState
                       ? 'Les mots de passe ne correspondent pas'
                       : null,
                 ),
-
-                if (_error != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.dangerTint,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(LucideIcons.circleAlert, color: AppColors.danger, size: 18),
-                        const SizedBox(width: Sp.sm),
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: AppTextStyles.caption().copyWith(color: AppColors.danger, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().shake(duration: 300.ms),
-                  const SizedBox(height: Sp.md),
-                ],
 
                 const SizedBox(height: Sp.md),
 

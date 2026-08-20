@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/api/providers/api_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -17,6 +17,9 @@ import '../../client/providers/settings_provider.dart';
 
 class ClientDetailScreen extends ConsumerWidget {
   const ClientDetailScreen({super.key, required this.clientId});
+
+  /// Identifiant de la carte de fidélité (`loyalty_cards.id`) — c'est lui que
+  /// `GET /merchant/clients/{card}` attend, la liste le fournit directement.
   final String clientId;
 
   @override
@@ -38,12 +41,7 @@ class ClientDetailScreen extends ConsumerWidget {
         title: Text('Détail client', style: AppTextStyles.h3()),
       ),
       body: FutureBuilder(
-        future: Supabase.instance.client
-            .from('loyalty_cards')
-            .select('*, users(*)')
-            .eq('client_id', clientId)
-            .eq('merchant_id', merchantAsync.value?.id ?? '')
-            .maybeSingle(),
+        future: ref.read(merchantDashboardServiceProvider).client(clientId),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Padding(
@@ -55,10 +53,11 @@ class ClientDetailScreen extends ConsumerWidget {
             return Center(child: Text('Client introuvable', style: AppTextStyles.bodyMd()));
           }
           final data = snap.data as Map<String, dynamic>;
-          final stamps = data['stamps_count'] as int? ?? 0;
+          final client = data['client'] as Map<String, dynamic>?;
+          final stamps = data['stamps_current'] as int? ?? 0;
           final required = merchantAsync.value?.stampsRequired ?? 10;
-          final name = (data['users'] as Map?)?['name'] as String? ?? 'Client';
-          final phone = (data['users'] as Map?)?['phone'] as String? ?? '';
+          final name = client?['name'] as String? ?? 'Client';
+          final phone = client?['phone'] as String? ?? '';
           final since = DateFormatter.relative(
               DateTime.tryParse(data['created_at'] as String? ?? '') ?? DateTime.now());
 
@@ -113,7 +112,7 @@ class ClientDetailScreen extends ConsumerWidget {
                     icon: LucideIcons.circlePlus,
                     onPressed: () async {
                       await ref.read(clientsNotifierProvider.notifier)
-                          .addBonusStamp(data['id'] as String);
+                          .addBonusStamp(data['id'].toString());
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Tampon bonus accordé')));

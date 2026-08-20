@@ -11,6 +11,14 @@ class AuthInterceptor extends Interceptor {
   /// Optionnel : sans lui, le token est quand même purgé du stockage sécurisé.
   final Future<void> Function()? onUnauthorized;
 
+  /// Vrai pendant une déconnexion volontaire. Le serveur révoque le token dès
+  /// que `/auth/logout` aboutit ; toute autre requête encore en vol à ce
+  /// moment (rafraîchissement wallet, heartbeat realtime…) reçoit alors un
+  /// 401 parfaitement normal mais qui, sans ce garde-fou, déclencherait à
+  /// tort le toast "session expirée" en pleine déconnexion demandée par
+  /// l'utilisateur.
+  bool suppressUnauthorized = false;
+
   AuthInterceptor(this.tokenStorage, {this.onUnauthorized});
 
   @override
@@ -35,13 +43,9 @@ class AuthInterceptor extends Interceptor {
     // expiré, ou mot de passe réinitialisé — `resetPassword` côté Laravel
     // supprime tous les tokens du client). Le garder en mémoire laisserait
     // l'app dans un état incohérent : authentifiée en apparence, refusée à
-    // chaque appel. On nettoie tout de suite.
-    //
-    // `/auth/logout` est exclu : un 401 y est le résultat attendu quand le
-    // token était déjà invalide, et la déconnexion purge déjà le stockage.
-    final isLogout = err.requestOptions.path.contains('/auth/logout');
-
-    if (err.response?.statusCode == 401 && !isLogout) {
+    // chaque appel. On nettoie tout de suite — sauf pendant une déconnexion
+    // volontaire, déjà prise en charge par [suppressUnauthorized].
+    if (err.response?.statusCode == 401 && !suppressUnauthorized) {
       await tokenStorage.deleteToken();
       await onUnauthorized?.call();
     }

@@ -58,12 +58,14 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    _authService.suppressUnauthorized = true;
     try {
       if (await isLoggedIn()) {
         await _authService.logout();
       }
     } finally {
       await _tokenStorage.deleteToken();
+      _authService.suppressUnauthorized = false;
     }
   }
 

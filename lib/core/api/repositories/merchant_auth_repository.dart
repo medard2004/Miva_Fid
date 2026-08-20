@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../services/merchant_auth_service.dart';
 import '../storage/merchant_token_storage.dart';
 import '../../../features/merchant/models/restaurant_account.dart';
@@ -45,18 +47,35 @@ class MerchantAuthRepository {
     return RestaurantAccount.fromJson(response['restaurant'] ?? {});
   }
 
+  Future<RestaurantAccount> uploadLogo(File file) async {
+    final response = await _authService.uploadLogo(file);
+    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+  }
+
+  Future<RestaurantAccount> deleteLogo() async {
+    final response = await _authService.deleteLogo();
+    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+  }
+
+  Future<RestaurantAccount> updatePlan(String planSlug) async {
+    final response = await _authService.updatePlan(planSlug);
+    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+  }
+
   Future<RestaurantAccount> getMe() async {
     final response = await _authService.getMe();
     return RestaurantAccount.fromJson(response['restaurant'] ?? {});
   }
 
   Future<void> logout() async {
+    _authService.suppressUnauthorized = true;
     try {
       if (await isLoggedIn()) {
         await _authService.logout();
       }
     } finally {
       await _tokenStorage.deleteToken();
+      _authService.suppressUnauthorized = false;
     }
   }
 

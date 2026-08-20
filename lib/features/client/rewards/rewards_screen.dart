@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -10,6 +11,7 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
 import 'package:miva_fid/features/client/widgets/shared/notification_bell_button.dart';
+import 'package:miva_fid/core/constants/reward_qr.dart';
 
 /// Écran des Récompenses et Privilèges.
 class RewardsScreen extends ConsumerWidget {
@@ -23,12 +25,8 @@ class RewardsScreen extends ConsumerWidget {
     final unreadNotifs =
         ref.watch(notificationsProvider).where((n) => !n.isRead).length;
 
-    final activeRewards =
-        rewards.where((r) => r.status == RewardStatus.active).toList();
-    final lockedRewards =
-        rewards.where((r) => r.status == RewardStatus.locked).toList();
-    final usedRewards =
-        rewards.where((r) => r.status == RewardStatus.used).toList();
+    final availableRewards = rewards.where((r) => r.isRedeemable).toList();
+    final usedRewards = rewards.where((r) => r.status != RewardStatus.available).toList();
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -45,8 +43,7 @@ class RewardsScreen extends ConsumerWidget {
               child: RefreshIndicator(
                 color: AppColors.primary,
                 backgroundColor: AppColors.surfaceCard,
-                onRefresh: () =>
-                    Future.delayed(const Duration(milliseconds: 700)),
+                onRefresh: () => ref.read(rewardsProvider.notifier).loadMine(),
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding:
@@ -54,13 +51,12 @@ class RewardsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (activeRewards.isNotEmpty)
-                        ...activeRewards.map((reward) => Padding(
+                      if (availableRewards.isNotEmpty)
+                        ...availableRewards.map((reward) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: _ActiveRewardCard(
                                 reward: reward,
-                                onRedeem: () =>
-                                    _confirmRedeem(context, ref, reward),
+                                onUse: () => _showRewardQr(context, ref, reward),
                               ),
                             ))
                       else
@@ -69,22 +65,6 @@ class RewardsScreen extends ConsumerWidget {
                           icon: LucideIcons.gift,
                           title: t.rewardsEmptyActiveTitle,
                           message: t.rewardsEmptyActiveMessage,
-                        ),
-                      const SizedBox(height: 16),
-                      Text(t.rewardsToUnlock,
-                          style: AppTextStyles.titleMedium()),
-                      const SizedBox(height: 10),
-                      if (lockedRewards.isNotEmpty)
-                        ...lockedRewards.map((reward) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _LockedRewardCard(reward: reward),
-                            ))
-                      else
-                        EmptyState(
-                          compact: true,
-                          icon: LucideIcons.lockOpen,
-                          title: t.rewardsAllUnlockedTitle,
-                          message: t.rewardsAllUnlockedMessage,
                         ),
                       const SizedBox(height: 20),
                       Text(t.commonHistory, style: AppTextStyles.titleMedium()),
@@ -123,46 +103,66 @@ class RewardsScreen extends ConsumerWidget {
   }
 }
 
-void _confirmRedeem(BuildContext context, WidgetRef ref, Reward reward) {
+/// Affiche le QR unique de la récompense — le marchand le scanne et valide
+/// sur place (aucune action locale ne marque la récompense comme utilisée :
+/// seule la confirmation marchand le fait). Recharge la liste à la fermeture
+/// au cas où la validation aurait déjà eu lieu pendant que le QR était affiché.
+Future<void> _showRewardQr(BuildContext context, WidgetRef ref, Reward reward) async {
   final t = AppLocalizations.of(context)!;
-  showDialog(
+  await showModalBottomSheet(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title:
-          Text(t.rewardsRedeemConfirmTitle, style: AppTextStyles.titleMedium()),
-      content: Text(
-        t.rewardsRedeemConfirmMessage(reward.title),
-        style:
-            AppTextStyles.bodyMedium(color: AppColors.inkMuted(opacity: 0.75)),
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(reward.title,
+              style: AppTextStyles.titleMedium(), textAlign: TextAlign.center),
+          const SizedBox(height: 4),
+          Text(reward.restaurantName,
+              style: AppTextStyles.bodyMedium(
+                  color: AppColors.inkMuted(opacity: 0.7)),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: QrImageView(
+              data: '$rewardQrPrefix${reward.redeemToken}',
+              size: 220,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            t.rewardsShowQrInstruction,
+            style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.65)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          AppButton(
+            label: t.commonClose,
+            onTap: () => Navigator.of(sheetContext).pop(),
+            height: 46,
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: Text(t.commonCancel,
-              style:
-                  AppTextStyles.label(color: AppColors.inkMuted(opacity: 0.6))),
-        ),
-        TextButton(
-          onPressed: () {
-            ref.read(rewardsProvider.notifier).redeem(reward.id);
-            Navigator.of(dialogContext).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(t.rewardsRedeemSuccess)),
-            );
-          },
-          child: Text(t.commonConfirm,
-              style: AppTextStyles.label(color: AppColors.primary)),
-        ),
-      ],
     ),
   );
+  await ref.read(rewardsProvider.notifier).loadMine();
 }
 
-/// Carte de récompense active.
+/// Carte de récompense disponible.
 class _ActiveRewardCard extends StatelessWidget {
   final Reward reward;
-  final VoidCallback onRedeem;
-  const _ActiveRewardCard({required this.reward, required this.onRedeem});
+  final VoidCallback onUse;
+  const _ActiveRewardCard({required this.reward, required this.onUse});
 
   @override
   Widget build(BuildContext context) {
@@ -192,61 +192,15 @@ class _ActiveRewardCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(reward.title,
               style: AppTextStyles.titleMedium().copyWith(fontSize: 17)),
-          const SizedBox(height: 4),
-          Text(
-            reward.description,
-            style: AppTextStyles.bodyMedium(
-                color: AppColors.inkMuted(opacity: 0.7)),
-          ),
           const SizedBox(height: 14),
-          AppButton(label: t.rewardsUseButton, onTap: onRedeem, height: 46),
+          AppButton(label: t.rewardsUseButton, onTap: onUse, height: 46),
         ],
       ),
     );
   }
 }
 
-/// Carte de récompense verrouillée.
-class _LockedRewardCard extends StatelessWidget {
-  final Reward reward;
-  const _LockedRewardCard({required this.reward});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      backgroundColor: AppColors.surfaceMuted,
-      bordered: false,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                reward.restaurantName.toUpperCase(),
-                style: AppTextStyles.eyebrow(
-                    color: AppColors.inkMuted(opacity: 0.55)),
-              ),
-              Icon(LucideIcons.lock, size: 14, color: AppColors.inkMuted()),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(reward.title,
-              style: AppTextStyles.titleMedium().copyWith(fontSize: 15)),
-          const SizedBox(height: 4),
-          Text(
-            reward.lockedCondition ?? reward.description,
-            style: AppTextStyles.bodySmall(
-                color: AppColors.inkMuted(opacity: 0.65)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Ligne d'historique.
+/// Ligne d'historique — utilisée ou annulée.
 class _HistoryRewardRow extends StatelessWidget {
   final Reward reward;
   const _HistoryRewardRow({required this.reward});
@@ -257,11 +211,17 @@ class _HistoryRewardRow extends StatelessWidget {
         Localizations.localeOf(context).languageCode == 'fr'
             ? 'fr_FR'
             : 'en_US';
+    final statusLabel = switch (reward.status) {
+      RewardStatus.canceled => 'Annulée',
+      _ => reward.isExpired ? 'Expirée' : '',
+    };
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          reward.formattedUsedDate(dateFormatLocale),
+          reward.status == RewardStatus.used
+              ? reward.formattedUsedDate(dateFormatLocale)
+              : statusLabel,
           style:
               AppTextStyles.monoSmall(color: AppColors.inkMuted(opacity: 0.8)),
         ),

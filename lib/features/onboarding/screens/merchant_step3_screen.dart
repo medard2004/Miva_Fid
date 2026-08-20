@@ -9,11 +9,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/color_palette_picker.dart';
 import '../widgets/loyalty_card_preview.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../merchant/providers/merchant_auth_provider.dart';
 
 class MerchantStep3Screen extends ConsumerStatefulWidget {
   const MerchantStep3Screen({super.key});
@@ -23,13 +25,37 @@ class MerchantStep3Screen extends ConsumerStatefulWidget {
 }
 
 class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
+  bool _uploadingLogo = false;
+
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
     final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (!mounted || file == null) return;
+
+    setState(() => _uploadingLogo = true);
+    final ok = await ref
+        .read(merchantAuthProvider.notifier)
+        .uploadLogo(File(file.path));
     if (!mounted) return;
-    if (file != null) {
-      ref.read(onboardingNotifierProvider.notifier).setLogoUrl(file.path);
+    if (ok) {
+      final url = ref.read(merchantAuthProvider).restaurant?.logoUrl ?? '';
+      ref.read(onboardingNotifierProvider.notifier).setLogoUrl(url);
+    } else {
+      AppToast.error(context, 'Impossible d\'envoyer le logo. Réessayez.');
     }
+    setState(() => _uploadingLogo = false);
+  }
+
+  Future<void> _removeLogo() async {
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).deleteLogo();
+    if (!mounted) return;
+    if (ok) {
+      ref.read(onboardingNotifierProvider.notifier).setLogoUrl('');
+    } else {
+      AppToast.error(context, 'Impossible de retirer le logo. Réessayez.');
+    }
+    setState(() => _uploadingLogo = false);
   }
 
   @override
@@ -47,7 +73,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
       body: SafeArea(
         child: Column(
           children: [
-            const OnboardingProgressBar(current: 3, total: 3),
+            const OnboardingProgressBar(current: 4, total: 4),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(Sp.md),
@@ -217,6 +243,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                       'Continuer',
                       onPressed: () => context.go('/auth/merchant/review'),
                       icon: LucideIcons.arrowRight,
+                      disabled: _uploadingLogo,
                     ),
                   ),
                 ],
@@ -247,15 +274,29 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(38),
-                  child: !hasLogo
-                      ? const Icon(LucideIcons.store, color: AppColors.merchant, size: 28)
-                      : Builder(builder: (context) {
-                          final url = state.logoUrl!;
-                          if (url.startsWith('http')) {
-                            return Image.network(url, fit: BoxFit.cover);
-                          }
-                          return Image.file(File(url), fit: BoxFit.cover);
-                        }),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (!hasLogo)
+                        const Icon(LucideIcons.store, color: AppColors.merchant, size: 28)
+                      else
+                        Image.network(state.logoUrl!, fit: BoxFit.cover),
+                      if (_uploadingLogo)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               Positioned(
@@ -279,6 +320,19 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
             hasLogo ? 'Changer le logo' : 'Ajouter un logo',
             style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
           ),
+          if (hasLogo) ...[
+            const SizedBox(height: 2),
+            GestureDetector(
+              onTap: _uploadingLogo ? null : _removeLogo,
+              child: Text(
+                'Retirer',
+                style: AppTextStyles.caption().copyWith(
+                  color: _uploadingLogo ? AppColors.textSecondary : AppColors.danger,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

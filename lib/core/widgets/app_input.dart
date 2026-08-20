@@ -32,6 +32,7 @@ class AppInput extends StatefulWidget {
     this.onTap,
     this.errorText,
     this.accentColor = AppColors.primary,
+    this.autovalidateMode,
   });
 
   final String label;
@@ -57,6 +58,7 @@ class AppInput extends StatefulWidget {
   final VoidCallback? onTap;
   final String? errorText;
   final Color accentColor;
+  final AutovalidateMode? autovalidateMode;
 
   @override
   State<AppInput> createState() => _AppInputState();
@@ -102,6 +104,7 @@ class _AppInputState extends State<AppInput> {
             autofocus: widget.autofocus,
             onTap: widget.onTap,
             validator: widget.validator,
+            autovalidateMode: widget.autovalidateMode,
             cursorColor: widget.accentColor,
             style: AppTextStyles.bodyMd().copyWith(
               color: AppColors.textPrimary,

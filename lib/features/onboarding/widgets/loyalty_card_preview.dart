@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/onboarding_provider.dart';
+import '../utils/card_colors.dart';
 import '../utils/commerce_icons.dart';
 import 'premium_card_surface.dart';
 import 'stamp_grid_widget_preview.dart';
@@ -22,11 +23,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
     final state = ref.watch(onboardingNotifierProvider);
 
     final primary = state.colorPrimary;
-    final secondary = HSLColor.fromColor(primary)
-        .withLightness(
-          (HSLColor.fromColor(primary).lightness - 0.15).clamp(0.0, 1.0),
-        )
-        .toColor();
+    final secondary = deriveSecondaryColor(primary);
 
     final isStampsMode = state.loyaltyMode == 'stamps';
     // For stamps mode, calculate progress based on stampsRequired
@@ -94,6 +91,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
                   remainingPoints: remainingPoints,
                   loyaltyMode: state.loyaltyMode,
                   rewardDescription: state.rewardDescription,
+                  cashbackPercentage: state.cashbackPercentage,
                   progress: progress,
                   stampDesignType: state.stampDesignType,
                   stampEmoji: state.stampEmoji,
@@ -222,6 +220,7 @@ class _CardBottomGroup extends StatelessWidget {
     required this.remainingPoints,
     required this.loyaltyMode,
     required this.rewardDescription,
+    required this.cashbackPercentage,
     required this.progress,
     required this.stampDesignType,
     required this.stampEmoji,
@@ -236,6 +235,7 @@ class _CardBottomGroup extends StatelessWidget {
   final int remainingPoints;
   final String loyaltyMode;
   final String rewardDescription;
+  final double cashbackPercentage;
   final double progress;
   final String stampDesignType;
   final String stampEmoji;
@@ -273,7 +273,56 @@ class _CardBottomGroup extends StatelessWidget {
             iconName: stampIcon,
             primaryColor: primaryColor,
           ),
+        ] else if (loyaltyMode == 'cashback') ...[
+          Row(
+            children: [
+              Icon(LucideIcons.wallet, size: 10, color: Colors.white.withValues(alpha: 0.7)),
+              const SizedBox(width: 5),
+              Text(
+                'CASHBACK',
+                style: AppTextStyles.mono().copyWith(
+                  fontSize: 9,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${cashbackPercentage.toStringAsFixed(cashbackPercentage % 1 == 0 ? 0 : 1)}%',
+            style: AppTextStyles.monoLg().copyWith(color: Colors.white, fontSize: 18),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Solde utilisable en réduction, crédité à chaque achat',
+            style: AppTextStyles.caption().copyWith(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 10.5,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ] else ...[
+          Builder(builder: (context) {
+            final isSpend = loyaltyMode == 'spend';
+            final mechanicIcon = isSpend ? LucideIcons.shoppingBag : LucideIcons.coins;
+            return Row(
+              children: [
+                Icon(mechanicIcon, size: 10, color: Colors.white.withValues(alpha: 0.7)),
+                const SizedBox(width: 5),
+                Text(
+                  isSpend ? 'ACHATS' : 'POINTS',
+                  style: AppTextStyles.mono().copyWith(
+                    fontSize: 9,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            );
+          }),
+          const SizedBox(height: 2),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -300,7 +349,11 @@ class _CardBottomGroup extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.sparkles, color: Colors.white, size: 12),
+                    Icon(
+                      loyaltyMode == 'spend' ? LucideIcons.shoppingBag : LucideIcons.coins,
+                      color: Colors.white,
+                      size: 12,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Objectif : $stampsRequired pts',
@@ -326,16 +379,18 @@ class _CardBottomGroup extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: Rd.pill,
-          child: LinearProgressIndicator(
-            value: progress.clamp(0.0, 1.0),
-            color: Colors.white,
-            backgroundColor: Colors.white.withValues(alpha: 0.3),
-            minHeight: 3,
+        if (loyaltyMode != 'cashback') ...[
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: Rd.pill,
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              color: Colors.white,
+              backgroundColor: Colors.white.withValues(alpha: 0.3),
+              minHeight: 3,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

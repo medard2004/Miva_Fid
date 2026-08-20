@@ -14,7 +14,6 @@ import '../../features/client/providers/app_providers.dart';
 import '../../features/merchant/providers/merchant_auth_provider.dart';
 import '../../features/client/auth/otp_screen.dart';
 import '../../features/client/auth/signup_screen.dart';
-import '../../features/client/auth/complete_profile_screen.dart';
 import '../../features/client/auth/complete_social_profile_screen.dart';
 import '../../features/client/onboarding/onboarding_screen.dart';
 import '../../features/client/onboarding/qr_scan_screen.dart';
@@ -31,6 +30,7 @@ import '../../features/client/profile/edit_birthdate_screen.dart';
 import '../../features/client/profile/verify_current_password_screen.dart';
 import '../../features/client/profile/set_new_password_screen.dart';
 import '../../features/client/settings/settings_screen.dart' as client_settings;
+import '../../features/client/legal/legal_screen.dart';
 import '../../features/client/notifications/notifications_screen.dart';
 import '../../features/client/widgets/shared/app_shell.dart';
 
@@ -45,9 +45,10 @@ import '../../features/merchant/screens/settings_screen.dart';
 import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
-import '../../features/onboarding/screens/login_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
 import '../../features/onboarding/screens/merchant_auth_screen.dart';
+import '../../features/onboarding/screens/merchant_location_map_screen.dart';
+import '../../features/onboarding/screens/merchant_location_screen.dart';
 import '../../features/onboarding/screens/merchant_step1_screen.dart';
 import '../../features/onboarding/screens/merchant_step2_screen.dart';
 import '../../features/onboarding/screens/merchant_step3_screen.dart';
@@ -163,6 +164,24 @@ const _clientPublicRoutes = {
   '/client/onboarding',
 };
 
+/// Écrans d'entrée du parcours marchand (intro + connexion/inscription) —
+/// sans intérêt pour un marchand déjà authentifié.
+const _merchantEntryRoutes = {
+  '/onboarding/merchant',
+  '/auth/merchant/auth',
+};
+
+/// Étapes de complétion du profil business marchand, atteignables tant que
+/// l'inscription n'est pas terminée (`hasBusinessInfo == false`).
+const _merchantOnboardingRoutes = {
+  '/auth/merchant/step1',
+  '/auth/merchant/location',
+  '/auth/merchant/step2',
+  '/auth/merchant/step3',
+  '/auth/merchant/review',
+  '/auth/merchant/success',
+};
+
 @Riverpod(keepAlive: true)
 GoRouter appRouter(AppRouterRef ref) {
   return GoRouter(
@@ -176,26 +195,67 @@ GoRouter appRouter(AppRouterRef ref) {
       final location = state.matchedLocation;
 
       // Dashboard marchand : accès protégé par le token Sanctum obtenu à
-      // l'inscription/connexion (voir `/auth/merchant/*`).
+      // l'inscription/connexion (voir `/auth/merchant/*`), et par la
+      // complétude de l'onboarding — sans ce deuxième filtre, un marchand
+      // qui saute une étape (ex. localisation) via un lien direct atterrit
+      // sur un dashboard incomplet.
       if (location.startsWith('/merchant/') || location == '/merchant') {
-        final isMerchantAuthenticated =
-            ref.read(merchantAuthProvider).isAuthenticated;
-        return isMerchantAuthenticated ? null : '/auth/merchant/auth';
+        final merchantAuth = ref.read(merchantAuthProvider);
+        if (!merchantAuth.isAuthenticated) return '/auth/merchant/auth';
+        final restaurant = merchantAuth.restaurant;
+        if (!(restaurant?.hasBusinessInfo ?? false)) return '/auth/merchant/step1';
+        if (!(restaurant?.hasLocation ?? false)) return '/auth/merchant/location';
+        if (!(restaurant?.hasLoyaltyProgram ?? false)) return '/auth/merchant/step2';
+        return null;
+      }
+
+      // Marchand déjà connecté : plus de raison de repasser par l'intro ou
+      // l'écran connexion/inscription. Si l'inscription business est déjà
+      // complète on renvoie au dashboard, sinon on reprend directement à
+      // l'étape où le marchand s'était arrêté.
+      if (_merchantEntryRoutes.contains(location) ||
+          _merchantOnboardingRoutes.contains(location)) {
+        final merchantAuth = ref.read(merchantAuthProvider);
+        if (merchantAuth.isAuthenticated) {
+          // `/auth/merchant/success` est l'écran d'arrivée juste après la
+          // création du programme : le renvoyer au dashboard priverait le
+          // marchand de son QR code et de la feuille comptoir.
+          if ((merchantAuth.restaurant?.hasLoyaltyProgram ?? false) &&
+              location != '/auth/merchant/success') {
+            return '/merchant';
+          }
+          if (_merchantEntryRoutes.contains(location)) {
+            return '/auth/merchant/step1';
+          }
+        } else if (_merchantOnboardingRoutes.contains(location)) {
+          // Les étapes de complétion écrivent toutes sur le compte
+          // authentifié : sans session, elles n'aboutiraient qu'à des 401.
+          return '/auth/merchant/auth';
+        }
       }
 
       if (!location.startsWith('/client/')) return null;
 
       final isAuthenticated = ref.read(authProvider).isAuthenticated;
       final isPublicRoute = _clientPublicRoutes.contains(location) ||
-          location.startsWith('/client/onboarding');
+          location.startsWith('/client/onboarding') ||
+          location.startsWith('/client/legal');
 
       if (!isAuthenticated) {
         return isPublicRoute ? null : '/client/auth';
       }
 
+      // Scan/join/légal restent accessibles une fois connecté : un client
+      // authentifié s'en sert pour ajouter une carte, et consulte les CGU
+      // depuis les réglages.
+      final isAuthOnlyEntryScreen = isPublicRoute &&
+          location != '/client/onboarding/scan' &&
+          location != '/client/onboarding/join' &&
+          !location.startsWith('/client/legal');
+
       // Déjà connecté : les écrans d'entrée n'ont plus lieu d'être. On laisse
       // passer la réinitialisation de mot de passe, légitime en session.
-      if (isPublicRoute &&
+      if (isAuthOnlyEntryScreen &&
           location != '/client/reset-password' &&
           location != '/client/otp') {
         return '/client/wallet';
@@ -211,10 +271,6 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/role-select',
         pageBuilder: (_, __) => _slide(const RoleSelectionScreen()),
-      ),
-      GoRoute(
-        path: '/auth/login',
-        pageBuilder: (_, __) => _slide(const LoginScreen()),
       ),
       GoRoute(
         path: '/auth/merchant/auth',
@@ -244,6 +300,14 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/auth/merchant/step1',
         pageBuilder: (_, __) => _slide(const MerchantStep1Screen()),
+      ),
+      GoRoute(
+        path: '/auth/merchant/location',
+        pageBuilder: (_, __) => _slide(const MerchantLocationScreen()),
+      ),
+      GoRoute(
+        path: '/auth/merchant/location/map',
+        pageBuilder: (_, __) => _slide(const MerchantLocationMapScreen()),
       ),
       GoRoute(
         path: '/auth/merchant/step2',
@@ -319,12 +383,16 @@ GoRouter appRouter(AppRouterRef ref) {
         builder: (_, state) => _buildClientResetPasswordScreen(state),
       ),
       GoRoute(
-        path: '/client/complete-profile',
-        builder: (_, __) => const CompleteProfileScreen(),
-      ),
-      GoRoute(
         path: '/client/complete-social-profile',
         builder: (_, __) => const CompleteSocialProfileScreen(),
+      ),
+      GoRoute(
+        path: '/client/legal/terms',
+        builder: (_, __) => const LegalScreen(document: LegalDocument.terms),
+      ),
+      GoRoute(
+        path: '/client/legal/privacy',
+        builder: (_, __) => const LegalScreen(document: LegalDocument.privacy),
       ),
 
       // ── Client: coquille principale (bottom tab bar) ─────────────────────

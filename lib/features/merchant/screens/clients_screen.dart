@@ -239,7 +239,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       return ClientRow(
                         card: card,
                         stampsRequired: stampReq,
-                        onTap: () => ctx.go('/merchant/clients/${card.clientId}'),
+                        onTap: () => ctx.go('/merchant/clients/${card.id}'),
                         onSendMessage: () {
                           // Navigate to SMS tab and trigger draft campaign
                           ctx.go('/merchant/sms');

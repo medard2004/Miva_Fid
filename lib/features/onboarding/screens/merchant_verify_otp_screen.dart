@@ -9,6 +9,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_messages.dart';
+import '../../../core/errors/error_translator.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 
@@ -28,7 +32,6 @@ class _MerchantVerifyOtpScreenState
   final _formKey = GlobalKey<FormState>();
   final _otpCtrl = TextEditingController();
   bool _loading = false;
-  String? _error;
 
   @override
   void dispose() {
@@ -38,10 +41,7 @@ class _MerchantVerifyOtpScreenState
 
   Future<void> _verify() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _loading = true);
 
     final resetToken = await ref
         .read(merchantAuthProvider.notifier)
@@ -56,7 +56,12 @@ class _MerchantVerifyOtpScreenState
         extra: {'email': widget.email, 'reset_token': resetToken},
       );
     } else {
-      setState(() => _error = 'Code invalide ou expiré.');
+      final error = ref.read(merchantAuthProvider).lastError;
+      ToastService.showError(ErrorTranslator.translate(
+            error,
+            context: ErrorContext.verifyOtp,
+          ).displayMessage ??
+          ErrorMessages.otpInvalid);
     }
   }
 
@@ -116,30 +121,6 @@ class _MerchantVerifyOtpScreenState
                       ? 'Le code doit contenir 6 chiffres'
                       : null,
                 ),
-
-                if (_error != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.dangerTint,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(LucideIcons.circleAlert, color: AppColors.danger, size: 18),
-                        const SizedBox(width: Sp.sm),
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: AppTextStyles.caption().copyWith(color: AppColors.danger, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().shake(duration: 300.ms),
-                  const SizedBox(height: Sp.md),
-                ],
 
                 const SizedBox(height: Sp.md),
 

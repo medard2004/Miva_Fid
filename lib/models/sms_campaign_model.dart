@@ -27,24 +27,23 @@ class SmsCampaignModel {
   bool get isSent => status == 'sent';
   bool get isScheduled => status == 'scheduled';
 
+  /// Construit une campagne depuis `GET /merchant/campaigns`. Les dates y
+  /// arrivent au format SQL comme ISO selon l'origine (colonne brute ou
+  /// accesseur), d'où le `tryParse` plutôt qu'un `parse` strict.
   factory SmsCampaignModel.fromJson(Map<String, dynamic> json) {
+    DateTime? date(String key) =>
+        DateTime.tryParse(json[key]?.toString() ?? '');
+
     return SmsCampaignModel(
-      id: json['id'] as String,
-      merchantId: json['merchant_id'] as String,
-      message: json['message'] as String,
+      id: json['id'].toString(),
+      merchantId: json['merchant_id']?.toString() ?? '',
+      message: json['message'] as String? ?? '',
       recipientType: json['recipient_type'] as String?,
-      recipientIds: (json['recipient_ids'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
       recipientsCount: json['recipients_count'] as int? ?? 0,
       status: json['status'] as String? ?? 'draft',
-      scheduledAt: json['scheduled_at'] != null
-          ? DateTime.parse(json['scheduled_at'] as String)
-          : null,
-      sentAt: json['sent_at'] != null
-          ? DateTime.parse(json['sent_at'] as String)
-          : null,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      scheduledAt: date('scheduled_at'),
+      sentAt: date('sent_at'),
+      createdAt: date('created_at') ?? DateTime.now(),
     );
   }
 

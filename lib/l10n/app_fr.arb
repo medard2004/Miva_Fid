@@ -101,6 +101,7 @@
   "cardStampsLabel": "TAMPONS",
   "cardPointsLabel": "SOLDE",
   "cardPointsSuffix": "PTS",
+  "cardSpendLabel": "OBJECTIF ACHAT",
   "cardCashbackLabel": "CASHBACK",
   "cardCashbackSuffix": "FCFA",
   "cardVipMaxTier": "Palier maximum atteint",
@@ -124,6 +125,7 @@
   },
   "rewardsRedeemSuccess": "Récompense marquée comme utilisée",
   "rewardsUseButton": "Utiliser",
+  "rewardsShowQrInstruction": "Présentez ce code au marchand pour l'utiliser. Valable une seule fois.",
 
   "walletGreetingMorning": "BONJOUR",
   "walletGreetingAfternoon": "BON APRÈS-MIDI",
@@ -212,6 +214,13 @@
   "authSignupGoogle": "S'inscrire avec Google",
   "authSignupApple": "S'inscrire avec Apple",
   "authHasAccountPrefix": "Déjà membre ? ",
+  "authAcceptPrefix": "En continuant, vous acceptez les ",
+  "authTermsLink": "CGU",
+  "authAcceptAnd": " et la ",
+  "authPrivacyLink": "politique de confidentialité",
+  "legalTermsTitle": "Conditions Générales d'Utilisation",
+  "legalPrivacyTitle": "Politique de confidentialité",
+  "authTermsRequiredError": "Veuillez accepter les CGU et la politique de confidentialité pour continuer.",
 
   "otpContextLogin": "Connexion",
   "otpContextSignup": "Inscription",
@@ -253,8 +262,8 @@
   "qrScanTitle": "SCANNER UN QR",
   "qrToggleFlash": "Activer ou désactiver le flash",
   "qrPlaceInFrame": "Placez le QR du restaurant dans le cadre.",
-  "qrManualEntryHint": "Le code figure sous le QR affiché par l'établissement.",
-  "qrManualEntryPlaceholder": "Ex. JARDIN-2024",
+  "qrManualEntryHint": "Le code unique à 8 caractères figure sous le QR affiché par l'établissement.",
+  "qrManualEntryPlaceholder": "Ex. 8XKQ2P9Z",
   "qrCameraUnavailableTitle": "Caméra indisponible",
   "qrCameraUnavailableMessage": "Autorisez l'accès à la caméra dans les réglages, ou saisissez le code manuellement.",
 
@@ -270,9 +279,18 @@
   "joinWelcomeOfferEyebrow": "Offre de bienvenue",
   "joinButton": "Rejoindre le programme",
   "joinCardCreatedTitle": "Carte créée !",
+  "joinCardAlreadyMemberTitle": "Déjà membre !",
+  "joinCardAlreadyMemberMessage": "Vous êtes déjà membre de ce programme de fidélité.",
 
   "phonePickerTitle": "Sélectionnez un indicatif",
   "phonePickerSearchHint": "Rechercher un pays ou un indicatif...",
+  "phoneDigitsError": "Le numéro doit contenir {count} chiffres pour {country}.",
+  "@phoneDigitsError": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "country": { "type": "String" }
+    }
+  },
   "countryPickerTitle": "Sélectionnez un pays",
   "countryPickerSearchHint": "Rechercher un pays...",
 

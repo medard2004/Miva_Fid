@@ -1,34 +1,38 @@
 import 'package:intl/intl.dart';
 
-enum RewardStatus { active, locked, used }
+enum RewardStatus { available, used, canceled }
 
+/// Récompense débloquée (cycle Tampons/Achats atteint), utilisable une
+/// seule fois via [redeemToken] (QR affiché au marchand). L'expiration
+/// n'est pas un statut séparé : [isExpired] est calculé côté serveur à la
+/// lecture (voir `LoyaltyReward::getIsExpiredAttribute` côté API).
 class Reward {
   final String id;
-  final String cardId;
+  final String? cardId;
   final String restaurantName;
   final String title;
-  final String description;
   final RewardStatus status;
-
-  /// Condition restante si verrouillée, ex. "Encore 3 sceaux".
-  final String? lockedCondition;
-
-  /// Date d'expiration si la récompense est à durée limitée.
+  final bool isExpired;
+  final String redeemToken;
+  final DateTime? unlockedAt;
   final DateTime? expiresAt;
-
   final DateTime? usedAt;
 
   const Reward({
     required this.id,
-    required this.cardId,
+    this.cardId,
     required this.restaurantName,
     required this.title,
-    required this.description,
     required this.status,
-    this.lockedCondition,
+    required this.isExpired,
+    required this.redeemToken,
+    this.unlockedAt,
     this.expiresAt,
     this.usedAt,
   });
+
+  /// Utilisable maintenant : disponible et non expirée.
+  bool get isRedeemable => status == RewardStatus.available && !isExpired;
 
   bool get isExpiringSoon =>
       expiresAt != null && expiresAt!.difference(DateTime.now()).inHours < 48;
@@ -46,5 +50,35 @@ class Reward {
     return DateFormat('dd MMM yyyy', dateFormatLocale)
         .format(usedAt!)
         .toUpperCase();
+  }
+
+  factory Reward.fromApi(Map<String, dynamic> json) {
+    final restaurant = json['restaurant'] as Map<String, dynamic>? ?? {};
+    DateTime? parseDate(dynamic v) =>
+        v == null ? null : DateTime.tryParse(v.toString());
+
+    return Reward(
+      id: json['id'].toString(),
+      cardId: json['loyalty_card_id']?.toString(),
+      restaurantName: restaurant['name'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      status: _statusFromApi(json['status'] as String?),
+      isExpired: json['is_expired'] as bool? ?? false,
+      redeemToken: json['redeem_token'] as String? ?? '',
+      unlockedAt: parseDate(json['unlocked_at']),
+      expiresAt: parseDate(json['expires_at']),
+      usedAt: parseDate(json['used_at']),
+    );
+  }
+
+  static RewardStatus _statusFromApi(String? status) {
+    switch (status) {
+      case 'used':
+        return RewardStatus.used;
+      case 'canceled':
+        return RewardStatus.canceled;
+      default:
+        return RewardStatus.available;
+    }
   }
 }

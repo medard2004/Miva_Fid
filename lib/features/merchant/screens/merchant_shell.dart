@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -14,6 +13,7 @@ import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/app_toast.dart';
 
 import '../providers/merchant_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
 class MerchantShell extends ConsumerWidget {
@@ -21,7 +21,8 @@ class MerchantShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   Future<void> _showMoreSheet(
-    BuildContext context, {
+    BuildContext context,
+    WidgetRef ref, {
     required String planLabel,
     required int smsRemaining,
   }) {
@@ -120,8 +121,8 @@ class MerchantShell extends ConsumerWidget {
                 destructive: true,
               );
               if (!confirmed) return;
-              await Supabase.instance.client.auth.signOut();
-              if (context.mounted) context.go('/role-select');
+              await ref.read(merchantAuthProvider.notifier).signOut();
+              if (context.mounted) context.go('/auth/merchant/auth');
             },
           ),
         ],
@@ -140,6 +141,7 @@ class MerchantShell extends ConsumerWidget {
     required String label,
     required int currentIndex,
     required BuildContext context,
+    required WidgetRef ref,
     bool isMore = false,
     String planLabel = '',
     int smsRemaining = 100,
@@ -151,7 +153,7 @@ class MerchantShell extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         if (isMore) {
-          _showMoreSheet(context, planLabel: planLabel, smsRemaining: smsRemaining);
+          _showMoreSheet(context, ref, planLabel: planLabel, smsRemaining: smsRemaining);
           return;
         }
         navigationShell.goBranch(index, initialLocation: index == currentIndex);
@@ -325,6 +327,7 @@ class MerchantShell extends ConsumerWidget {
                       label: 'Accueil',
                       currentIndex: currentIndex,
                       context: context,
+                      ref: ref,
                     ),
                     _buildNavItem(
                       index: 1,
@@ -332,6 +335,7 @@ class MerchantShell extends ConsumerWidget {
                       label: 'Clients',
                       currentIndex: currentIndex,
                       context: context,
+                      ref: ref,
                     ),
                     _buildCenterNavItem(
                       index: 2,
@@ -346,6 +350,7 @@ class MerchantShell extends ConsumerWidget {
                       label: 'SMS',
                       currentIndex: currentIndex,
                       context: context,
+                      ref: ref,
                     ),
                     _buildNavItem(
                       index: 4,
@@ -353,6 +358,7 @@ class MerchantShell extends ConsumerWidget {
                       label: 'Plus',
                       currentIndex: currentIndex,
                       context: context,
+                      ref: ref,
                       isMore: true,
                       planLabel: planLabel,
                       smsRemaining: smsRemaining,

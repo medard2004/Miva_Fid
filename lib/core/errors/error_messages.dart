@@ -142,6 +142,8 @@ class ErrorMessages {
 
   static String get nameInvalid => _t?.errNameInvalid ?? 'Ce nom n\'est pas valide.';
 
+  static String get commerceNameTaken => 'Ce nom de commerce est déjà utilisé.';
+
   static String get birthdateInvalid => _t?.errBirthdateInvalid ?? 'Cette date de naissance n\'est pas valide.';
 
   static String get birthdateRequired => _t?.errBirthdateRequired ?? 'Veuillez indiquer votre date de naissance.';

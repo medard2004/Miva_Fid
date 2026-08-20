@@ -13,48 +13,85 @@ import 'package:miva_fid/features/client/models/user.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class RewardsNotifier extends StateNotifier<List<Reward>> {
-  RewardsNotifier() : super(MockData.rewards);
+  RewardsNotifier(this._ref) : super(const []) {
+    _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
+  }
 
-  List<Reward> get active =>
-      state.where((r) => r.status == RewardStatus.active).toList();
-  List<Reward> get locked =>
-      state.where((r) => r.status == RewardStatus.locked).toList();
-  List<Reward> get used =>
-      state.where((r) => r.status == RewardStatus.used).toList();
+  final Ref _ref;
 
-  List<Reward> forCard(String cardId) =>
-      state.where((r) => r.cardId == cardId).toList();
+  void _onAuthChanged(AuthState? previous, AuthState next) {
+    if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
+      loadMine().catchError((_) {});
+    } else if (previous?.isAuthenticated == true && !next.isAuthenticated) {
+      state = const [];
+    }
+  }
 
-  /// Marque une récompense active comme utilisée.
-  void redeem(String id) {
-    state = [
-      for (final r in state)
-        if (r.id == id && r.status == RewardStatus.active)
-          Reward(
-            id: r.id,
-            cardId: r.cardId,
-            restaurantName: r.restaurantName,
-            title: r.title,
-            description: r.description,
-            status: RewardStatus.used,
-            usedAt: DateTime.now(),
-          )
-        else
-          r,
-    ];
+  List<Reward> get available =>
+      state.where((r) => r.status == RewardStatus.available && !r.isExpired).toList();
+  List<Reward> get used => state.where((r) => r.status == RewardStatus.used).toList();
+
+  /// Recharge depuis `GET /rewards` — appelé au login et par le
+  /// pull-to-refresh de l'écran "Mes récompenses".
+  Future<void> loadMine() async {
+    state = await _ref.read(loyaltyRewardRepositoryProvider).listMine();
   }
 }
 
 final rewardsProvider = StateNotifierProvider<RewardsNotifier, List<Reward>>(
-  (ref) => RewardsNotifier(),
+  (ref) => RewardsNotifier(ref),
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Le reste du flux notifications est mock (stamp/points/cashback/vip/
+/// referral/system) — aucune infra serveur n'existe encore pour eux. Seule
+/// la partie récompenses est réelle, dérivée de [rewardsProvider] : pas de
+/// nouvelle table de notifications côté backend, on synthétise ces entrées
+/// depuis la liste de récompenses déjà chargée.
 class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
-  NotificationsNotifier() : super(MockData.notifications);
+  NotificationsNotifier(this._ref) : super(MockData.notifications) {
+    _ref.listen<List<Reward>>(
+      rewardsProvider,
+      (previous, next) => _syncRewardNotifications(next),
+      fireImmediately: true,
+    );
+  }
+
+  final Ref _ref;
+
+  void _syncRewardNotifications(List<Reward> rewards) {
+    final derived = <AppNotification>[];
+    for (final reward in rewards) {
+      if (reward.status == RewardStatus.available && !reward.isExpired) {
+        derived.add(AppNotification(
+          id: 'reward-unlocked-${reward.id}',
+          restaurantName: reward.restaurantName,
+          kind: NotificationKind.reward,
+          message: 'Récompense débloquée : ${reward.title}',
+          timestamp: reward.unlockedAt ?? DateTime.now(),
+        ));
+      } else if (reward.status == RewardStatus.used) {
+        derived.add(AppNotification(
+          id: 'reward-used-${reward.id}',
+          restaurantName: reward.restaurantName,
+          kind: NotificationKind.reward,
+          message: 'Récompense utilisée : ${reward.title}',
+          timestamp: reward.usedAt ?? reward.unlockedAt ?? DateTime.now(),
+        ));
+      }
+    }
+
+    // Préserve l'état lu des entrées déjà connues (dérivées ou mock).
+    final readById = {for (final n in state) n.id: n.isRead};
+    final others = state.where((n) => !n.id.startsWith('reward-')).toList();
+    state = [
+      ...others,
+      ...derived.map((n) => n.copyWith(isRead: readById[n.id] ?? false)),
+    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  }
 
   int get unreadCount => state.where((n) => !n.isRead).length;
 
@@ -76,7 +113,7 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
 
 final notificationsProvider =
     StateNotifierProvider<NotificationsNotifier, List<AppNotification>>(
-  (ref) => NotificationsNotifier(),
+  (ref) => NotificationsNotifier(ref),
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -418,8 +455,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(clearError: true);
     try {
+      // L'API stocke prénom et nom séparément : on découpe ici pour ne pas
+      // laisser un ancien `last_name` (ex. issu du split Google au signup)
+      // se retrouver dupliqué avec le nom complet saisi.
+      final parts = fullName.trim().split(RegExp(r'\s+'));
       final user = await _authRepository.completeSocialProfile({
-        'first_name': fullName,
+        'first_name': parts.first,
+        'last_name': parts.skip(1).join(' '),
         'phone': phone,
         if (birthDate != null) 'birthdate': _asDate(birthDate),
         if (city != null) 'city': city,
@@ -486,7 +528,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         city: city,
         country: country,
         neighborhood: neighborhood,
-        profileCompleted: true,
       ),
     );
 
@@ -521,7 +562,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user == null) return;
     state = state.copyWith(localAvatar: file);
     try {
-      state = state.copyWith(user: await _authRepository.uploadAvatar(file));
+      final user = await _authRepository.uploadAvatar(file);
+      state = state.copyWith(user: user, clearLocalAvatar: true);
     } catch (e) {
       state = state.copyWith(clearLocalAvatar: true, lastError: e);
       rethrow;

@@ -29,6 +29,12 @@ class AppError {
 
   bool get hasFieldErrors => fieldErrors.isNotEmpty;
   bool get hasGeneralMessage => generalMessage != null;
+
+  /// Un message unique à afficher, pour les écrans qui n'ont qu'un seul
+  /// emplacement d'erreur (bannière) plutôt qu'un slot par champ.
+  /// Retombe sur la première erreur de champ si aucun message général.
+  String? get displayMessage =>
+      generalMessage ?? (fieldErrors.isNotEmpty ? fieldErrors.values.first : null);
 }
 
 /// Contexte d'appel : un même code d'erreur ne se formule pas pareil selon
@@ -45,4 +51,5 @@ enum ErrorContext {
   updateAvatar,
   verifyPassword,
   changePassword,
+  createLoyaltyProgram,
 }

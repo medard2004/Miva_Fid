@@ -5,8 +5,13 @@ import '../storage/merchant_token_storage.dart';
 import '../services/auth_service.dart';
 import '../services/merchant_auth_service.dart';
 import '../services/loyalty_program_service.dart';
+import '../services/loyalty_card_service.dart';
+import '../services/loyalty_reward_service.dart';
+import '../services/merchant_dashboard_service.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/merchant_auth_repository.dart';
+import '../repositories/loyalty_card_repository.dart';
+import '../repositories/loyalty_reward_repository.dart';
 
 /// Compteur incrémenté chaque fois que le serveur rejette le token (401).
 ///
@@ -75,7 +80,33 @@ final merchantAuthRepositoryProvider = Provider<MerchantAuthRepository>((ref) {
   return MerchantAuthRepository(authService, tokenStorage);
 });
 
+final merchantDashboardServiceProvider =
+    Provider<MerchantDashboardService>((ref) {
+  final apiClient = ref.watch(merchantApiClientProvider);
+  return MerchantDashboardService(apiClient);
+});
+
 final loyaltyProgramServiceProvider = Provider<LoyaltyProgramService>((ref) {
   final apiClient = ref.watch(merchantApiClientProvider);
   return LoyaltyProgramService(apiClient);
+});
+
+final loyaltyCardServiceProvider = Provider<LoyaltyCardService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return LoyaltyCardService(apiClient);
+});
+
+final loyaltyCardRepositoryProvider = Provider<LoyaltyCardRepository>((ref) {
+  final service = ref.watch(loyaltyCardServiceProvider);
+  return LoyaltyCardRepository(service);
+});
+
+final loyaltyRewardServiceProvider = Provider<LoyaltyRewardService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return LoyaltyRewardService(apiClient);
+});
+
+final loyaltyRewardRepositoryProvider = Provider<LoyaltyRewardRepository>((ref) {
+  final service = ref.watch(loyaltyRewardServiceProvider);
+  return LoyaltyRewardRepository(service);
 });

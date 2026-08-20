@@ -1,36 +1,32 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/api/providers/api_providers.dart';
 import '../../../models/sms_campaign_model.dart';
+import 'merchant_auth_provider.dart';
 import 'merchant_provider.dart';
 
 part 'sms_provider.g.dart';
 
+/// Campagnes SMS du commerce (`/merchant/campaigns`).
 @riverpod
 class SmsNotifier extends _$SmsNotifier {
   @override
   Future<List<SmsCampaignModel>> build() async {
-    final merchant = await ref.watch(merchantNotifierProvider.future);
-    if (merchant == null) return [];
-    final res = await Supabase.instance.client
-        .from('sms_campaigns')
-        .select()
-        .eq('merchant_id', merchant.id)
-        .order('created_at', ascending: false);
-    return (res as List)
-        .cast<Map<String, dynamic>>()
-        .map(SmsCampaignModel.fromJson)
-        .toList();
+    final restaurant = ref.watch(
+      merchantAuthProvider.select((s) => s.restaurant),
+    );
+    if (restaurant == null) return [];
+
+    final rows = await ref.read(merchantDashboardServiceProvider).campaigns();
+    return rows.map(SmsCampaignModel.fromJson).toList();
   }
 
-  Future<int> countRecipients(String recipientType) async {
-    final merchant = await ref.read(merchantNotifierProvider.future);
-    if (merchant == null) return 0;
-    final res = await Supabase.instance.client
-        .from('loyalty_cards')
-        .select('id')
-        .eq('merchant_id', merchant.id);
-    return (res as List).length;
+  /// Nombre de destinataires pour un ciblage donné — calculé par le serveur,
+  /// jamais estimé côté app.
+  Future<int> countRecipients(String recipientType) {
+    return ref
+        .read(merchantDashboardServiceProvider)
+        .recipientCount(recipientType);
   }
 
   Future<void> sendCampaign({
@@ -38,18 +34,14 @@ class SmsNotifier extends _$SmsNotifier {
     required String recipientType,
     DateTime? scheduledAt,
   }) async {
-    final merchant = await ref.read(merchantNotifierProvider.future);
-    if (merchant == null) return;
-    final count = await countRecipients(recipientType);
-    await Supabase.instance.client.from('sms_campaigns').insert({
-      'merchant_id': merchant.id,
-      'message': message,
-      'recipient_type': recipientType,
-      'recipients_count': count,
-      'status': scheduledAt != null ? 'scheduled' : 'sent',
-      'scheduled_at': scheduledAt?.toIso8601String(),
-      'sent_at': scheduledAt == null ? DateTime.now().toIso8601String() : null,
-    });
+    await ref.read(merchantDashboardServiceProvider).sendCampaign(
+          message: message,
+          recipientType: recipientType,
+          scheduledAt: scheduledAt,
+        );
+    // L'envoi débite le crédit SMS : recharger la session met le compteur
+    // du dashboard à jour en même temps que la liste des campagnes.
+    await ref.read(merchantNotifierProvider.notifier).refresh();
     ref.invalidateSelf();
   }
 }

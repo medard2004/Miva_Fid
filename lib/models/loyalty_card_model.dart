@@ -36,21 +36,36 @@ class LoyaltyCardModel {
     return rem < 0 ? 0 : rem;
   }
 
+  /// Construit une carte depuis `GET /merchant/clients*`.
+  ///
+  /// Le backend expose `stamps_current` (extrait du JSON `progress`) et
+  /// imbrique le client sous `client` — les identifiants arrivent en string
+  /// pour rester compatibles avec l'ancien format.
   factory LoyaltyCardModel.fromJson(Map<String, dynamic> json) {
+    final client = json['client'] as Map<String, dynamic>?;
     return LoyaltyCardModel(
-      id: json['id'] as String,
-      clientId: json['client_id'] as String,
-      merchantId: json['merchant_id'] as String,
-      stampsCount: json['stamps_count'] as int? ?? 0,
+      id: json['id'].toString(),
+      clientId: json['client_id'].toString(),
+      merchantId: json['restaurant_id']?.toString() ??
+          json['merchant_id']?.toString() ??
+          '',
+      stampsCount: json['stamps_current'] as int? ?? 0,
       pointsTotal: json['points_total'] as int? ?? 0,
       status: json['status'] as String? ?? 'active',
-      createdAt: DateTime.parse(json['created_at'] as String),
-      merchant: json['merchants'] != null
-          ? MerchantModel.fromJson(json['merchants'] as Map<String, dynamic>)
-          : null,
-      client: json['users'] != null
-          ? UserModel.fromJson(json['users'] as Map<String, dynamic>)
-          : null,
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+              DateTime.now(),
+      client: client == null
+          ? null
+          : UserModel(
+              id: client['id'].toString(),
+              name: client['name'] as String? ?? 'Client',
+              phone: client['phone'] as String?,
+              role: 'client',
+              createdAt:
+                  DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+                      DateTime.now(),
+            ),
     );
   }
 

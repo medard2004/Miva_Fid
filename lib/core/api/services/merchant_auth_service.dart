@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import '../core/api_client.dart';
 import '../core/api_exceptions.dart';
@@ -8,6 +9,8 @@ class MerchantAuthService {
   final ApiClient _apiClient;
 
   MerchantAuthService(this._apiClient);
+
+  set suppressUnauthorized(bool value) => _apiClient.suppressUnauthorized = value;
 
   Never _throwFromDio(DioException e) {
     final status = e.response?.statusCode;
@@ -84,6 +87,27 @@ class MerchantAuthService {
       _guard(() async {
         final response =
             await _apiClient.dio.put('/auth/merchant/profile', data: data);
+        return response.data as Map<String, dynamic>;
+      });
+
+  Future<Map<String, dynamic>> uploadLogo(File file) => _guard(() async {
+        final formData = FormData.fromMap({
+          'logo': await MultipartFile.fromFile(file.path, filename: 'logo.jpg'),
+        });
+        final response =
+            await _apiClient.dio.post('/auth/merchant/profile/logo', data: formData);
+        return response.data as Map<String, dynamic>;
+      });
+
+  Future<Map<String, dynamic>> deleteLogo() => _guard(() async {
+        final response =
+            await _apiClient.dio.delete('/auth/merchant/profile/logo');
+        return response.data as Map<String, dynamic>;
+      });
+
+  Future<Map<String, dynamic>> updatePlan(String planSlug) => _guard(() async {
+        final response = await _apiClient.dio
+            .put('/auth/merchant/plan', data: {'plan': planSlug});
         return response.data as Map<String, dynamic>;
       });
 

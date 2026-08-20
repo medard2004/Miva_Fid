@@ -1,11 +1,16 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/api/providers/api_providers.dart';
 import '../../../models/loyalty_card_model.dart';
-import 'merchant_provider.dart';
+import 'merchant_auth_provider.dart';
 
 part 'clients_provider.g.dart';
 
+/// Clientèle du commerce connecté (`GET /merchant/clients`).
+///
+/// Recherche et filtre sont résolus côté serveur : le filtre « +30j » cible
+/// les cartes sans activité récente, là où l'implémentation Supabase se
+/// rabattait sur un `hashCode` de nom faute de données réelles.
 @riverpod
 class ClientsNotifier extends _$ClientsNotifier {
   String _q = '';
@@ -13,54 +18,16 @@ class ClientsNotifier extends _$ClientsNotifier {
 
   @override
   Future<List<LoyaltyCardModel>> build() async {
-    final merchant = await ref.watch(merchantNotifierProvider.future);
-    if (merchant == null) return [];
+    final restaurant = ref.watch(
+      merchantAuthProvider.select((s) => s.restaurant),
+    );
+    if (restaurant == null) return [];
 
-    var query = Supabase.instance.client
-        .from('loyalty_cards')
-        .select('*, users(*)')
-        .eq('merchant_id', merchant.id)
-        .order('created_at', ascending: false);
-
-    final res = await query;
-    var cards = (res as List)
-        .cast<Map<String, dynamic>>()
-        .map(LoyaltyCardModel.fromJson)
-        .toList();
-
-    if (_q.isNotEmpty) {
-      final q = _q.toLowerCase();
-      cards = cards.where((c) {
-        final name = c.client?.name.toLowerCase() ?? '';
-        return name.contains(q);
-      }).toList();
-    }
-
-    if (_filter == 'Argent') {
-      cards = cards.where((c) {
-        final name = c.client?.name ?? '';
-        return name.hashCode % 3 == 1;
-      }).toList();
-    } else if (_filter == 'Or') {
-      cards = cards.where((c) {
-        final name = c.client?.name ?? '';
-        return name.hashCode % 3 == 0;
-      }).toList();
-    } else if (_filter == 'Platine') {
-      cards = cards.where((c) {
-        final name = c.client?.name ?? '';
-        return name.hashCode % 3 == 2;
-      }).toList();
-    } else if (_filter == '+30j') {
-      final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-      cards = cards.where((c) {
-        final isOld = c.createdAt.isBefore(thirtyDaysAgo);
-        if (isOld) return true;
-        return (c.client?.name.hashCode ?? 0) % 5 == 0;
-      }).toList();
-    }
-
-    return cards;
+    final rows = await ref.read(merchantDashboardServiceProvider).clients(
+          search: _q,
+          filter: _filter == '+30j' ? 'inactive_30d' : null,
+        );
+    return rows.map(LoyaltyCardModel.fromJson).toList();
   }
 
   void search(String q) {
@@ -73,14 +40,9 @@ class ClientsNotifier extends _$ClientsNotifier {
     ref.invalidateSelf();
   }
 
+  /// Accorde un tampon depuis la fiche client.
   Future<void> addBonusStamp(String cardId) async {
-    final merchant = await ref.read(merchantNotifierProvider.future);
-    if (merchant == null) return;
-    await Supabase.instance.client.from('stamps').insert({
-      'card_id': cardId,
-      'merchant_id': merchant.id,
-      'validated_by': Supabase.instance.client.auth.currentUser?.id,
-    });
+    await ref.read(merchantDashboardServiceProvider).addStamp(cardId);
     ref.invalidateSelf();
   }
 }

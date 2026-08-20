@@ -1,83 +1,116 @@
-import 'dart:math';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/api/providers/api_providers.dart';
 import '../../../models/loyalty_card_model.dart';
+import 'clients_provider.dart';
 import 'dashboard_stats_provider.dart' show dashboardStatsProvider;
-import 'merchant_provider.dart';
 
 part 'validate_provider.g.dart';
 
+/// Résultat d'une validation (`POST /merchant/clients/{card}/stamps`) — le
+/// détail complet, contrairement au simple compteur renvoyé auparavant :
+/// l'écran de succès a besoin de savoir combien de points ont été
+/// effectivement crédités et si la récompense vient de se débloquer.
+class ValidationOutcome {
+  const ValidationOutcome({
+    required this.stampsCurrent,
+    required this.pointsEarned,
+    required this.rewardUnlocked,
+    required this.message,
+  });
+
+  final int stampsCurrent;
+  final int pointsEarned;
+  final bool rewardUnlocked;
+  final String message;
+}
+
+/// Récompense résolue depuis un QR scanné (`/merchant/rewards/lookup`).
+class MerchantReward {
+  const MerchantReward({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.isExpired,
+    this.clientName,
+  });
+
+  final String id;
+  final String title;
+  final String status;
+  final bool isExpired;
+  final String? clientName;
+
+  bool get isRedeemable => status == 'available' && !isExpired;
+
+  factory MerchantReward.fromJson(Map<String, dynamic> json) {
+    final client = json['client'] as Map<String, dynamic>?;
+    return MerchantReward(
+      id: json['id'].toString(),
+      title: json['title'] as String? ?? '',
+      status: json['status'] as String? ?? 'available',
+      isExpired: json['is_expired'] as bool? ?? false,
+      clientName: client?['name'] as String?,
+    );
+  }
+}
+
+/// Écran de validation : recherche d'un client du commerce et attribution
+/// de tampons (`/merchant/clients/*`).
 @riverpod
 class ValidateNotifier extends _$ValidateNotifier {
   @override
   void build() {}
 
-  Future<LoyaltyCardModel?> lookupClient(String clientId) async {
-    final merchant = await ref.read(merchantNotifierProvider.future);
-    if (merchant == null) return null;
-    final res = await Supabase.instance.client
-        .from('loyalty_cards')
-        .select('*, users(*)')
-        .eq('client_id', clientId)
-        .eq('merchant_id', merchant.id)
-        .maybeSingle();
-    if (res == null) return null;
-    return LoyaltyCardModel.fromJson(res);
-  }
-
+  /// Recherche par code de carte, `qr_token` ou identifiant public du
+  /// client — le serveur accepte les trois et ne renvoie que des cartes du
+  /// commerce authentifié.
   Future<LoyaltyCardModel?> lookupByCode(String code) async {
-    final res = await Supabase.instance.client
-        .from('users')
-        .select('id')
-        .ilike('id', '%${code.toLowerCase()}%')
-        .maybeSingle();
-    if (res == null) return null;
-    return lookupClient(res['id'] as String);
+    final row = await ref.read(merchantDashboardServiceProvider).lookup(code);
+    return row == null ? null : LoyaltyCardModel.fromJson(row);
   }
 
-  Future<int> addStamp(String cardId) async {
-    final merchant = await ref.read(merchantNotifierProvider.future);
-    if (merchant == null) throw Exception('Marchand non trouvé');
+  /// Conservé pour les appels par identifiant client ; même endpoint.
+  Future<LoyaltyCardModel?> lookupClient(String clientId) =>
+      lookupByCode(clientId);
 
-    await Supabase.instance.client.from('stamps').insert({
-      'card_id': cardId,
-      'merchant_id': merchant.id,
-      'validated_by': Supabase.instance.client.auth.currentUser?.id,
-    });
-
-    final card = await Supabase.instance.client
-        .from('loyalty_cards')
-        .select('stamps_count')
-        .eq('id', cardId)
-        .single();
-
-    final newCount = (card['stamps_count'] as int? ?? 0);
-
-    if (newCount >= merchant.stampsRequired) {
-      await Supabase.instance.client.from('rewards').insert({
-        'card_id': cardId,
-        'client_id': (await Supabase.instance.client
-                .from('loyalty_cards')
-                .select('client_id')
-                .eq('id', cardId)
-                .single())['client_id'],
-        'merchant_id': merchant.id,
-        'expires_at': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
-        'redemption_code': _generateCode(),
-        'status': 'available',
-      });
-      await Supabase.instance.client
-          .from('loyalty_cards')
-          .update({'stamps_count': 0, 'status': 'reward_available'})
-          .eq('id', cardId);
-    }
+  /// Accorde un tampon (ou des points, en mode "Achat" via [amountFcfa]).
+  /// Le déblocage de la récompense (remise à zéro + statut
+  /// `reward_available`) est décidé côté serveur, qui seul connaît
+  /// l'objectif du programme.
+  Future<ValidationOutcome> addStamp(String cardId, {double? amountFcfa}) async {
+    final result = await ref
+        .read(merchantDashboardServiceProvider)
+        .addStamp(cardId, amountFcfa: amountFcfa);
 
     ref.invalidate(dashboardStatsProvider);
-    return newCount;
+    ref.invalidate(clientsNotifierProvider);
+
+    final card = result['client'] as Map<String, dynamic>?;
+    return ValidationOutcome(
+      stampsCurrent: card?['stamps_current'] as int? ?? 0,
+      pointsEarned: result['points_earned'] as int? ?? 1,
+      rewardUnlocked: result['reward_unlocked'] as bool? ?? false,
+      message: result['message'] as String? ?? '',
+    );
   }
 
-  String _generateCode() =>
-      List.generate(6, (_) => Random().nextInt(10)).join();
+  /// Résout le jeton d'un QR de récompense scanné — `null` si aucune
+  /// récompense du commerce ne correspond (jeton étranger ou invalide).
+  Future<MerchantReward?> lookupReward(String token) async {
+    final row = await ref.read(merchantDashboardServiceProvider).lookupReward(token);
+    return row == null ? null : MerchantReward.fromJson(row);
+  }
+
+  Future<MerchantReward> redeemReward(String rewardId) async {
+    final result = await ref.read(merchantDashboardServiceProvider).redeemReward(rewardId);
+    return MerchantReward.fromJson(result['reward'] as Map<String, dynamic>);
+  }
+
+  Future<MerchantReward> cancelReward(String rewardId, {String? reason}) async {
+    final result = await ref
+        .read(merchantDashboardServiceProvider)
+        .cancelReward(rewardId, reason: reason);
+    return MerchantReward.fromJson(result['reward'] as Map<String, dynamic>);
+  }
 }

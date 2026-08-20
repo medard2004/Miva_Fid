@@ -8,6 +8,8 @@ class AuthService {
 
   AuthService(this._apiClient);
 
+  set suppressUnauthorized(bool value) => _apiClient.suppressUnauthorized = value;
+
   /// Convertit toute erreur Dio en exception typée du domaine.
   ///
   /// Les messages conservés ici restent techniques : ils servent uniquement à

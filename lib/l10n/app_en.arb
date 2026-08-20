@@ -101,6 +101,7 @@
   "cardStampsLabel": "STAMPS",
   "cardPointsLabel": "BALANCE",
   "cardPointsSuffix": "PTS",
+  "cardSpendLabel": "PURCHASE GOAL",
   "cardCashbackLabel": "CASHBACK",
   "cardCashbackSuffix": "FCFA",
   "cardVipMaxTier": "Top tier reached",
@@ -124,6 +125,7 @@
   },
   "rewardsRedeemSuccess": "Reward marked as used",
   "rewardsUseButton": "Use",
+  "rewardsShowQrInstruction": "Show this code to the merchant to use it. Valid once only.",
 
   "walletGreetingMorning": "GOOD MORNING",
   "walletGreetingAfternoon": "GOOD AFTERNOON",
@@ -212,6 +214,13 @@
   "authSignupGoogle": "Sign up with Google",
   "authSignupApple": "Sign up with Apple",
   "authHasAccountPrefix": "Already a member? ",
+  "authAcceptPrefix": "By continuing, you agree to the ",
+  "authTermsLink": "Terms of Use",
+  "authAcceptAnd": " and ",
+  "authPrivacyLink": "Privacy Policy",
+  "legalTermsTitle": "Terms of Use",
+  "legalPrivacyTitle": "Privacy Policy",
+  "authTermsRequiredError": "Please accept the Terms of Use and Privacy Policy to continue.",
 
   "otpContextLogin": "Sign in",
   "otpContextSignup": "Sign up",
@@ -253,8 +262,8 @@
   "qrScanTitle": "SCAN A QR CODE",
   "qrToggleFlash": "Toggle flash",
   "qrPlaceInFrame": "Place the restaurant's QR code in the frame.",
-  "qrManualEntryHint": "The code is printed below the QR code shown by the establishment.",
-  "qrManualEntryPlaceholder": "E.g. JARDIN-2024",
+  "qrManualEntryHint": "The unique 8-character code is printed below the QR code shown by the establishment.",
+  "qrManualEntryPlaceholder": "E.g. 8XKQ2P9Z",
   "qrCameraUnavailableTitle": "Camera unavailable",
   "qrCameraUnavailableMessage": "Allow camera access in settings, or enter the code manually.",
 
@@ -270,9 +279,18 @@
   "joinWelcomeOfferEyebrow": "Welcome offer",
   "joinButton": "Join the program",
   "joinCardCreatedTitle": "Card created!",
+  "joinCardAlreadyMemberTitle": "Already a member!",
+  "joinCardAlreadyMemberMessage": "You're already a member of this loyalty program.",
 
   "phonePickerTitle": "Select a dial code",
   "phonePickerSearchHint": "Search a country or dial code...",
+  "phoneDigitsError": "The number must contain {count} digits for {country}.",
+  "@phoneDigitsError": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "country": { "type": "String" }
+    }
+  },
   "countryPickerTitle": "Select a country",
   "countryPickerSearchHint": "Search a country...",
 

@@ -1,13 +1,30 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/storage/local_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../client/providers/settings_provider.dart';
+
+/// Route de destination pour un rôle donné : le carrousel d'intro
+/// correspondant s'il n'a jamais été vu, sinon directement l'écran d'auth du
+/// rôle — l'intro ne doit apparaître qu'une seule fois, jamais à un retour
+/// en arrière vers cet écran une fois déjà vue.
+String _destinationFor(String role, bool hasSeenOnboarding) {
+  return switch ((role, hasSeenOnboarding)) {
+    ('client', true) => '/client/auth',
+    ('client', false) => '/client/onboarding',
+    ('merchant', true) => '/auth/merchant/auth',
+    (_, false) => '/onboarding/merchant',
+    _ => '/role-select',
+  };
+}
 
 class RoleSelectionScreen extends ConsumerStatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -21,12 +38,14 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   String? _selectedRole;
   bool _navigating = false;
 
-  void _handleRoleSelection(String role, String route) {
+  void _handleRoleSelection(String role) {
     if (_navigating) return;
     setState(() {
       _selectedRole = role;
       _navigating = true;
     });
+    unawaited(ref.read(localPreferencesProvider).setLastRole(role));
+    final route = _destinationFor(role, ref.read(hasSeenOnboardingProvider));
     Future.delayed(const Duration(milliseconds: 320), () {
       if (mounted) {
         context.go(route);
@@ -151,7 +170,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                               icon: LucideIcons.gift,
                               isSelected: isClientSelected,
                               hasSelection: hasSelection,
-                              onTap: () => _handleRoleSelection('client', '/client/onboarding'),
+                              onTap: () => _handleRoleSelection('client'),
                             ).animate(delay: 150.ms).fadeIn(duration: 400.ms).slideY(
                                   begin: 0.12,
                                   end: 0,
@@ -174,7 +193,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                               icon: LucideIcons.store,
                               isSelected: isMerchantSelected,
                               hasSelection: hasSelection,
-                              onTap: () => _handleRoleSelection('merchant', '/onboarding/merchant'),
+                              onTap: () => _handleRoleSelection('merchant'),
                             ).animate(delay: 220.ms).fadeIn(duration: 400.ms).slideY(
                                   begin: 0.12,
                                   end: 0,
@@ -185,36 +204,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                         ],
                       ),
 
-                      // Footer
-                      AnimatedOpacity(
-                        opacity: hasSelection ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 250),
-                        child: TextButton(
-                          onPressed: hasSelection ? null : () => context.go('/auth/login'),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.xs),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                          child: RichText(
-                            text: TextSpan(
-                              style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary, fontSize: 13),
-                              children: const [
-                                TextSpan(text: 'Déjà un compte ? '),
-                                TextSpan(
-                                  text: 'Se connecter',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      const SizedBox.shrink(),
                     ],
                   ),
                 ),

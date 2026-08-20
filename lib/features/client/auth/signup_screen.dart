@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -30,11 +31,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   final _phoneInputKey = GlobalKey<PhoneInputWithCountryPickerState>();
   final _phoneController = TextEditingController();
   DateTime? _birthDate;
+  bool _acceptedTerms = false;
+  bool _showTermsError = false;
+  late final _termsTap = TapGestureRecognizer()
+    ..onTap = () => context.push('/client/legal/terms');
+  late final _privacyTap = TapGestureRecognizer()
+    ..onTap = () => context.push('/client/legal/privacy');
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
+    _termsTap.dispose();
+    _privacyTap.dispose();
     super.dispose();
   }
 
@@ -48,6 +57,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     FocusScope.of(context).unfocus();
     clearAllFieldErrors();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_acceptedTerms) {
+      setState(() => _showTermsError = true);
+      return;
+    }
 
     final fullPhone = _phoneInputKey.currentState?.fullPhoneNumber ??
         _phoneController.text.trim();
@@ -85,6 +98,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   }
 
   Future<void> _continueWithSocial(AuthProvider provider) async {
+    if (!_acceptedTerms) {
+      setState(() => _showTermsError = true);
+      return;
+    }
+
     final t = AppLocalizations.of(context)!;
 
     try {
@@ -192,6 +210,71 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                         ),
                       ),
                       const SizedBox(height: 20),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: _acceptedTerms,
+                              onChanged: (value) => setState(() {
+                                _acceptedTerms = value ?? false;
+                                if (_acceptedTerms) _showTermsError = false;
+                              }),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => setState(() {
+                                _acceptedTerms = !_acceptedTerms;
+                                if (_acceptedTerms) _showTermsError = false;
+                              }),
+                              child: RichText(
+                                text: TextSpan(
+                                  style: AppTextStyles.bodySmall(
+                                      color: AppColors.inkMuted(opacity: 0.55)),
+                                  children: [
+                                    TextSpan(text: t.authAcceptPrefix),
+                                    TextSpan(
+                                      text: t.authTermsLink,
+                                      style: AppTextStyles.bodySmall(
+                                              color: AppColors.ink)
+                                          .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              decoration:
+                                                  TextDecoration.underline),
+                                      recognizer: _termsTap,
+                                    ),
+                                    TextSpan(text: t.authAcceptAnd),
+                                    TextSpan(
+                                      text: t.authPrivacyLink,
+                                      style: AppTextStyles.bodySmall(
+                                              color: AppColors.ink)
+                                          .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              decoration:
+                                                  TextDecoration.underline),
+                                      recognizer: _privacyTap,
+                                    ),
+                                    const TextSpan(text: '.'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_showTermsError) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          t.authTermsRequiredError,
+                          style: AppTextStyles.bodySmall(color: AppColors.error),
+                        ),
+                      ],
+                      const SizedBox(height: 14),
                       AppButton(
                         label: t.authSignupButton,
                         onTap: isBusy ? null : _submit,
@@ -220,6 +303,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                             : () => _continueWithSocial(AuthProvider.apple),
                       ),
                       const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       Center(
                         child: AppTapScale(
                           onTap: _goToLogin,

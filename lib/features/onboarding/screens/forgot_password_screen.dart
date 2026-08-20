@@ -9,6 +9,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_messages.dart';
+import '../../../core/errors/error_translator.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 
@@ -25,7 +30,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _emailCtrl = TextEditingController();
   bool _loading = false;
   bool _sent = false;
-  String? _error;
 
   @override
   void dispose() {
@@ -35,22 +39,32 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   Future<void> _sendResetLink() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      await ref
-          .read(merchantAuthProvider.notifier)
-          .forgotPassword(_emailCtrl.text.trim());
-      if (mounted) setState(() => _sent = true);
-    } catch (e) {
-      debugPrint('Reset password error: $e');
-      // Even on error show success to avoid email enumeration
-      if (mounted) setState(() => _sent = true);
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    setState(() => _loading = true);
+    final ok = await ref
+        .read(merchantAuthProvider.notifier)
+        .forgotPassword(_emailCtrl.text.trim());
+
+    if (!mounted) return;
+
+    if (ok) {
+      setState(() => _sent = true);
+    } else {
+      final error = ref.read(merchantAuthProvider).lastError;
+      // Compte inexistant (422) : on affiche quand même le succès pour ne
+      // pas laisser deviner quels emails ont un compte. Une vraie panne
+      // (réseau, serveur) doit en revanche être signalée — sinon l'email
+      // n'est jamais parti et l'utilisateur croit avoir reçu un code.
+      if (error is ValidationException) {
+        setState(() => _sent = true);
+      } else {
+        ToastService.showError(ErrorTranslator.translate(
+              error,
+              context: ErrorContext.forgotPassword,
+            ).displayMessage ??
+            ErrorMessages.forgotSendFailed);
+      }
     }
+    setState(() => _loading = false);
   }
 
   @override
@@ -163,38 +177,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               return null;
             },
           ).animate(delay: 100.ms).fadeIn(duration: 350.ms),
-
-          // Error banner
-          if (_error != null) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.dangerTint,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    LucideIcons.circleAlert,
-                    color: AppColors.danger,
-                    size: 18,
-                  ),
-                  const SizedBox(width: Sp.sm),
-                  Expanded(
-                    child: Text(
-                      _error!,
-                      style: AppTextStyles.caption().copyWith(
-                        color: AppColors.danger,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ).animate().shake(duration: 300.ms),
-            const SizedBox(height: Sp.md),
-          ],
 
           const SizedBox(height: Sp.md),
 

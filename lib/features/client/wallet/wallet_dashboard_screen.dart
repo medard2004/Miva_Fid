@@ -69,8 +69,14 @@ class WalletDashboardScreen extends ConsumerWidget {
               child: RefreshIndicator(
                 color: AppColors.primary,
                 backgroundColor: AppColors.surfaceCard,
-                onRefresh: () =>
-                    Future.delayed(const Duration(milliseconds: 700)),
+                onRefresh: () async {
+                  try {
+                    await ref.read(walletProvider.notifier).loadMine();
+                  } catch (_) {
+                    // Échec réseau : le wallet garde son dernier état connu,
+                    // l'utilisateur peut retenter le pull-to-refresh.
+                  }
+                },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics()),

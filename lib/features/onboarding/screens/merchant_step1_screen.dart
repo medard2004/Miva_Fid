@@ -10,10 +10,14 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_messages.dart';
+import '../../../core/errors/error_translator.dart';
 import '../providers/onboarding_provider.dart';
 import '../utils/commerce_icons.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../merchant/providers/merchant_auth_provider.dart';
 
 // ── Country code model ────────────────────────────────────────────────────────
 class _CountryCode {
@@ -92,7 +96,26 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     super.initState();
     final state = ref.read(onboardingNotifierProvider);
     _nameCtrl.text = state.commerceName;
-    _phoneCtrl.text = state.phone;
+    // `state.phone` stocke l'indicatif ET le numéro concaténés (voir `_next`,
+    // "${dialCode} ${numéro}") — sans ce découpage, un retour sur cet écran
+    // réinjectait la chaîne complète dans un champ censé ne contenir que les
+    // chiffres locaux, et le pays retombait toujours sur le premier de la
+    // liste au lieu de celui réellement choisi.
+    if (state.phone.isNotEmpty) {
+      final matchingCountry = _countryList
+          .where((c) => state.phone.startsWith('${c.dialCode} '))
+          .fold<_CountryCode?>(
+              null,
+              (best, c) => best == null || c.dialCode.length > best.dialCode.length
+                  ? c
+                  : best);
+      if (matchingCountry != null) {
+        _selectedCountry = matchingCountry;
+        _phoneCtrl.text = state.phone.substring(matchingCountry.dialCode.length + 1);
+      } else {
+        _phoneCtrl.text = state.phone;
+      }
+    }
     _whatsappCtrl.text = state.whatsapp;
     _instagramCtrl.text = state.instagram;
     _facebookCtrl.text = state.facebook;
@@ -139,9 +162,17 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     setState(() => _submitting = false);
 
     if (ok) {
-      context.go('/auth/merchant/step2');
+      context.go('/auth/merchant/location');
     } else {
-      AppToast.error(context, "Impossible d'enregistrer les infos du commerce.");
+      final error = ref.read(merchantAuthProvider).lastError;
+      final appError = ErrorTranslator.translate(error, context: ErrorContext.updateProfile);
+      final message = appError.hasFieldErrors
+          ? appError.fieldErrors.values.join('\n')
+          : appError.displayMessage ?? ErrorMessages.profileSaveFailed;
+      AppToast.error(
+        context,
+        message,
+      );
     }
   }
 
@@ -371,7 +402,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
           key: _formKey,
           child: Column(
             children: [
-              const OnboardingProgressBar(current: 1, total: 3),
+              const OnboardingProgressBar(current: 1, total: 4),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(Sp.md),
