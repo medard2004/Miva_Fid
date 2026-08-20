@@ -14,7 +14,7 @@ class ApiConstants {
   ///     ./scripts/dev.sh tunnel       # données mobiles (tunnel ngrok)
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.1.83:8000/api',
+    defaultValue: 'https://distract-buffalo-mockup.ngrok-free.dev/api',
   );
 
   static const int connectTimeout = 30000; // 30 secondes
