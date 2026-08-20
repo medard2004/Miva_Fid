@@ -8,19 +8,35 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../api/config/api_constants.dart';
 import '../api/core/api_client.dart';
 
-/// Port/clé publique du serveur Reverb — dérivés de `.env` côté Laravel
-/// (`REVERB_PORT`, `REVERB_APP_KEY`), overridables en dart-define comme
-/// `API_BASE_URL` si un déploiement change de valeurs. La clé d'app Reverb
-/// est publique par conception (c'est le secret côté serveur qui protège).
+/// Clé publique du serveur Reverb — dérivée de `.env` côté Laravel
+/// (`REVERB_APP_KEY`), overridable en dart-define comme `API_BASE_URL` si un
+/// déploiement change de valeur. La clé d'app Reverb est publique par
+/// conception (c'est le secret côté serveur qui protège).
+///
+/// Port et TLS sont déduits de `ApiConstants.baseUrl` par défaut (même
+/// host/port que l'API) plutôt que fixés en dur : le proxy nginx de dev
+/// (`docker/nginx-dev/` côté backend) multiplexe API et Reverb sur le même
+/// port 8000, seul port réellement joignable depuis l'app quand elle passe
+/// par le tunnel ngrok (le plan gratuit ne tunnelle qu'un seul port — un
+/// Reverb exposé séparément sur 8080 y serait tout simplement inatteignable,
+/// et les mises à jour de carte cessaient d'arriver en direct). `REVERB_PORT`
+/// / `REVERB_TLS` restent overridables en dart-define pour un déploiement où
+/// Reverb serait réellement sur un host/port distinct.
 class ReverbConfig {
   ReverbConfig._();
 
-  static const int port = int.fromEnvironment('REVERB_PORT', defaultValue: 8080);
+  static const int _portOverride = int.fromEnvironment('REVERB_PORT', defaultValue: -1);
   static const String appKey = String.fromEnvironment(
     'REVERB_APP_KEY',
     defaultValue: 'lmr8oqvyjygvcbcujywu',
   );
-  static const bool useTls = bool.fromEnvironment('REVERB_TLS', defaultValue: false);
+  static const bool _hasTlsOverride = bool.hasEnvironment('REVERB_TLS');
+  static const bool _tlsOverride = bool.fromEnvironment('REVERB_TLS');
+
+  static int portFor(Uri apiUri) => _portOverride != -1 ? _portOverride : apiUri.port;
+
+  static bool useTlsFor(Uri apiUri) =>
+      _hasTlsOverride ? _tlsOverride : apiUri.scheme == 'https';
 }
 
 /// Client WebSocket minimal pour le protocole Pusher (celui que parle
@@ -49,9 +65,14 @@ class RealtimeService {
   bool _disposed = true;
 
   final _cardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _rewardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
 
   /// Payload `LoyaltyCardUpdated::broadcastWith()` — id/progress/status/etc.
   Stream<Map<String, dynamic>> get onCardUpdated => _cardUpdatedController.stream;
+
+  /// Payload `LoyaltyRewardUpdated::broadcastWith()` — `{id, status}`, à
+  /// chaque déblocage/validation/annulation d'une récompense.
+  Stream<Map<String, dynamic>> get onRewardUpdated => _rewardUpdatedController.stream;
 
   /// Ouvre la connexion et s'abonne au canal privé du client authentifié.
   /// Idempotent : un appel alors qu'une connexion est déjà active la
@@ -77,15 +98,16 @@ class RealtimeService {
   void dispose() {
     disconnect();
     _cardUpdatedController.close();
+    _rewardUpdatedController.close();
   }
 
   void _open() {
-    final host = Uri.parse(ApiConstants.baseUrl).host;
-    const scheme = ReverbConfig.useTls ? 'wss' : 'ws';
+    final apiUri = Uri.parse(ApiConstants.baseUrl);
+    final scheme = ReverbConfig.useTlsFor(apiUri) ? 'wss' : 'ws';
     final uri = Uri(
       scheme: scheme,
-      host: host,
-      port: ReverbConfig.port,
+      host: apiUri.host,
+      port: ReverbConfig.portFor(apiUri),
       path: '/app/${ReverbConfig.appKey}',
       queryParameters: {'protocol': '7', 'client': 'flutter', 'version': '1.0'},
     );
@@ -145,6 +167,10 @@ class RealtimeService {
       case 'loyalty.card.updated':
         final data = _decodeData(message['data']);
         if (data != null) _cardUpdatedController.add(data);
+        return;
+      case 'loyalty.reward.updated':
+        final data = _decodeData(message['data']);
+        if (data != null) _rewardUpdatedController.add(data);
         return;
     }
   }
