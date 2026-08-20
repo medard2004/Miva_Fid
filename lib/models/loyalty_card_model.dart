@@ -8,10 +8,14 @@ class LoyaltyCardModel {
     required this.merchantId,
     this.stampsCount = 0,
     this.pointsTotal = 0,
+    this.cashbackBalanceFcfa = 0,
     this.status = 'active',
     required this.createdAt,
     this.merchant,
     this.client,
+    this.levelName,
+    this.levelPercentToNext,
+    this.isMaxLevel = false,
   });
 
   final String id;
@@ -19,10 +23,18 @@ class LoyaltyCardModel {
   final String merchantId;
   final int stampsCount;
   final int pointsTotal;
+  final double cashbackBalanceFcfa;
   final String status; // 'active' | 'reward_available'
   final DateTime createdAt;
   final MerchantModel? merchant;
   final UserModel? client;
+
+  /// Niveau de fidélité du client (Bronze/Argent/Or...) — indépendant du
+  /// cycle en cours, voir `LoyaltyCard::level` côté API. `null` si le
+  /// programme n'a pas encore été résolu côté serveur.
+  final String? levelName;
+  final int? levelPercentToNext;
+  final bool isMaxLevel;
 
   bool get hasRewardAvailable => status == 'reward_available';
 
@@ -43,6 +55,7 @@ class LoyaltyCardModel {
   /// pour rester compatibles avec l'ancien format.
   factory LoyaltyCardModel.fromJson(Map<String, dynamic> json) {
     final client = json['client'] as Map<String, dynamic>?;
+    final level = json['level'] as Map<String, dynamic>?;
     return LoyaltyCardModel(
       id: json['id'].toString(),
       clientId: json['client_id'].toString(),
@@ -51,10 +64,15 @@ class LoyaltyCardModel {
           '',
       stampsCount: json['stamps_current'] as int? ?? 0,
       pointsTotal: json['points_total'] as int? ?? 0,
+      cashbackBalanceFcfa:
+          double.tryParse(json['cashback_balance_fcfa']?.toString() ?? '') ?? 0,
       status: json['status'] as String? ?? 'active',
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '') ??
               DateTime.now(),
+      levelName: level?['name'] as String?,
+      levelPercentToNext: level?['percent_to_next'] as int?,
+      isMaxLevel: level?['is_max_level'] as bool? ?? false,
       client: client == null
           ? null
           : UserModel(
@@ -87,10 +105,14 @@ class LoyaltyCardModel {
     String? merchantId,
     int? stampsCount,
     int? pointsTotal,
+    double? cashbackBalanceFcfa,
     String? status,
     DateTime? createdAt,
     MerchantModel? merchant,
     UserModel? client,
+    String? levelName,
+    int? levelPercentToNext,
+    bool? isMaxLevel,
   }) {
     return LoyaltyCardModel(
       id: id ?? this.id,
@@ -98,10 +120,14 @@ class LoyaltyCardModel {
       merchantId: merchantId ?? this.merchantId,
       stampsCount: stampsCount ?? this.stampsCount,
       pointsTotal: pointsTotal ?? this.pointsTotal,
+      cashbackBalanceFcfa: cashbackBalanceFcfa ?? this.cashbackBalanceFcfa,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       merchant: merchant ?? this.merchant,
       client: client ?? this.client,
+      levelName: levelName ?? this.levelName,
+      levelPercentToNext: levelPercentToNext ?? this.levelPercentToNext,
+      isMaxLevel: isMaxLevel ?? this.isMaxLevel,
     );
   }
 }

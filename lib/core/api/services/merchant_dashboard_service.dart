@@ -110,6 +110,24 @@ class MerchantDashboardService {
         return (response.data as Map).cast<String, dynamic>();
       });
 
+  /// Mode Cashback : utilise une partie du solde comme réduction sur
+  /// l'achat en cours (`amountFcfa`), plafonnée côté serveur.
+  Future<Map<String, dynamic>> redeemCashback(
+    String cardId, {
+    required double amountFcfa,
+    required double redeemAmountFcfa,
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.post(
+          '/merchant/clients/$cardId/redeem-cashback',
+          data: {
+            'amount_fcfa': amountFcfa,
+            'redeem_amount_fcfa': redeemAmountFcfa,
+          },
+        );
+        return (response.data as Map).cast<String, dynamic>();
+      });
+
   /// Retourne `null` quand aucune récompense du commerce ne correspond au
   /// jeton scanné (404) — même convention que [lookup].
   Future<Map<String, dynamic>?> lookupReward(String token) async {

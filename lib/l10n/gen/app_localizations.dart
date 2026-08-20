@@ -854,6 +854,30 @@ abstract class AppLocalizations {
   /// **'UTILISÉ'**
   String get rewardStatusUsed;
 
+  /// No description provided for @rewardStatusExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'EXPIRÉ'**
+  String get rewardStatusExpired;
+
+  /// No description provided for @rewardExpirationDate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Date d\'expiration'**
+  String get rewardExpirationDate;
+
+  /// No description provided for @rewardUsedDate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utilisé le'**
+  String get rewardUsedDate;
+
+  /// No description provided for @rewardQrInstructions2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Présentez ce QR Code pour utiliser votre récompense'**
+  String get rewardQrInstructions2;
+
   /// No description provided for @historyStampEntry.
   ///
   /// In fr, this message translates to:
@@ -883,6 +907,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Inscription à la carte'**
   String get historySignupEntry;
+
+  /// No description provided for @historyCashbackRedeemEntry.
+  ///
+  /// In fr, this message translates to:
+  /// **'-{amount} FCFA · Cashback utilisé'**
+  String historyCashbackRedeemEntry(int amount);
+
+  /// No description provided for @cardDetailHistoryEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune opération pour l\'instant.'**
+  String get cardDetailHistoryEmpty;
 
   /// No description provided for @exportFailedRetry.
   ///

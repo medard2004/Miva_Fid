@@ -22,16 +22,24 @@ class ClientCardSheet extends StatefulWidget {
     required this.mechanic,
     required this.goal,
     required this.onValidate,
-    this.fcfaPerPoint = 500,
+    this.fcfaPerPoint = 100,
+    this.cashbackPercentage = 0,
+    this.onRedeemCashback,
   });
 
   final LoyaltyCardModel card;
 
-  /// `stamps`, `points` ou `spend` — voir `loyalty_programs.type` côté API.
+  /// `stamps`, `spend` ou `cashback` — voir `loyalty_programs.type` côté API.
   final String mechanic;
   final int goal;
   final int fcfaPerPoint;
+  final double cashbackPercentage;
   final ValueChanged<double?> onValidate;
+
+  /// Mode Cashback uniquement : utilisation d'une partie du solde comme
+  /// réduction sur l'achat en cours — `(montantAchat, montantUtilisé)`, le
+  /// premier sert de base au plafond serveur (`cashback_redeem_cap_percent`).
+  final void Function(double purchaseAmount, double redeemAmount)? onRedeemCashback;
 
   @override
   State<ClientCardSheet> createState() => _ClientCardSheetState();
@@ -39,10 +47,14 @@ class ClientCardSheet extends StatefulWidget {
 
 class _ClientCardSheetState extends State<ClientCardSheet> {
   final _amountCtrl = TextEditingController();
+  final _redeemCtrl = TextEditingController();
   double? _amount;
+  double? _redeemAmount;
   bool _submitting = false;
+  bool _showRedeemPanel = false;
 
   bool get _isSpend => widget.mechanic == 'spend';
+  bool get _isCashback => widget.mechanic == 'cashback';
   bool get _isActive => widget.card.status == 'active' || widget.card.hasRewardAvailable;
 
   int get _pointsPreview {
@@ -50,19 +62,32 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     return _amount! ~/ widget.fcfaPerPoint;
   }
 
+  double get _cashbackPreview {
+    if (_amount == null) return 0;
+    return (_amount! * widget.cashbackPercentage / 100 * 100).round() / 100;
+  }
+
   bool get _canSubmit {
     if (_submitting || !_isActive) return false;
     if (_isSpend) return _pointsPreview >= 1;
+    if (_isCashback) return (_amount ?? 0) > 0;
     return true;
+  }
+
+  bool get _canRedeem {
+    if (_submitting || !_isActive) return false;
+    final amount = _redeemAmount ?? 0;
+    final purchase = _amount ?? 0;
+    return purchase > 0 && amount > 0 && amount <= widget.card.cashbackBalanceFcfa;
   }
 
   String get _actionLabel {
     if (!_isActive) return 'Carte inactive';
     switch (widget.mechanic) {
-      case 'points':
-        return 'Valider les points';
       case 'spend':
         return 'Confirmer et créditer';
+      case 'cashback':
+        return 'Créditer le cashback';
       default:
         return 'Valider le tampon';
     }
@@ -71,13 +96,20 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
   @override
   void dispose() {
     _amountCtrl.dispose();
+    _redeemCtrl.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (!_canSubmit) return;
     setState(() => _submitting = true);
-    widget.onValidate(_isSpend ? _amount : null);
+    widget.onValidate(_isSpend || _isCashback ? _amount : null);
+  }
+
+  void _submitRedeem() {
+    if (!_canRedeem) return;
+    setState(() => _submitting = true);
+    widget.onRedeemCashback?.call(_amount!, _redeemAmount!);
   }
 
   @override
@@ -123,7 +155,19 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(name, style: AppTextStyles.labelBold()),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(name,
+                                        style: AppTextStyles.labelBold(),
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                  if (card.levelName != null) ...[
+                                    const SizedBox(width: 6),
+                                    _LevelBadge(name: card.levelName!),
+                                  ],
+                                ],
+                              ),
                               if (phone.isNotEmpty)
                                 Text(phone,
                                     style: AppTextStyles.caption()
@@ -149,7 +193,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                     ),
                     const Divider(height: Sp.lg),
                     ..._buildProgress(progress),
-                    if (_isSpend) ...[
+                    if (_isSpend || _isCashback) ...[
                       const SizedBox(height: Sp.md),
                       TextField(
                         controller: _amountCtrl,
@@ -159,23 +203,69 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                           labelText: 'Montant de l\'achat',
                           suffixText: 'FCFA',
                           border: const OutlineInputBorder(borderRadius: Rd.input),
-                          helperText: '1 point tous les ${widget.fcfaPerPoint} FCFA d\'achat',
+                          helperText: _isCashback
+                              ? '${widget.cashbackPercentage.toStringAsFixed(widget.cashbackPercentage % 1 == 0 ? 0 : 1)}% crédités en cashback'
+                              : '1 point tous les ${widget.fcfaPerPoint} FCFA d\'achat',
                         ),
                         onChanged: (v) => setState(() => _amount = double.tryParse(v.trim())),
                       ),
                       const SizedBox(height: Sp.sm),
                       Text(
                         _amount == null
-                            ? 'Saisissez le montant pour voir les points crédités.'
-                            : '= $_pointsPreview point(s) crédité(s)',
+                            ? (_isCashback
+                                ? 'Saisissez le montant pour voir le cashback crédité.'
+                                : 'Saisissez le montant pour voir les points crédités.')
+                            : (_isCashback
+                                ? '= ${_cashbackPreview.round()} FCFA de cashback crédités'
+                                : '= $_pointsPreview point(s) crédité(s)'),
                         style: AppTextStyles.bodyMd().copyWith(
-                          color: _pointsPreview >= 1 ? AppColors.merchant : AppColors.textSecondary,
+                          color: (_isCashback ? _cashbackPreview > 0 : _pointsPreview >= 1)
+                              ? AppColors.merchant
+                              : AppColors.textSecondary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                     const SizedBox(height: Sp.lg),
                     AppButton.primary(_actionLabel, onPressed: _canSubmit ? _submit : null, loading: _submitting),
+                    if (_isCashback && widget.card.cashbackBalanceFcfa > 0) ...[
+                      const SizedBox(height: Sp.sm),
+                      AppButton.ghost(
+                        _showRedeemPanel ? 'Masquer l\'utilisation du cashback' : 'Utiliser le cashback',
+                        onPressed: () => setState(() => _showRedeemPanel = !_showRedeemPanel),
+                      ),
+                      if (_showRedeemPanel) ...[
+                        const SizedBox(height: Sp.sm),
+                        if (_amount == null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Sp.xs),
+                            child: Text(
+                              'Renseignez d\'abord le montant de l\'achat ci-dessus.',
+                              style: AppTextStyles.caption().copyWith(color: AppColors.danger),
+                            ),
+                          ),
+                        TextField(
+                          controller: _redeemCtrl,
+                          enabled: _isActive,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                          decoration: InputDecoration(
+                            labelText: 'Montant de cashback à utiliser',
+                            suffixText: 'FCFA',
+                            border: const OutlineInputBorder(borderRadius: Rd.input),
+                            helperText:
+                                'Solde disponible : ${widget.card.cashbackBalanceFcfa.round()} FCFA',
+                          ),
+                          onChanged: (v) =>
+                              setState(() => _redeemAmount = double.tryParse(v.trim())),
+                        ),
+                        const SizedBox(height: Sp.sm),
+                        AppButton.primary(
+                          'Confirmer l\'utilisation',
+                          onPressed: _canRedeem ? _submitRedeem : null,
+                          loading: _submitting,
+                        ),
+                      ],
+                    ],
                     const SizedBox(height: Sp.sm),
                     AppButton.ghost('Annuler', onPressed: () => Navigator.pop(context)),
                     SizedBox(height: MediaQuery.of(context).padding.bottom + Sp.sm),
@@ -190,6 +280,24 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
   }
 
   List<Widget> _buildProgress(double progress) {
+    if (widget.mechanic == 'cashback') {
+      return [
+        Row(
+          children: [
+            const Icon(LucideIcons.wallet, size: 14, color: AppColors.merchant),
+            const SizedBox(width: 6),
+            Text('CASHBACK',
+                style: AppTextStyles.caption().copyWith(
+                    color: AppColors.merchant, fontWeight: FontWeight.w700, letterSpacing: 1)),
+          ],
+        ),
+        const SizedBox(height: Sp.xs),
+        Text('${widget.card.cashbackBalanceFcfa.round()} FCFA',
+            style: AppTextStyles.h1().copyWith(fontWeight: FontWeight.w900, color: AppColors.merchant)),
+        Text('solde disponible',
+            style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
+      ];
+    }
     if (widget.mechanic == 'stamps') {
       return [
         StampGridWidget(
@@ -237,6 +345,34 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
         color: AppColors.primary,
         backgroundColor: AppColors.border,
         minHeight: 8,
+      ),
+    );
+  }
+}
+
+/// Badge de niveau de fidélité (Bronze/Argent/Or...) affiché à côté du nom
+/// du client pendant la validation — répond à "Consulter le niveau de
+/// fidélité du client" côté marchand, jusque-là visible uniquement côté app
+/// client.
+class _LevelBadge extends StatelessWidget {
+  final String name;
+  const _LevelBadge({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.merchantTint,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        name.toUpperCase(),
+        style: AppTextStyles.caption().copyWith(
+          color: AppColors.merchant,
+          fontWeight: FontWeight.w700,
+          fontSize: 10,
+        ),
       ),
     );
   }

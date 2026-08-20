@@ -6,9 +6,11 @@
 #
 # Args supplementaires transmis a `flutter run` (ex: -d chrome, -d <device-id>).
 #
-# Le backend Laravel doit ecouter sur toutes les interfaces, pas juste localhost:
-#   php artisan serve --host=0.0.0.0 --port=8000
-#   (ou `composer dev`, qui le fait deja)
+# Cote backend, lancer `composer dev` : ca demarre Laravel + Reverb + le proxy
+# nginx de dev (docker/nginx-dev/) qui les multiplexe sur le port 8000, seul
+# port a exposer (LAN ou tunnel ngrok) pour que l'API ET les mises a jour
+# temps reel des cartes fonctionnent. Ne pas lancer `artisan serve --port=8000`
+# a la main a cote : ce port est reserve au proxy.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

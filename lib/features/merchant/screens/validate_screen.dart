@@ -50,7 +50,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   int get _fcfaPerPoint {
     final config = ref.read(merchantAuthProvider).restaurant?.loyaltyConfig ?? const {};
-    return (config['fcfa_per_point'] as num?)?.toInt() ?? 500;
+    return (config['fcfa_per_point'] as num?)?.toInt() ?? 100;
+  }
+
+  double get _cashbackPercentage {
+    final config = ref.read(merchantAuthProvider).restaurant?.loyaltyConfig ?? const {};
+    return (config['cashback_percentage'] as num?)?.toDouble() ?? 0;
   }
 
   Future<void> _onQrDetected(BarcodeCapture capture) async {
@@ -107,7 +112,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         mechanic: _mechanic,
         goal: _goal,
         fcfaPerPoint: _fcfaPerPoint,
+        cashbackPercentage: _cashbackPercentage,
         onValidate: (amount) => _validateStamp(resolvedCard, amount),
+        onRedeemCashback: (purchaseAmount, redeemAmount) => _redeemCashback(
+          resolvedCard,
+          purchaseAmount: purchaseAmount,
+          redeemAmount: redeemAmount,
+        ),
       ),
     );
   }
@@ -197,6 +208,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           goal: _goal,
           pointsEarned: outcome.pointsEarned,
           rewardUnlocked: outcome.rewardUnlocked,
+          cashbackEarned: outcome.cashbackEarned,
         ),
       ));
     } on ValidationException catch (e) {
@@ -207,6 +219,44 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       // 409 = double validation (verrou anti-doublon côté serveur).
+      ToastService.showError(
+        e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
+      );
+    } on NetworkException {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+    } catch (_) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Échec de la validation. Réessayez.');
+    }
+  }
+
+  Future<void> _redeemCashback(
+    LoyaltyCardModel card, {
+    required double purchaseAmount,
+    required double redeemAmount,
+  }) async {
+    final sheetNavigator = Navigator.of(context);
+    try {
+      final outcome = await ref.read(validateNotifierProvider.notifier).redeemCashback(
+            card.id,
+            amountFcfa: purchaseAmount,
+            redeemAmountFcfa: redeemAmount,
+          );
+      if (!mounted) return;
+      sheetNavigator.pop();
+      await AppHaptics.medium();
+      if (!mounted) return;
+      ToastService.showSuccess(outcome.message);
+    } on ValidationException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(e.message);
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
       ToastService.showError(
         e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
       );

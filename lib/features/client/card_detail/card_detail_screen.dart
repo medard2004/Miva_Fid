@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
@@ -15,6 +16,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
+import 'package:miva_fid/core/constants/reward_qr.dart';
 import '../wallet/widgets/card_face_content.dart';
 import 'card_export_service.dart';
 
@@ -99,8 +101,12 @@ class CardDetailScreen extends ConsumerWidget {
                           itemCount: rewards.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(width: 10),
-                          itemBuilder: (context, i) =>
-                              _DetailedRewardCard(reward: rewards[i], t: t),
+                          itemBuilder: (context, i) => _DetailedRewardCard(
+                            reward: rewards[i],
+                            t: t,
+                            onTap: () =>
+                                _showRewardDetailSheet(context, ref, rewards[i], t),
+                          ),
                         ),
                       )
                     else
@@ -454,17 +460,30 @@ class _MiddleCardWidget extends StatelessWidget {
 class _DetailedRewardCard extends StatelessWidget {
   final Reward reward;
   final AppLocalizations t;
-  const _DetailedRewardCard({required this.reward, required this.t});
+  final VoidCallback onTap;
+  const _DetailedRewardCard({
+    required this.reward,
+    required this.t,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isReady = reward.isRedeemable;
+    final statusLabel = isReady 
+        ? t.rewardStatusReady 
+        : (reward.isExpired ? t.rewardStatusExpired : t.rewardStatusUsed);
+    final statusTone = isReady 
+        ? StatusTone.success 
+        : (reward.isExpired ? StatusTone.error : StatusTone.neutral);
+    final statusIcon = isReady ? LucideIcons.circleCheckBig : (reward.isExpired ? LucideIcons.circleX : null);
 
     return Align(
       alignment: Alignment.centerLeft,
       child: SizedBox(
         width: 250,
         child: AppCard(
+          onTap: onTap,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           elevated: isReady,
           child: Column(
@@ -475,9 +494,9 @@ class _DetailedRewardCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   StatusBadge(
-                    label: isReady ? t.rewardStatusReady : t.rewardStatusUsed,
-                    tone: isReady ? StatusTone.success : StatusTone.neutral,
-                    icon: isReady ? LucideIcons.circleCheckBig : null,
+                    label: statusLabel,
+                    tone: statusTone,
+                    icon: statusIcon,
                   ),
                 ],
               ),
@@ -549,78 +568,54 @@ class _DefaultOfferCard extends StatelessWidget {
   }
 }
 
-/// Accordéon de l'historique.
-class _HistoryAccordionBar extends StatefulWidget {
+/// Accordéon de l'historique — données réelles (`GET /loyalty-cards/{id}/history`),
+/// plus l'entrée d'inscription synthétique (pas de ligne serveur pour ça).
+class _HistoryAccordionBar extends ConsumerStatefulWidget {
   final LoyaltyCard card;
   final AppLocalizations t;
   const _HistoryAccordionBar({required this.card, required this.t});
 
   @override
-  State<_HistoryAccordionBar> createState() => _HistoryAccordionBarState();
+  ConsumerState<_HistoryAccordionBar> createState() => _HistoryAccordionBarState();
 }
 
-class _HistoryAccordionBarState extends State<_HistoryAccordionBar> {
+class _HistoryAccordionBarState extends ConsumerState<_HistoryAccordionBar> {
   bool _expanded = false;
 
-  /// Historique synthétique dérivé des vraies données de la carte
-  /// (pas de modèle de visites individuelles côté backend pour l'instant),
-  /// pour éviter d'afficher les 3 mêmes lignes sur toutes les cartes.
-  List<_HistoryEntry> _historyFor(LoyaltyCard card, AppLocalizations t) {
-    final now = DateTime.now();
-    final entries = <_HistoryEntry>[];
-    switch (card.mechanic) {
-      case LoyaltyMechanic.stamps:
-        for (int i = card.stampsCurrent; i >= 1; i--) {
-          entries.add(_HistoryEntry(
-            date:
-                now.subtract(Duration(days: (card.stampsCurrent - i + 1) * 9)),
-            detail: t.historyStampEntry,
-          ));
-        }
-        break;
-      case LoyaltyMechanic.points:
-      case LoyaltyMechanic.spend:
-        entries.add(_HistoryEntry(
-            date: now.subtract(const Duration(days: 4)),
-            detail: t.historyPointsEntry(80)));
-        entries.add(_HistoryEntry(
-            date: now.subtract(const Duration(days: 19)),
-            detail: t.historyPointsEntry(120)));
-        break;
-      case LoyaltyMechanic.cashback:
-        entries.add(_HistoryEntry(
-            date: now.subtract(const Duration(days: 3)),
-            detail: t.historyCashbackEntry(500)));
-        entries.add(_HistoryEntry(
-            date: now.subtract(const Duration(days: 15)),
-            detail: t.historyCashbackEntry(900)));
-        break;
-      case LoyaltyMechanic.vip:
-        entries.add(_HistoryEntry(
-            date: now.subtract(const Duration(days: 6)),
-            detail: t.historyVisitEntry));
-        entries.add(_HistoryEntry(
-            date: now.subtract(const Duration(days: 20)),
-            detail: t.historyVisitEntry));
-        break;
-    }
-    entries.add(_HistoryEntry(
-      date: now.subtract(const Duration(days: 34)),
-      detail: card.welcomeOffer.isNotEmpty
-          ? card.welcomeOffer
-          : t.historySignupEntry,
-    ));
-    return entries;
+  _HistoryEntry _entryFor(CardHistoryEntry row, AppLocalizations t) {
+    final detail = switch (row.type) {
+      'cashback_earn' => t.historyCashbackEntry(row.value.round()),
+      'cashback_redeem' => t.historyCashbackRedeemEntry(row.value.round()),
+      _ => widget.card.mechanic == LoyaltyMechanic.stamps
+          ? t.historyStampEntry
+          : t.historyPointsEntry(row.value.round()),
+    };
+    return _HistoryEntry(date: row.date, detail: detail);
   }
 
   @override
   Widget build(BuildContext context) {
     final t = widget.t;
-    final history = _historyFor(widget.card, t);
+    final card = widget.card;
+    final asyncHistory = ref.watch(cardHistoryProvider(card.id));
     final dateFormatLocale =
         Localizations.localeOf(context).languageCode == 'fr'
             ? 'fr_FR'
             : 'en_US';
+
+    final signup = _HistoryEntry(
+      date: card.createdAt ?? DateTime.now(),
+      detail: card.welcomeOffer.isNotEmpty ? card.welcomeOffer : t.historySignupEntry,
+    );
+
+    final history = asyncHistory.maybeWhen(
+      data: (rows) => [
+        ...rows.map((r) => _entryFor(r, t)),
+        signup,
+      ],
+      orElse: () => <_HistoryEntry>[],
+    );
+
     return Column(
       children: [
         AppCard(
@@ -630,10 +625,17 @@ class _HistoryAccordionBarState extends State<_HistoryAccordionBar> {
             children: [
               Text(t.commonHistory, style: AppTextStyles.titleMedium()),
               const Spacer(),
-              Text(
-                t.cardDetailVisitsCount(history.length),
-                style: AppTextStyles.eyebrow(color: AppColors.primary),
-              ),
+              if (asyncHistory.isLoading)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Text(
+                  t.cardDetailVisitsCount(history.length),
+                  style: AppTextStyles.eyebrow(color: AppColors.primary),
+                ),
               const SizedBox(width: 8),
               AnimatedRotation(
                 turns: _expanded ? 0.5 : 0.0,
@@ -652,17 +654,26 @@ class _HistoryAccordionBarState extends State<_HistoryAccordionBar> {
                   padding: const EdgeInsets.only(top: 8),
                   child: AppCard(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < history.length; i++) ...[
-                          if (i > 0)
-                            Divider(height: 20, color: AppColors.border),
-                          _HistoryRow(
-                              entry: history[i],
-                              dateFormatLocale: dateFormatLocale),
-                        ],
-                      ],
-                    ),
+                    child: history.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Text(
+                              t.cardDetailHistoryEmpty,
+                              style: AppTextStyles.bodySmall(
+                                  color: AppColors.inkMuted(opacity: 0.7)),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              for (int i = 0; i < history.length; i++) ...[
+                                if (i > 0)
+                                  Divider(height: 20, color: AppColors.border),
+                                _HistoryRow(
+                                    entry: history[i],
+                                    dateFormatLocale: dateFormatLocale),
+                              ],
+                            ],
+                          ),
                   ),
                 )
               : const SizedBox.shrink(),
@@ -741,6 +752,380 @@ class _CardQr extends StatelessWidget {
       dataModuleStyle: const QrDataModuleStyle(
         dataModuleShape: QrDataModuleShape.square,
         color: AppColors.inkSolid,
+      ),
+    );
+  }
+}
+
+/// Affiche une modale contenant le détail d'une récompense (popup dédié avec QR et expiration)
+void _showRewardDetailSheet(
+    BuildContext context, WidgetRef ref, Reward reward, AppLocalizations t) {
+  final dateFormatLocale =
+      Localizations.localeOf(context).languageCode == 'fr' ? 'fr_FR' : 'en_US';
+      
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+    ),
+    builder: (context) {
+      final isReady = reward.isRedeemable;
+      final statusLabel = isReady 
+          ? t.rewardStatusReady 
+          : (reward.isExpired ? t.rewardStatusExpired : t.rewardStatusUsed);
+      final statusTone = isReady 
+          ? StatusTone.success 
+          : (reward.isExpired ? StatusTone.error : StatusTone.neutral);
+      final statusIcon = isReady ? LucideIcons.circleCheckBig : (reward.isExpired ? LucideIcons.circleX : LucideIcons.circleCheckBig);
+
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Handle for bottom sheet
+              Center(
+                child: Container(
+                  width: 48,
+                  height: 6,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              
+              // Header Icon
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: statusTone == StatusTone.success 
+                        ? AppColors.successTint 
+                        : (statusTone == StatusTone.error ? AppColors.errorTint : AppColors.surfaceMuted),
+                  ),
+                  child: Icon(
+                    isReady ? LucideIcons.gift : (reward.isExpired ? LucideIcons.calendarX : LucideIcons.calendarCheck),
+                    size: 32,
+                    color: statusTone == StatusTone.success 
+                        ? AppColors.success 
+                        : (statusTone == StatusTone.error ? AppColors.error : AppColors.inkMuted()),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Title & Subtitle
+              Text(
+                reward.title,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.displayLarge(),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                reward.restaurantName,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyLarge(color: AppColors.inkMuted()),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Status Badge centered
+              Center(
+                child: StatusBadge(
+                  label: statusLabel,
+                  tone: statusTone,
+                  icon: statusIcon,
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Central Content: QR Code or Info Box
+              if (isReady) ...[
+                if (reward.expiresAt != null)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _RewardCountdown(
+                        expiresAt: reward.expiresAt!,
+                        t: t,
+                      ),
+                    ),
+                  ),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: AppColors.border, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.ink.withValues(alpha: 0.05),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        QrImageView(
+                          data: '$rewardQrPrefix${reward.redeemToken}',
+                          size: 220,
+                          backgroundColor: Colors.white,
+                          eyeStyle: const QrEyeStyle(
+                            eyeShape: QrEyeShape.square,
+                            color: AppColors.inkSolid,
+                          ),
+                          dataModuleStyle: const QrDataModuleStyle(
+                            dataModuleShape: QrDataModuleShape.square,
+                            color: AppColors.inkSolid,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                reward.redeemToken.replaceAll('-', ' - '),
+                                style: AppTextStyles.monoMedium(color: AppColors.inkSolid)
+                                    .copyWith(fontSize: 18),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () async {
+                                await Clipboard.setData(ClipboardData(text: reward.redeemToken));
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(t.cardDetailIdCopied)),
+                                  );
+                                }
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  LucideIcons.copy,
+                                  size: 16,
+                                  color: AppColors.inkSolid.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  t.rewardQrInstructions2,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMedium(color: AppColors.inkMuted()),
+                ),
+              ] else if (reward.usedAt != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(LucideIcons.calendarCheck, size: 40, color: AppColors.inkMuted()),
+                      const SizedBox(height: 16),
+                      Text(
+                        t.rewardUsedDate,
+                        style: AppTextStyles.label(color: AppColors.inkMuted()),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        reward.formattedUsedDate(dateFormatLocale),
+                        style: AppTextStyles.displayMedium(color: AppColors.ink),
+                      ),
+                    ],
+                  ),
+                )
+              ] else if (reward.isExpired) ...[
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorTint,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(LucideIcons.calendarX, size: 40, color: AppColors.error),
+                      const SizedBox(height: 16),
+                      Text(
+                        t.rewardStatusExpired,
+                        style: AppTextStyles.displayMedium(color: AppColors.error),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+
+              // Expiration Date at bottom
+              if (reward.expiresAt != null && isReady) ...[
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: reward.isExpiringSoon ? AppColors.errorTint : AppColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: reward.isExpiringSoon 
+                          ? AppColors.error.withValues(alpha: 0.3) 
+                          : AppColors.border
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: reward.isExpiringSoon 
+                              ? AppColors.error.withValues(alpha: 0.1) 
+                              : AppColors.surfaceMuted,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          LucideIcons.calendarClock, 
+                          size: 20, 
+                          color: reward.isExpiringSoon 
+                              ? AppColors.error 
+                              : AppColors.inkMuted()
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.rewardExpirationDate,
+                              style: AppTextStyles.label(
+                                  color: reward.isExpiringSoon 
+                                      ? AppColors.error 
+                                      : AppColors.inkMuted()),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              DateFormat('dd MMMM yyyy', dateFormatLocale).format(reward.expiresAt!),
+                              style: AppTextStyles.monoMedium(
+                                color: reward.isExpiringSoon 
+                                    ? AppColors.error 
+                                    : AppColors.ink
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _RewardCountdown extends StatefulWidget {
+  final DateTime expiresAt;
+  final AppLocalizations t;
+
+  const _RewardCountdown({required this.expiresAt, required this.t});
+
+  @override
+  State<_RewardCountdown> createState() => _RewardCountdownState();
+}
+
+class _RewardCountdownState extends State<_RewardCountdown> {
+  late Timer _timer;
+  late Duration _timeLeft;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateTimeLeft();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _updateTimeLeft();
+        });
+      }
+    });
+  }
+
+  void _updateTimeLeft() {
+    final now = DateTime.now();
+    _timeLeft = widget.expiresAt.difference(now);
+    if (_timeLeft.isNegative) {
+      _timeLeft = Duration.zero;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_timeLeft == Duration.zero) return const SizedBox.shrink();
+
+    final days = _timeLeft.inDays;
+    final hours = _timeLeft.inHours.remainder(24).toString().padLeft(2, '0');
+    final minutes = _timeLeft.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = _timeLeft.inSeconds.remainder(60).toString().padLeft(2, '0');
+    
+    final isExpiringSoon = _timeLeft.inHours < 48;
+    
+    final timeString = days > 0 
+        ? '$days ${widget.t.commonCountdownPrefix.replaceAll('-', '')} $hours:$minutes:$seconds' 
+        : '$hours:$minutes:$seconds';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isExpiringSoon ? AppColors.errorTint : AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(
+          color: isExpiringSoon ? AppColors.error.withValues(alpha: 0.3) : AppColors.border
+        )
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.calendarClock, size: 16, color: isExpiringSoon ? AppColors.error : AppColors.inkMuted()),
+          const SizedBox(width: 8),
+          Text(
+            timeString,
+            style: AppTextStyles.monoMedium(
+              color: isExpiringSoon ? AppColors.error : AppColors.ink
+            ).copyWith(fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }

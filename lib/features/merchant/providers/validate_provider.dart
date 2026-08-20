@@ -17,12 +17,15 @@ class ValidationOutcome {
     required this.pointsEarned,
     required this.rewardUnlocked,
     required this.message,
+    this.cashbackEarned,
   });
 
   final int stampsCurrent;
   final int pointsEarned;
   final bool rewardUnlocked;
   final String message;
+  /// Mode Cashback uniquement — montant FCFA crédité par cette validation.
+  final double? cashbackEarned;
 }
 
 /// Récompense résolue depuis un QR scanné (`/merchant/rewards/lookup`).
@@ -91,6 +94,30 @@ class ValidateNotifier extends _$ValidateNotifier {
       stampsCurrent: card?['stamps_current'] as int? ?? 0,
       pointsEarned: result['points_earned'] as int? ?? 1,
       rewardUnlocked: result['reward_unlocked'] as bool? ?? false,
+      message: result['message'] as String? ?? '',
+      cashbackEarned: (result['cashback_earned'] as num?)?.toDouble(),
+    );
+  }
+
+  /// Mode Cashback : utilise une partie du solde comme réduction.
+  Future<ValidationOutcome> redeemCashback(
+    String cardId, {
+    required double amountFcfa,
+    required double redeemAmountFcfa,
+  }) async {
+    final result = await ref.read(merchantDashboardServiceProvider).redeemCashback(
+          cardId,
+          amountFcfa: amountFcfa,
+          redeemAmountFcfa: redeemAmountFcfa,
+        );
+
+    ref.invalidate(clientsNotifierProvider);
+
+    final card = result['client'] as Map<String, dynamic>?;
+    return ValidationOutcome(
+      stampsCurrent: card?['stamps_current'] as int? ?? 0,
+      pointsEarned: 0,
+      rewardUnlocked: false,
       message: result['message'] as String? ?? '',
     );
   }

@@ -430,6 +430,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rewardStatusUsed => 'UTILISÉ';
 
   @override
+  String get rewardStatusExpired => 'EXPIRÉ';
+
+  @override
+  String get rewardExpirationDate => 'Date d\'expiration';
+
+  @override
+  String get rewardUsedDate => 'Utilisé le';
+
+  @override
+  String get rewardQrInstructions2 =>
+      'Présentez ce QR Code pour utiliser votre récompense';
+
+  @override
   String get historyStampEntry => '+1 tampon · Passage en caisse';
 
   @override
@@ -447,6 +460,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get historySignupEntry => 'Inscription à la carte';
+
+  @override
+  String historyCashbackRedeemEntry(int amount) {
+    return '-$amount FCFA · Cashback utilisé';
+  }
+
+  @override
+  String get cardDetailHistoryEmpty => 'Aucune opération pour l\'instant.';
 
   @override
   String get exportFailedRetry => 'Échec de l\'export : réessayez.';

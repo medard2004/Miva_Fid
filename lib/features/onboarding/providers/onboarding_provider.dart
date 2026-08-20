@@ -26,6 +26,7 @@ class OnboardingState {
     this.fcfaPerPoint = 100,
     this.cashbackPercentage = 5,
     this.cashbackRedeemCapPercent = 50,
+    this.cashbackExpiryDays,
     this.showReviewButton = false,
     this.googleReviewUrl = '',
     this.stampDesignType = 'icon',
@@ -62,6 +63,9 @@ class OnboardingState {
   /// Mode "Cashback" : part maximale (%) d'un achat réglable avec le solde
   /// cashback — `null` = pas de plafond.
   final int? cashbackRedeemCapPercent;
+  /// Mode "Cashback" : le solde expire après ce nombre de jours sans
+  /// nouveau crédit — `null` = pas d'expiration.
+  final int? cashbackExpiryDays;
   final bool showReviewButton;
   final String googleReviewUrl;
   final String stampDesignType;
@@ -107,6 +111,8 @@ class OnboardingState {
     double? cashbackPercentage,
     int? cashbackRedeemCapPercent,
     bool clearCashbackRedeemCap = false,
+    int? cashbackExpiryDays,
+    bool clearCashbackExpiryDays = false,
     bool? showReviewButton,
     String? googleReviewUrl,
     String? stampDesignType,
@@ -141,6 +147,9 @@ class OnboardingState {
       cashbackRedeemCapPercent: clearCashbackRedeemCap
           ? null
           : (cashbackRedeemCapPercent ?? this.cashbackRedeemCapPercent),
+      cashbackExpiryDays: clearCashbackExpiryDays
+          ? null
+          : (cashbackExpiryDays ?? this.cashbackExpiryDays),
       showReviewButton: showReviewButton ?? this.showReviewButton,
       googleReviewUrl: googleReviewUrl ?? this.googleReviewUrl,
       stampDesignType: stampDesignType ?? this.stampDesignType,
@@ -187,6 +196,8 @@ class OnboardingState {
       if (isCashback) 'cashback_percentage': cashbackPercentage,
       if (isCashback && cashbackRedeemCapPercent != null)
         'cashback_redeem_cap_percent': cashbackRedeemCapPercent,
+      if (isCashback && cashbackExpiryDays != null)
+        'cashback_expiry_days': cashbackExpiryDays,
     };
   }
 
@@ -284,6 +295,13 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       state = state.copyWith(clearCashbackRedeemCap: true);
     } else {
       state = state.copyWith(cashbackRedeemCapPercent: v.clamp(1, 100));
+    }
+  }
+  void setCashbackExpiryDays(int? v) {
+    if (v == null) {
+      state = state.copyWith(clearCashbackExpiryDays: true);
+    } else {
+      state = state.copyWith(cashbackExpiryDays: v.clamp(1, 3650));
     }
   }
   void setRewardDescription(String v) {
@@ -429,6 +447,8 @@ class OnboardingNotifier extends _$OnboardingNotifier {
           double.tryParse(config['cashback_percentage']?.toString() ?? '') ?? 5,
       cashbackRedeemCapPercent:
           int.tryParse(config['cashback_redeem_cap_percent']?.toString() ?? ''),
+      cashbackExpiryDays:
+          int.tryParse(config['cashback_expiry_days']?.toString() ?? ''),
       showReviewButton: config['show_review_button'] == true,
       googleReviewUrl: text(config['google_review_url']?.toString()),
       stampDesignType: config['stamp_design_type']?.toString() ?? 'icon',

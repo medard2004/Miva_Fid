@@ -1,0 +1,50 @@
+Analyzing Miva_Fid...                                           
+
+   info • Statements in an if should be enclosed in a block • lib/core/api/services/auth_service.dart:44:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/core/api/services/loyalty_program_service.dart:32:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/core/api/services/merchant_auth_service.dart:39:7 • curly_braces_in_flow_control_structures
+   info • The member 'saveToken' overrides an inherited member but isn't annotated with '@override' • lib/core/api/storage/token_storage.dart:15:16 • annotate_overrides
+   info • The member 'getToken' overrides an inherited member but isn't annotated with '@override' • lib/core/api/storage/token_storage.dart:19:19 • annotate_overrides
+   info • The member 'deleteToken' overrides an inherited member but isn't annotated with '@override' • lib/core/api/storage/token_storage.dart:23:16 • annotate_overrides
+   info • Use 'const' with the constructor to improve performance • lib/core/theme/app_theme.dart:79:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/theme/app_theme.dart:125:24 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/theme/app_theme.dart:127:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/theme/app_theme.dart:129:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/theme/app_theme.dart:131:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/theme/app_theme.dart:133:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/theme/app_theme.dart:135:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/widgets/app_bottom_sheet.dart:46:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/core/widgets/app_bottom_sheet.dart:46:50 • prefer_const_constructors
+  error • The method 'displaySmall' isn't defined for the type 'AppTextStyles' • lib/features/client/card_detail/card_detail_screen.dart:810:46 • undefined_method
+  error • The getter 'danger' isn't defined for the type 'AppColors' • lib/features/client/card_detail/card_detail_screen.dart:870:68 • undefined_getter
+  error • The getter 'danger' isn't defined for the type 'AppColors' • lib/features/client/card_detail/card_detail_screen.dart:886:35 • undefined_getter
+  error • The getter 'danger' isn't defined for the type 'AppColors' • lib/features/client/card_detail/card_detail_screen.dart:891:39 • undefined_getter
+  error • The getter 'danger' isn't defined for the type 'AppColors' • lib/features/client/card_detail/card_detail_screen.dart:900:39 • undefined_getter
+  error • The getter 'danger' isn't defined for the type 'AppColors' • lib/features/client/card_detail/card_detail_screen.dart:912:49 • undefined_getter
+warning • The value of the field '_isNewCard' isn't used • lib/features/client/onboarding/join_restaurant_screen.dart:31:8 • unused_field
+   info • Use 'const' with the constructor to improve performance • lib/features/client/onboarding/join_restaurant_screen.dart:250:31 • prefer_const_constructors
+warning • The value of the field '_initialized' isn't used • lib/features/merchant/screens/programme_screen.dart:36:8 • unused_field
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:430:33 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:431:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:465:33 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:466:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:482:33 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:483:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:1023:39 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:1024:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:1041:39 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/screens/settings_screen.dart:1042:31 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/merchant/widgets/reward_redeem_sheet.dart:62:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_auth_screen.dart:540:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_auth_screen.dart:550:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_auth_screen.dart:560:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_step1_screen.dart:370:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_step1_screen.dart:381:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_step1_screen.dart:383:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_step1_screen.dart:385:20 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_step1_screen.dart:387:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_step1_screen.dart:389:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/screens/merchant_step1_screen.dart:391:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/widgets/color_palette_picker.dart:149:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/onboarding/widgets/color_palette_picker.dart:149:50 • prefer_const_constructors
+

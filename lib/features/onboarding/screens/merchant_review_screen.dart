@@ -12,7 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_toast.dart';
+import '../../../core/utils/toast_service.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/loyalty_card_preview.dart';
 import '../../client/providers/settings_provider.dart';
@@ -49,7 +49,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
         final message = error.hasFieldErrors
             ? error.fieldErrors.values.join('\n')
             : error.displayMessage ?? ErrorMessages.profileSaveFailed;
-        AppToast.error(context, message);
+        ToastService.showError(message);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -59,10 +59,10 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
   String get _modeLabel {
     final mode = ref.read(onboardingNotifierProvider).loyaltyMode;
     switch (mode) {
-      case 'points':
-        return 'Points';
       case 'spend':
-        return 'Points par achat';
+        return 'Achats';
+      case 'cashback':
+        return 'Cashback';
       default:
         return 'Tampons';
     }

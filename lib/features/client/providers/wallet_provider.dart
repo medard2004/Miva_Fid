@@ -125,3 +125,35 @@ final walletProvider = StateNotifierProvider<WalletNotifier, List<LoyaltyCard>>(
 );
 
 final selectedCardProvider = StateProvider<String?>((ref) => null);
+
+/// Une ligne de `GET /loyalty-cards/{id}/history` — un tampon accordé, un
+/// crédit ou un usage de cashback réellement enregistré côté serveur.
+class CardHistoryEntry {
+  final String type; // stamp | cashback_earn | cashback_redeem
+  final double value;
+  final double? montantCommandeFcfa;
+  final DateTime date;
+
+  const CardHistoryEntry({
+    required this.type,
+    required this.value,
+    required this.date,
+    this.montantCommandeFcfa,
+  });
+
+  factory CardHistoryEntry.fromApi(Map<String, dynamic> json) => CardHistoryEntry(
+        type: json['type'] as String? ?? '',
+        value: (json['value'] as num?)?.toDouble() ?? 0,
+        montantCommandeFcfa: (json['montant_commande_fcfa'] as num?)?.toDouble(),
+        date: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+            DateTime.now(),
+      );
+}
+
+/// Historique réel d'une carte — remplace l'historique fabriqué de
+/// `card_detail_screen.dart` (`_HistoryAccordionBar`).
+final cardHistoryProvider =
+    FutureProvider.family<List<CardHistoryEntry>, String>((ref, cardId) async {
+  final rows = await ref.read(loyaltyCardServiceProvider).history(cardId);
+  return rows.map(CardHistoryEntry.fromApi).toList();
+});

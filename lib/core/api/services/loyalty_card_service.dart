@@ -63,4 +63,14 @@ class LoyaltyCardService {
         final response = await _apiClient.dio.get('/loyalty-cards/$id');
         return response.data as Map<String, dynamic>;
       });
+
+  /// Historique réel des opérations de la carte (`GET /loyalty-cards/{id}/history`)
+  /// — tampons/points accordés, cashback crédité/utilisé, du plus récent au
+  /// plus ancien. Remplace l'historique fabriqué côté écran de détail.
+  Future<List<Map<String, dynamic>>> history(String id) => _guard(() async {
+        final response = await _apiClient.dio.get('/loyalty-cards/$id/history');
+        return ((response.data as Map)['history'] as List)
+            .map((e) => (e as Map).cast<String, dynamic>())
+            .toList();
+      });
 }

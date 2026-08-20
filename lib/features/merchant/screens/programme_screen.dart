@@ -27,6 +27,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
   final _formKey = GlobalKey<FormState>();
   final List<TextEditingController> _goalCtrls = [];
   final List<TextEditingController> _descCtrls = [];
+  final List<TextEditingController> _validityCtrls = [];
   final List<TextEditingController> _levelNameCtrls = [];
   final List<TextEditingController> _levelThresholdCtrls = [];
   final _fcfaPerPointCtrl = TextEditingController(text: '500');
@@ -106,6 +107,8 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
   void _addRewardController(RewardTier tier) {
     _goalCtrls.add(TextEditingController(text: tier.goal.toString()));
     _descCtrls.add(TextEditingController(text: tier.rewardDescription));
+    _validityCtrls
+        .add(TextEditingController(text: tier.validityDays?.toString() ?? ''));
   }
 
   void _clearRewardControllers() {
@@ -115,8 +118,12 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
     for (final c in _descCtrls) {
       c.dispose();
     }
+    for (final c in _validityCtrls) {
+      c.dispose();
+    }
     _goalCtrls.clear();
     _descCtrls.clear();
+    _validityCtrls.clear();
   }
 
   void _addNewTier() {
@@ -139,8 +146,10 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
     setState(() {
       _goalCtrls[index].dispose();
       _descCtrls[index].dispose();
+      _validityCtrls[index].dispose();
       _goalCtrls.removeAt(index);
       _descCtrls.removeAt(index);
+      _validityCtrls.removeAt(index);
     });
   }
 
@@ -196,7 +205,12 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
     for (int i = 0; i < _goalCtrls.length; i++) {
       final goalVal = int.tryParse(_goalCtrls[i].text.trim()) ?? 10;
       final descVal = _descCtrls[i].text.trim();
-      updatedRewards.add(RewardTier(goal: goalVal, rewardDescription: descVal));
+      final validityVal = int.tryParse(_validityCtrls[i].text.trim());
+      updatedRewards.add(RewardTier(
+        goal: goalVal,
+        rewardDescription: descVal,
+        validityDays: validityVal,
+      ));
     }
 
     final firstGoal = updatedRewards.isNotEmpty ? updatedRewards.first.goal : 10;
@@ -440,6 +454,26 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                                         return null;
                                       },
                                     ),
+                                    const SizedBox(height: Sp.sm),
+
+                                    // Champ 3: Validité propre à ce palier (optionnelle)
+                                    AppInput(
+                                      label: 'Validité (jours, optionnel)',
+                                      hint: 'Ex: 30 — vide = valeur par défaut ci-dessous',
+                                      controller: _validityCtrls[index],
+                                      keyboardType: TextInputType.number,
+                                      prefixIcon: LucideIcons.calendarClock,
+                                      accentColor: AppColors.merchant,
+                                      validator: (v) {
+                                        final trimmed = v?.trim() ?? '';
+                                        if (trimmed.isEmpty) return null;
+                                        final parsed = int.tryParse(trimmed);
+                                        if (parsed == null || parsed <= 0) {
+                                          return 'Veuillez entrer un nombre de jours supérieur à 0';
+                                        }
+                                        return null;
+                                      },
+                                    ),
                                   ],
                                 ),
                               );
@@ -470,8 +504,8 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                           const SizedBox(height: Sp.md),
 
                           AppInput(
-                            label: 'Durée de validité d\'une récompense (jours, optionnel)',
-                            hint: 'Ex: 30 — vide = jamais expirée',
+                            label: 'Validité par défaut des récompenses (jours, optionnel)',
+                            hint: 'Ex: 30 — utilisée par les paliers sans validité propre, vide = jamais expirée',
                             controller: _rewardValidityDaysCtrl,
                             keyboardType: TextInputType.number,
                             prefixIcon: LucideIcons.calendarClock,

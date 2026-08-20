@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/api/repositories/auth_repository.dart';
+import 'package:miva_fid/core/services/realtime_service.dart';
 import 'package:miva_fid/features/client/data/mock_data.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/models/app_notification.dart';
@@ -15,9 +17,17 @@ import 'package:miva_fid/features/client/models/user.dart';
 class RewardsNotifier extends StateNotifier<List<Reward>> {
   RewardsNotifier(this._ref) : super(const []) {
     _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
+    // Le payload Reverb (`{id, status}`) ne porte pas assez pour patcher en
+    // place (titre/QR/expiration manquants côté déblocage) — recharger la
+    // liste est ce qui garde l'écran "Mes récompenses" fiable sans
+    // pull-to-refresh, comme le wallet le fait déjà pour la progression.
+    _realtimeSub = RealtimeService.instance.onRewardUpdated.listen((_) {
+      loadMine().catchError((_) {});
+    });
   }
 
   final Ref _ref;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
@@ -31,10 +41,17 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
       state.where((r) => r.status == RewardStatus.available && !r.isExpired).toList();
   List<Reward> get used => state.where((r) => r.status == RewardStatus.used).toList();
 
-  /// Recharge depuis `GET /rewards` — appelé au login et par le
-  /// pull-to-refresh de l'écran "Mes récompenses".
+  /// Recharge depuis `GET /rewards` — appelé au login, par le
+  /// pull-to-refresh de l'écran "Mes récompenses", et par le canal temps
+  /// réel dès qu'une récompense change de statut côté marchand.
   Future<void> loadMine() async {
     state = await _ref.read(loyaltyRewardRepositoryProvider).listMine();
+  }
+
+  @override
+  void dispose() {
+    _realtimeSub?.cancel();
+    super.dispose();
   }
 }
 

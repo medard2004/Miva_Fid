@@ -27,8 +27,10 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
   late final TextEditingController _fcfaPerPointCtrl;
   late final TextEditingController _cashbackPercentCtrl;
   late final TextEditingController _cashbackCapCtrl;
+  late final TextEditingController _cashbackExpiryCtrl;
   final List<TextEditingController> _goalCtrls = [];
   final List<TextEditingController> _descCtrls = [];
+  final List<TextEditingController> _validityCtrls = [];
 
   @override
   void initState() {
@@ -41,6 +43,8 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
             state.cashbackPercentage % 1 == 0 ? 0 : 1));
     _cashbackCapCtrl = TextEditingController(
         text: state.cashbackRedeemCapPercent?.toString() ?? '');
+    _cashbackExpiryCtrl = TextEditingController(
+        text: state.cashbackExpiryDays?.toString() ?? '');
     _initRewardControllers(state.rewards);
   }
 
@@ -58,6 +62,8 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
   void _addRewardController(RewardTier tier) {
     _goalCtrls.add(TextEditingController(text: tier.goal.toString()));
     _descCtrls.add(TextEditingController(text: tier.rewardDescription));
+    _validityCtrls
+        .add(TextEditingController(text: tier.validityDays?.toString() ?? ''));
   }
 
   void _clearRewardControllers() {
@@ -67,8 +73,12 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     for (final c in _descCtrls) {
       c.dispose();
     }
+    for (final c in _validityCtrls) {
+      c.dispose();
+    }
     _goalCtrls.clear();
     _descCtrls.clear();
+    _validityCtrls.clear();
   }
 
   @override
@@ -77,6 +87,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     _fcfaPerPointCtrl.dispose();
     _cashbackPercentCtrl.dispose();
     _cashbackCapCtrl.dispose();
+    _cashbackExpiryCtrl.dispose();
     _clearRewardControllers();
     super.dispose();
   }
@@ -99,8 +110,10 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     setState(() {
       _goalCtrls[index].dispose();
       _descCtrls[index].dispose();
+      _validityCtrls[index].dispose();
       _goalCtrls.removeAt(index);
       _descCtrls.removeAt(index);
+      _validityCtrls.removeAt(index);
     });
   }
 
@@ -115,7 +128,12 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
       for (int i = 0; i < _goalCtrls.length; i++) {
         final goalVal = int.tryParse(_goalCtrls[i].text.trim()) ?? 10;
         final descVal = _descCtrls[i].text.trim();
-        updatedRewards.add(RewardTier(goal: goalVal, rewardDescription: descVal));
+        final validityVal = int.tryParse(_validityCtrls[i].text.trim());
+        updatedRewards.add(RewardTier(
+          goal: goalVal,
+          rewardDescription: descVal,
+          validityDays: validityVal,
+        ));
       }
       notifier.setRewards(updatedRewards);
     }
@@ -129,6 +147,8 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
           double.tryParse(_cashbackPercentCtrl.text.trim().replaceAll(',', '.')) ?? 5);
       final cap = int.tryParse(_cashbackCapCtrl.text.trim());
       notifier.setCashbackRedeemCapPercent(cap);
+      final expiry = int.tryParse(_cashbackExpiryCtrl.text.trim());
+      notifier.setCashbackExpiryDays(expiry);
     }
 
     if (ref.read(onboardingNotifierProvider).showReviewButton) {
@@ -305,6 +325,24 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                                   return null;
                                 },
                               ),
+                              const SizedBox(height: Sp.sm),
+                              AppInput(
+                                label: "Expiration du solde (jours, optionnel)",
+                                hint: 'Ex: 365 — vide = pas d\'expiration',
+                                controller: _cashbackExpiryCtrl,
+                                keyboardType: TextInputType.number,
+                                prefixIcon: LucideIcons.calendarClock,
+                                accentColor: AppColors.merchant,
+                                validator: (v) {
+                                  final trimmed = v?.trim() ?? '';
+                                  if (trimmed.isEmpty) return null;
+                                  final parsed = int.tryParse(trimmed);
+                                  if (parsed == null || parsed <= 0) {
+                                    return 'Veuillez entrer un nombre de jours supérieur à 0';
+                                  }
+                                  return null;
+                                },
+                              ),
                               const SizedBox(height: Sp.xs),
                               Builder(builder: (context) {
                                 final pct = double.tryParse(
@@ -437,6 +475,26 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                                     final val = v?.trim() ?? '';
                                     if (val.isEmpty) {
                                       return 'La description de la récompense est obligatoire';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: Sp.sm),
+
+                                // Champ 3: Validité (optionnelle, propre à ce palier)
+                                AppInput(
+                                  label: 'Validité (jours, optionnel)',
+                                  hint: 'Ex: 30 — vide = pas d\'expiration',
+                                  controller: _validityCtrls[index],
+                                  keyboardType: TextInputType.number,
+                                  prefixIcon: LucideIcons.calendarClock,
+                                  accentColor: AppColors.merchant,
+                                  validator: (v) {
+                                    final trimmed = v?.trim() ?? '';
+                                    if (trimmed.isEmpty) return null;
+                                    final parsed = int.tryParse(trimmed);
+                                    if (parsed == null || parsed <= 0) {
+                                      return 'Veuillez entrer un nombre de jours supérieur à 0';
                                     }
                                     return null;
                                   },

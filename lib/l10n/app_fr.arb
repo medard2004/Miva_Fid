@@ -163,6 +163,10 @@
   "rewardStatusReady": "PRÊT",
   "rewardStatusLocked": "VERROUILLÉ",
   "rewardStatusUsed": "UTILISÉ",
+  "rewardStatusExpired": "EXPIRÉ",
+  "rewardExpirationDate": "Date d'expiration",
+  "rewardUsedDate": "Utilisé le",
+  "rewardQrInstructions2": "Présentez ce QR Code pour utiliser votre récompense",
 
   "historyStampEntry": "+1 tampon · Passage en caisse",
   "historyPointsEntry": "+{points} points · Passage en caisse",
@@ -175,6 +179,11 @@
   },
   "historyVisitEntry": "Visite comptabilisée",
   "historySignupEntry": "Inscription à la carte",
+  "historyCashbackRedeemEntry": "-{amount} FCFA · Cashback utilisé",
+  "@historyCashbackRedeemEntry": {
+    "placeholders": { "amount": { "type": "int" } }
+  },
+  "cardDetailHistoryEmpty": "Aucune opération pour l'instant.",
 
   "exportFailedRetry": "Échec de l'export : réessayez.",
   "exportShareSubject": "Ma carte {name} — Carte",

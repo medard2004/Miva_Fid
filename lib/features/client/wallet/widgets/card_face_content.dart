@@ -121,11 +121,11 @@ class CardFaceContent extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: compact ? 6 : 10),
+            SizedBox(height: compact ? 4 : 8),
             Text(
               card.restaurantName,
               style: AppTextStyles.displayLarge(color: textColor).copyWith(
-                fontSize: compact ? 20 : 25,
+                fontSize: compact ? 18 : 22,
                 height: 1.05,
               ),
               maxLines: 1,
@@ -133,7 +133,7 @@ class CardFaceContent extends StatelessWidget {
             ),
           ],
         ),
-        _MechanicStat(card: card, textColor: textColor, subtextColor: subtextColor),
+        _MechanicStat(card: card, textColor: textColor, subtextColor: subtextColor, compact: compact),
       ],
     );
   }
@@ -223,11 +223,13 @@ class _MechanicStat extends StatelessWidget {
   final LoyaltyCard card;
   final Color textColor;
   final Color subtextColor;
+  final bool compact;
 
   const _MechanicStat({
     required this.card,
     required this.textColor,
     required this.subtextColor,
+    this.compact = false,
   });
 
   @override
@@ -278,19 +280,40 @@ class _MechanicStat extends StatelessWidget {
           ],
         );
       case LoyaltyMechanic.points:
-        return _valueRow(t.cardPointsLabel,
-            formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _valueRow(t.cardPointsLabel,
+                formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix),
+            _levelRow(),
+          ],
+        );
       // Mode "Achat" : même compteur que "Points" côté données, mais un
       // libellé distinct (existait déjà dans l10n, jamais câblé) pour que
       // les deux mécaniques ne se ressemblent pas au premier coup d'œil.
       case LoyaltyMechanic.spend:
-        return _valueRow(t.cardSpendLabel,
-            formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix,
-            percent: card.percent);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _valueRow(t.cardSpendLabel,
+                formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix,
+                percent: card.percent),
+            _levelRow(),
+          ],
+        );
       case LoyaltyMechanic.stamps:
-        return _valueRow(t.cardStampsLabel,
-            '${card.stampsCurrent}/${card.stampsGoal}', null,
-            percent: card.percent);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _valueRow(t.cardStampsLabel,
+                '${card.stampsCurrent}/${card.stampsGoal}', null,
+                percent: card.percent),
+            _levelRow(),
+          ],
+        );
     }
   }
 
@@ -301,7 +324,7 @@ class _MechanicStat extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(label, style: AppTextStyles.monoSmall(color: subtextColor)),
-        const SizedBox(height: 2),
+        SizedBox(height: compact ? 0 : 2),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
@@ -309,7 +332,9 @@ class _MechanicStat extends StatelessWidget {
             Flexible(
               child: Text(
                 value,
-                style: AppTextStyles.monoLarge(color: textColor),
+                style: AppTextStyles.monoLarge(color: textColor).copyWith(
+                  fontSize: compact ? 22 : 26,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -330,13 +355,14 @@ class _MechanicStat extends StatelessWidget {
     );
   }
 
-  /// Niveau de fidélité (Cashback) : jamais le montant cumulé dépensé/gagné,
-  /// uniquement le nom du niveau et le pourcentage vers le suivant — calculés
-  /// côté serveur (`LoyaltyLevelService`).
+  /// Niveau de fidélité — indépendant du programme (Tampons/Achats/Cashback) :
+  /// jamais le montant cumulé dépensé/gagné, uniquement le nom du niveau et
+  /// le pourcentage vers le suivant, calculés côté serveur
+  /// (`LoyaltyLevelService`).
   Widget _levelRow() {
     if (card.levelName == null) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: 4),
+      padding: EdgeInsets.only(top: compact ? 2 : 4),
       child: Text(
         card.isMaxLevel
             ? '${card.levelName} · niveau maximum'

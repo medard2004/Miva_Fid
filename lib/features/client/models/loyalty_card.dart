@@ -67,6 +67,11 @@ class LoyaltyCard {
   final String fallbackId; // ex. "SUN-28392"
   final String welcomeOffer;
 
+  /// Date d'adhésion à la carte — sert de repère à l'entrée "inscription"
+  /// de l'historique (`_HistoryAccordionBar`). `null` seulement si la carte
+  /// vient d'un flux qui n'a pas encore cette donnée.
+  final DateTime? createdAt;
+
   const LoyaltyCard({
     required this.id,
     required this.restaurantName,
@@ -92,6 +97,7 @@ class LoyaltyCard {
     this.isMaxLevel = false,
     required this.fallbackId,
     this.welcomeOffer = '',
+    this.createdAt,
   });
 
   /// Construit une carte réelle depuis `POST/GET /loyalty-cards/*`
@@ -120,15 +126,22 @@ class LoyaltyCard {
       stampsCurrent: progress['stamps_current'] as int? ?? 0,
       stampsGoal: json['goal'] as int? ?? config['goal'] as int? ?? 8,
       pointsBalance: progress['stamps_current'] as int? ?? 0,
-      cashbackBalanceFcfa:
-          double.tryParse(json['cashback_balance_fcfa']?.toString() ?? '')
-                  ?.round() ??
-              0,
+      // `cashback_available_fcfa` (calculé, tient compte d'une éventuelle
+      // expiration de solde configurée par le marchand) prime sur le solde
+      // brut quand il est présent — absent uniquement sur d'anciennes
+      // réponses qui n'auraient pas encore cet append.
+      cashbackBalanceFcfa: double.tryParse(
+                  (json['cashback_available_fcfa'] ?? json['cashback_balance_fcfa'])
+                      ?.toString() ??
+                  '')
+              ?.round() ??
+          0,
       percent: json['percent'] as int? ?? 0,
       levelName: level?['name'] as String?,
       levelPercentToNext: level?['percent_to_next'] as int?,
       isMaxLevel: level?['is_max_level'] as bool? ?? false,
       fallbackId: json['card_code'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
     );
   }
 
@@ -167,6 +180,7 @@ class LoyaltyCard {
       isMaxLevel: isMaxLevel ?? this.isMaxLevel,
       fallbackId: fallbackId,
       welcomeOffer: welcomeOffer,
+      createdAt: createdAt,
     );
   }
 
@@ -204,6 +218,8 @@ class LoyaltyCard {
       // mode reste borné par `goal` comme les tampons.
       case 'spend':
         return LoyaltyMechanic.spend;
+      case 'cashback':
+        return LoyaltyMechanic.cashback;
       default:
         return LoyaltyMechanic.stamps;
     }

@@ -21,16 +21,18 @@ class ValidationSuccessOverlay extends StatefulWidget {
     required this.goal,
     required this.pointsEarned,
     required this.rewardUnlocked,
+    this.cashbackEarned,
   });
 
   final String clientName;
 
-  /// `stamps`, `points` ou `spend`.
+  /// `stamps`, `spend` ou `cashback`.
   final String mechanic;
   final int stampCount;
   final int goal;
   final int pointsEarned;
   final bool rewardUnlocked;
+  final double? cashbackEarned;
 
   @override
   State<ValidationSuccessOverlay> createState() => _ValidationSuccessOverlayState();
@@ -58,6 +60,9 @@ class _ValidationSuccessOverlayState extends State<ValidationSuccessOverlay> {
 
   String get _title {
     if (widget.rewardUnlocked) return 'Récompense débloquée !';
+    if (widget.mechanic == 'cashback') {
+      return '${(widget.cashbackEarned ?? 0).round()} FCFA crédités à ${widget.clientName} !';
+    }
     if (widget.mechanic == 'stamps') return 'Tampon accordé à ${widget.clientName} !';
     return '${widget.pointsEarned} point(s) accordé(s) à ${widget.clientName} !';
   }
@@ -65,6 +70,9 @@ class _ValidationSuccessOverlayState extends State<ValidationSuccessOverlay> {
   String get _subtitle {
     if (widget.rewardUnlocked) {
       return 'Le client peut réclamer sa récompense dès maintenant.';
+    }
+    if (widget.mechanic == 'cashback') {
+      return 'Cashback crédité sur le solde du client.';
     }
     if (widget.mechanic == 'stamps') {
       return '${widget.stampCount} sur ${widget.goal} tampons';

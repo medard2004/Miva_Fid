@@ -9,7 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
-import '../../../core/widgets/app_toast.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/errors/error_messages.dart';
 import '../../../core/errors/error_translator.dart';
@@ -169,10 +169,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
       final message = appError.hasFieldErrors
           ? appError.fieldErrors.values.join('\n')
           : appError.displayMessage ?? ErrorMessages.profileSaveFailed;
-      AppToast.error(
-        context,
-        message,
-      );
+      ToastService.showError(message);
     }
   }
 

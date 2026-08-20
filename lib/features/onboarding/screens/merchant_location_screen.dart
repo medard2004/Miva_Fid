@@ -10,7 +10,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
-import '../../../core/widgets/app_toast.dart';
+import '../../../core/utils/toast_service.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
@@ -80,14 +80,13 @@ class _MerchantLocationScreenState
       });
     } on LocationServiceException catch (e) {
       if (!mounted) return;
-      AppToast.error(context, _messageFor(e.reason));
+      ToastService.showError(_messageFor(e.reason));
     } catch (_) {
       // `Geolocator.getCurrentPosition` sort du `timeLimit` avec une
       // `TimeoutException` brute (pas notre `LocationServiceException`) —
       // sans ce repli, un GPS lent échoue en silence, écran figé.
       if (!mounted) return;
-      AppToast.error(
-        context,
+      ToastService.showError(
         'Position introuvable (signal GPS trop faible). Réessayez ou choisissez sur la carte.',
       );
     } finally {
@@ -117,16 +116,15 @@ class _MerchantLocationScreenState
 
   Future<void> _submit() async {
     if (_country.isEmpty) {
-      AppToast.error(context, 'Veuillez sélectionner votre pays.');
+      ToastService.showError('Veuillez sélectionner votre pays.');
       return;
     }
     if (_cityCtrl.text.trim().isEmpty) {
-      AppToast.error(context, 'Veuillez renseigner votre ville.');
+      ToastService.showError('Veuillez renseigner votre ville.');
       return;
     }
     if (_latitude == null || _longitude == null) {
-      AppToast.error(
-        context,
+      ToastService.showError(
         'Veuillez indiquer la position de votre commerce (position actuelle ou carte).',
       );
       return;
@@ -146,7 +144,7 @@ class _MerchantLocationScreenState
     if (ok) {
       context.go('/auth/merchant/step2');
     } else {
-      AppToast.error(context, 'Impossible d\'enregistrer la position. Réessayez.');
+      ToastService.showError('Impossible d\'enregistrer la position. Réessayez.');
     }
   }
 

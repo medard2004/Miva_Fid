@@ -163,6 +163,10 @@
   "rewardStatusReady": "READY",
   "rewardStatusLocked": "LOCKED",
   "rewardStatusUsed": "USED",
+  "rewardStatusExpired": "EXPIRED",
+  "rewardExpirationDate": "Expires on",
+  "rewardUsedDate": "Used on",
+  "rewardQrInstructions2": "Show this QR Code to use your reward",
 
   "historyStampEntry": "+1 stamp · Checkout visit",
   "historyPointsEntry": "+{points} points · Checkout visit",
@@ -175,6 +179,11 @@
   },
   "historyVisitEntry": "Visit recorded",
   "historySignupEntry": "Joined the card",
+  "historyCashbackRedeemEntry": "-{amount} FCFA · Cashback used",
+  "@historyCashbackRedeemEntry": {
+    "placeholders": { "amount": { "type": "int" } }
+  },
+  "cardDetailHistoryEmpty": "No activity yet.",
 
   "exportFailedRetry": "Export failed: please try again.",
   "exportShareSubject": "My {name} card — Carte",

@@ -106,6 +106,8 @@ class MerchantNotifier extends _$MerchantNotifier {
           'cashback_percentage': config['cashback_percentage'] ?? 5,
           if (config['cashback_redeem_cap_percent'] != null)
             'cashback_redeem_cap_percent': config['cashback_redeem_cap_percent'],
+          if (config['cashback_expiry_days'] != null)
+            'cashback_expiry_days': config['cashback_expiry_days'],
         },
       });
     }
@@ -147,6 +149,7 @@ const _configKeys = {
   'card_gradient_type',
   'logo_url',
   'fcfa_per_point',
+  'cashback_expiry_days',
 };
 
 MerchantModel _fromRestaurant(RestaurantAccount r) {

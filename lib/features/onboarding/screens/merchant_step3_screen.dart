@@ -9,7 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_toast.dart';
+import '../../../core/utils/toast_service.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/color_palette_picker.dart';
 import '../widgets/loyalty_card_preview.dart';
@@ -41,7 +41,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
       final url = ref.read(merchantAuthProvider).restaurant?.logoUrl ?? '';
       ref.read(onboardingNotifierProvider.notifier).setLogoUrl(url);
     } else {
-      AppToast.error(context, 'Impossible d\'envoyer le logo. Réessayez.');
+      ToastService.showError('Impossible d\'envoyer le logo. Réessayez.');
     }
     setState(() => _uploadingLogo = false);
   }
@@ -53,7 +53,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
     if (ok) {
       ref.read(onboardingNotifierProvider.notifier).setLogoUrl('');
     } else {
-      AppToast.error(context, 'Impossible de retirer le logo. Réessayez.');
+      ToastService.showError('Impossible de retirer le logo. Réessayez.');
     }
     setState(() => _uploadingLogo = false);
   }

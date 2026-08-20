@@ -20,15 +20,27 @@ void main() {
       expect(container.read(onboardingNotifierProvider).stampsRequired, 50);
     });
 
-    test('setStampsRequired clamp selon le mode points (10-100000)', () {
+    test('setCashbackPercentage clamp entre 0.1 et 100', () {
       final notifier = container.read(onboardingNotifierProvider.notifier);
-      notifier.setLoyaltyMode('points');
+      notifier.setLoyaltyMode('cashback');
 
-      notifier.setStampsRequired(1);
-      expect(container.read(onboardingNotifierProvider).stampsRequired, 10);
+      notifier.setCashbackPercentage(0);
+      expect(container.read(onboardingNotifierProvider).cashbackPercentage, 0.1);
 
-      notifier.setStampsRequired(999999999);
-      expect(container.read(onboardingNotifierProvider).stampsRequired, 100000);
+      notifier.setCashbackPercentage(500);
+      expect(container.read(onboardingNotifierProvider).cashbackPercentage, 100);
+    });
+
+    test('toLoyaltyProgramJson omet goal/rewards en mode cashback', () {
+      final notifier = container.read(onboardingNotifierProvider.notifier);
+      notifier.setLoyaltyMode('cashback');
+      notifier.setCashbackPercentage(5);
+
+      final json = container.read(onboardingNotifierProvider).toLoyaltyProgramJson();
+
+      expect(json.containsKey('goal'), false);
+      expect(json.containsKey('rewards'), false);
+      expect(json['cashback_percentage'], 5.0);
     });
 
     test('setStampsRequired clamp selon le mode spend (50-1000000)', () {

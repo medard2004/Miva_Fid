@@ -58,6 +58,8 @@ class ClientDetailScreen extends ConsumerWidget {
           final required = merchantAsync.value?.stampsRequired ?? 10;
           final name = client?['name'] as String? ?? 'Client';
           final phone = client?['phone'] as String? ?? '';
+          final level = data['level'] as Map<String, dynamic>?;
+          final levelName = level?['name'] as String?;
           final since = DateFormatter.relative(
               DateTime.tryParse(data['created_at'] as String? ?? '') ?? DateTime.now());
 
@@ -84,7 +86,30 @@ class ClientDetailScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: Sp.sm),
-                      Text(name, style: AppTextStyles.h2()),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(name, style: AppTextStyles.h2()),
+                          if (levelName != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.merchantTint,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                levelName.toUpperCase(),
+                                style: AppTextStyles.caption().copyWith(
+                                  color: AppColors.merchant,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                       if (phone.isNotEmpty)
                         Text(phone, style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary)),
                       Text('Membre depuis $since',

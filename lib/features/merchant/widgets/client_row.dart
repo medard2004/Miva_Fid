@@ -29,23 +29,10 @@ class ClientRow extends StatelessWidget {
     final initials = card.client?.initials ?? '?';
     final int hash = name.hashCode;
 
-    // Determine tier & colors
-    final String tier;
-    final Color badgeBg;
-    final Color badgeFg;
-    if (hash % 3 == 0) {
-      tier = 'Or';
-      badgeBg = AppColors.warningTint;
-      badgeFg = AppColors.warningDark;
-    } else if (hash % 3 == 1) {
-      tier = 'Argent';
-      badgeBg = AppColors.gray100;
-      badgeFg = AppColors.gray600;
-    } else {
-      tier = 'Platine';
-      badgeBg = AppColors.merchantTint;
-      badgeFg = AppColors.merchant;
-    }
+    // Niveau de fidélité réel (`LoyaltyLevelService` côté API) — `null` tant
+    // que le programme n'a pas encore résolu de niveau pour cette carte.
+    final tier = card.levelName;
+    final (badgeBg, badgeFg) = _levelColors(tier);
 
     // Determine deterministic last visit time
     final String visitTime;
@@ -117,22 +104,24 @@ class ClientRow extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(name, style: AppTextStyles.labelBold()),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: badgeBg,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              tier,
-                              style: AppTextStyles.caption().copyWith(
-                                color: badgeFg,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                          if (tier != null) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: badgeBg,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                tier,
+                                style: AppTextStyles.caption().copyWith(
+                                  color: badgeFg,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -190,6 +179,27 @@ class ClientRow extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Couleurs du badge de niveau — reconnaît les noms par défaut
+  /// (Bronze/Argent/Or/Platine, insensible à la casse/aux accents anglais)
+  /// et retombe sur une teinte neutre pour un nom personnalisé par le
+  /// marchand (`programme_screen.dart` permet de renommer les niveaux).
+  (Color, Color) _levelColors(String? name) {
+    final n = (name ?? '').toLowerCase();
+    if (n.contains('or') || n.contains('gold')) {
+      return (AppColors.warningTint, AppColors.warningDark);
+    }
+    if (n.contains('argent') || n.contains('silver')) {
+      return (AppColors.gray100, AppColors.gray600);
+    }
+    if (n.contains('platine') || n.contains('platinum')) {
+      return (AppColors.merchantTint, AppColors.merchant);
+    }
+    if (n.contains('bronze')) {
+      return (AppColors.dangerTint, AppColors.warningDark);
+    }
+    return (AppColors.merchantTint, AppColors.merchant);
   }
 }
 
