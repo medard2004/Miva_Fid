@@ -70,6 +70,68 @@ void main() {
       expect(card.levelName, 'Bronze');
       expect(card.isMaxLevel, false);
     });
+
+    test('parses the tiers array into List<CardTier>', () {
+      final json = baseJson(
+        stampsCurrent: 3,
+        goal: 5,
+        percent: 60,
+        level: {'name': 'Argent', 'percent_to_next': 60, 'is_max_level': false},
+      );
+      json['tiers'] = [
+        {
+          'order': 2,
+          'goal': 500,
+          'level_name': 'Argent',
+          'reward_description': '10% de réduction',
+          'icon': '🥈',
+          'status': 'current',
+        },
+      ];
+
+      final card = LoyaltyCard.fromApi(json);
+
+      expect(card.tiers, hasLength(1));
+      final tier = card.tiers.single;
+      expect(tier.order, 2);
+      expect(tier.goal, 500);
+      expect(tier.levelName, 'Argent');
+      expect(tier.rewardDescription, '10% de réduction');
+      expect(tier.icon, '🥈');
+      expect(tier.status, 'current');
+    });
+
+    test('mono-tier response (level null, tiers absent) -> levelName null, tiers empty', () {
+      final json = baseJson(
+        stampsCurrent: 1,
+        goal: 2,
+        percent: 50,
+        level: {'name': 'Argent', 'percent_to_next': 100, 'is_max_level': true},
+      );
+      json['level'] = null;
+      json.remove('tiers');
+
+      final card = LoyaltyCard.fromApi(json);
+
+      expect(card.levelName, isNull);
+      expect(card.tiers, isEmpty);
+    });
+
+    test('mono-tier response with tiers: [] also produces an empty tiers list', () {
+      final json = baseJson(
+        stampsCurrent: 1,
+        goal: 2,
+        percent: 50,
+        level: {'name': 'Argent', 'percent_to_next': 100, 'is_max_level': true},
+      );
+      json['level'] = null;
+      json['tiers'] = [];
+
+      final card = LoyaltyCard.fromApi(json);
+
+      expect(card.levelName, isNull);
+      expect(card.tiers, isEmpty);
+    });
   });
 
   group('LoyaltyCard.applyRealtimeUpdate — parité avec le fetch initial', () {
@@ -113,6 +175,99 @@ void main() {
       expect(updated.percent, 0);
       expect(updated.levelName, 'Argent');
       expect(updated.isMaxLevel, true);
+    });
+
+    test('a payload carrying tiers updates card.tiers', () {
+      final initial = LoyaltyCard.fromApi({
+        'id': 1,
+        'card_code': 'L1YFNAHT',
+        'progress': {'stamps_current': 1},
+        'cashback_balance_fcfa': '0.00',
+        'status': 'active',
+        'goal': 2,
+        'percent': 50,
+        'level': {'name': 'Bronze', 'percent_to_next': 0, 'is_max_level': false},
+        'restaurant': {'id': 1, 'name': 'QA Test Resto', 'category': 'Restaurant'},
+        'loyalty_program': {
+          'id': 1,
+          'type': 'stamps',
+          'config': {'goal': 2},
+        },
+      });
+      expect(initial.tiers, isEmpty);
+
+      final realtimePayload = {
+        'id': 1,
+        'progress': {'stamps_current': 1},
+        'cashback_balance_fcfa': '0.00',
+        'status': 'active',
+        'goal': 2,
+        'percent': 50,
+        'level': {'name': 'Bronze', 'percent_to_next': 0, 'is_max_level': false},
+        'tiers': [
+          {
+            'order': 1,
+            'goal': 2,
+            'level_name': 'Bronze',
+            'reward_description': 'Café offert',
+            'icon': '🥉',
+            'status': 'current',
+          },
+        ],
+      };
+
+      final updated = initial.applyRealtimeUpdate(realtimePayload);
+
+      expect(updated.tiers, hasLength(1));
+      expect(updated.tiers.single.levelName, 'Bronze');
+    });
+
+    test('a payload omitting tiers leaves the existing tiers unchanged', () {
+      final initial = LoyaltyCard.fromApi({
+        'id': 1,
+        'card_code': 'L1YFNAHT',
+        'progress': {'stamps_current': 1},
+        'cashback_balance_fcfa': '0.00',
+        'status': 'active',
+        'goal': 2,
+        'percent': 50,
+        'level': {'name': 'Bronze', 'percent_to_next': 0, 'is_max_level': false},
+        'restaurant': {'id': 1, 'name': 'QA Test Resto', 'category': 'Restaurant'},
+        'loyalty_program': {
+          'id': 1,
+          'type': 'stamps',
+          'config': {'goal': 2},
+        },
+        'tiers': [
+          {
+            'order': 1,
+            'goal': 2,
+            'level_name': 'Bronze',
+            'reward_description': 'Café offert',
+            'icon': '🥉',
+            'status': 'current',
+          },
+        ],
+      });
+      expect(initial.tiers, hasLength(1));
+
+      // Payload temps réel sans clé `tiers` (convention existante : absent =
+      // conserver la valeur précédente, comme pour tous les autres champs).
+      final realtimePayload = {
+        'id': 1,
+        'progress': {'stamps_current': 0},
+        'cashback_balance_fcfa': '0.00',
+        'status': 'reward_available',
+        'reward_unlocked': true,
+        'goal': 2,
+        'percent': 0,
+        'level': {'name': 'Argent', 'percent_to_next': 100, 'is_max_level': true},
+      };
+
+      final updated = initial.applyRealtimeUpdate(realtimePayload);
+
+      expect(updated.tiers, hasLength(1));
+      expect(updated.tiers.single.levelName, 'Bronze');
     });
   });
 }
