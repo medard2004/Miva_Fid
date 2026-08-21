@@ -25,13 +25,16 @@ import '../../features/client/widgets/shared/app_shell.dart';
 
 import '../../features/merchant/screens/clients_screen.dart';
 import '../../features/merchant/screens/client_detail_screen.dart';
-import '../../features/merchant/screens/dashboard_screen.dart';
+import '../../features/merchant/screens/merchant_hours_screen.dart';
+import '../../features/merchant/screens/merchant_notifications_screen.dart';
+import '../../features/merchant/screens/merchant_profile_screen.dart';
 import '../../features/merchant/screens/merchant_shell.dart';
-import '../../features/merchant/screens/more_screen.dart';
+import '../../features/merchant/screens/merchant_socials_screen.dart';
 import '../../features/merchant/screens/programme_screen.dart';
 import '../../features/merchant/screens/qr_code_screen.dart';
 import '../../features/merchant/screens/settings_screen.dart';
 import '../../features/merchant/screens/sms_campaign_screen.dart';
+import '../../features/merchant/screens/stats_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/onboarding/screens/login_screen.dart';
@@ -290,16 +293,17 @@ GoRouter appRouter(AppRouterRef ref) {
         },
       ),
 
-      // Merchant shell
+      // Merchant notifications
+      GoRoute(
+        path: '/merchant/notifications',
+        pageBuilder: (_, __) => _slide(const MerchantNotificationsScreen()),
+      ),
+
+      // Merchant shell with 5 branches: Clients (0), Stats (1), Valider (2), SMS (3), Réglages (4)
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => MerchantShell(navigationShell: shell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/merchant',
-              pageBuilder: (_, __) => _fade(const DashboardScreen()),
-            ),
-          ]),
+          // Branch 0: Clients
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/merchant/clients',
@@ -312,22 +316,70 @@ GoRouter appRouter(AppRouterRef ref) {
               ),
             ),
           ]),
+
+          // Branch 1: Stats
           StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/merchant/stats',
+              pageBuilder: (_, __) => _fade(const StatsScreen()),
+            ),
+          ]),
+
+          // Branch 2: Valider (Primary landing tab)
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/merchant',
+              pageBuilder: (_, __) => _fade(const ValidateScreen()),
+            ),
             GoRoute(
               path: '/merchant/validate',
               pageBuilder: (_, __) => _fade(const ValidateScreen()),
             ),
           ]),
+
+          // Branch 3: SMS
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/merchant/sms',
               pageBuilder: (_, __) => _fade(const SmsCampaignScreen()),
             ),
           ]),
+
+          // Branch 4: Réglages / Paramètres
           StatefulShellBranch(routes: [
             GoRoute(
+              path: '/merchant/settings',
+              pageBuilder: (_, __) => _fade(const SettingsScreen()),
+              routes: [
+                GoRoute(
+                  path: 'profile',
+                  pageBuilder: (_, __) => _slide(const MerchantProfileScreen()),
+                ),
+                GoRoute(
+                  path: 'hours',
+                  pageBuilder: (_, __) => _slide(const MerchantHoursScreen()),
+                ),
+                GoRoute(
+                  path: 'socials',
+                  pageBuilder: (_, __) => _slide(const MerchantSocialsScreen()),
+                ),
+                GoRoute(
+                  path: 'programme',
+                  pageBuilder: (_, __) => _slide(const ProgrammeScreen()),
+                ),
+                GoRoute(
+                  path: 'qrcode',
+                  pageBuilder: (_, __) => _slide(const QrCodeScreen()),
+                ),
+                GoRoute(
+                  path: 'vitrine',
+                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                ),
+              ],
+            ),
+            GoRoute(
               path: '/merchant/more',
-              pageBuilder: (_, __) => _fade(const MoreScreen()),
+              pageBuilder: (_, __) => _fade(const SettingsScreen()),
               routes: [
                 GoRoute(
                   path: 'programme',

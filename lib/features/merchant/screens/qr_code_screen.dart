@@ -43,6 +43,27 @@ class QrCodeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Back Button
+                GestureDetector(
+                  onTap: () => Navigator.of(context).maybePop(),
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.chevronLeft, color: AppColors.textSecondary, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Paramètres',
+                        style: AppTextStyles.caption().copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Sp.sm),
+
                 // Title and Subtitle
                 Text(
                   'Mon QR Code',

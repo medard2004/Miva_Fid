@@ -12,6 +12,7 @@ import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
 import 'package:miva_fid/features/client/widgets/shared/notification_bell_button.dart';
 import 'widgets/card_stack.dart';
+import 'widgets/promo_carousel.dart';
 
 class WalletDashboardScreen extends ConsumerWidget {
   const WalletDashboardScreen({super.key});
@@ -75,13 +76,24 @@ class WalletDashboardScreen extends ConsumerWidget {
                   physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics()),
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                  child: cards.isEmpty
-                      ? _EmptyWallet(
-                          t: t, onScan: () => context.push('/client/onboarding/scan'))
-                      : LoyaltyCardStack(
-                          cards: cards,
-                          onCardTap: (card) => context.push('/client/card/${card.id}'),
-                        ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Carousel espace publicitaire
+                      const PromoCarousel(),
+                      const SizedBox(height: 24),
+                      cards.isEmpty
+                          ? _EmptyWallet(
+                              t: t,
+                              onScan: () =>
+                                  context.push('/client/onboarding/scan'))
+                          : LoyaltyCardStack(
+                              cards: cards,
+                              onCardTap: (card) =>
+                                  context.push('/client/card/${card.id}'),
+                            ),
+                    ],
+                  ),
                 ),
               ),
             ),

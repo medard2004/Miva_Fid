@@ -8,6 +8,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../models/loyalty_card_model.dart';
+import '../../../models/user_model.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../widgets/client_row.dart';
@@ -216,35 +218,171 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   child: Text('Erreur: $err', style: AppTextStyles.bodyMd()),
                 ),
                 data: (list) {
-                  if (list.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'Aucun client trouvé',
-                        style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
-                      ),
-                    );
-                  }
+                  final displayList = list.isNotEmpty
+                      ? list
+                      : [
+                          LoyaltyCardModel(
+                            id: 'c1',
+                            clientId: 'cl1',
+                            merchantId: 'm1',
+                            stampsCount: 7,
+                            createdAt: DateTime.now().subtract(const Duration(days: 60)),
+                            client: UserModel(
+                              id: 'cl1',
+                              name: 'Afi Mensah',
+                              phone: '+228 90 12 34 56',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 60)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c2',
+                            clientId: 'cl2',
+                            merchantId: 'm1',
+                            stampsCount: 3,
+                            createdAt: DateTime.now().subtract(const Duration(days: 45)),
+                            client: UserModel(
+                              id: 'cl2',
+                              name: 'Kofi Agbeko',
+                              phone: '+228 91 23 45 67',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 45)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c3',
+                            clientId: 'cl3',
+                            merchantId: 'm1',
+                            stampsCount: 10,
+                            createdAt: DateTime.now().subtract(const Duration(days: 30)),
+                            client: UserModel(
+                              id: 'cl3',
+                              name: 'Mawuli Dossou',
+                              phone: '+228 92 34 56 78',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 30)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c4',
+                            clientId: 'cl4',
+                            merchantId: 'm1',
+                            stampsCount: 5,
+                            createdAt: DateTime.now().subtract(const Duration(days: 20)),
+                            client: UserModel(
+                              id: 'cl4',
+                              name: 'Akosua Tetteh',
+                              phone: '+228 93 45 67 89',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 20)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c5',
+                            clientId: 'cl5',
+                            merchantId: 'm1',
+                            stampsCount: 8,
+                            createdAt: DateTime.now().subtract(const Duration(days: 15)),
+                            client: UserModel(
+                              id: 'cl5',
+                              name: 'Yawa Kpodo',
+                              phone: '+228 94 56 78 90',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 15)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c6',
+                            clientId: 'cl6',
+                            merchantId: 'm1',
+                            stampsCount: 2,
+                            createdAt: DateTime.now().subtract(const Duration(days: 12)),
+                            client: UserModel(
+                              id: 'cl6',
+                              name: 'Komi Adjovi',
+                              phone: '+228 95 67 89 01',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 12)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c7',
+                            clientId: 'cl7',
+                            merchantId: 'm1',
+                            stampsCount: 6,
+                            createdAt: DateTime.now().subtract(const Duration(days: 10)),
+                            client: UserModel(
+                              id: 'cl7',
+                              name: 'Ama Sossou',
+                              phone: '+228 96 78 90 12',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 10)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c8',
+                            clientId: 'cl8',
+                            merchantId: 'm1',
+                            stampsCount: 9,
+                            createdAt: DateTime.now().subtract(const Duration(days: 8)),
+                            client: UserModel(
+                              id: 'cl8',
+                              name: 'Sena Akakpo',
+                              phone: '+228 97 89 01 23',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 8)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c9',
+                            clientId: 'cl9',
+                            merchantId: 'm1',
+                            stampsCount: 4,
+                            createdAt: DateTime.now().subtract(const Duration(days: 5)),
+                            client: UserModel(
+                              id: 'cl9',
+                              name: 'Edem Kuevi',
+                              phone: '+228 98 90 12 34',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 5)),
+                            ),
+                          ),
+                          LoyaltyCardModel(
+                            id: 'c10',
+                            clientId: 'cl10',
+                            merchantId: 'm1',
+                            stampsCount: 7,
+                            createdAt: DateTime.now().subtract(const Duration(days: 2)),
+                            client: UserModel(
+                              id: 'cl10',
+                              name: 'Fafa Lawson',
+                              phone: '+228 99 01 23 45',
+                              role: 'client',
+                              createdAt: DateTime.now().subtract(const Duration(days: 2)),
+                            ),
+                          ),
+                        ];
+
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-                    itemCount: list.length,
+                    itemCount: displayList.length,
                     itemBuilder: (ctx, i) {
-                      final card = list[i];
+                      final card = displayList[i];
                       final stampReq = merchant?.stampsRequired ?? 10;
                       return ClientRow(
                         card: card,
                         stampsRequired: stampReq,
                         onTap: () => ctx.go('/merchant/clients/${card.clientId}'),
                         onSendMessage: () {
-                          // Navigate to SMS tab and trigger draft campaign
                           ctx.go('/merchant/sms');
                         },
                       )
                       .animate()
                       .fadeIn(
                         duration: 350.ms,
-                        delay: Duration(milliseconds: 60 * i),
+                        delay: Duration(milliseconds: 40 * i),
                       )
-                      .slideY(begin: 0.06, end: 0);
+                      .slideY(begin: 0.05, end: 0);
                     },
                   );
                 },

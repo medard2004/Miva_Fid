@@ -1,17 +1,14 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_dialog.dart';
-import '../../../models/merchant_model.dart';
-import '../providers/dashboard_stats_provider.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../providers/merchant_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -22,1608 +19,559 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  int _activeTabIndex = 0;
-  int _prevTabIndex = 0;
-  bool _initialized = false;
+  Future<void> _logout() async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Se déconnecter ?',
+      message: 'Vous devrez vous reconnecter pour accéder à votre espace marchand.',
+      confirmLabel: 'Se déconnecter',
+      destructive: true,
+    );
+    if (!confirmed) return;
 
-  // Form Profile Controllers
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _phoneController;
-  late final TextEditingController _emailController;
-  String _selectedLanguage = 'Français';
-  bool _isSavingProfile = false;
-
-  // Plan update state
-  bool _isUpdatingPlan = false;
-
-  // Local state for notification switches
-  bool _notifNewClient = true;
-  bool _notifReward = true;
-  bool _notifLowSms = true;
-  bool _notifWeeklyReport = false;
-  bool _notifPromotions = false;
-
-  // Team list state
-  final GlobalKey<AnimatedListState> _teamListKey = GlobalKey<AnimatedListState>();
-  final List<Map<String, String>> _teamMembers = [
-    {'name': 'Kofi Mensah', 'role': 'Propriétaire', 'status': 'Actif', 'initials': 'KM'},
-    {'name': 'Ama Doe', 'role': 'Caissière', 'status': 'Actif', 'initials': 'AD'},
-    {'name': 'Yao Lawson', 'role': 'Serveur', 'status': 'Invité', 'initials': 'YL'},
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController();
-    _phoneController = TextEditingController();
-    _emailController = TextEditingController();
+    await Supabase.instance.client.auth.signOut();
+    if (mounted) {
+      context.go('/role-select');
+    }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _emailController.dispose();
-    super.dispose();
+  void _showSubscriptionSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(Sp.md),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Abonnement Plan Pro', style: AppTextStyles.h2().copyWith(fontSize: 18)),
+                IconButton(
+                  icon: const Icon(LucideIcons.x, size: 20),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: Sp.sm),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F3FF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFDDD6FE)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Plan Pro', style: AppTextStyles.labelBold().copyWith(fontSize: 16, color: AppColors.merchant)),
+                      const Text('15 000 FCFA / mois', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('• SMS illimités avec quota mensuel (100 inclus)'),
+                  const Text('• Statistiques avancées'),
+                  const Text('• Multi-utilisateurs & vitrine personnalisée'),
+                ],
+              ),
+            ),
+            const SizedBox(height: Sp.md),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.merchant,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: const RoundedRectangleBorder(borderRadius: Rd.button),
+              ),
+              child: const Text('Gérer mon abonnement'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final merchant = ref.watch(merchantNotifierProvider).value;
+    final merchantName = merchant?.name ?? 'Restaurant La Saveur';
+    final initials = merchant?.initials ?? 'RL';
+    final city = merchant?.address ?? 'Lomé';
 
-    if (merchant != null && !_initialized) {
-      _nameController.text = merchant.name;
-      _phoneController.text = merchant.phone ?? '';
-      _emailController.text = Supabase.instance.client.auth.currentUser?.email ?? 'contact@lasaveur.tg';
-      _initialized = true;
-    }
-
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isWide = screenWidth >= 768;
-
-    if (isWide) {
-      return Scaffold(
-        backgroundColor: AppColors.bgLight,
-        body: SafeArea(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left Column (Master Panel)
-              SizedBox(
-                width: 340,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(Sp.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Paramètres',
-                        style: AppTextStyles.h1().copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: Sp.md),
-                      _buildMerchantHeaderCard(merchant),
-                      const SizedBox(height: Sp.md),
-                      _buildVerticalTabs(),
-                      const SizedBox(height: Sp.md),
-                      _buildCommonSettingsCard(context),
-                      const SizedBox(height: Sp.md),
-                      Center(
-                        child: Text(
-                          'Miva-Fid v1.0.0 • Lomé, Togo',
-                          style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const VerticalDivider(width: 1, color: AppColors.border, thickness: 1),
-              // Right Column (Details Panel)
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(Sp.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        _getTabTitle(_activeTabIndex),
-                        style: AppTextStyles.h2().copyWith(color: AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: Sp.md),
-                      _buildTabContentWithAnimation(merchant),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Narrow layout (Mobile)
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(Sp.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Paramètres',
-              style: AppTextStyles.h1().copyWith(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: Sp.md),
-            _buildMerchantHeaderCard(merchant),
-            const SizedBox(height: Sp.md),
-            _buildHorizontalTabs(),
-            const SizedBox(height: Sp.md),
-            _buildTabContentWithAnimation(merchant),
-            const SizedBox(height: Sp.md),
-            _buildCommonSettingsCard(context),
-            const SizedBox(height: Sp.md),
-            Center(
-              child: Text(
-                'Miva-Fid v1.0.0 • Lomé, Togo',
-                style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-              ),
-            ),
-            const SizedBox(height: Sp.xl),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getTabTitle(int index) {
-    switch (index) {
-      case 0:
-        return 'Mon profil';
-      case 1:
-        return 'Mon abonnement';
-      case 2:
-        return 'Préférences de notifications';
-      case 3:
-        return 'Membres de l\'équipe';
-      case 4:
-        return 'Activité & Statistiques';
-      default:
-        return 'Paramètres';
-    }
-  }
-
-  Widget _buildMerchantHeaderCard(MerchantModel? merchant) {
-    final initials = merchant?.initials ?? 'LS';
-    final name = merchant?.name ?? 'Restaurant La Saveur';
-    final email = Supabase.instance.client.auth.currentUser?.email ?? 'contact@lasaveur.tg';
-
-    return Container(
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: AppColors.primary,
-            child: Text(
-              initials,
-              style: AppTextStyles.bodyMd().copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: Sp.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: AppTextStyles.labelBold().copyWith(color: AppColors.textPrimary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  email,
-                  style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 32,
-            height: 14,
-            decoration: BoxDecoration(
-              color: AppColors.warning,
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHorizontalTabs() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
-          _buildTabItem(0, LucideIcons.user, LucideIcons.user, 'Profil'),
-          const SizedBox(width: Sp.sm),
-          _buildTabItem(1, LucideIcons.creditCard, LucideIcons.creditCard, 'Abonnement'),
-          const SizedBox(width: Sp.sm),
-          _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs'),
-          const SizedBox(width: Sp.sm),
-          _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe'),
-          const SizedBox(width: Sp.sm),
-          _buildTabItem(4, LucideIcons.barChart2, LucideIcons.barChart2, 'Activité'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVerticalTabs() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildTabItem(0, LucideIcons.user, LucideIcons.user, 'Profil', isVertical: true),
-        const SizedBox(height: Sp.sm),
-        _buildTabItem(1, LucideIcons.creditCard, LucideIcons.creditCard, 'Abonnement', isVertical: true),
-        const SizedBox(height: Sp.sm),
-        _buildTabItem(2, LucideIcons.bell, LucideIcons.bell, 'Notifs', isVertical: true),
-        const SizedBox(height: Sp.sm),
-        _buildTabItem(3, LucideIcons.users, LucideIcons.users, 'Équipe', isVertical: true),
-        const SizedBox(height: Sp.sm),
-        _buildTabItem(4, LucideIcons.barChart2, LucideIcons.barChart2, 'Activité', isVertical: true),
-      ],
-    );
-  }
-
-  Widget _buildTabItem(int index, IconData icon, IconData activeIcon, String label, {bool isVertical = false}) {
-    final bool isActive = _activeTabIndex == index;
-    final Color bg = isActive ? AppColors.merchant : Colors.white;
-    final Color fg = isActive ? Colors.white : AppColors.textPrimary;
-    final Color border = isActive ? AppColors.merchant : AppColors.border;
-
-    return Material(
-      color: bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(99),
-        side: BorderSide(color: border, width: 1.2),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          if (_activeTabIndex == index) return;
-          setState(() {
-            _prevTabIndex = _activeTabIndex;
-            _activeTabIndex = index;
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 10),
-          child: Row(
-            mainAxisSize: isVertical ? MainAxisSize.max : MainAxisSize.min,
-            mainAxisAlignment: isVertical ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              Icon(isActive ? activeIcon : icon, color: fg, size: 18),
-              const SizedBox(width: Sp.sm),
-              Text(
-                label,
-                style: AppTextStyles.labelBold().copyWith(
-                  color: fg,
-                  fontSize: 13,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabContentWithAnimation(MerchantModel? merchant) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOutCubic,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
-        switchInCurve: Curves.easeInOutCubic,
-        switchOutCurve: Curves.easeInOutCubic,
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          final bool isEntering = child.key == ValueKey<int>(_activeTabIndex);
-          final double slideOffset = _activeTabIndex > _prevTabIndex ? 0.15 : -0.15;
-
-          final Animation<Offset> offsetAnimation = Tween<Offset>(
-            begin: Offset(isEntering ? slideOffset : -slideOffset, 0.0),
-            end: Offset.zero,
-          ).animate(animation);
-
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: offsetAnimation,
-              child: child,
-            ),
-          );
-        },
-        child: KeyedSubtree(
-          key: ValueKey<int>(_activeTabIndex),
-          child: _buildTabContent(_activeTabIndex, merchant),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabContent(int index, MerchantModel? merchant) {
-    switch (index) {
-      case 0:
-        return _buildProfileTab(merchant);
-      case 1:
-        return _buildAbonnementTab(merchant);
-      case 2:
-        return _buildNotifsTab();
-      case 3:
-        return _buildTeamTab();
-      case 4:
-        return _buildActiviteTab();
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  Widget _buildActiviteTab() {
-    final statsAsync = ref.watch(dashboardStatsProvider);
-    
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: Rd.card,
-      ),
-      child: statsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Erreur stats: $err', style: AppTextStyles.bodyMd())),
-        data: (stats) {
-          return Column(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // KPI Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _KpiCard(
-                      icon: LucideIcons.users,
-                      value: stats.totalClients == 0 ? '47' : stats.totalClients.toString(),
-                      label: 'Clients',
-                      trend: '+12',
-                      trendColor: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(width: Sp.sm),
-                  Expanded(
-                    child: _KpiCard(
-                      icon: LucideIcons.circleCheck,
-                      value: stats.stampsToday == 0 ? '183' : stats.stampsToday.toString(),
-                      label: 'Tampons',
-                      subtext: 'ce mois',
-                    ),
-                  ),
-                  const SizedBox(width: Sp.sm),
-                  Expanded(
-                    child: _KpiCard(
-                      icon: LucideIcons.gift,
-                      value: stats.activeRewards == 0 ? '9' : stats.activeRewards.toString(),
-                      label: 'Récomp.',
-                      subtext: 'utilisées',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: Sp.lg),
-              
-              // Activity Chart
-              const _ActivityChartCard(),
-              const SizedBox(height: Sp.lg),
-              
-              // Relance Auto
-              const _RelanceAutoCard(),
-            ],
-          );
-        }
-      ),
-    );
-  }
-
-  Widget _buildProfileTab(MerchantModel? merchant) {
-    return Container(
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildInputLabel('NOM DU COMMERCE'),
-            const SizedBox(height: Sp.xs),
-            TextFormField(
-              controller: _nameController,
-              style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                fillColor: AppColors.bgLight,
-                filled: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: Rd.input,
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              validator: (val) => val == null || val.trim().isEmpty ? 'Requis' : null,
-            ),
-            const SizedBox(height: Sp.md),
-            _buildInputLabel('EMAIL'),
-            const SizedBox(height: Sp.xs),
-            TextFormField(
-              controller: _emailController,
-              enabled: false,
-              style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
-              decoration: InputDecoration(
-                fillColor: AppColors.bgLight.withValues(alpha: 0.5),
-                filled: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
-                border: const OutlineInputBorder(
-                  borderRadius: Rd.input,
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: Sp.md),
-            _buildInputLabel('TÉLÉPHONE'),
-            const SizedBox(height: Sp.xs),
-            TextFormField(
-              controller: _phoneController,
-              style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                fillColor: AppColors.bgLight,
-                filled: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: Rd.input,
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: Sp.md),
-            _buildInputLabel('LANGUE'),
-            const SizedBox(height: Sp.xs),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedLanguage,
-              icon: const Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
-              style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                fillColor: AppColors.bgLight,
-                filled: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: Rd.input,
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              items: ['Français', 'English'].map((lang) {
-                return DropdownMenuItem<String>(
-                  value: lang,
-                  child: Text(lang),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() => _selectedLanguage = val);
-                }
-              },
-            ),
-            const SizedBox(height: Sp.lg),
-            AppButton.merchant(
-              'Enregistrer',
-              loading: _isSavingProfile,
-              onPressed: () async {
-                if (!_formKey.currentState!.validate()) return;
-                setState(() => _isSavingProfile = true);
-                try {
-                  await ref.read(merchantNotifierProvider.notifier).updateProgramme({
-                    'name': _nameController.text.trim(),
-                    'phone': _phoneController.text.trim(),
-                  });
-                  _initialized = false;
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Profil mis à jour avec succès'),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Erreur lors de la mise à jour : $e'),
-                        backgroundColor: AppColors.danger,
-                      ),
-                    );
-                  }
-                } finally {
-                  if (mounted) setState(() => _isSavingProfile = false);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputLabel(String label) {
-    return Text(
-      label,
-      style: AppTextStyles.caption().copyWith(
-        color: AppColors.textSecondary,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-
-  Widget _buildAbonnementTab(MerchantModel? merchant) {
-    final currentPlan = merchant?.plan ?? 'free';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildPlanCard(
-          title: 'Démarrage',
-          price: '0 F/mois',
-          details: '50 clients • 30 SMS',
-          planKey: 'free',
-          currentPlan: currentPlan,
-        ),
-        const SizedBox(height: Sp.sm),
-        _buildPlanCard(
-          title: 'Pro',
-          price: '9 900 F/mois',
-          details: '500 clients • 100 SMS',
-          planKey: 'pro',
-          currentPlan: currentPlan,
-        ),
-        const SizedBox(height: Sp.sm),
-        _buildPlanCard(
-          title: 'Business',
-          price: '24 900 F/mois',
-          details: 'Illimité • 500 SMS',
-          planKey: 'business',
-          currentPlan: currentPlan,
-        ),
-        const SizedBox(height: Sp.md),
-        Container(
-          padding: const EdgeInsets.all(Sp.md),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: Rd.card,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Prochaine facture',
-                    style: AppTextStyles.labelBold().copyWith(color: AppColors.textPrimary),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '15 janvier 2026',
-                    style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
+              // Title
               Text(
-                currentPlan == 'business'
-                    ? '24 900 F'
-                    : currentPlan == 'pro'
-                        ? '9 900 F'
-                        : '0 F',
-                style: AppTextStyles.mono().copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
+                'Paramètres',
+                style: AppTextStyles.h1().copyWith(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+              const SizedBox(height: Sp.md),
 
-  Widget _buildPlanCard({
-    required String title,
-    required String price,
-    required String details,
-    required String planKey,
-    required String currentPlan,
-  }) {
-    final bool isCurrent = planKey == currentPlan;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        border: Border.all(
-          color: isCurrent ? AppColors.merchant : AppColors.border,
-          width: isCurrent ? 2.0 : 1.0,
-        ),
-        boxShadow: isCurrent
-            ? [
-                BoxShadow(
-                  color: AppColors.merchant.withValues(alpha: 0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.h3().copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (isCurrent) ...[
-                      const SizedBox(width: Sp.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.merchant,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'ACTUEL',
-                          style: AppTextStyles.caption().copyWith(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+              // Profile Card
+              InkWell(
+                onTap: () => context.push('/merchant/settings/profile'),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.textPrimary.withValues(alpha: 0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF3F4F6),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              merchantName,
+                              style: AppTextStyles.labelBold().copyWith(
+                                fontSize: 15,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Restaurant • $city',
+                              style: AppTextStyles.caption().copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(LucideIcons.chevronRight, color: AppColors.gray400, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: Sp.md),
+
+              // "Compléter mon profil 2/5" Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
-                const SizedBox(height: Sp.xs),
-                Text(
-                  details,
-                  style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Compléter mon profil',
+                          style: AppTextStyles.labelBold().copyWith(fontSize: 14),
+                        ),
+                        Text(
+                          '2/5',
+                          style: AppTextStyles.caption().copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: const LinearProgressIndicator(
+                        value: 0.4,
+                        color: AppColors.merchant,
+                        backgroundColor: Color(0xFFF3F4F6),
+                        minHeight: 6,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _ProfileTaskRow(
+                      label: 'Logo du commerce',
+                      onTap: () => context.push('/merchant/settings/profile'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _ProfileTaskRow(
+                      label: 'Réseaux sociaux',
+                      onTap: () => context.push('/merchant/settings/socials'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _ProfileTaskRow(
+                      label: 'Lien d\'avis Google',
+                      onTap: () => context.push('/merchant/settings/profile'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: Sp.lg),
+
+              // COMPTE Section
+              const _SectionHeader(title: 'COMPTE'),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _SettingsItem(
+                      icon: LucideIcons.user,
+                      title: 'Profil du commerce',
+                      onTap: () => context.push('/merchant/settings/profile'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.clock,
+                      title: 'Horaires d\'ouverture',
+                      onTap: () => context.push('/merchant/settings/hours'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.link,
+                      title: 'Réseaux sociaux',
+                      trailingText: 'À compléter',
+                      onTap: () => context.push('/merchant/settings/socials'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.creditCard,
+                      title: 'Abonnement',
+                      trailingText: 'Pro',
+                      onTap: _showSubscriptionSheet,
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.bell,
+                      title: 'Notifications',
+                      onTap: () => context.push('/merchant/notifications'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.users,
+                      title: 'Équipe',
+                      trailingText: '3',
+                      onTap: () => AppToast.info(context, 'Gestion de l\'équipe (3 membres)'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.lg),
+
+              // MA CARTE DE FIDÉLITÉ Section
+              const _SectionHeader(title: 'MA CARTE DE FIDÉLITÉ'),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _SettingsItem(
+                      icon: LucideIcons.creditCard,
+                      title: 'Personnaliser la carte',
+                      onTap: () => context.push('/merchant/more/programme'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.gift,
+                      title: 'Objectif & récompense',
+                      trailingText: '10 visites',
+                      onTap: () => context.push('/merchant/more/programme'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.gift,
+                      title: 'Programme de fidélité',
+                      onTap: () => context.push('/merchant/more/programme'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.scan,
+                      title: 'Mon QR code',
+                      onTap: () => context.push('/merchant/more/qrcode'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.globe,
+                      title: 'Ma vitrine',
+                      onTap: () => context.push('/merchant/more/vitrine'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.lg),
+
+              // ASSISTANCE Section
+              const _SectionHeader(title: 'ASSISTANCE'),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _SettingsItem(
+                      icon: LucideIcons.shield,
+                      title: 'Confidentialité',
+                      onTap: () => AppToast.info(context, 'Politique de confidentialité Miva-Fid'),
+                    ),
+                    const Divider(height: 1, color: AppColors.gray100),
+                    _SettingsItem(
+                      icon: LucideIcons.helpCircle,
+                      title: 'Conditions d\'utilisation',
+                      onTap: () => AppToast.info(context, 'Conditions générales d\'utilisation'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.lg),
+
+              // Se Déconnecter Button Card
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: _logout,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.logOut, color: AppColors.danger, size: 20),
+                        const SizedBox(width: 14),
+                        Text(
+                          'Se déconnecter',
+                          style: AppTextStyles.labelBold().copyWith(
+                            color: AppColors.danger,
+                            fontSize: 14.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: Sp.lg),
+
+              // Version Footer
+              Center(
+                child: Text(
+                  'Miva-Fid v1.0.0',
+                  style: AppTextStyles.caption().copyWith(
+                    color: AppColors.gray400,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: Sp.xl),
+            ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                price,
-                style: AppTextStyles.mono().copyWith(
-                  fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: AppTextStyles.caption().copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileTaskRow extends StatelessWidget {
+  const _ProfileTaskRow({
+    required this.label,
+    required this.onTap,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.gray400,
+                  width: 1.5,
+                  style: BorderStyle.solid,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.bodyMd().copyWith(
+                  fontSize: 13.5,
                   color: AppColors.textPrimary,
                 ),
               ),
-              if (!isCurrent) ...[
-                const SizedBox(height: 4),
-                InkWell(
-                  onTap: _isUpdatingPlan
-                      ? null
-                      : () async {
-                          setState(() => _isUpdatingPlan = true);
-                          try {
-                            await ref.read(merchantNotifierProvider.notifier).updateProgramme({'plan': planKey});
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Abonnement modifié : plan $title sélectionné'),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Erreur lors du changement de plan : $e'),
-                                  backgroundColor: AppColors.danger,
-                                ),
-                              );
-                            }
-                          } finally {
-                            if (mounted) setState(() => _isUpdatingPlan = false);
-                          }
-                        },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    child: Text(
-                      'Choisir',
-                      style: AppTextStyles.labelBold().copyWith(
-                        color: AppColors.merchant,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotifsTab() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          _buildNotifSwitch(
-            title: 'Nouveau client',
-            subtitle: 'Notif. à chaque inscription',
-            value: _notifNewClient,
-            onChanged: (val) => setState(() => _notifNewClient = val),
-          ),
-          const Divider(height: 0, indent: Sp.md),
-          _buildNotifSwitch(
-            title: 'Récompense gagnée',
-            subtitle: 'Quand un palier est atteint',
-            value: _notifReward,
-            onChanged: (val) => setState(() => _notifReward = val),
-          ),
-          const Divider(height: 0, indent: Sp.md),
-          _buildNotifSwitch(
-            title: 'Quota SMS faible',
-            subtitle: 'Sous 20 SMS restants',
-            value: _notifLowSms,
-            onChanged: (val) => setState(() => _notifLowSms = val),
-          ),
-          const Divider(height: 0, indent: Sp.md),
-          _buildNotifSwitch(
-            title: 'Rapport hebdomadaire',
-            subtitle: 'Tous les lundis matin',
-            value: _notifWeeklyReport,
-            onChanged: (val) => setState(() => _notifWeeklyReport = val),
-          ),
-          const Divider(height: 0, indent: Sp.md),
-          _buildNotifSwitch(
-            title: 'Promotions Miva-Fid',
-            subtitle: 'Offres et nouveautés',
-            value: _notifPromotions,
-            onChanged: (val) => setState(() => _notifPromotions = val),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotifSwitch({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.xs),
-      title: Text(
-        title,
-        style: AppTextStyles.bodyMd().copyWith(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-      ),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor: Colors.white,
-        activeTrackColor: AppColors.merchant,
-        inactiveThumbColor: Colors.white,
-        inactiveTrackColor: AppColors.border,
-        trackOutlineColor: WidgetStateProperty.resolveWith<Color?>((states) {
-          return Colors.transparent;
-        }),
-      ),
-    );
-  }
-
-  Widget _buildTeamTab() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: Rd.card,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: AnimatedList(
-            key: _teamListKey,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            initialItemCount: _teamMembers.length,
-            itemBuilder: (context, index, animation) {
-              return _buildTeamMemberItem(_teamMembers[index], animation, index);
-            },
-          ),
-        ),
-        const SizedBox(height: Sp.md),
-        _buildInviteMemberButton(),
-      ],
-    );
-  }
-
-  Widget _buildTeamMemberItem(Map<String, String> member, Animation<double> animation, int index) {
-    final initials = member['initials'] ?? 'KM';
-    final name = member['name'] ?? '';
-    final role = member['role'] ?? '';
-    final status = member['status'] ?? '';
-    final isActif = status == 'Actif';
-
-    return SizeTransition(
-      sizeFactor: animation,
-      child: FadeTransition(
-        opacity: animation,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AppColors.merchantTint,
-                    child: Text(
-                      initials,
-                      style: AppTextStyles.bodyMd().copyWith(
-                        color: AppColors.merchant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: Sp.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: AppTextStyles.bodyMd().copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          role,
-                          style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isActif ? AppColors.successTint : AppColors.border,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isActif) ...[
-                          const Icon(LucideIcons.check, color: AppColors.success, size: 12),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          status,
-                          style: AppTextStyles.caption().copyWith(
-                            color: isActif ? AppColors.success : AppColors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: Sp.sm),
-                  IconButton(
-                    icon: const Icon(LucideIcons.trash, color: AppColors.danger, size: 18),
-                    onPressed: () => _removeTeamMember(index),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
             ),
-            if (index < _teamMembers.length - 1)
-              const Divider(height: 0, indent: 56),
+            const Icon(LucideIcons.chevronRight, color: AppColors.gray400, size: 18),
           ],
         ),
       ),
     );
   }
-
-  void _removeTeamMember(int index) {
-    if (index < 0 || index >= _teamMembers.length) return;
-
-    final removedItem = _teamMembers[index];
-
-    setState(() {
-      _teamMembers.removeAt(index);
-    });
-
-    _teamListKey.currentState?.removeItem(
-      index,
-      (context, animation) => _buildTeamMemberItem(removedItem, animation, index),
-      duration: const Duration(milliseconds: 300),
-    );
-  }
-
-  Widget _buildInviteMemberButton() {
-    return CustomPaint(
-      painter: DashedBorderPainter(
-        color: AppColors.merchant.withValues(alpha: 0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        dashLength: 6.0,
-        gap: 4.0,
-      ),
-      child: InkWell(
-        onTap: _showInviteMemberDialog,
-        borderRadius: Rd.card,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: Sp.md),
-          alignment: Alignment.center,
-          child: Text(
-            '+ Inviter un membre',
-            style: AppTextStyles.labelBold().copyWith(
-              color: AppColors.merchant,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showInviteMemberDialog() {
-    final nameController = TextEditingController();
-    String selectedRole = 'Serveur';
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: const RoundedRectangleBorder(borderRadius: Rd.card),
-              title: Text(
-                'Inviter un membre d\'équipe',
-                style: AppTextStyles.h3().copyWith(color: AppColors.textPrimary),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildInputLabel('NOM COMPLET'),
-                  const SizedBox(height: Sp.xs),
-                  TextField(
-                    controller: nameController,
-                    style: AppTextStyles.bodyMd(),
-                    decoration: const InputDecoration(
-                      fillColor: AppColors.bgLight,
-                      filled: true,
-                      contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: Rd.input,
-                        borderSide: BorderSide.none,
-                      ),
-                      hintText: 'Ex: Yao Lawson',
-                    ),
-                  ),
-                  const SizedBox(height: Sp.md),
-                  _buildInputLabel('RÔLE'),
-                  const SizedBox(height: Sp.xs),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedRole,
-                    icon: const Icon(LucideIcons.chevronDown),
-                    style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      fillColor: AppColors.bgLight,
-                      filled: true,
-                      contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: Rd.input,
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    items: ['Propriétaire', 'Caissière', 'Serveur'].map((role) {
-                      return DropdownMenuItem<String>(
-                        value: role,
-                        child: Text(role),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedRole = val);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Annuler', style: TextStyle(color: AppColors.textSecondary)),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final name = nameController.text.trim();
-                    if (name.isEmpty) return;
-                    Navigator.pop(context);
-                    _addTeamMember(name, selectedRole);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.merchant,
-                    shape: const RoundedRectangleBorder(borderRadius: Rd.button),
-                  ),
-                  child: const Text('Inviter', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _addTeamMember(String name, String role) {
-    final parts = name.split(' ');
-    String initials = '?';
-    if (parts.length >= 2) {
-      initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    } else if (name.isNotEmpty) {
-      initials = name[0].toUpperCase();
-    }
-
-    final newMember = {
-      'name': name,
-      'role': role,
-      'status': 'Invité',
-      'initials': initials,
-    };
-
-    final int newIndex = _teamMembers.length;
-    setState(() {
-      _teamMembers.add(newMember);
-    });
-
-    _teamListKey.currentState?.insertItem(
-      newIndex,
-      duration: const Duration(milliseconds: 300),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$name a été invité(e) en tant que $role'),
-        backgroundColor: AppColors.success,
-      ),
-    );
-  }
-
-  Widget _buildCommonSettingsCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          _buildCommonTile(
-            icon: LucideIcons.shield,
-            label: 'Sécurité & confidentialité',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sécurité & confidentialité bientôt disponible')),
-              );
-            },
-          ),
-          const Divider(height: 0, indent: Sp.md),
-          _buildCommonTile(
-            icon: LucideIcons.circleHelp,
-            label: 'Aide & support',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Centre d\'aide bientôt disponible')),
-              );
-            },
-          ),
-          const Divider(height: 0, indent: Sp.md),
-          _buildCommonTile(
-            icon: LucideIcons.logOut,
-            label: 'Se déconnecter',
-            textColor: AppColors.danger,
-            iconColor: AppColors.danger,
-            onTap: () async {
-              final confirmed = await AppDialog.confirm(
-                context,
-                title: 'Se déconnecter ?',
-                message: 'Vous devrez vous reconnecter pour accéder à votre espace marchand.',
-                confirmLabel: 'Se déconnecter',
-                destructive: true,
-              );
-              if (!confirmed) return;
-              await Supabase.instance.client.auth.signOut();
-              if (context.mounted) context.go('/role-select');
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommonTile({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? textColor,
-    Color? iconColor,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor ?? AppColors.primary, size: 20),
-      title: Text(
-        label,
-        style: AppTextStyles.bodyMd().copyWith(
-          color: textColor ?? AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      trailing: Icon(
-        LucideIcons.arrowRight,
-        size: 14,
-        color: textColor ?? AppColors.textSecondary,
-      ),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 2),
-    );
-  }
 }
 
-class DashedBorderPainter extends CustomPainter {
-  DashedBorderPainter({
-    required this.color,
-    this.strokeWidth = 1.0,
-    this.gap = 4.0,
-    this.dashLength = 6.0,
-    required this.borderRadius,
-  });
-
-  final Color color;
-  final double strokeWidth;
-  final double gap;
-  final double dashLength;
-  final BorderRadius borderRadius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final RRect rrect = RRect.fromRectAndCorners(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      topLeft: borderRadius.topLeft,
-      topRight: borderRadius.topRight,
-      bottomLeft: borderRadius.bottomLeft,
-      bottomRight: borderRadius.bottomRight,
-    );
-
-    final Path path = Path()..addRRect(rrect);
-    final Path dashedPath = Path();
-
-    final PathMetrics pathMetrics = path.computeMetrics();
-    for (final PathMetric metric in pathMetrics) {
-      double distance = 0.0;
-      while (distance < metric.length) {
-        final double length = dashLength;
-        dashedPath.addPath(
-          metric.extractPath(distance, distance + length),
-          Offset.zero,
-        );
-        distance += length + gap;
-      }
-    }
-
-    canvas.drawPath(dashedPath, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant DashedBorderPainter oldDelegate) {
-    return oldDelegate.color != color ||
-        oldDelegate.strokeWidth != strokeWidth ||
-        oldDelegate.gap != gap ||
-        oldDelegate.dashLength != dashLength ||
-        oldDelegate.borderRadius != borderRadius;
-  }
-}
-
-// ==========================================
-// Composants pour l'onglet Activité
-// ==========================================
-
-// KPI Card widget layout
-class _KpiCard extends StatelessWidget {
-  const _KpiCard({
+class _SettingsItem extends StatelessWidget {
+  const _SettingsItem({
     required this.icon,
-    required this.value,
-    required this.label,
-    this.subtext,
-    this.trend,
-    this.trendColor,
+    required this.title,
+    this.trailingText,
+    required this.onTap,
   });
 
   final IconData icon;
-  final String value;
-  final String label;
-  final String? subtext;
-  final String? trend;
-  final Color? trendColor;
+  final String title;
+  final String? trailingText;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.06),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: AppColors.textSecondary.withValues(alpha: 0.7),
-                  size: 16,
-                ),
-              ),
-              if (trend != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      LucideIcons.arrowUp,
-                      color: trendColor ?? AppColors.success,
-                      size: 11,
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      trend!,
-                      style: AppTextStyles.caption().copyWith(
-                        color: trendColor ?? AppColors.success,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            value,
-            style: AppTextStyles.h1().copyWith(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: AppTextStyles.caption().copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (subtext != null)
-            Text(
-              subtext!,
-              style: AppTextStyles.caption().copyWith(
-                color: AppColors.textSecondary.withValues(alpha: 0.6),
-                fontSize: 10,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// Activity Chart Widget
-class _ActivityChartCard extends StatelessWidget {
-  const _ActivityChartCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Activité du mois',
-            style: AppTextStyles.labelBold().copyWith(
-              color: AppColors.textPrimary,
-              fontSize: 15,
-            ),
-          ),
-          Text(
-            'Validations par semaine',
-            style: AppTextStyles.caption().copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 120,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: ['60', '45', '30', '15', '0']
-                      .map((val) => Text(
-                            val,
-                            style: AppTextStyles.caption().copyWith(
-                              fontSize: 10,
-                              color: AppColors.textSecondary
-                                  .withValues(alpha: 0.6),
-                            ),
-                          ))
-                      .toList(),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(
-                            5,
-                            (_) => Container(
-                              height: 1,
-                              color: AppColors.border.withValues(alpha: 0.35),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _buildBar('Sem 1', 38),
-                          _buildBar('Sem 2', 47),
-                          _buildBar('Sem 3', 54),
-                          _buildBar('Sem 4', 43),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBar(String weekLabel, int val) {
-    final double barHeight = (val / 60) * 92;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 28,
-          height: barHeight,
-          decoration: const BoxDecoration(
-            color: AppColors.merchant,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(6),
-              topRight: Radius.circular(6),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          weekLabel,
-          style: AppTextStyles.caption().copyWith(
-            fontSize: 10,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Relance Auto Card
-class _RelanceAutoCard extends StatelessWidget {
-  const _RelanceAutoCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: Rd.card,
-        child: Stack(
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
           children: [
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 4,
-                color: AppColors.merchant,
+            Icon(icon, color: AppColors.gray700, size: 20),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTextStyles.bodyMd().copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(Sp.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'RELANCE AUTO',
-                        style: AppTextStyles.caption().copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: Sp.sm),
-                  Text(
-                    '3 clients n\'ont pas visité depuis 14 jours',
-                    style: AppTextStyles.bodyMd().copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: Sp.md),
-                  OutlinedButton(
-                    onPressed: () => context.go('/merchant/clients'),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.merchant),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                    ),
-                    child: Text(
-                      'Voir les inactifs',
-                      style: AppTextStyles.caption().copyWith(
-                        color: AppColors.merchant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+            if (trailingText != null) ...[
+              Text(
+                trailingText!,
+                style: AppTextStyles.caption().copyWith(
+                  color: AppColors.gray500,
+                  fontSize: 13,
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+            ],
+            const Icon(LucideIcons.chevronRight, color: AppColors.gray400, size: 18),
           ],
         ),
       ),

@@ -96,6 +96,25 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            const Icon(LucideIcons.chevronLeft, color: AppColors.textSecondary, size: 18),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Paramètres',
+                              style: AppTextStyles.caption().copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: Sp.sm),
                       Text('Mon Programme', style: AppTextStyles.h1()),
                       const SizedBox(height: Sp.xs),
                       Text('Modifiez votre programme de fidélité',
