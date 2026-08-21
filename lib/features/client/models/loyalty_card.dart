@@ -170,7 +170,9 @@ class LoyaltyCard {
       stampEmoji: config['stamp_emoji'] as String? ?? '✨',
       stampIcon: config['stamp_icon'] as String? ?? 'check_rounded',
       stampsCurrent: progress['stamps_current'] as int? ?? 0,
-      stampsGoal: json['goal'] as int? ?? config['goal'] as int? ?? 8,
+      stampsGoal: json['goal'] as int? ??
+          config['goal'] as int? ??
+          (progress['stamps_current'] as int? ?? 0),
       pointsBalance: progress['stamps_current'] as int? ?? 0,
       // `cashback_available_fcfa` (calculé, tient compte d'une éventuelle
       // expiration de solde configurée par le marchand) prime sur le solde
