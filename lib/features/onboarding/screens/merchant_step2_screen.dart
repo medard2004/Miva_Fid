@@ -8,7 +8,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
-import '../models/reward_tier.dart';
+import '../models/program_tier.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
@@ -45,21 +45,21 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         text: state.cashbackRedeemCapPercent?.toString() ?? '');
     _cashbackExpiryCtrl = TextEditingController(
         text: state.cashbackExpiryDays?.toString() ?? '');
-    _initRewardControllers(state.rewards);
+    _initRewardControllers(state.tiers);
   }
 
-  void _initRewardControllers(List<RewardTier> rewards) {
+  void _initRewardControllers(List<ProgramTier> tiers) {
     _clearRewardControllers();
-    if (rewards.isEmpty) {
-      _addRewardController(const RewardTier(goal: 10, rewardDescription: ''));
+    if (tiers.isEmpty) {
+      _addRewardController(const ProgramTier(goal: 10, rewardDescription: ''));
     } else {
-      for (final tier in rewards) {
+      for (final tier in tiers) {
         _addRewardController(tier);
       }
     }
   }
 
-  void _addRewardController(RewardTier tier) {
+  void _addRewardController(ProgramTier tier) {
     _goalCtrls.add(TextEditingController(text: tier.goal.toString()));
     _descCtrls.add(TextEditingController(text: tier.rewardDescription));
     _validityCtrls
@@ -99,7 +99,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         : 10;
     final step = state.loyaltyMode == 'stamps' ? 5 : 500;
 
-    final newTier = RewardTier(goal: lastGoal + step, rewardDescription: '');
+    final newTier = ProgramTier(goal: lastGoal + step, rewardDescription: '');
     setState(() {
       _addRewardController(newTier);
     });
@@ -124,18 +124,18 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     final loyaltyMode = ref.read(onboardingNotifierProvider).loyaltyMode;
 
     if (loyaltyMode != 'cashback') {
-      final List<RewardTier> updatedRewards = [];
+      final List<ProgramTier> updatedRewards = [];
       for (int i = 0; i < _goalCtrls.length; i++) {
         final goalVal = int.tryParse(_goalCtrls[i].text.trim()) ?? 10;
         final descVal = _descCtrls[i].text.trim();
         final validityVal = int.tryParse(_validityCtrls[i].text.trim());
-        updatedRewards.add(RewardTier(
+        updatedRewards.add(ProgramTier(
           goal: goalVal,
           rewardDescription: descVal,
           validityDays: validityVal,
         ));
       }
-      notifier.setRewards(updatedRewards);
+      notifier.setTiers(updatedRewards);
     }
 
     if (loyaltyMode == 'spend') {

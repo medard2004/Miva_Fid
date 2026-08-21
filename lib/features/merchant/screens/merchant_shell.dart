@@ -12,128 +12,15 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/app_toast.dart';
 
+import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
-import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
 class MerchantShell extends ConsumerWidget {
   const MerchantShell({super.key, required this.navigationShell});
   final StatefulNavigationShell navigationShell;
 
-  Future<void> _showMoreSheet(
-    BuildContext context,
-    WidgetRef ref, {
-    required String planLabel,
-    required int smsRemaining,
-  }) {
-    return AppBottomSheet.show(
-      context: context,
-      title: 'Menu',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 2.25,
-            children: [
-              _MoreMenuCard(
-                icon: LucideIcons.gift,
-                label: 'Programme fidélité',
-                onTap: () => _navigateFromSheet(context, '/merchant/more/programme'),
-              ),
-              _MoreMenuCard(
-                icon: LucideIcons.scan,
-                label: 'Mon QR Code',
-                onTap: () => _navigateFromSheet(context, '/merchant/more/qrcode'),
-              ),
-              _MoreMenuCard(
-                icon: LucideIcons.globe,
-                label: 'Ma Vitrine',
-                onTap: () => _navigateFromSheet(context, '/merchant/more/vitrine'),
-              ),
-              _MoreMenuCard(
-                icon: LucideIcons.settings,
-                label: 'Paramètres',
-                onTap: () => _navigateFromSheet(context, '/merchant/more/settings'),
-              ),
-            ],
-          ),
-          const SizedBox(height: Sp.md),
-          const Divider(height: 1, color: AppColors.gray100, thickness: 1.2),
-          const SizedBox(height: Sp.md),
 
-          // SMS Quota
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Quota SMS', style: AppTextStyles.bodyMd().copyWith(color: AppColors.gray500)),
-                  Text(
-                    '$smsRemaining/100',
-                    style: AppTextStyles.bodyMd().copyWith(color: AppColors.gray500, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
-                  value: smsRemaining / 100.0,
-                  color: AppColors.merchant,
-                  backgroundColor: AppColors.gray100,
-                  minHeight: 5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Sp.sm),
-
-          _MoreMenuRow(
-            icon: LucideIcons.messageCircle,
-            label: 'Support WhatsApp',
-            color: AppColors.success,
-            onTap: () async {
-              Navigator.pop(context);
-              final url = Uri.parse('https://wa.me/22899001122');
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url);
-              }
-            },
-          ),
-          _MoreMenuRow(
-            icon: LucideIcons.logOut,
-            label: 'Se déconnecter',
-            color: AppColors.gray500,
-            onTap: () async {
-              Navigator.pop(context);
-              final confirmed = await AppDialog.confirm(
-                context,
-                title: 'Se déconnecter ?',
-                message: 'Vous devrez vous reconnecter pour accéder à votre espace marchand.',
-                confirmLabel: 'Se déconnecter',
-                destructive: true,
-              );
-              if (!confirmed) return;
-              await ref.read(merchantAuthProvider.notifier).signOut();
-              if (context.mounted) context.go('/auth/merchant/auth');
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _navigateFromSheet(BuildContext context, String route) {
-    Navigator.pop(context);
-    context.go(route);
-  }
 
   Widget _buildNavItem({
     required int index,
@@ -142,9 +29,6 @@ class MerchantShell extends ConsumerWidget {
     required int currentIndex,
     required BuildContext context,
     required WidgetRef ref,
-    bool isMore = false,
-    String planLabel = '',
-    int smsRemaining = 100,
   }) {
     final bool isActive = currentIndex == index;
     const activeColor = AppColors.merchant;
@@ -152,10 +36,6 @@ class MerchantShell extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        if (isMore) {
-          _showMoreSheet(context, ref, planLabel: planLabel, smsRemaining: smsRemaining);
-          return;
-        }
         navigationShell.goBranch(index, initialLocation: index == currentIndex);
       },
       behavior: HitTestBehavior.opaque,
@@ -246,9 +126,11 @@ class MerchantShell extends ConsumerWidget {
     final initials = merchant?.initials ?? 'RS';
     final planLabel = merchant?.isPro ?? false ? 'Plan Pro' : 'Plan Standard';
     final smsRemaining = merchant?.smsRemaining ?? 100;
+    
+    final hideNav = ref.watch(hideMerchantNavProvider);
 
     return Scaffold(
-      appBar: showHeader
+      appBar: (showHeader && !hideNav)
           ? PreferredSize(
               preferredSize: const Size.fromHeight(64),
               child: Container(
@@ -306,7 +188,7 @@ class MerchantShell extends ConsumerWidget {
             )
           : null,
       body: navigationShell,
-      bottomNavigationBar: Container(
+      bottomNavigationBar: hideNav ? const SizedBox.shrink() : Container(
         height: 66 + bottomPadding,
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -359,9 +241,6 @@ class MerchantShell extends ConsumerWidget {
                       currentIndex: currentIndex,
                       context: context,
                       ref: ref,
-                      isMore: true,
-                      planLabel: planLabel,
-                      smsRemaining: smsRemaining,
                     ),
                   ],
                 ),
@@ -375,74 +254,3 @@ class MerchantShell extends ConsumerWidget {
   }
 }
 
-class _MoreMenuCard extends StatelessWidget {
-  const _MoreMenuCard({required this.icon, required this.label, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.gray50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.gray100, width: 1.2),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(color: AppColors.gray100, borderRadius: BorderRadius.circular(8)),
-                child: Icon(icon, color: AppColors.gray700, size: 15),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: AppTextStyles.labelBold().copyWith(color: AppColors.gray900, fontSize: 11),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MoreMenuRow extends StatelessWidget {
-  const _MoreMenuRow({required this.icon, required this.label, required this.color, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 12),
-            Text(label, style: AppTextStyles.labelBold().copyWith(color: color, fontSize: 13.5)),
-          ],
-        ),
-      ),
-    );
-  }
-}

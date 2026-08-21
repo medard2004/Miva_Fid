@@ -103,7 +103,14 @@ class ClientRow extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(name, style: AppTextStyles.labelBold()),
+                          Flexible(
+                            child: Text(
+                              name, 
+                              style: AppTextStyles.labelBold(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           if (tier != null) ...[
                             const SizedBox(width: 6),
                             Container(
@@ -136,11 +143,6 @@ class ClientRow extends StatelessWidget {
                   ),
                 ),
                 // Quick Action Buttons
-                _QuickActionBtn(
-                  icon: LucideIcons.eye,
-                  onTap: onViewDetail ?? onTap,
-                ),
-                const SizedBox(width: 8),
                 _QuickActionBtn(
                   icon: LucideIcons.messageCircle,
                   onTap: onSendMessage,

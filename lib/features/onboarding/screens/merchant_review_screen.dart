@@ -235,9 +235,9 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                         _ReviewRow(
                           icon: LucideIcons.layoutGrid,
                           label: 'Mode de fidélité',
-                          value: '$_modeLabel (${state.rewards.length} palier${state.rewards.length > 1 ? 's' : ''})',
+                          value: '$_modeLabel (${state.tiers.length} palier${state.tiers.length > 1 ? 's' : ''})',
                         ),
-                        ...state.rewards.asMap().entries.map((entry) {
+                        ...state.tiers.asMap().entries.map((entry) {
                           final idx = entry.key;
                           final reward = entry.value;
                           return _ReviewRow(

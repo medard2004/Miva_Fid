@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
@@ -5,6 +6,8 @@ import '../../../models/loyalty_card_model.dart';
 import 'merchant_auth_provider.dart';
 
 part 'clients_provider.g.dart';
+
+final hideMerchantNavProvider = StateProvider<bool>((ref) => false);
 
 /// Clientèle du commerce connecté (`GET /merchant/clients`).
 ///
