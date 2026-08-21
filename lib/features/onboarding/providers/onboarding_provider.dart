@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/api/providers/api_providers.dart';
 import '../../merchant/models/restaurant_account.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
-import '../models/reward_tier.dart';
+import '../models/program_tier.dart';
 import '../utils/card_colors.dart';
 
 part 'onboarding_provider.g.dart';
@@ -21,7 +21,7 @@ class OnboardingState {
     this.logoUrl,
     this.colorPrimary = const Color(0xFF4F46E5),
     this.colorSecondary = const Color(0xFF3730A3),
-    this.rewards = const [RewardTier(goal: 10, rewardDescription: '')],
+    this.tiers = const [ProgramTier(goal: 10, rewardDescription: '')],
     this.loyaltyMode = 'stamps',
     this.fcfaPerPoint = 100,
     this.cashbackPercentage = 5,
@@ -54,7 +54,7 @@ class OnboardingState {
   final String? logoUrl;
   final Color colorPrimary;
   final Color colorSecondary;
-  final List<RewardTier> rewards;
+  final List<ProgramTier> tiers;
   final String loyaltyMode;
   /// Mode "Achat" : nombre de FCFA dépensés pour créditer 1 point.
   final int fcfaPerPoint;
@@ -82,8 +82,8 @@ class OnboardingState {
   final bool isLoading;
   final String? error;
 
-  int get stampsRequired => rewards.isNotEmpty ? rewards.first.goal : 10;
-  String get rewardDescription => rewards.isNotEmpty ? rewards.first.rewardDescription : '';
+  int get stampsRequired => tiers.isNotEmpty ? tiers.first.goal : 10;
+  String get rewardDescription => tiers.isNotEmpty ? tiers.first.rewardDescription : '';
 
   String get colorPrimaryHex =>
       '#${(colorPrimary.toARGB32() & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
@@ -105,7 +105,7 @@ class OnboardingState {
     String? logoUrl,
     Color? colorPrimary,
     Color? colorSecondary,
-    List<RewardTier>? rewards,
+    List<ProgramTier>? tiers,
     String? loyaltyMode,
     int? fcfaPerPoint,
     double? cashbackPercentage,
@@ -140,7 +140,7 @@ class OnboardingState {
       logoUrl: logoUrl ?? this.logoUrl,
       colorPrimary: colorPrimary ?? this.colorPrimary,
       colorSecondary: colorSecondary ?? this.colorSecondary,
-      rewards: rewards ?? this.rewards,
+      tiers: tiers ?? this.tiers,
       loyaltyMode: loyaltyMode ?? this.loyaltyMode,
       fcfaPerPoint: fcfaPerPoint ?? this.fcfaPerPoint,
       cashbackPercentage: cashbackPercentage ?? this.cashbackPercentage,
@@ -174,13 +174,7 @@ class OnboardingState {
   Map<String, dynamic> toLoyaltyProgramJson() {
     return {
       'mode': loyaltyMode,
-      // Cashback n'a pas de cycle objectif/récompense — le backend ne
-      // l'exige que pour les deux autres modes.
-      if (!isCashback) 'goal': stampsRequired,
-      if (!isCashback)
-        'reward_description':
-            rewardDescription.isEmpty ? null : rewardDescription,
-      if (!isCashback) 'rewards': rewards.map((r) => r.toJson()).toList(),
+      if (!isCashback) 'tiers': tiers.map((t) => t.toJson()).toList(),
       'show_review_button': showReviewButton,
       'google_review_url':
           (showReviewButton && googleReviewUrl.isNotEmpty) ? googleReviewUrl : null,
@@ -243,45 +237,45 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       _ => (1, 1000000),
     };
     final clampedGoal = v.clamp(min, max);
-    if (state.rewards.isEmpty) {
-      state = state.copyWith(rewards: [RewardTier(goal: clampedGoal, rewardDescription: '')]);
+    if (state.tiers.isEmpty) {
+      state = state.copyWith(tiers: [ProgramTier(goal: clampedGoal, rewardDescription: '')]);
     } else {
-      final updated = List<RewardTier>.from(state.rewards);
+      final updated = List<ProgramTier>.from(state.tiers);
       updated[0] = updated[0].copyWith(goal: clampedGoal);
-      state = state.copyWith(rewards: updated);
+      state = state.copyWith(tiers: updated);
     }
   }
 
-  void setRewards(List<RewardTier> rewards) {
-    state = state.copyWith(rewards: rewards);
+  void setTiers(List<ProgramTier> tiers) {
+    state = state.copyWith(tiers: tiers);
   }
 
-  void addReward([RewardTier? tier]) {
-    final list = List<RewardTier>.from(state.rewards);
+  void addTier([ProgramTier? tier]) {
+    final list = List<ProgramTier>.from(state.tiers);
     if (tier != null) {
       list.add(tier);
     } else {
       final lastGoal = list.isNotEmpty ? list.last.goal : 10;
       final step = state.loyaltyMode == 'stamps' ? 5 : 500;
-      list.add(RewardTier(goal: lastGoal + step, rewardDescription: ''));
+      list.add(ProgramTier(goal: lastGoal + step, rewardDescription: ''));
     }
-    state = state.copyWith(rewards: list);
+    state = state.copyWith(tiers: list);
   }
 
-  void removeReward(int index) {
-    if (state.rewards.length <= 1) return;
-    final list = List<RewardTier>.from(state.rewards);
+  void removeTier(int index) {
+    if (state.tiers.length <= 1) return;
+    final list = List<ProgramTier>.from(state.tiers);
     if (index >= 0 && index < list.length) {
       list.removeAt(index);
-      state = state.copyWith(rewards: list);
+      state = state.copyWith(tiers: list);
     }
   }
 
-  void updateReward(int index, RewardTier tier) {
-    final list = List<RewardTier>.from(state.rewards);
+  void updateTier(int index, ProgramTier tier) {
+    final list = List<ProgramTier>.from(state.tiers);
     if (index >= 0 && index < list.length) {
       list[index] = tier;
-      state = state.copyWith(rewards: list);
+      state = state.copyWith(tiers: list);
     }
   }
 
@@ -306,12 +300,12 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   }
   void setRewardDescription(String v) {
     final trimmed = v.trim();
-    if (state.rewards.isEmpty) {
-      state = state.copyWith(rewards: [RewardTier(goal: 10, rewardDescription: trimmed)]);
+    if (state.tiers.isEmpty) {
+      state = state.copyWith(tiers: [ProgramTier(goal: 10, rewardDescription: trimmed)]);
     } else {
-      final updated = List<RewardTier>.from(state.rewards);
+      final updated = List<ProgramTier>.from(state.tiers);
       updated[0] = updated[0].copyWith(rewardDescription: trimmed);
-      state = state.copyWith(rewards: updated);
+      state = state.copyWith(tiers: updated);
     }
   }
 
@@ -409,19 +403,19 @@ class OnboardingNotifier extends _$OnboardingNotifier {
 
     String text(String? value) => value ?? '';
 
-    List<RewardTier> loadedRewards = [];
-    if (config['rewards'] is List) {
-      for (final item in config['rewards'] as List) {
+    List<ProgramTier> loadedTiers = [];
+    if (config['tiers'] is List) {
+      for (final item in config['tiers'] as List) {
         if (item is Map<String, dynamic>) {
-          loadedRewards.add(RewardTier.fromJson(item));
+          loadedTiers.add(ProgramTier.fromJson(item));
         } else if (item is Map) {
-          loadedRewards.add(RewardTier.fromJson(Map<String, dynamic>.from(item)));
+          loadedTiers.add(ProgramTier.fromJson(Map<String, dynamic>.from(item)));
         }
       }
     }
-    if (loadedRewards.isEmpty) {
-      loadedRewards = [
-        RewardTier(
+    if (loadedTiers.isEmpty) {
+      loadedTiers = [
+        ProgramTier(
           goal: (int.tryParse(config['goal']?.toString() ?? '') ?? 10).clamp(1, 1000000),
           rewardDescription: text(config['reward_description']?.toString()),
         ),
@@ -439,7 +433,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       logoUrl: config['logo_url']?.toString() ?? restaurant.logoUrl,
       colorPrimary: color('color_primary') ?? const Color(0xFF4F46E5),
       colorSecondary: color('color_secondary') ?? const Color(0xFF3730A3),
-      rewards: loadedRewards,
+      tiers: loadedTiers,
       loyaltyMode: restaurant.loyaltyType ?? 'stamps',
       fcfaPerPoint:
           int.tryParse(config['fcfa_per_point']?.toString() ?? '') ?? 100,
