@@ -20,12 +20,16 @@ class TierEditorForm extends StatefulWidget {
   final List<ProgramTier> initialTiers;
   final String goalUnit;
   final ValueChanged<List<ProgramTier>> onChanged;
+  final bool allowEmpty;
+  final int goalStep;
 
   const TierEditorForm({
     super.key,
     required this.initialTiers,
     required this.goalUnit,
     required this.onChanged,
+    this.allowEmpty = false,
+    this.goalStep = 500,
   });
 
   @override
@@ -41,7 +45,7 @@ class TierEditorFormState extends State<TierEditorForm> {
   @override
   void initState() {
     super.initState();
-    final tiers = widget.initialTiers.isEmpty
+    final tiers = widget.initialTiers.isEmpty && !widget.allowEmpty
         ? [const ProgramTier(goal: 10, rewardDescription: '')]
         : widget.initialTiers;
     for (final tier in tiers) {
@@ -79,13 +83,13 @@ class TierEditorFormState extends State<TierEditorForm> {
     final lastGoal =
         _goalCtrls.isNotEmpty ? (int.tryParse(_goalCtrls.last.text) ?? 10) : 10;
     setState(() {
-      _addController(ProgramTier(goal: lastGoal + 500, rewardDescription: ''));
+      _addController(ProgramTier(goal: lastGoal + widget.goalStep, rewardDescription: ''));
     });
     _emitChange();
   }
 
   void removeTier(int index) {
-    if (_goalCtrls.length <= 1) return;
+    if (_goalCtrls.length <= (widget.allowEmpty ? 0 : 1)) return;
     setState(() {
       _goalCtrls[index].dispose();
       _levelNameCtrls[index].dispose();
@@ -134,6 +138,14 @@ class TierEditorFormState extends State<TierEditorForm> {
           ),
         ],
         const SizedBox(height: Sp.sm),
+        if (widget.allowEmpty && _goalCtrls.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: Sp.sm),
+            child: Text(
+              'Aucun palier configuré — le cashback fonctionne normalement sans palier.',
+              style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+            ),
+          ),
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

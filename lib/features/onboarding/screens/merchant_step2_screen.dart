@@ -298,6 +298,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                           initialTiers: state.tiers,
                           goalUnit: goalUnit,
                           onChanged: (_) {},
+                          goalStep: state.loyaltyMode == 'stamps' ? 5 : 500,
                         ),
                         const SizedBox(height: Sp.md),
                         OutlinedButton.icon(

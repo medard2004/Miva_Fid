@@ -39,6 +39,7 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
     if (restaurant == null || m == null) return;
 
     final config = restaurant.loyaltyConfig;
+    final loyaltyMode = m.loyaltyMode;
     List<ProgramTier> loaded = [];
     if (config['tiers'] is List) {
       for (final item in config['tiers'] as List) {
@@ -49,7 +50,7 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
         }
       }
     }
-    if (loaded.isEmpty) {
+    if (loaded.isEmpty && loyaltyMode != 'cashback') {
       loaded = [ProgramTier(goal: m.stampsRequired, rewardDescription: m.rewardDescription ?? '')];
     }
 
@@ -135,6 +136,8 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
                         initialTiers: _tiers,
                         goalUnit: _goalUnit(loyaltyMode),
                         onChanged: (t) => _tiers = t,
+                        allowEmpty: loyaltyMode == 'cashback',
+                        goalStep: loyaltyMode == 'stamps' ? 5 : 500,
                       ),
                       const SizedBox(height: Sp.md),
                       OutlinedButton.icon(
