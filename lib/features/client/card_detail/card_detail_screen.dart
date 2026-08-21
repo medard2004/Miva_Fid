@@ -87,6 +87,11 @@ class CardDetailScreen extends ConsumerWidget {
                       ),
                     ),
 
+                    if (card.tiers.length > 1) ...[
+                      const SizedBox(height: 20),
+                      _TierRoadmap(tiers: card.tiers),
+                    ],
+
                     const SizedBox(height: 20),
 
                     Text(t.rewardsTitle, style: AppTextStyles.displayMedium()),
@@ -452,6 +457,90 @@ class _MiddleCardWidget extends StatelessWidget {
               CardFaceContent(card: card, textColor: textColor, compact: true),
         ),
       ),
+    );
+  }
+}
+
+/// Roadmap verticale des paliers — palier atteint, en cours, et à venir,
+/// avec le niveau et la récompense de chacun. Affichée uniquement quand le
+/// programme a 2+ paliers (un seul palier = pas de système de niveau, voir
+/// `LoyaltyCard.levelName`).
+class _TierRoadmap extends StatelessWidget {
+  final List<CardTier> tiers;
+  const _TierRoadmap({required this.tiers});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < tiers.length; i++) ...[
+            _TierRoadmapRow(tier: tiers[i]),
+            if (i < tiers.length - 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 18),
+                child: Container(width: 2, height: 16, color: AppColors.border),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TierRoadmapRow extends StatelessWidget {
+  final CardTier tier;
+  const _TierRoadmapRow({required this.tier});
+
+  @override
+  Widget build(BuildContext context) {
+    final isReached = tier.status == 'reached';
+    final isCurrent = tier.status == 'current';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isReached
+                ? AppColors.successTint
+                : (isCurrent ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surfaceMuted),
+            border: isCurrent ? Border.all(color: AppColors.primary, width: 1.5) : null,
+          ),
+          child: Text(tier.icon, style: const TextStyle(fontSize: 16)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tier.levelName ?? 'Palier',
+                  style: AppTextStyles.titleMedium().copyWith(
+                    fontSize: 14,
+                    color: isReached || isCurrent ? AppColors.ink : AppColors.inkMuted(opacity: 0.6),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  tier.rewardDescription,
+                  style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isReached)
+          const Icon(LucideIcons.circleCheckBig, size: 18, color: AppColors.success),
+      ],
     );
   }
 }
