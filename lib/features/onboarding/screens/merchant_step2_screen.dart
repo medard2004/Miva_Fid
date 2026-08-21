@@ -8,10 +8,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
-import '../models/program_tier.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../merchant/widgets/tier_editor_form.dart';
 
 class MerchantStep2Screen extends ConsumerStatefulWidget {
   const MerchantStep2Screen({super.key});
@@ -28,9 +28,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
   late final TextEditingController _cashbackPercentCtrl;
   late final TextEditingController _cashbackCapCtrl;
   late final TextEditingController _cashbackExpiryCtrl;
-  final List<TextEditingController> _goalCtrls = [];
-  final List<TextEditingController> _descCtrls = [];
-  final List<TextEditingController> _validityCtrls = [];
+  final _tierEditorKey = GlobalKey<TierEditorFormState>();
 
   @override
   void initState() {
@@ -45,40 +43,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         text: state.cashbackRedeemCapPercent?.toString() ?? '');
     _cashbackExpiryCtrl = TextEditingController(
         text: state.cashbackExpiryDays?.toString() ?? '');
-    _initRewardControllers(state.tiers);
-  }
-
-  void _initRewardControllers(List<ProgramTier> tiers) {
-    _clearRewardControllers();
-    if (tiers.isEmpty) {
-      _addRewardController(const ProgramTier(goal: 10, rewardDescription: ''));
-    } else {
-      for (final tier in tiers) {
-        _addRewardController(tier);
-      }
-    }
-  }
-
-  void _addRewardController(ProgramTier tier) {
-    _goalCtrls.add(TextEditingController(text: tier.goal.toString()));
-    _descCtrls.add(TextEditingController(text: tier.rewardDescription));
-    _validityCtrls
-        .add(TextEditingController(text: tier.validityDays?.toString() ?? ''));
-  }
-
-  void _clearRewardControllers() {
-    for (final c in _goalCtrls) {
-      c.dispose();
-    }
-    for (final c in _descCtrls) {
-      c.dispose();
-    }
-    for (final c in _validityCtrls) {
-      c.dispose();
-    }
-    _goalCtrls.clear();
-    _descCtrls.clear();
-    _validityCtrls.clear();
   }
 
   @override
@@ -88,33 +52,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     _cashbackPercentCtrl.dispose();
     _cashbackCapCtrl.dispose();
     _cashbackExpiryCtrl.dispose();
-    _clearRewardControllers();
     super.dispose();
-  }
-
-  void _addNewTier() {
-    final state = ref.read(onboardingNotifierProvider);
-    final lastGoal = _goalCtrls.isNotEmpty
-        ? (int.tryParse(_goalCtrls.last.text) ?? 10)
-        : 10;
-    final step = state.loyaltyMode == 'stamps' ? 5 : 500;
-
-    final newTier = ProgramTier(goal: lastGoal + step, rewardDescription: '');
-    setState(() {
-      _addRewardController(newTier);
-    });
-  }
-
-  void _removeTier(int index) {
-    if (_goalCtrls.length <= 1) return;
-    setState(() {
-      _goalCtrls[index].dispose();
-      _descCtrls[index].dispose();
-      _validityCtrls[index].dispose();
-      _goalCtrls.removeAt(index);
-      _descCtrls.removeAt(index);
-      _validityCtrls.removeAt(index);
-    });
   }
 
   void _next() {
@@ -124,18 +62,9 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     final loyaltyMode = ref.read(onboardingNotifierProvider).loyaltyMode;
 
     if (loyaltyMode != 'cashback') {
-      final List<ProgramTier> updatedRewards = [];
-      for (int i = 0; i < _goalCtrls.length; i++) {
-        final goalVal = int.tryParse(_goalCtrls[i].text.trim()) ?? 10;
-        final descVal = _descCtrls[i].text.trim();
-        final validityVal = int.tryParse(_validityCtrls[i].text.trim());
-        updatedRewards.add(ProgramTier(
-          goal: goalVal,
-          rewardDescription: descVal,
-          validityDays: validityVal,
-        ));
-      }
-      notifier.setTiers(updatedRewards);
+      final tiers = _tierEditorKey.currentState?.currentTiers() ??
+          ref.read(onboardingNotifierProvider).tiers;
+      notifier.setTiers(tiers);
     }
 
     if (loyaltyMode == 'spend') {
@@ -364,168 +293,28 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       // Liste dynamique des récompenses (Tampons/Achats
                       // uniquement — Cashback n'a pas de cycle objectif).
                       if (state.loyaltyMode != 'cashback') ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Paliers de récompenses',
-                              style: AppTextStyles.labelBold()),
-                          Text(
-                            '${_goalCtrls.length} palier${_goalCtrls.length > 1 ? 's' : ''}',
-                            style: AppTextStyles.caption().copyWith(
-                              color: AppColors.merchant,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        TierEditorForm(
+                          key: _tierEditorKey,
+                          initialTiers: state.tiers,
+                          goalUnit: goalUnit,
+                          onChanged: (_) {},
+                        ),
+                        const SizedBox(height: Sp.md),
+                        OutlinedButton.icon(
+                          onPressed: () => _tierEditorKey.currentState?.addTier(),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                            foregroundColor: AppColors.merchant,
+                            side: const BorderSide(color: AppColors.merchant),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: Sp.sm),
-
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _goalCtrls.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: Sp.md),
-                        itemBuilder: (context, index) {
-                          return Container(
-                            padding: const EdgeInsets.all(Sp.md),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.merchantTint,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        'Récompense #${index + 1}',
-                                        style: AppTextStyles.caption().copyWith(
-                                          color: AppColors.merchant,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    if (_goalCtrls.length > 1)
-                                      IconButton(
-                                        icon: const Icon(LucideIcons.trash2,
-                                            size: 18, color: AppColors.danger),
-                                        onPressed: () => _removeTier(index),
-                                        tooltip: 'Supprimer cette récompense',
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(height: Sp.sm),
-
-                                // Champ 1: Seuil
-                                AppInput(
-                                  label: 'Objectif / Seuil ($goalUnit) *',
-                                  hint: 'Ex: 10',
-                                  controller: _goalCtrls[index],
-                                  keyboardType: TextInputType.number,
-                                  prefixIcon: LucideIcons.target,
-                                  accentColor: AppColors.merchant,
-                                  onChanged: (_) => setState(() {}),
-                                  validator: (v) {
-                                    final val = v?.trim() ?? '';
-                                    if (val.isEmpty) {
-                                      return 'Le palier est obligatoire';
-                                    }
-                                    final parsed = int.tryParse(val);
-                                    if (parsed == null || parsed <= 0) {
-                                      return 'Veuillez entrer un nombre supérieur à 0';
-                                    }
-                                    if (index > 0) {
-                                      final prevText = _goalCtrls[index - 1].text.trim();
-                                      final prevParsed = int.tryParse(prevText);
-                                      if (prevParsed != null && parsed <= prevParsed) {
-                                        return 'Doit être supérieur au palier précédent ($prevParsed $goalUnit)';
-                                      }
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: Sp.sm),
-
-                                // Champ 2: Description
-                                AppInput(
-                                  label: 'Récompense offerte *',
-                                  hint: 'Ex : 1 café offert, 10% de réduction',
-                                  controller: _descCtrls[index],
-                                  prefixIcon: LucideIcons.gift,
-                                  accentColor: AppColors.merchant,
-                                  maxLength: 255,
-                                  onChanged: (_) => setState(() {}),
-                                  validator: (v) {
-                                    final val = v?.trim() ?? '';
-                                    if (val.isEmpty) {
-                                      return 'La description de la récompense est obligatoire';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: Sp.sm),
-
-                                // Champ 3: Validité (optionnelle, propre à ce palier)
-                                AppInput(
-                                  label: 'Validité (jours, optionnel)',
-                                  hint: 'Ex: 30 — vide = pas d\'expiration',
-                                  controller: _validityCtrls[index],
-                                  keyboardType: TextInputType.number,
-                                  prefixIcon: LucideIcons.calendarClock,
-                                  accentColor: AppColors.merchant,
-                                  validator: (v) {
-                                    final trimmed = v?.trim() ?? '';
-                                    if (trimmed.isEmpty) return null;
-                                    final parsed = int.tryParse(trimmed);
-                                    if (parsed == null || parsed <= 0) {
-                                      return 'Veuillez entrer un nombre de jours supérieur à 0';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: Sp.md),
-
-                      // Bouton ajouter une autre récompense
-                      OutlinedButton.icon(
-                        onPressed: _addNewTier,
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          foregroundColor: AppColors.merchant,
-                          side: const BorderSide(color: AppColors.merchant),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          icon: const Icon(LucideIcons.plus, size: 18),
+                          label: Text(
+                            'Ajouter un palier',
+                            style: AppTextStyles.bodyMd()
+                                .copyWith(color: AppColors.merchant, fontWeight: FontWeight.bold),
                           ),
                         ),
-                        icon: const Icon(LucideIcons.plus, size: 18),
-                        label: Text(
-                          'Ajouter une autre récompense',
-                          style: AppTextStyles.bodyMd().copyWith(
-                            color: AppColors.merchant,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
                       ],
 
                       const SizedBox(height: Sp.lg),
