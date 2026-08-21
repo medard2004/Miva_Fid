@@ -40,8 +40,16 @@ import '../../features/merchant/screens/dashboard_screen.dart';
 import '../../features/merchant/screens/merchant_shell.dart';
 import '../../features/merchant/screens/more_screen.dart';
 import '../../features/merchant/screens/programme_screen.dart';
+import '../../features/merchant/screens/programme_tiers_screen.dart';
+import '../../features/merchant/screens/programme_rules_screen.dart';
+import '../../features/merchant/screens/programme_design_screen.dart';
 import '../../features/merchant/screens/qr_code_screen.dart';
-import '../../features/merchant/screens/settings_screen.dart';
+import '../../features/merchant/screens/account_category_screen.dart';
+import '../../features/merchant/screens/subscription_category_screen.dart';
+import '../../features/merchant/screens/profile_screen.dart' as merchant_profile;
+import '../../features/merchant/screens/subscription_screen.dart';
+import '../../features/merchant/screens/team_screen.dart';
+import '../../features/merchant/screens/notifications_screen.dart' as merchant_notifs;
 import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
@@ -534,12 +542,15 @@ GoRouter appRouter(AppRouterRef ref) {
             GoRoute(
               path: '/merchant/clients',
               pageBuilder: (_, __) => _fade(const ClientsScreen()),
-            ),
-            GoRoute(
-              path: '/merchant/clients/:id',
-              pageBuilder: (_, s) => _slide(
-                ClientDetailScreen(clientId: s.pathParameters['id']!),
-              ),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, s) => _slide(
+                    ClientDetailScreen(clientId: s.pathParameters['id']!),
+                  ),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -561,19 +572,69 @@ GoRouter appRouter(AppRouterRef ref) {
               routes: [
                 GoRoute(
                   path: 'programme',
+                  parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, __) => _slide(const ProgrammeScreen()),
+                  routes: [
+                    GoRoute(
+                      path: 'tiers',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const ProgrammeTiersScreen()),
+                    ),
+                    GoRoute(
+                      path: 'rules',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const ProgrammeRulesScreen()),
+                    ),
+                    GoRoute(
+                      path: 'design',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const ProgrammeDesignScreen()),
+                    ),
+                  ],
                 ),
                 GoRoute(
-                  path: 'qrcode',
-                  pageBuilder: (_, __) => _slide(const QrCodeScreen()),
+                  path: 'account',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const AccountCategoryScreen()),
+                  routes: [
+                    GoRoute(
+                      path: 'profile',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const merchant_profile.ProfileScreen()),
+                    ),
+                    GoRoute(
+                      path: 'vitrine',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                    ),
+                    GoRoute(
+                      path: 'qrcode',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const QrCodeScreen()),
+                    ),
+                  ],
                 ),
                 GoRoute(
-                  path: 'vitrine',
-                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                  path: 'subscription',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const SubscriptionCategoryScreen()),
+                  routes: [
+                    GoRoute(
+                      path: 'plan',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const SubscriptionScreen()),
+                    ),
+                    GoRoute(
+                      path: 'team',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const TeamScreen()),
+                    ),
+                  ],
                 ),
                 GoRoute(
-                  path: 'settings',
-                  pageBuilder: (_, __) => _slide(const SettingsScreen()),
+                  path: 'preferences',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const merchant_notifs.NotificationsScreen()),
                 ),
               ],
             ),
