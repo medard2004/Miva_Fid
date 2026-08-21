@@ -362,9 +362,8 @@ class _MechanicStat extends StatelessWidget {
   /// (`LoyaltyLevelService`).
   Widget _levelRow() {
     if (card.levelName == null) return const SizedBox.shrink();
-    final currentTier = card.tiers
-        .where((t) => t.status == 'reached' || t.status == 'current')
-        .lastOrNull;
+    final currentTier =
+        card.tiers.where((t) => t.status == 'reached').lastOrNull;
     final icon = currentTier?.icon;
     return Padding(
       padding: EdgeInsets.only(top: compact ? 2 : 4),
