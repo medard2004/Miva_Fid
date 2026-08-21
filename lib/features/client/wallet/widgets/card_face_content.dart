@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -361,15 +362,30 @@ class _MechanicStat extends StatelessWidget {
   /// (`LoyaltyLevelService`).
   Widget _levelRow() {
     if (card.levelName == null) return const SizedBox.shrink();
+    final currentTier = card.tiers
+        .where((t) => t.status == 'reached' || t.status == 'current')
+        .lastOrNull;
+    final icon = currentTier?.icon;
     return Padding(
       padding: EdgeInsets.only(top: compact ? 2 : 4),
-      child: Text(
-        card.isMaxLevel
-            ? '${card.levelName} · niveau maximum'
-            : '${card.levelName} · ${card.levelPercentToNext ?? 0}% vers le niveau suivant',
-        style: AppTextStyles.monoSmall(color: subtextColor),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Text(icon, style: const TextStyle(fontSize: 12)),
+            const SizedBox(width: 4),
+          ],
+          Flexible(
+            child: Text(
+              card.isMaxLevel
+                  ? '${card.levelName} · niveau maximum'
+                  : '${card.levelName} · ${card.levelPercentToNext ?? 0}% vers le niveau suivant',
+              style: AppTextStyles.monoSmall(color: subtextColor),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,6 +6,47 @@ enum LoyaltyMechanic { stamps, points, spend, cashback, vip }
 /// Palier VIP — Platinum réserve le Bordeaux profond.
 enum VipTier { none, silver, gold, platinum }
 
+/// Un palier tel que renvoyé par l'API (`LoyaltyCard::tiers`, côté serveur) —
+/// vide tant que le programme n'a qu'un seul palier configuré.
+class CardTier {
+  final int order;
+  final int goal;
+  final String? levelName;
+  final String rewardDescription;
+  final String icon;
+
+  /// `reached`, `current` ou `upcoming`.
+  final String status;
+
+  const CardTier({
+    required this.order,
+    required this.goal,
+    this.levelName,
+    required this.rewardDescription,
+    required this.icon,
+    required this.status,
+  });
+
+  factory CardTier.fromJson(Map<String, dynamic> json) {
+    return CardTier(
+      order: (json['order'] as num?)?.toInt() ?? 0,
+      goal: (json['goal'] as num?)?.toInt() ?? 0,
+      levelName: json['level_name'] as String?,
+      rewardDescription: json['reward_description'] as String? ?? '',
+      icon: json['icon'] as String? ?? '⭐',
+      status: json['status'] as String? ?? 'upcoming',
+    );
+  }
+}
+
+List<CardTier> _tiersFromApi(dynamic raw) {
+  if (raw is! List) return const [];
+  return raw
+      .whereType<Map>()
+      .map((m) => CardTier.fromJson(Map<String, dynamic>.from(m)))
+      .toList();
+}
+
 class LoyaltyCard {
   final String id;
   final String restaurantName;
@@ -64,6 +105,10 @@ class LoyaltyCard {
   final int? levelPercentToNext;
   final bool isMaxLevel;
 
+  /// Roadmap des paliers — vide si un seul palier configuré (pas de système
+  /// de niveau affiché dans ce cas, voir `levelName`).
+  final List<CardTier> tiers;
+
   final String fallbackId; // ex. "SUN-28392"
   final String welcomeOffer;
 
@@ -95,6 +140,7 @@ class LoyaltyCard {
     this.levelName,
     this.levelPercentToNext,
     this.isMaxLevel = false,
+    this.tiers = const [],
     required this.fallbackId,
     this.welcomeOffer = '',
     this.createdAt,
@@ -140,6 +186,7 @@ class LoyaltyCard {
       levelName: level?['name'] as String?,
       levelPercentToNext: level?['percent_to_next'] as int?,
       isMaxLevel: level?['is_max_level'] as bool? ?? false,
+      tiers: _tiersFromApi(json['tiers']),
       fallbackId: json['card_code'] as String? ?? '',
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
     );
@@ -154,6 +201,7 @@ class LoyaltyCard {
     String? levelName,
     int? levelPercentToNext,
     bool? isMaxLevel,
+    List<CardTier>? tiers,
   }) {
     return LoyaltyCard(
       id: id,
@@ -178,6 +226,7 @@ class LoyaltyCard {
       levelName: levelName ?? this.levelName,
       levelPercentToNext: levelPercentToNext ?? this.levelPercentToNext,
       isMaxLevel: isMaxLevel ?? this.isMaxLevel,
+      tiers: tiers ?? this.tiers,
       fallbackId: fallbackId,
       welcomeOffer: welcomeOffer,
       createdAt: createdAt,
@@ -204,6 +253,7 @@ class LoyaltyCard {
       levelName: level?['name'] as String?,
       levelPercentToNext: level?['percent_to_next'] as int?,
       isMaxLevel: level?['is_max_level'] as bool?,
+      tiers: payload['tiers'] != null ? _tiersFromApi(payload['tiers']) : null,
     );
   }
 
