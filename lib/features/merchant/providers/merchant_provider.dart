@@ -85,10 +85,8 @@ class MerchantNotifier extends _$MerchantNotifier {
         ..addAll(configPatch);
       await ref.read(loyaltyProgramServiceProvider).save({
         'mode': restaurant.loyaltyType ?? 'stamps',
-        'goal': config['goal'] ?? 10,
-        'reward_description': config['reward_description'],
-        'rewards': config['rewards'],
-        'levels': config['levels'],
+        if (restaurant.loyaltyType != 'cashback' || _hasNonEmptyTiers(config))
+          'tiers': config['tiers'] ?? [],
         'reward_validity_days': config['reward_validity_days'],
         'show_review_button': config['show_review_button'] ?? false,
         'google_review_url': config['google_review_url'],
@@ -150,7 +148,17 @@ const _configKeys = {
   'logo_url',
   'fcfa_per_point',
   'cashback_expiry_days',
+  'tiers',
 };
+
+/// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,
+/// où il est optionnel — l'omettre entièrement (plutôt qu'envoyer `[]`) pour
+/// un commerce cashback sans palier configuré évite un 422 côté validation
+/// Laravel (`array`/`min:1` ne s'appliquent pas à un champ absent).
+bool _hasNonEmptyTiers(Map<String, dynamic> config) {
+  final tiers = config['tiers'];
+  return tiers is List && tiers.isNotEmpty;
+}
 
 MerchantModel _fromRestaurant(RestaurantAccount r) {
   final config = r.loyaltyConfig;
