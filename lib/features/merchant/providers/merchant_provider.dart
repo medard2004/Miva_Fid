@@ -171,6 +171,14 @@ MerchantModel _fromRestaurant(RestaurantAccount r) {
     return int.tryParse(value?.toString() ?? '');
   }
 
+  Map<String, dynamic>? firstTier() {
+    final tiers = config['tiers'];
+    if (tiers is List && tiers.isNotEmpty && tiers.first is Map) {
+      return Map<String, dynamic>.from(tiers.first as Map);
+    }
+    return null;
+  }
+
   return MerchantModel(
     id: r.id,
     userId: r.uuid,
@@ -189,8 +197,9 @@ MerchantModel _fromRestaurant(RestaurantAccount r) {
     // Le backend nomme le mode `type` (`stamps`/`points`/`spend`) ; le module
     // marchand parle de `loyaltyMode` avec les mêmes valeurs.
     loyaltyMode: r.loyaltyType ?? 'stamps',
-    stampsRequired: asInt('goal') ?? 10,
-    rewardDescription: asString('reward_description'),
+    stampsRequired: (firstTier()?['goal'] as num?)?.toInt() ?? asInt('goal') ?? 10,
+    rewardDescription:
+        firstTier()?['reward_description'] as String? ?? asString('reward_description'),
     googleReviewUrl: asString('google_review_url'),
     showReviewButton: config['show_review_button'] == true,
     stampDesignType: asString('stamp_design_type') ?? 'check',
