@@ -531,6 +531,11 @@ class _TierRoadmapRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
+                  'Objectif : ${formatGroupedNumber(tier.goal)}',
+                  style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.6)),
+                ),
+                const SizedBox(height: 2),
+                Text(
                   tier.rewardDescription,
                   style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
                 ),
