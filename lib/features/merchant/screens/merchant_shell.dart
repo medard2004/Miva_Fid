@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/app_bottom_sheet.dart';
-import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_header.dart';
-import '../../../core/widgets/app_toast.dart';
 
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
@@ -178,7 +174,7 @@ class MerchantShell extends ConsumerWidget {
                         AppHeaderAction(
                           icon: LucideIcons.bell,
                           badge: true,
-                          onTap: () => AppToast.info(context, 'Notifications bientôt disponibles'),
+                          onTap: () => context.push('/merchant/more/preferences'),
                         ),
                       ],
                     ),

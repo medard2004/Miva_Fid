@@ -185,6 +185,34 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     ),
                     const SizedBox(height: Sp.md),
                   ],
+
+                  if (loyaltyMode != 'cashback') ...[
+                    Container(
+                      padding: const EdgeInsets.all(Sp.md),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: Rd.card,
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: SwitchListTile.adaptive(
+                        value: merchant.loops,
+                        onChanged: (v) => ref
+                            .read(merchantNotifierProvider.notifier)
+                            .updateProgramme({'loops': v}),
+                        title: Text('Programme en boucle', style: AppTextStyles.labelBold()),
+                        subtitle: Text(
+                          merchant.loops
+                              ? 'Dernier palier atteint : nouveau cycle automatique.'
+                              : 'Dernier palier atteint : carte terminée définitivement.',
+                          style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                        ),
+                        activeThumbColor: Colors.white,
+                        activeTrackColor: AppColors.merchant,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const SizedBox(height: Sp.md),
+                  ],
                 ],
               ),
             );

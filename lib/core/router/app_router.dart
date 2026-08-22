@@ -53,6 +53,7 @@ import '../../features/merchant/screens/notifications_screen.dart' as merchant_n
 import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
+import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
 import '../../features/onboarding/screens/merchant_auth_screen.dart';
 import '../../features/onboarding/screens/merchant_location_map_screen.dart';
@@ -601,6 +602,11 @@ GoRouter appRouter(AppRouterRef ref) {
                       path: 'profile',
                       parentNavigatorKey: rootNavigatorKey,
                       pageBuilder: (_, __) => _slide(const merchant_profile.ProfileScreen()),
+                    ),
+                    GoRoute(
+                      path: 'change-password',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
                     ),
                     GoRoute(
                       path: 'vitrine',

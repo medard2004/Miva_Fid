@@ -27,7 +27,9 @@ class RewardsScreen extends ConsumerWidget {
         ref.watch(notificationsProvider).where((n) => !n.isRead).length;
 
     final availableRewards = rewards.where((r) => r.isRedeemable).toList();
-    final usedRewards = rewards.where((r) => r.status != RewardStatus.available).toList();
+    final usedRewards = rewards
+        .where((r) => r.status != RewardStatus.available || r.isExpired)
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.surface,

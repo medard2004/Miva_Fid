@@ -126,9 +126,10 @@ class _CompleteSocialProfileScreenState
                       PhoneInputWithCountryPicker(
                         key: _phoneInputKey,
                         controller: _phoneController,
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? t.authPhoneRequiredError
-                            : null,
+                        validator: fieldValidator(
+                          'phone',
+                          requiredMessage: t.authPhoneRequiredError,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(t.editProfileBirthDate,
@@ -137,8 +138,9 @@ class _CompleteSocialProfileScreenState
                       AppDatePickerField(
                         value: _birthDate,
                         onChanged: (date) => setState(() => _birthDate = date),
-                        validator: (_) =>
-                            _birthDate == null ? t.authBirthDateError : null,
+                        validator: (_) => _birthDate == null
+                            ? t.authBirthDateError
+                            : fieldError('birthdate'),
                       ),
                       const SizedBox(height: 28),
                       AppButton(

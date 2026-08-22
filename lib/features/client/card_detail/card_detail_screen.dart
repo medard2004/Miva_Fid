@@ -89,33 +89,68 @@ class CardDetailScreen extends ConsumerWidget {
 
                     if (card.tiers.length > 1) ...[
                       const SizedBox(height: 20),
-                      _TierRoadmap(tiers: card.tiers),
+                      _CurrentLevelCard(
+                        card: card,
+                        onSeeAll: () => _showAllLevelsSheet(context, card.tiers),
+                      ),
                     ],
 
-                    const SizedBox(height: 20),
+                    if (card.mechanic != LoyaltyMechanic.cashback) ...[
+                      const SizedBox(height: 20),
 
-                    Text(t.rewardsTitle, style: AppTextStyles.displayMedium()),
+                      Text(t.rewardsTitle,
+                          style: AppTextStyles.displayMedium()),
 
-                    const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
-                    if (rewards.isNotEmpty)
-                      SizedBox(
-                        height: 132,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: rewards.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 10),
-                          itemBuilder: (context, i) => _DetailedRewardCard(
-                            reward: rewards[i],
-                            t: t,
-                            onTap: () =>
-                                _showRewardDetailSheet(context, ref, rewards[i], t),
+                      Builder(builder: (context) {
+                        // Multi-palier : la liste inclut aussi un aperçu
+                        // verrouillé pour chaque palier pas encore atteint
+                        // (y compris ceux de niveau supérieur), pas
+                        // seulement les récompenses déjà débloquées.
+                        final lockedTiers = card.tiers
+                            .where((tier) => tier.status != 'reached')
+                            .toList();
+                        final showLockedTiers = card.tiers.isNotEmpty;
+                        final total = rewards.length +
+                            (showLockedTiers
+                                ? lockedTiers.length
+                                : (rewards.isEmpty ? 1 : 0));
+
+                        if (total == 0) return const SizedBox.shrink();
+
+                        return SizedBox(
+                          height: 132,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: total,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 10),
+                            itemBuilder: (context, i) {
+                              if (i < rewards.length) {
+                                return _DetailedRewardCard(
+                                  reward: rewards[i],
+                                  t: t,
+                                  onTap: () => _showRewardDetailSheet(
+                                      context, ref, rewards[i], t),
+                                );
+                              }
+                              if (showLockedTiers) {
+                                return _LockedTierCard(
+                                  t: t,
+                                  tier: lockedTiers[i - rewards.length],
+                                );
+                              }
+                              return _LockedTierCard(
+                                t: t,
+                                tier: card.nextReward,
+                                fallbackGoal: card.stampsGoal,
+                              );
+                            },
                           ),
-                        ),
-                      )
-                    else
-                      _DefaultOfferCard(t: t),
+                        );
+                      }),
+                    ],
 
                     const SizedBox(height: 16),
 
@@ -536,7 +571,9 @@ class _TierRoadmapRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  tier.rewardDescription,
+                  tier.rewardDescription.isNotEmpty
+                      ? tier.rewardDescription
+                      : '🔒 Récompense surprise',
                   style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
                 ),
               ],
@@ -616,14 +653,23 @@ class _DetailedRewardCard extends StatelessWidget {
   }
 }
 
-/// Aperçu générique affiché tant que la carte n'a débloqué aucune
-/// récompense — pas de véritable [Reward] tant que rien n'est débloqué.
-class _DefaultOfferCard extends StatelessWidget {
+/// Aperçu d'un palier pas encore atteint — objectif, récompense (masquée
+/// côté serveur si le marchand a désactivé `reveal_reward` pour ce palier)
+/// et statut verrouillé. Remplace l'ancien texte d'incitation générique.
+class _LockedTierCard extends StatelessWidget {
   final AppLocalizations t;
-  const _DefaultOfferCard({required this.t});
+  final CardTier? tier;
+  final int? fallbackGoal;
+  const _LockedTierCard({required this.t, this.tier, this.fallbackGoal});
 
   @override
   Widget build(BuildContext context) {
+    final goal = tier?.goal ?? fallbackGoal;
+    final description = tier?.rewardDescription ?? '';
+    final title = description.isNotEmpty
+        ? (tier != null ? '${tier!.icon} $description' : description)
+        : t.cardDetailDefaultOfferTitle;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: SizedBox(
@@ -641,25 +687,131 @@ class _DefaultOfferCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                t.cardDetailDefaultOfferTitle,
+                title,
                 style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                t.cardDetailDefaultOfferMessage,
-                style: AppTextStyles.bodySmall(
-                    color: AppColors.inkMuted(opacity: 0.7)),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (goal != null) ...[
+                const SizedBox(height: 3),
+                Text(
+                  'Objectif : ${formatGroupedNumber(goal)}',
+                  style: AppTextStyles.bodySmall(
+                      color: AppColors.inkMuted(opacity: 0.7)),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
+}
+
+/// Carte compacte du niveau ACTUEL du cycle en cours — pas la roadmap
+/// complète (voir `_showAllLevelsSheet`). Le niveau maximum historique
+/// (`LoyaltyCard.max_level_*` côté serveur) reste consultable via l'accordéon
+/// d'historique, pas ici : cette carte ne parle que du cycle en cours.
+class _CurrentLevelCard extends StatelessWidget {
+  final LoyaltyCard card;
+  final VoidCallback onSeeAll;
+  const _CurrentLevelCard({required this.card, required this.onSeeAll});
+
+  CardTier? get _displayTier {
+    if (card.tiers.isEmpty) return null;
+    final current = card.tiers.where((tr) => tr.status == 'current');
+    if (current.isNotEmpty) return current.first;
+    final reached = card.tiers.where((tr) => tr.status == 'reached');
+    if (reached.isNotEmpty) return reached.last;
+    return card.tiers.first;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tier = _displayTier;
+
+    return AppCard(
+      onTap: onSeeAll,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: 0.12),
+              border: Border.all(color: AppColors.primary, width: 1.5),
+            ),
+            child: Text(tier?.icon ?? '⭐', style: const TextStyle(fontSize: 16)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  card.levelName ?? tier?.levelName ?? 'Palier',
+                  style: AppTextStyles.titleMedium().copyWith(fontSize: 14),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  card.isMaxLevel
+                      ? 'Niveau maximum atteint'
+                      : 'Objectif : ${formatGroupedNumber(tier?.goal ?? card.stampsGoal)}',
+                  style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.6)),
+                ),
+              ],
+            ),
+          ),
+          Icon(LucideIcons.chevronRight, color: AppColors.inkMuted(opacity: 0.5), size: 20),
+        ],
+      ),
+    );
+  }
+}
+
+/// Popup listant tous les paliers (roadmap complète) — ouvert depuis
+/// [_CurrentLevelCard], réutilise `_TierRoadmap` telle quelle.
+void _showAllLevelsSheet(BuildContext context, List<CardTier> tiers) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+    ),
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 48,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text('Tous les niveaux', style: AppTextStyles.displayMedium()),
+            const SizedBox(height: 16),
+            Flexible(
+              child: SingleChildScrollView(
+                child: _TierRoadmap(tiers: tiers),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// Accordéon de l'historique — données réelles (`GET /loyalty-cards/{id}/history`),
@@ -989,14 +1141,12 @@ void _showRewardDetailSheet(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Flexible(
-                              child: Text(
-                                reward.redeemToken.replaceAll('-', ' - '),
-                                style: AppTextStyles.monoMedium(color: AppColors.inkSolid)
-                                    .copyWith(fontSize: 18),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                            Text(
+                              reward.redeemToken.replaceAll('-', ' - '),
+                              style: AppTextStyles.monoMedium(color: AppColors.inkSolid)
+                                  .copyWith(fontSize: 18),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(

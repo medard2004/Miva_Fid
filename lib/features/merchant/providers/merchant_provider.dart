@@ -98,6 +98,7 @@ class MerchantNotifier extends _$MerchantNotifier {
         'card_decoration_pattern': config['card_decoration_pattern'],
         'card_gradient_type': config['card_gradient_type'],
         'logo_url': config['logo_url'],
+        'loops': config['loops'] ?? true,
         if (restaurant.loyaltyType == 'spend')
           'fcfa_per_point': config['fcfa_per_point'] ?? 100,
         if (restaurant.loyaltyType == 'cashback') ...{
@@ -149,6 +150,7 @@ const _configKeys = {
   'fcfa_per_point',
   'cashback_expiry_days',
   'tiers',
+  'loops',
 };
 
 /// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,
@@ -207,6 +209,7 @@ MerchantModel _fromRestaurant(RestaurantAccount r) {
     stampIcon: asString('stamp_icon') ?? 'check_rounded',
     cardDecorationPattern: asString('card_decoration_pattern') ?? 'none',
     cardGradientType: asString('card_gradient_type') ?? 'linear',
+    loops: config['loops'] as bool? ?? true,
     plan: r.plan,
     smsRemaining: r.smsCredits,
     createdAt: DateTime.now(),

@@ -57,6 +57,24 @@ class MerchantAuthRepository {
     return RestaurantAccount.fromJson(response['restaurant'] ?? {});
   }
 
+  Future<bool> verifyPassword(String currentPassword) async {
+    final response = await _authService.verifyPassword(currentPassword);
+    return response['valid'] == true;
+  }
+
+  Future<String> changePassword(
+      String currentPassword, String newPassword) async {
+    final response =
+        await _authService.changePassword(currentPassword, newPassword);
+    return response['message'] ?? 'Mot de passe modifié';
+  }
+
+  Future<RestaurantAccount> updateNotificationPreferences(
+      Map<String, bool> patch) async {
+    final response = await _authService.updateNotificationPreferences(patch);
+    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+  }
+
   Future<RestaurantAccount> updatePlan(String planSlug) async {
     final response = await _authService.updatePlan(planSlug);
     return RestaurantAccount.fromJson(response['restaurant'] ?? {});

@@ -318,6 +318,28 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                         ),
                       ],
 
+                      if (state.loyaltyMode != 'cashback') ...[
+                        SwitchListTile.adaptive(
+                          value: state.loops,
+                          onChanged: notifier.setLoops,
+                          title: Text(
+                            'Programme en boucle',
+                            style: AppTextStyles.bodyMd(),
+                          ),
+                          subtitle: Text(
+                            state.loops
+                                ? 'Dernier palier atteint : nouveau cycle automatique.'
+                                : 'Dernier palier atteint : carte terminée définitivement.',
+                            style: AppTextStyles.caption()
+                                .copyWith(color: AppColors.textSecondary),
+                          ),
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: AppColors.merchant,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        const SizedBox(height: Sp.md),
+                      ],
+
                       const SizedBox(height: Sp.lg),
 
                       SwitchListTile.adaptive(

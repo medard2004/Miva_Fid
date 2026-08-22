@@ -113,6 +113,19 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
   }
 
   /// Change la formule d'abonnement (`PUT /auth/merchant/plan`).
+  Future<bool> updateNotificationPreferences(Map<String, bool> patch) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final restaurant =
+          await _authRepository.updateNotificationPreferences(patch);
+      state = state.copyWith(restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
   Future<bool> updatePlan(String planSlug) async {
     state = state.copyWith(clearError: true);
     try {
@@ -154,6 +167,28 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     try {
       final restaurant = await _authRepository.deleteLogo();
       state = state.copyWith(restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  Future<bool> verifyPassword(String currentPassword) async {
+    state = state.copyWith(clearError: true);
+    try {
+      return await _authRepository.verifyPassword(currentPassword);
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
+  Future<bool> changePassword(
+      String currentPassword, String newPassword) async {
+    state = state.copyWith(clearError: true);
+    try {
+      await _authRepository.changePassword(currentPassword, newPassword);
       return true;
     } catch (e) {
       state = state.copyWith(lastError: e);

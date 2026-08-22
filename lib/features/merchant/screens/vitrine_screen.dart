@@ -1,14 +1,18 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/toast_service.dart';
 import '../providers/merchant_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
 class VitrineScreen extends ConsumerStatefulWidget {
@@ -25,6 +29,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
   final _phoneCtrl = TextEditingController();
   final _addrCtrl = TextEditingController();
   bool _saving = false;
+  bool _uploadingLogo = false;
 
   @override
   void initState() {
@@ -33,10 +38,10 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
       final m = ref.read(merchantNotifierProvider).value;
       if (m != null) {
         _nameCtrl.text = m.name;
-        _catCtrl.text = 'Restaurant'; // Mockup default
-        _descCtrl.text = m.description ?? 'Cuisine togolaise authentique au cœur de Lomé. Spécialités maison et accueil chaleureux.';
-        _phoneCtrl.text = m.phone ?? '+228 90 12 34 56';
-        _addrCtrl.text = 'Rue des Cocotiers, Lomé'; // Mockup default
+        _catCtrl.text = m.category;
+        _descCtrl.text = m.description ?? '';
+        _phoneCtrl.text = m.phone ?? '';
+        _addrCtrl.text = m.address ?? '';
         setState(() {});
       }
     });
@@ -52,12 +57,39 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     super.dispose();
   }
 
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (!mounted || file == null) return;
+
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).uploadLogo(File(file.path));
+    if (!mounted) return;
+    if (!ok) {
+      ToastService.showError('Impossible d\'envoyer le logo. Réessayez.');
+    }
+    setState(() => _uploadingLogo = false);
+  }
+
+  Future<void> _removeLogo() async {
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).deleteLogo();
+    if (!mounted) return;
+    if (!ok) {
+      ToastService.showError('Impossible de supprimer le logo. Réessayez.');
+    }
+    setState(() => _uploadingLogo = false);
+  }
+
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
       await ref.read(merchantNotifierProvider.notifier).updateProgramme({
+        'name': _nameCtrl.text.trim(),
+        'category': _catCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
+        'address': _addrCtrl.text.trim(),
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -218,31 +250,10 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     // Section Photo de couverture
                     const _SectionTitle('Photo de couverture').animate().fadeIn(duration: 300.ms, delay: 220.ms),
                     const SizedBox(height: 6),
-                    CustomPaint(
-                      painter: _DashedBorderPainter(
-                        color: AppColors.border.withValues(alpha: 0.8),
-                        borderRadius: 12,
-                      ),
-                      child: Container(
-                        height: 120,
-                        width: double.infinity,
-                        alignment: Alignment.center,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(LucideIcons.camera, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 28),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Ajouter une photo',
-                              style: AppTextStyles.caption().copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ).animate().fadeIn(duration: 400.ms, delay: 260.ms).slideY(begin: 0.06, end: 0),
+                    _buildLogoPicker(merchant?.logoUrl)
+                        .animate()
+                        .fadeIn(duration: 400.ms, delay: 260.ms)
+                        .slideY(begin: 0.06, end: 0),
                     const SizedBox(height: Sp.lg),
 
                     // Section Informations
@@ -334,6 +345,83 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
             ).animate().fadeIn(duration: 400.ms, delay: 550.ms).slideY(begin: 0.15, end: 0),
           ],
         ),
+    );
+  }
+
+  Widget _buildLogoPicker(String? logoUrl) {
+    return GestureDetector(
+      onTap: _uploadingLogo ? null : _pickLogo,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            if (logoUrl == null || logoUrl.isEmpty)
+              CustomPaint(
+                painter: _DashedBorderPainter(
+                  color: AppColors.border.withValues(alpha: 0.8),
+                  borderRadius: 12,
+                ),
+                child: Container(
+                  height: 120,
+                  width: double.infinity,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(LucideIcons.camera,
+                          color: AppColors.textSecondary.withValues(alpha: 0.6), size: 28),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ajouter une photo',
+                        style: AppTextStyles.caption().copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Image.network(
+                logoUrl,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 120,
+                  color: AppColors.background,
+                  alignment: Alignment.center,
+                  child: Icon(LucideIcons.imageOff, color: AppColors.textSecondary),
+                ),
+              ),
+            if (_uploadingLogo)
+              Container(
+                height: 120,
+                width: double.infinity,
+                color: Colors.black.withValues(alpha: 0.35),
+                alignment: Alignment.center,
+                child: const CircularProgressIndicator(color: Colors.white),
+              ),
+            if (!_uploadingLogo && logoUrl != null && logoUrl.isNotEmpty)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Material(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    icon: const Icon(LucideIcons.trash2, color: Colors.white, size: 16),
+                    onPressed: _removeLogo,
+                    tooltip: 'Supprimer la photo',
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 

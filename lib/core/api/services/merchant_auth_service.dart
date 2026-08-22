@@ -105,6 +105,37 @@ class MerchantAuthService {
         return response.data as Map<String, dynamic>;
       });
 
+  Future<Map<String, dynamic>> verifyPassword(String currentPassword) =>
+      _guard(() async {
+        final response =
+            await _apiClient.dio.post('/auth/merchant/verify-password', data: {
+          'current_password': currentPassword,
+        });
+        return response.data as Map<String, dynamic>;
+      });
+
+  Future<Map<String, dynamic>> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) =>
+      _guard(() async {
+        final response =
+            await _apiClient.dio.put('/auth/merchant/change-password', data: {
+          'current_password': currentPassword,
+          'password': newPassword,
+          'password_confirmation': newPassword,
+        });
+        return response.data as Map<String, dynamic>;
+      });
+
+  Future<Map<String, dynamic>> updateNotificationPreferences(
+          Map<String, bool> patch) =>
+      _guard(() async {
+        final response = await _apiClient.dio
+            .put('/auth/merchant/notification-preferences', data: patch);
+        return response.data as Map<String, dynamic>;
+      });
+
   Future<Map<String, dynamic>> updatePlan(String planSlug) => _guard(() async {
         final response = await _apiClient.dio
             .put('/auth/merchant/plan', data: {'plan': planSlug});

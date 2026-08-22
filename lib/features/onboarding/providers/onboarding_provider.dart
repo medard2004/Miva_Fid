@@ -23,6 +23,7 @@ class OnboardingState {
     this.colorSecondary = const Color(0xFF3730A3),
     this.tiers = const [ProgramTier(goal: 10, rewardDescription: '')],
     this.loyaltyMode = 'stamps',
+    this.loops = true,
     this.fcfaPerPoint = 100,
     this.cashbackPercentage = 5,
     this.cashbackRedeemCapPercent = 50,
@@ -56,6 +57,9 @@ class OnboardingState {
   final Color colorSecondary;
   final List<ProgramTier> tiers;
   final String loyaltyMode;
+  /// Comportement après le dernier palier : `true` = nouveau cycle
+  /// automatique, `false` = carte terminée définitivement au dernier palier.
+  final bool loops;
   /// Mode "Achat" : nombre de FCFA dépensés pour créditer 1 point.
   final int fcfaPerPoint;
   /// Mode "Cashback" : pourcentage de chaque achat crédité en solde.
@@ -107,6 +111,7 @@ class OnboardingState {
     Color? colorSecondary,
     List<ProgramTier>? tiers,
     String? loyaltyMode,
+    bool? loops,
     int? fcfaPerPoint,
     double? cashbackPercentage,
     int? cashbackRedeemCapPercent,
@@ -142,6 +147,7 @@ class OnboardingState {
       colorSecondary: colorSecondary ?? this.colorSecondary,
       tiers: tiers ?? this.tiers,
       loyaltyMode: loyaltyMode ?? this.loyaltyMode,
+      loops: loops ?? this.loops,
       fcfaPerPoint: fcfaPerPoint ?? this.fcfaPerPoint,
       cashbackPercentage: cashbackPercentage ?? this.cashbackPercentage,
       cashbackRedeemCapPercent: clearCashbackRedeemCap
@@ -186,6 +192,7 @@ class OnboardingState {
       'card_decoration_pattern': cardDecorationPattern,
       'card_gradient_type': cardGradientType,
       'logo_url': logoUrl,
+      if (!isCashback) 'loops': loops,
       if (loyaltyMode == 'spend') 'fcfa_per_point': fcfaPerPoint,
       if (isCashback) 'cashback_percentage': cashbackPercentage,
       if (isCashback && cashbackRedeemCapPercent != null)
@@ -280,6 +287,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   }
 
   void setLoyaltyMode(String v) => state = state.copyWith(loyaltyMode: v);
+  void setLoops(bool v) => state = state.copyWith(loops: v);
   void setFcfaPerPoint(int v) =>
       state = state.copyWith(fcfaPerPoint: v.clamp(1, 1000000));
   void setCashbackPercentage(double v) =>
@@ -435,6 +443,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       colorSecondary: color('color_secondary') ?? const Color(0xFF3730A3),
       tiers: loadedTiers,
       loyaltyMode: restaurant.loyaltyType ?? 'stamps',
+      loops: config['loops'] as bool? ?? true,
       fcfaPerPoint:
           int.tryParse(config['fcfa_per_point']?.toString() ?? '') ?? 100,
       cashbackPercentage:

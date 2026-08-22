@@ -31,6 +31,7 @@ class MerchantModel {
     this.stampIcon = 'check_rounded',
     this.cardDecorationPattern = 'none',
     this.cardGradientType = 'linear',
+    this.loops = true,
     this.plan = 'free',
     this.smsRemaining = 100,
     required this.createdAt,
@@ -65,6 +66,7 @@ class MerchantModel {
   final String stampIcon;
   final String cardDecorationPattern;
   final String cardGradientType;
+  final bool loops;
   final String plan;
   final int smsRemaining;
   final DateTime createdAt;
@@ -129,6 +131,7 @@ class MerchantModel {
       stampIcon: json['stamp_icon'] as String? ?? 'check_rounded',
       cardDecorationPattern: json['card_decoration_pattern'] as String? ?? 'none',
       cardGradientType: json['card_gradient_type'] as String? ?? 'linear',
+      loops: json['loops'] as bool? ?? true,
       plan: json['plan'] as String? ?? 'free',
       smsRemaining: json['sms_remaining'] as int? ?? 100,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -166,6 +169,7 @@ class MerchantModel {
       'stamp_icon': stampIcon,
       'card_decoration_pattern': cardDecorationPattern,
       'card_gradient_type': cardGradientType,
+      'loops': loops,
       'plan': plan,
       'sms_remaining': smsRemaining,
       'created_at': createdAt.toIso8601String(),
@@ -202,6 +206,7 @@ class MerchantModel {
     String? stampIcon,
     String? cardDecorationPattern,
     String? cardGradientType,
+    bool? loops,
     String? plan,
     int? smsRemaining,
     DateTime? createdAt,
@@ -236,6 +241,7 @@ class MerchantModel {
       stampIcon: stampIcon ?? this.stampIcon,
       cardDecorationPattern: cardDecorationPattern ?? this.cardDecorationPattern,
       cardGradientType: cardGradientType ?? this.cardGradientType,
+      loops: loops ?? this.loops,
       plan: plan ?? this.plan,
       smsRemaining: smsRemaining ?? this.smsRemaining,
       createdAt: createdAt ?? this.createdAt,

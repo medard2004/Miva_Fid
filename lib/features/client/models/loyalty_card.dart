@@ -109,6 +109,12 @@ class LoyaltyCard {
   /// de niveau affiché dans ce cas, voir `levelName`).
   final List<CardTier> tiers;
 
+  /// Palier (objectif + vraie récompense) vers lequel la carte progresse,
+  /// pas encore débloqué — à afficher tant qu'aucune récompense n'est
+  /// encore débloquée (contrairement à `tiers`, jamais vide pour un
+  /// mono-palier : c'est le seul moyen d'y connaître la récompense visée).
+  final CardTier? nextReward;
+
   final String fallbackId; // ex. "SUN-28392"
   final String welcomeOffer;
 
@@ -141,6 +147,7 @@ class LoyaltyCard {
     this.levelPercentToNext,
     this.isMaxLevel = false,
     this.tiers = const [],
+    this.nextReward,
     required this.fallbackId,
     this.welcomeOffer = '',
     this.createdAt,
@@ -189,6 +196,9 @@ class LoyaltyCard {
       levelPercentToNext: level?['percent_to_next'] as int?,
       isMaxLevel: level?['is_max_level'] as bool? ?? false,
       tiers: _tiersFromApi(json['tiers']),
+      nextReward: json['next_reward'] is Map
+          ? CardTier.fromJson(Map<String, dynamic>.from(json['next_reward'] as Map))
+          : null,
       fallbackId: json['card_code'] as String? ?? '',
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
     );
@@ -204,6 +214,7 @@ class LoyaltyCard {
     int? levelPercentToNext,
     bool? isMaxLevel,
     List<CardTier>? tiers,
+    CardTier? nextReward,
   }) {
     return LoyaltyCard(
       id: id,
@@ -229,6 +240,7 @@ class LoyaltyCard {
       levelPercentToNext: levelPercentToNext ?? this.levelPercentToNext,
       isMaxLevel: isMaxLevel ?? this.isMaxLevel,
       tiers: tiers ?? this.tiers,
+      nextReward: nextReward ?? this.nextReward,
       fallbackId: fallbackId,
       welcomeOffer: welcomeOffer,
       createdAt: createdAt,
@@ -256,6 +268,9 @@ class LoyaltyCard {
       levelPercentToNext: level?['percent_to_next'] as int?,
       isMaxLevel: level?['is_max_level'] as bool?,
       tiers: payload['tiers'] != null ? _tiersFromApi(payload['tiers']) : null,
+      nextReward: payload['next_reward'] is Map
+          ? CardTier.fromJson(Map<String, dynamic>.from(payload['next_reward'] as Map))
+          : null,
     );
   }
 

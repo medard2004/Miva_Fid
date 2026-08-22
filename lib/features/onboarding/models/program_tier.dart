@@ -12,11 +12,18 @@ class ProgramTier {
   /// valeur par défaut du programme (`reward_validity_days`).
   final int? validityDays;
 
+  /// `false` = récompense "surprise" : le client voit que ce palier existe
+  /// mais pas son contenu tant qu'il ne l'a pas débloqué. Réglable palier
+  /// par palier — un programme peut cacher un seul palier et laisser les
+  /// autres visibles.
+  final bool revealReward;
+
   const ProgramTier({
     required this.goal,
     this.levelName,
     required this.rewardDescription,
     this.validityDays,
+    this.revealReward = true,
   });
 
   ProgramTier copyWith({
@@ -26,6 +33,7 @@ class ProgramTier {
     String? rewardDescription,
     int? validityDays,
     bool clearValidityDays = false,
+    bool? revealReward,
   }) {
     return ProgramTier(
       goal: goal ?? this.goal,
@@ -33,6 +41,7 @@ class ProgramTier {
       rewardDescription: rewardDescription ?? this.rewardDescription,
       validityDays:
           clearValidityDays ? null : (validityDays ?? this.validityDays),
+      revealReward: revealReward ?? this.revealReward,
     );
   }
 
@@ -42,6 +51,7 @@ class ProgramTier {
       'level_name': levelName,
       'reward_description': rewardDescription,
       if (validityDays != null) 'validity_days': validityDays,
+      'reveal_reward': revealReward,
     };
   }
 
@@ -51,6 +61,7 @@ class ProgramTier {
       levelName: json['level_name'] as String?,
       rewardDescription: (json['reward_description'] as String?) ?? '',
       validityDays: (json['validity_days'] as num?)?.toInt(),
+      revealReward: json['reveal_reward'] as bool? ?? true,
     );
   }
 }

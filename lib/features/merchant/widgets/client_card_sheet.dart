@@ -45,13 +45,21 @@ class ClientCardSheet extends StatefulWidget {
   State<ClientCardSheet> createState() => _ClientCardSheetState();
 }
 
+/// Étape du parcours cashback — un scan ne peut mener qu'à UNE seule
+/// opération (créditer OU utiliser, jamais les deux) : le choix est fait une
+/// fois pour toutes en [choice], irréversible sans fermer et rouvrir la
+/// fiche (bouton "Annuler").
+enum _CashbackStep { choice, form, summary }
+
 class _ClientCardSheetState extends State<ClientCardSheet> {
   final _amountCtrl = TextEditingController();
   final _redeemCtrl = TextEditingController();
   double? _amount;
   double? _redeemAmount;
   bool _submitting = false;
-  bool _showRedeemPanel = false;
+
+  _CashbackStep _cbStep = _CashbackStep.choice;
+  bool _cbIsRedeem = false;
 
   bool get _isSpend => widget.mechanic == 'spend';
   bool get _isCashback => widget.mechanic == 'cashback';
@@ -67,6 +75,11 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     return (_amount! * widget.cashbackPercentage / 100 * 100).round() / 100;
   }
 
+  /// Achat moins cashback utilisé — jamais négatif (la validation empêche
+  /// déjà un cashback supérieur à l'achat, ce clamp ne sert qu'à l'affichage
+  /// pendant la saisie, avant que la validation soit satisfaite).
+  double get _amountToPay => ((_amount ?? 0) - (_redeemAmount ?? 0)).clamp(0, double.infinity);
+
   bool get _canSubmit {
     if (_submitting || !_isActive) return false;
     if (_isSpend) return _pointsPreview >= 1;
@@ -78,7 +91,10 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     if (_submitting || !_isActive) return false;
     final amount = _redeemAmount ?? 0;
     final purchase = _amount ?? 0;
-    return purchase > 0 && amount > 0 && amount <= widget.card.cashbackBalanceFcfa;
+    return purchase > 0 &&
+        amount > 0 &&
+        amount <= widget.card.cashbackBalanceFcfa &&
+        amount <= purchase;
   }
 
   String get _actionLabel {
@@ -110,6 +126,188 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     if (!_canRedeem) return;
     setState(() => _submitting = true);
     widget.onRedeemCashback?.call(_amount!, _redeemAmount!);
+  }
+
+  String _fcfa(double v) => '${v.round()} FCFA';
+
+  /// Parcours cashback en 3 étapes — choix irréversible avant toute saisie
+  /// (jamais crédit+utilisation dans la même opération, voir section 5 du
+  /// cahier des charges), puis résumé obligatoire avant confirmation finale.
+  List<Widget> _buildCashbackFlow() {
+    switch (_cbStep) {
+      case _CashbackStep.choice:
+        return _buildCashbackChoiceStep();
+      case _CashbackStep.form:
+        return _buildCashbackFormStep();
+      case _CashbackStep.summary:
+        return _buildCashbackSummaryStep();
+    }
+  }
+
+  List<Widget> _buildCashbackChoiceStep() {
+    final hasBalance = widget.card.cashbackBalanceFcfa > 0;
+    return [
+      AppButton.primary(
+        'Créditer du cashback',
+        onPressed: _isActive
+            ? () => setState(() {
+                  _cbIsRedeem = false;
+                  _cbStep = _CashbackStep.form;
+                })
+            : null,
+      ),
+      const SizedBox(height: Sp.sm),
+      AppButton.outlined(
+        'Utiliser du cashback',
+        onPressed: _isActive && hasBalance
+            ? () => setState(() {
+                  _cbIsRedeem = true;
+                  _cbStep = _CashbackStep.form;
+                })
+            : null,
+      ),
+      if (_isActive && !hasBalance) ...[
+        const SizedBox(height: Sp.xs),
+        Text('Aucun solde cashback à utiliser pour ce client.',
+            style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
+      ],
+      const SizedBox(height: Sp.sm),
+      AppButton.ghost('Annuler', onPressed: () => Navigator.pop(context)),
+    ];
+  }
+
+  List<Widget> _buildCashbackFormStep() {
+    return [
+      TextField(
+        controller: _amountCtrl,
+        enabled: _isActive,
+        keyboardType: const TextInputType.numberWithOptions(decimal: false),
+        decoration: InputDecoration(
+          labelText: 'Montant de l\'achat',
+          suffixText: 'FCFA',
+          border: const OutlineInputBorder(borderRadius: Rd.input),
+          helperText: !_cbIsRedeem
+              ? '${widget.cashbackPercentage.toStringAsFixed(widget.cashbackPercentage % 1 == 0 ? 0 : 1)}% crédités en cashback'
+              : null,
+        ),
+        onChanged: (v) => setState(() => _amount = double.tryParse(v.trim())),
+      ),
+      if (!_cbIsRedeem) ...[
+        const SizedBox(height: Sp.sm),
+        Text(
+          _amount == null
+              ? 'Saisissez le montant pour voir le cashback crédité.'
+              : '= ${_fcfa(_cashbackPreview)} de cashback crédités',
+          style: AppTextStyles.bodyMd().copyWith(
+            color: _cashbackPreview > 0 ? AppColors.merchant : AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ] else ...[
+        const SizedBox(height: Sp.sm),
+        TextField(
+          controller: _redeemCtrl,
+          enabled: _isActive,
+          keyboardType: const TextInputType.numberWithOptions(decimal: false),
+          decoration: InputDecoration(
+            labelText: 'Cashback à utiliser',
+            suffixText: 'FCFA',
+            border: const OutlineInputBorder(borderRadius: Rd.input),
+            helperText: 'Solde disponible : ${_fcfa(widget.card.cashbackBalanceFcfa)}',
+          ),
+          onChanged: (v) => setState(() => _redeemAmount = double.tryParse(v.trim())),
+        ),
+        const SizedBox(height: Sp.sm),
+        Text(
+          '= ${_fcfa(_amountToPay)} à payer',
+          style: AppTextStyles.bodyMd().copyWith(
+            color: AppColors.merchant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if ((_redeemAmount ?? 0) > (widget.card.cashbackBalanceFcfa)) ...[
+          const SizedBox(height: Sp.xs),
+          Text('Dépasse le solde disponible.',
+              style: AppTextStyles.caption().copyWith(color: AppColors.danger)),
+        ] else if ((_redeemAmount ?? 0) > (_amount ?? 0) && (_amount ?? 0) > 0) ...[
+          const SizedBox(height: Sp.xs),
+          Text('Ne peut pas dépasser le montant de l\'achat.',
+              style: AppTextStyles.caption().copyWith(color: AppColors.danger)),
+        ],
+      ],
+      const SizedBox(height: Sp.lg),
+      AppButton.primary(
+        'Voir le résumé',
+        onPressed: (_cbIsRedeem ? _canRedeem : _canSubmit)
+            ? () => setState(() => _cbStep = _CashbackStep.summary)
+            : null,
+      ),
+      const SizedBox(height: Sp.sm),
+      AppButton.ghost('Retour', onPressed: () => setState(() => _cbStep = _CashbackStep.choice)),
+    ];
+  }
+
+  List<Widget> _buildCashbackSummaryStep() {
+    final newBalance = _cbIsRedeem
+        ? widget.card.cashbackBalanceFcfa - (_redeemAmount ?? 0)
+        : widget.card.cashbackBalanceFcfa + _cashbackPreview;
+
+    return [
+      Container(
+        padding: const EdgeInsets.all(Sp.md),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _summaryRow('Achat', _fcfa(_amount ?? 0)),
+            if (_cbIsRedeem) ...[
+              _summaryRow('Cashback utilisé', '- ${_fcfa(_redeemAmount ?? 0)}'),
+              const Divider(height: Sp.md),
+              _summaryRow('À payer', _fcfa(_amountToPay), emphasize: true),
+            ] else ...[
+              _summaryRow('Cashback généré', '+ ${_fcfa(_cashbackPreview)}'),
+            ],
+            const SizedBox(height: 4),
+            _summaryRow('Nouveau solde', _fcfa(newBalance)),
+          ],
+        ),
+      ),
+      const SizedBox(height: Sp.lg),
+      AppButton.primary(
+        _cbIsRedeem ? 'Confirmer l\'utilisation' : 'Créditer le cashback',
+        onPressed: (_cbIsRedeem ? _canRedeem : _canSubmit)
+            ? (_cbIsRedeem ? _submitRedeem : _submit)
+            : null,
+        loading: _submitting,
+      ),
+      const SizedBox(height: Sp.sm),
+      AppButton.ghost(
+        'Modifier',
+        onPressed: _submitting ? null : () => setState(() => _cbStep = _CashbackStep.form),
+      ),
+    ];
+  }
+
+  Widget _summaryRow(String label, String value, {bool emphasize = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary)),
+          Text(
+            value,
+            style: AppTextStyles.bodyMd().copyWith(
+              fontWeight: FontWeight.w700,
+              color: emphasize ? AppColors.merchant : AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -193,81 +391,40 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                     ),
                     const Divider(height: Sp.lg),
                     ..._buildProgress(progress),
-                    if (_isSpend || _isCashback) ...[
+                    if (_isCashback) ...[
                       const SizedBox(height: Sp.md),
-                      TextField(
-                        controller: _amountCtrl,
-                        enabled: _isActive,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                        decoration: InputDecoration(
-                          labelText: 'Montant de l\'achat',
-                          suffixText: 'FCFA',
-                          border: const OutlineInputBorder(borderRadius: Rd.input),
-                          helperText: _isCashback
-                              ? '${widget.cashbackPercentage.toStringAsFixed(widget.cashbackPercentage % 1 == 0 ? 0 : 1)}% crédités en cashback'
-                              : '1 point tous les ${widget.fcfaPerPoint} FCFA d\'achat',
-                        ),
-                        onChanged: (v) => setState(() => _amount = double.tryParse(v.trim())),
-                      ),
-                      const SizedBox(height: Sp.sm),
-                      Text(
-                        _amount == null
-                            ? (_isCashback
-                                ? 'Saisissez le montant pour voir le cashback crédité.'
-                                : 'Saisissez le montant pour voir les points crédités.')
-                            : (_isCashback
-                                ? '= ${_cashbackPreview.round()} FCFA de cashback crédités'
-                                : '= $_pointsPreview point(s) crédité(s)'),
-                        style: AppTextStyles.bodyMd().copyWith(
-                          color: (_isCashback ? _cashbackPreview > 0 : _pointsPreview >= 1)
-                              ? AppColors.merchant
-                              : AppColors.textSecondary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: Sp.lg),
-                    AppButton.primary(_actionLabel, onPressed: _canSubmit ? _submit : null, loading: _submitting),
-                    if (_isCashback && widget.card.cashbackBalanceFcfa > 0) ...[
-                      const SizedBox(height: Sp.sm),
-                      AppButton.ghost(
-                        _showRedeemPanel ? 'Masquer l\'utilisation du cashback' : 'Utiliser le cashback',
-                        onPressed: () => setState(() => _showRedeemPanel = !_showRedeemPanel),
-                      ),
-                      if (_showRedeemPanel) ...[
-                        const SizedBox(height: Sp.sm),
-                        if (_amount == null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: Sp.xs),
-                            child: Text(
-                              'Renseignez d\'abord le montant de l\'achat ci-dessus.',
-                              style: AppTextStyles.caption().copyWith(color: AppColors.danger),
-                            ),
-                          ),
+                      ..._buildCashbackFlow(),
+                    ] else ...[
+                      if (_isSpend) ...[
+                        const SizedBox(height: Sp.md),
                         TextField(
-                          controller: _redeemCtrl,
+                          controller: _amountCtrl,
                           enabled: _isActive,
                           keyboardType: const TextInputType.numberWithOptions(decimal: false),
                           decoration: InputDecoration(
-                            labelText: 'Montant de cashback à utiliser',
+                            labelText: 'Montant de l\'achat',
                             suffixText: 'FCFA',
                             border: const OutlineInputBorder(borderRadius: Rd.input),
-                            helperText:
-                                'Solde disponible : ${widget.card.cashbackBalanceFcfa.round()} FCFA',
+                            helperText: '1 point tous les ${widget.fcfaPerPoint} FCFA d\'achat',
                           ),
-                          onChanged: (v) =>
-                              setState(() => _redeemAmount = double.tryParse(v.trim())),
+                          onChanged: (v) => setState(() => _amount = double.tryParse(v.trim())),
                         ),
                         const SizedBox(height: Sp.sm),
-                        AppButton.primary(
-                          'Confirmer l\'utilisation',
-                          onPressed: _canRedeem ? _submitRedeem : null,
-                          loading: _submitting,
+                        Text(
+                          _amount == null
+                              ? 'Saisissez le montant pour voir les points crédités.'
+                              : '= $_pointsPreview point(s) crédité(s)',
+                          style: AppTextStyles.bodyMd().copyWith(
+                            color: _pointsPreview >= 1 ? AppColors.merchant : AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ],
+                      const SizedBox(height: Sp.lg),
+                      AppButton.primary(_actionLabel, onPressed: _canSubmit ? _submit : null, loading: _submitting),
+                      const SizedBox(height: Sp.sm),
+                      AppButton.ghost('Annuler', onPressed: () => Navigator.pop(context)),
                     ],
-                    const SizedBox(height: Sp.sm),
-                    AppButton.ghost('Annuler', onPressed: () => Navigator.pop(context)),
                     SizedBox(height: MediaQuery.of(context).padding.bottom + Sp.sm),
                   ],
                 ),

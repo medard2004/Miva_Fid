@@ -46,6 +46,11 @@ class RestaurantAccount {
   /// Crédit SMS restant, décrémenté à chaque campagne envoyée.
   final int smsCredits;
 
+  /// Préférences de notifications marchand — clés : `new_client`, `reward`,
+  /// `low_sms`, `weekly_report`, `promotions`. Toujours les 5 clés présentes
+  /// (défauts appliqués côté serveur, voir `RestaurantAuthController`).
+  final Map<String, bool> notificationPreferences;
+
   const RestaurantAccount({
     required this.id,
     required this.uuid,
@@ -73,6 +78,7 @@ class RestaurantAccount {
     this.loyaltyConfig = const {},
     this.plan = 'free',
     this.smsCredits = 0,
+    this.notificationPreferences = const {},
   });
 
   factory RestaurantAccount.fromJson(Map<String, dynamic> json) {
@@ -105,6 +111,9 @@ class RestaurantAccount {
           (program?['config'] as Map?)?.cast<String, dynamic>() ?? const {},
       plan: json['plan'] as String? ?? 'free',
       smsCredits: json['sms_credits'] as int? ?? 0,
+      notificationPreferences:
+          (json['notification_preferences'] as Map?)?.cast<String, bool>() ??
+              const {},
     );
   }
 }

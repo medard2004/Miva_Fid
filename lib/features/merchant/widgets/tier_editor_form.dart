@@ -8,10 +8,17 @@ import '../../../core/widgets/app_input.dart';
 import '../../onboarding/models/program_tier.dart';
 
 /// Icônes de niveau — automatiques par rang, jamais choisies par le
-/// marchand (miroir de `LoyaltyTierService::iconForRank` côté API).
+/// marchand (miroir de `LoyaltyTierService::iconForRank` côté API : mise à
+/// l'échelle sur `totalTiers` pour que le dernier palier obtienne toujours
+/// l'icône maximale 👑, même avec seulement 2 paliers).
 const List<String> tierRankIcons = ['🥉', '🥈', '🥇', '💎', '👑'];
-String iconForTierRank(int rank) =>
-    rank >= 1 && rank <= tierRankIcons.length ? tierRankIcons[rank - 1] : '⭐';
+String iconForTierRank(int rank, int totalTiers) {
+  final maxIndex = tierRankIcons.length - 1;
+  final index = totalTiers <= 1
+      ? maxIndex
+      : (((rank - 1) / (totalTiers - 1)) * maxIndex).round();
+  return tierRankIcons[index.clamp(0, maxIndex)];
+}
 
 /// Éditeur de paliers réutilisé par l'onboarding (step2) et les réglages
 /// marchand — un palier = objectif + nom de niveau (masqué si un seul
@@ -41,6 +48,8 @@ class TierEditorFormState extends State<TierEditorForm> {
   final List<TextEditingController> _levelNameCtrls = [];
   final List<TextEditingController> _descCtrls = [];
   final List<TextEditingController> _validityCtrls = [];
+  final List<bool> _isExpanded = [];
+  final List<bool> _revealReward = [];
 
   @override
   void initState() {
@@ -48,17 +57,19 @@ class TierEditorFormState extends State<TierEditorForm> {
     final tiers = widget.initialTiers.isEmpty && !widget.allowEmpty
         ? [const ProgramTier(goal: 10, rewardDescription: '')]
         : widget.initialTiers;
-    for (final tier in tiers) {
-      _addController(tier);
+    for (int i = 0; i < tiers.length; i++) {
+      _addController(tiers[i], expanded: false);
     }
   }
 
-  void _addController(ProgramTier tier) {
+  void _addController(ProgramTier tier, {bool expanded = true}) {
     _goalCtrls.add(TextEditingController(text: tier.goal.toString()));
     _levelNameCtrls.add(TextEditingController(text: tier.levelName ?? ''));
     _descCtrls.add(TextEditingController(text: tier.rewardDescription));
     _validityCtrls
         .add(TextEditingController(text: tier.validityDays?.toString() ?? ''));
+    _isExpanded.add(expanded);
+    _revealReward.add(tier.revealReward);
   }
 
   void _emitChange() {
@@ -75,6 +86,7 @@ class TierEditorFormState extends State<TierEditorForm> {
             : null,
         rewardDescription: _descCtrls[i].text.trim(),
         validityDays: int.tryParse(_validityCtrls[i].text.trim()),
+        revealReward: _revealReward[i],
       );
     });
   }
@@ -83,7 +95,10 @@ class TierEditorFormState extends State<TierEditorForm> {
     final lastGoal =
         _goalCtrls.isNotEmpty ? (int.tryParse(_goalCtrls.last.text) ?? 10) : 10;
     setState(() {
-      _addController(ProgramTier(goal: lastGoal + widget.goalStep, rewardDescription: ''));
+      for (int i = 0; i < _isExpanded.length; i++) {
+        _isExpanded[i] = false;
+      }
+      _addController(ProgramTier(goal: lastGoal + widget.goalStep, rewardDescription: ''), expanded: true);
     });
     _emitChange();
   }
@@ -99,6 +114,8 @@ class TierEditorFormState extends State<TierEditorForm> {
       _levelNameCtrls.removeAt(index);
       _descCtrls.removeAt(index);
       _validityCtrls.removeAt(index);
+      _isExpanded.removeAt(index);
+      _revealReward.removeAt(index);
     });
     _emitChange();
   }
@@ -151,123 +168,245 @@ class TierEditorFormState extends State<TierEditorForm> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _goalCtrls.length,
           separatorBuilder: (_, __) => const SizedBox(height: Sp.md),
-          itemBuilder: (context, index) => Container(
-            padding: const EdgeInsets.all(Sp.md),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.merchantTint,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${iconForTierRank(index + 1)} Palier ${index + 1}',
-                        style: AppTextStyles.caption()
-                            .copyWith(color: AppColors.merchant, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (_goalCtrls.length > 1)
-                      IconButton(
-                        icon: const Icon(LucideIcons.trash2, size: 18, color: AppColors.danger),
-                        onPressed: () => removeTier(index),
-                        tooltip: 'Supprimer ce palier',
-                      ),
-                  ],
-                ),
-                const SizedBox(height: Sp.sm),
-                AppInput(
-                  label: 'Objectif (${widget.goalUnit}) *',
-                  hint: 'Ex: 500',
-                  controller: _goalCtrls[index],
-                  keyboardType: TextInputType.number,
-                  prefixIcon: LucideIcons.target,
-                  accentColor: AppColors.merchant,
-                  onChanged: (_) {
-                    setState(() {});
-                    _emitChange();
-                  },
-                  validator: (v) {
-                    final val = v?.trim() ?? '';
-                    if (val.isEmpty) return "L'objectif est obligatoire";
-                    final parsed = int.tryParse(val);
-                    if (parsed == null || parsed <= 0) {
-                      return 'Veuillez entrer un nombre supérieur à 0';
-                    }
-                    if (index > 0) {
-                      final prev = int.tryParse(_goalCtrls[index - 1].text.trim());
-                      if (prev != null && parsed <= prev) {
-                        return 'Doit être supérieur au palier précédent ($prev)';
-                      }
-                    }
-                    return null;
-                  },
-                ),
-                if (isMultiTier) ...[
-                  const SizedBox(height: Sp.sm),
-                  AppInput(
-                    label: 'Nom du niveau *',
-                    hint: 'Ex : Découverte, Habitué, VIP',
-                    controller: _levelNameCtrls[index],
-                    prefixIcon: LucideIcons.award,
-                    accentColor: AppColors.merchant,
-                    onChanged: (_) => _emitChange(),
-                    validator: (v) => (v?.trim() ?? '').isEmpty
-                        ? 'Le nom du niveau est obligatoire'
-                        : null,
+          itemBuilder: (context, index) {
+            final isExpanded = _isExpanded[index];
+            final levelName = _levelNameCtrls[index].text.trim();
+            final goal = _goalCtrls[index].text.trim();
+            final reward = _descCtrls[index].text.trim();
+
+            final summaryTitle = levelName.isNotEmpty ? levelName : 'Palier ${index + 1}';
+            String summarySubtitle = '';
+            if (goal.isNotEmpty && reward.isNotEmpty) {
+              summarySubtitle = '$goal ${widget.goalUnit} • $reward';
+            } else if (goal.isNotEmpty) {
+              summarySubtitle = '$goal ${widget.goalUnit}';
+            } else if (reward.isNotEmpty) {
+              summarySubtitle = reward;
+            } else {
+              summarySubtitle = 'Configurer ce palier';
+            }
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                    color: isExpanded ? AppColors.merchant : AppColors.border,
+                    width: isExpanded ? 2 : 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isExpanded ? AppColors.merchant : Colors.black)
+                        .withValues(alpha: isExpanded ? 0.08 : 0.03),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
-                const SizedBox(height: Sp.sm),
-                AppInput(
-                  label: 'Récompense offerte *',
-                  hint: 'Ex : 1 café offert, 10% de réduction',
-                  controller: _descCtrls[index],
-                  prefixIcon: LucideIcons.gift,
-                  accentColor: AppColors.merchant,
-                  maxLength: 255,
-                  onChanged: (_) => _emitChange(),
-                  validator: (v) => (v?.trim() ?? '').isEmpty
-                      ? 'La description de la récompense est obligatoire'
-                      : null,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _isExpanded[index] = !isExpanded;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(Sp.md),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isExpanded ? AppColors.merchantTint : AppColors.background,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  iconForTierRank(index + 1, _goalCtrls.length),
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                              ),
+                              const SizedBox(width: Sp.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      summaryTitle,
+                                      style: AppTextStyles.bodyMd().copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: isExpanded ? AppColors.merchant : AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    if (!isExpanded) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        summarySubtitle,
+                                        style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (_goalCtrls.length > 1)
+                                IconButton(
+                                  icon: Icon(LucideIcons.trash2, size: isExpanded ? 20 : 18, color: isExpanded ? AppColors.danger : AppColors.textSecondary),
+                                  onPressed: () => removeTier(index),
+                                  tooltip: 'Supprimer ce palier',
+                                ),
+                              const SizedBox(width: Sp.xs),
+                              Icon(
+                                isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                                size: 20,
+                                color: isExpanded ? AppColors.merchant : AppColors.textSecondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    AnimatedCrossFade(
+                      firstChild: const SizedBox(width: double.infinity, height: 0),
+                      secondChild: Padding(
+                        padding: const EdgeInsets.fromLTRB(Sp.md, 0, Sp.md, Sp.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Divider(height: 1),
+                            const SizedBox(height: Sp.md),
+                            AppInput(
+                              label: 'Objectif (${widget.goalUnit}) *',
+                              hint: 'Ex: 500',
+                              controller: _goalCtrls[index],
+                              keyboardType: TextInputType.number,
+                              prefixIcon: LucideIcons.target,
+                              accentColor: AppColors.merchant,
+                              onChanged: (_) {
+                                setState(() {});
+                                _emitChange();
+                              },
+                              validator: (v) {
+                                final val = v?.trim() ?? '';
+                                if (val.isEmpty) return "L'objectif est obligatoire";
+                                final parsed = int.tryParse(val);
+                                if (parsed == null || parsed <= 0) {
+                                  return 'Veuillez entrer un nombre supérieur à 0';
+                                }
+                                if (index > 0) {
+                                  final prev = int.tryParse(_goalCtrls[index - 1].text.trim());
+                                  if (prev != null && parsed <= prev) {
+                                    return 'Doit être supérieur au palier précédent ($prev)';
+                                  }
+                                }
+                                return null;
+                              },
+                            ),
+                            if (isMultiTier) ...[
+                              const SizedBox(height: Sp.sm),
+                              AppInput(
+                                label: 'Nom du niveau *',
+                                hint: 'Ex : Découverte, Habitué, VIP',
+                                controller: _levelNameCtrls[index],
+                                prefixIcon: LucideIcons.award,
+                                accentColor: AppColors.merchant,
+                                onChanged: (_) {
+                                  setState(() {});
+                                  _emitChange();
+                                },
+                                validator: (v) => (v?.trim() ?? '').isEmpty
+                                    ? 'Le nom du niveau est obligatoire'
+                                    : null,
+                              ),
+                            ],
+                            const SizedBox(height: Sp.sm),
+                            AppInput(
+                              label: 'Récompense offerte *',
+                              hint: 'Ex : 1 café offert, 10% de réduction',
+                              controller: _descCtrls[index],
+                              prefixIcon: LucideIcons.gift,
+                              accentColor: AppColors.merchant,
+                              maxLength: 255,
+                              onChanged: (_) {
+                                setState(() {});
+                                _emitChange();
+                              },
+                              validator: (v) => (v?.trim() ?? '').isEmpty
+                                  ? 'La description de la récompense est obligatoire'
+                                  : null,
+                            ),
+                            const SizedBox(height: Sp.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Récompense surprise 🎁',
+                                            style: AppTextStyles.caption()
+                                                .copyWith(fontWeight: FontWeight.bold)),
+                                        Text(
+                                          'Cacher ce palier au client jusqu\'à ce qu\'il le débloque.',
+                                          style: AppTextStyles.caption()
+                                              .copyWith(color: AppColors.textSecondary, fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: !_revealReward[index],
+                                    onChanged: (hide) {
+                                      setState(() => _revealReward[index] = !hide);
+                                      _emitChange();
+                                    },
+                                    activeThumbColor: AppColors.merchant,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: Sp.sm),
+                            AppInput(
+                              label: 'Validité (jours, optionnel)',
+                              hint: "Ex: 30 — vide = pas d'expiration",
+                              controller: _validityCtrls[index],
+                              keyboardType: TextInputType.number,
+                              prefixIcon: LucideIcons.calendarClock,
+                              accentColor: AppColors.merchant,
+                              onChanged: (_) => _emitChange(),
+                              validator: (v) {
+                                final trimmed = v?.trim() ?? '';
+                                if (trimmed.isEmpty) return null;
+                                final parsed = int.tryParse(trimmed);
+                                if (parsed == null || parsed <= 0) {
+                                  return 'Veuillez entrer un nombre de jours supérieur à 0';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                      duration: const Duration(milliseconds: 250),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: Sp.sm),
-                AppInput(
-                  label: 'Validité (jours, optionnel)',
-                  hint: "Ex: 30 — vide = pas d'expiration",
-                  controller: _validityCtrls[index],
-                  keyboardType: TextInputType.number,
-                  prefixIcon: LucideIcons.calendarClock,
-                  accentColor: AppColors.merchant,
-                  onChanged: (_) => _emitChange(),
-                  validator: (v) {
-                    final trimmed = v?.trim() ?? '';
-                    if (trimmed.isEmpty) return null;
-                    final parsed = int.tryParse(trimmed);
-                    if (parsed == null || parsed <= 0) {
-                      return 'Veuillez entrer un nombre de jours supérieur à 0';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ],
     );

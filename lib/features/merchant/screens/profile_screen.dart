@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -106,6 +107,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     border: const OutlineInputBorder(
                       borderRadius: Rd.input,
                       borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Sp.xs),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => context.push('/merchant/more/account/change-password'),
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    child: Text(
+                      'Changer le mot de passe',
+                      style: AppTextStyles.caption().copyWith(
+                        color: AppColors.merchant,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),

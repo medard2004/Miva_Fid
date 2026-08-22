@@ -132,6 +132,47 @@ void main() {
       expect(card.levelName, isNull);
       expect(card.tiers, isEmpty);
     });
+
+    test('mono-tier response carries next_reward with the real reward text (no roadmap)', () {
+      final json = baseJson(
+        stampsCurrent: 1,
+        goal: 2,
+        percent: 50,
+        level: {'name': 'Argent', 'percent_to_next': 100, 'is_max_level': true},
+      );
+      json['level'] = null;
+      json['tiers'] = [];
+      json['next_reward'] = {
+        'goal': 2,
+        'level_name': null,
+        'reward_description': 'Café offert',
+        'icon': '🎁',
+      };
+
+      final card = LoyaltyCard.fromApi(json);
+
+      expect(card.tiers, isEmpty, reason: 'mono-tier : pas de roadmap de niveau');
+      expect(card.nextReward, isNotNull);
+      expect(card.nextReward!.rewardDescription, 'Café offert');
+      expect(card.nextReward!.goal, 2);
+      expect(card.nextReward!.icon, '🎁');
+    });
+
+    test('a program with no configured reward sends next_reward: null', () {
+      final json = baseJson(
+        stampsCurrent: 0,
+        goal: 0,
+        percent: 0,
+        level: {},
+        programType: 'cashback',
+      );
+      json['level'] = null;
+      json['next_reward'] = null;
+
+      final card = LoyaltyCard.fromApi(json);
+
+      expect(card.nextReward, isNull);
+    });
   });
 
   group('LoyaltyCard.applyRealtimeUpdate — parité avec le fetch initial', () {
@@ -268,6 +309,47 @@ void main() {
 
       expect(updated.tiers, hasLength(1));
       expect(updated.tiers.single.levelName, 'Bronze');
+    });
+
+    test('a payload carrying next_reward updates card.nextReward', () {
+      final initial = LoyaltyCard.fromApi({
+        'id': 1,
+        'card_code': 'L1YFNAHT',
+        'progress': {'stamps_current': 1},
+        'cashback_balance_fcfa': '0.00',
+        'status': 'active',
+        'goal': 2,
+        'percent': 50,
+        'level': null,
+        'restaurant': {'id': 1, 'name': 'QA Test Resto', 'category': 'Restaurant'},
+        'loyalty_program': {
+          'id': 1,
+          'type': 'stamps',
+          'config': {'goal': 2},
+        },
+      });
+      expect(initial.nextReward, isNull);
+
+      final realtimePayload = {
+        'id': 1,
+        'progress': {'stamps_current': 1},
+        'cashback_balance_fcfa': '0.00',
+        'status': 'active',
+        'goal': 2,
+        'percent': 50,
+        'level': null,
+        'next_reward': {
+          'goal': 2,
+          'level_name': null,
+          'reward_description': 'Café offert',
+          'icon': '🎁',
+        },
+      };
+
+      final updated = initial.applyRealtimeUpdate(realtimePayload);
+
+      expect(updated.nextReward, isNotNull);
+      expect(updated.nextReward!.rewardDescription, 'Café offert');
     });
   });
 }
