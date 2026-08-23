@@ -83,6 +83,17 @@ class MerchantDashboardService {
     }
   }
 
+  /// Historique des opérations d'une carte (`GET /merchant/clients/{card}/history`),
+  /// avec attribution : `staff_name`/`staff_role` valent `null` quand
+  /// l'opération a été effectuée par l'admin directement (pas par un
+  /// opérateur).
+  Future<List<Map<String, dynamic>>> history(String cardId) => _guard(() async {
+        final response = await _apiClient.dio.get('/merchant/clients/$cardId/history');
+        return ((response.data as Map)['history'] as List)
+            .map((e) => (e as Map).cast<String, dynamic>())
+            .toList();
+      });
+
   /// Retourne `null` quand aucune carte du commerce ne correspond (404),
   /// l'écran de validation traitant ce cas comme « client inconnu » et non
   /// comme une erreur réseau.
