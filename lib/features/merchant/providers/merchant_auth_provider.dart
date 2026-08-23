@@ -252,3 +252,11 @@ final merchantAuthProvider =
     StateNotifierProvider<MerchantAuthNotifier, MerchantAuthState>((ref) {
   return MerchantAuthNotifier(ref.watch(merchantAuthRepositoryProvider));
 });
+
+/// `true` pour un compte Restaurant classique ou un membre d'équipe rôle
+/// admin ; `false` pour un opérateur — pilote la navigation réduite
+/// (`MerchantShell`) et la redirection du router.
+final isAdminProvider = Provider<bool>((ref) {
+  final restaurant = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
+  return restaurant == null || restaurant.staffRole == 'admin';
+});
