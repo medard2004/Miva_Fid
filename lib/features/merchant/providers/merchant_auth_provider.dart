@@ -74,6 +74,18 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
+  Future<bool> staffLogin(String email, String password) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final restaurant = await _authRepository.staffLogin(email, password);
+      state = MerchantAuthState(isAuthenticated: true, restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
   /// Échange un `id_token` Google/Apple contre une session marchande.
   /// `action: 'signup'` autorise la création d'un compte si aucun n'existe.
   Future<bool> socialLogin(

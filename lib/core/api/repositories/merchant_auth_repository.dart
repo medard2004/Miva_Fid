@@ -28,6 +28,15 @@ class MerchantAuthRepository {
     return RestaurantAccount.fromJson(response['restaurant'] ?? {});
   }
 
+  Future<RestaurantAccount> staffLogin(String email, String password) async {
+    final response = await _authService.staffLogin(email, password);
+    final token = response['access_token'];
+    if (token != null) {
+      await _tokenStorage.saveToken(token);
+    }
+    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+  }
+
   Future<RestaurantAccount> socialLogin(
     String provider,
     String idToken, {
