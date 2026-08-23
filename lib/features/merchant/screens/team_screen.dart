@@ -168,7 +168,14 @@ class _TeamMemberTile extends ConsumerWidget {
             value: member.isActive,
             activeThumbColor: Colors.white,
             activeTrackColor: AppColors.merchant,
-            onChanged: (val) => ref.read(teamNotifierProvider.notifier).toggleActive(member.id, val),
+            onChanged: (val) async {
+              final ok = await ref.read(teamNotifierProvider.notifier).toggleActive(member.id, val);
+              if (!ok && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Impossible de modifier le statut de ce membre.')),
+                );
+              }
+            },
           ),
         ],
       ),
