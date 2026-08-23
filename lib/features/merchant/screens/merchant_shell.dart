@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_header.dart';
 
 import '../providers/clients_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
@@ -124,9 +125,10 @@ class MerchantShell extends ConsumerWidget {
     final smsRemaining = merchant?.smsRemaining ?? 100;
     
     final hideNav = ref.watch(hideMerchantNavProvider);
+    final isAdmin = ref.watch(isAdminProvider);
 
     return Scaffold(
-      appBar: (showHeader && !hideNav)
+      appBar: (showHeader && !hideNav && isAdmin)
           ? PreferredSize(
               preferredSize: const Size.fromHeight(64),
               child: Container(
@@ -184,7 +186,7 @@ class MerchantShell extends ConsumerWidget {
             )
           : null,
       body: navigationShell,
-      bottomNavigationBar: hideNav ? const SizedBox.shrink() : Container(
+      bottomNavigationBar: (hideNav || !isAdmin) ? const SizedBox.shrink() : Container(
         height: 66 + bottomPadding,
         decoration: BoxDecoration(
           color: AppColors.surface,

@@ -215,6 +215,14 @@ GoRouter appRouter(AppRouterRef ref) {
         if (!(restaurant?.hasBusinessInfo ?? false)) return '/auth/merchant/step1';
         if (!(restaurant?.hasLocation ?? false)) return '/auth/merchant/location';
         if (!(restaurant?.hasLoyaltyProgram ?? false)) return '/auth/merchant/step2';
+
+        // Opérateur : uniquement l'écran de validation, jamais le dashboard,
+        // la clientèle, les campagnes ou la configuration (voir spec équipe).
+        final isAdmin = ref.read(isAdminProvider);
+        if (!isAdmin && !location.startsWith('/merchant/validate')) {
+          return '/merchant/validate';
+        }
+
         return null;
       }
 
