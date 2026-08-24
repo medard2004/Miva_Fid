@@ -10,6 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/merchant_auth_provider.dart';
+import '../providers/merchant_provider.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -17,6 +18,10 @@ class MoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final merchant = ref.watch(merchantNotifierProvider).value;
+    final merchantName = merchant?.name ?? 'Votre Commerce';
+    final initials = merchant?.initials ?? 'MC';
+    final planLabel = (merchant?.isPro ?? false) ? 'Plan Pro' : 'Plan Standard';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -34,8 +39,65 @@ class MoreScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: Sp.md),
-              
-              // Groupe 1 : Navigation principale
+
+              // En-tête profil
+              Container(
+                padding: const EdgeInsets.all(Sp.md),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: Rd.card,
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundColor: AppColors.merchant,
+                      child: Text(
+                        initials,
+                        style: AppTextStyles.monoLg().copyWith(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: Sp.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            merchantName,
+                            style: AppTextStyles.labelBold().copyWith(fontSize: 16),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.merchant.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              planLabel,
+                              style: TextStyle(
+                                color: AppColors.merchant,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.lg),
+
+              _buildSectionLabel('COMPTE'),
+              const SizedBox(height: Sp.sm),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -53,16 +115,30 @@ class MoreScreen extends ConsumerWidget {
                     const Divider(height: 0, indent: Sp.md),
                     _buildMenuItem(
                       context: context,
-                      icon: LucideIcons.award,
-                      label: 'Fidélisation',
-                      route: '/merchant/more/programme',
-                    ),
-                    const Divider(height: 0, indent: Sp.md),
-                    _buildMenuItem(
-                      context: context,
                       icon: LucideIcons.creditCard,
                       label: 'Abonnement & Équipe',
                       route: '/merchant/more/subscription',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.lg),
+
+              _buildSectionLabel('FIDÉLISATION'),
+              const SizedBox(height: Sp.sm),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: Rd.card,
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    _buildMenuItem(
+                      context: context,
+                      icon: LucideIcons.award,
+                      label: 'Programme de fidélité',
+                      route: '/merchant/more/programme',
                     ),
                     const Divider(height: 0, indent: Sp.md),
                     _buildMenuItem(
@@ -74,10 +150,10 @@ class MoreScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              
               const SizedBox(height: Sp.lg),
-              
-              // Groupe 2 : Aide et déconnexion
+
+              _buildSectionLabel('ASSISTANCE'),
+              const SizedBox(height: Sp.sm),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -120,7 +196,7 @@ class MoreScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: Sp.xl),
               Center(
                 child: Text(
@@ -131,6 +207,21 @@ class MoreScreen extends ConsumerWidget {
               const SizedBox(height: Sp.xl),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        text,
+        style: AppTextStyles.caption().copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+          fontSize: 12,
         ),
       ),
     );
