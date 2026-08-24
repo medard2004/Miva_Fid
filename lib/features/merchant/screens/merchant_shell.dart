@@ -203,16 +203,16 @@ class MerchantShell extends ConsumerWidget {
                   children: [
                     _buildNavItem(
                       index: 0,
-                      icon: LucideIcons.layoutGrid,
-                      label: 'Accueil',
+                      icon: LucideIcons.users,
+                      label: 'Clients',
                       currentIndex: currentIndex,
                       context: context,
                       ref: ref,
                     ),
                     _buildNavItem(
                       index: 1,
-                      icon: LucideIcons.users,
-                      label: 'Clients',
+                      icon: LucideIcons.chartColumnBig,
+                      label: 'Stats',
                       currentIndex: currentIndex,
                       context: context,
                       ref: ref,
@@ -234,8 +234,8 @@ class MerchantShell extends ConsumerWidget {
                     ),
                     _buildNavItem(
                       index: 4,
-                      icon: LucideIcons.ellipsis,
-                      label: 'Plus',
+                      icon: LucideIcons.settings,
+                      label: 'Réglages',
                       currentIndex: currentIndex,
                       context: context,
                       ref: ref,

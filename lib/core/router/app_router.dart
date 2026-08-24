@@ -548,12 +548,6 @@ GoRouter appRouter(AppRouterRef ref) {
         branches: [
           StatefulShellBranch(routes: [
             GoRoute(
-              path: '/merchant',
-              pageBuilder: (_, __) => _fade(const DashboardScreen()),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
               path: '/merchant/clients',
               pageBuilder: (_, __) => _fade(const ClientsScreen()),
               routes: [
@@ -568,6 +562,16 @@ GoRouter appRouter(AppRouterRef ref) {
             ),
           ]),
           StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/merchant/stats',
+              pageBuilder: (_, __) => _fade(const DashboardScreen()),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/merchant',
+              pageBuilder: (_, __) => _fade(const ValidateScreen()),
+            ),
             GoRoute(
               path: '/merchant/validate',
               pageBuilder: (_, __) => _fade(const ValidateScreen()),
