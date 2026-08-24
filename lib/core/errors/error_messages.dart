@@ -49,6 +49,8 @@ class ErrorMessages {
 
   static String get loginAccountNotFound => _t?.errLoginAccountNotFound ?? 'Ce compte n\'existe pas encore.';
 
+  static String get loginAccountDeactivated => _t?.errLoginAccountDeactivated ?? 'Ce compte a été désactivé. Contactez votre administrateur.';
+
   static String get loginFailed => _t?.errLoginFailed ?? 'Impossible de vous connecter pour le moment. Réessayez.';
 
   static String get accountUsesGoogle => _t?.errAccountUsesGoogle ?? 'Ce compte utilise une connexion Google. Connectez-vous avec Google pour accéder à votre compte.';
@@ -114,6 +116,9 @@ class ErrorMessages {
   static String get passwordChangeSuccess => _t?.errPasswordChangeSuccess ?? 'Votre mot de passe a bien été modifié.';
 
   static String get passwordChangeFailed => _t?.errPasswordChangeFailed ?? 'Impossible de modifier votre mot de passe. Réessayez.';
+
+  // ── Équipe ──
+  static String get teamActionFailed => _t?.errTeamActionFailed ?? 'Impossible d\'effectuer cette action. Réessayez.';
 
   // ── Erreurs de champ (affichées sous le champ) ──
   static String get fieldRequired => _t?.errFieldRequired ?? 'Veuillez renseigner ce champ.';

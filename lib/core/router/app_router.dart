@@ -215,6 +215,19 @@ GoRouter appRouter(AppRouterRef ref) {
         if (!(restaurant?.hasBusinessInfo ?? false)) return '/auth/merchant/step1';
         if (!(restaurant?.hasLocation ?? false)) return '/auth/merchant/location';
         if (!(restaurant?.hasLoyaltyProgram ?? false)) return '/auth/merchant/step2';
+
+        // Opérateur : uniquement l'écran de validation, jamais le dashboard,
+        // la clientèle, les campagnes ou la configuration (voir spec équipe).
+        // Le changement de mot de passe reste accessible : sans lui, le menu
+        // compte de l'opérateur sur `/merchant/validate` mènerait à une route
+        // aussitôt renvoyée ici.
+        final isAdmin = ref.read(isAdminProvider);
+        final isOperatorReachable = location.startsWith('/merchant/validate') ||
+            location == '/merchant/more/account/change-password';
+        if (!isAdmin && !isOperatorReachable) {
+          return '/merchant/validate';
+        }
+
         return null;
       }
 

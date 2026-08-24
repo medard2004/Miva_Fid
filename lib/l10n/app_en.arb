@@ -343,6 +343,8 @@
   "errMissingRequiredFields": "Please fill in all required fields.",
   "errLoginInvalidCredentials": "Incorrect phone number or password.",
   "errLoginAccountNotFound": "This account doesn't exist yet.",
+  "errLoginAccountDeactivated": "This account has been deactivated. Contact your administrator.",
+  "errTeamActionFailed": "Couldn't complete this action. Try again.",
   "errLoginFailed": "We can't sign you in right now. Try again.",
   "errAccountUsesGoogle": "This account uses Google sign-in. Sign in with Google to access your account.",
   "errAccountUsesApple": "This account uses Apple sign-in. Sign in with Apple to access your account.",

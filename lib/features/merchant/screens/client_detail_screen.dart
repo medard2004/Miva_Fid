@@ -244,7 +244,7 @@ class ClientDetailScreen extends ConsumerWidget {
                     AppButton.outlined(
                       'Historique',
                       icon: LucideIcons.history,
-                      onPressed: () => AppToast.info(context, 'Historique bientôt disponible'),
+                      onPressed: () => _showHistorySheet(context, ref, data['id'].toString()),
                     ),
                   ],
                 ),
@@ -261,6 +261,139 @@ class ClientDetailScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  void _showHistorySheet(BuildContext context, WidgetRef ref, String cardId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.7,
+          padding: const EdgeInsets.all(Sp.md),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: Sp.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                Text('Historique', style: AppTextStyles.h3()),
+                const SizedBox(height: Sp.md),
+                Expanded(
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: ref.read(merchantDashboardServiceProvider).history(cardId),
+                    builder: (context, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snap.hasError) {
+                        return Center(
+                          child: Text(
+                            "Impossible de charger l'historique.",
+                            style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
+                          ),
+                        );
+                      }
+                      final entries = snap.data ?? const [];
+                      if (entries.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Aucune opération enregistrée pour ce client.',
+                            style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        itemCount: entries.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: Sp.sm),
+                        itemBuilder: (context, i) => _historyEntryTile(entries[i]),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _historyEntryTile(Map<String, dynamic> entry) {
+    final type = entry['type'] as String? ?? '';
+    final value = entry['value'];
+    final createdAt = DateTime.tryParse(entry['created_at'] as String? ?? '');
+    final staffName = entry['staff_name'] as String?;
+    final staffRole = entry['staff_role'] as String?;
+
+    return Container(
+      padding: const EdgeInsets.all(Sp.md),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: Rd.card,
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(_historyTypeIcon(type), size: 18, color: AppColors.textSecondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_historyTypeLabel(type, value), style: AppTextStyles.labelBold()),
+                if (createdAt != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${DateFormatter.short(createdAt)} à ${DateFormatter.time(createdAt)}',
+                    style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+                const SizedBox(height: 2),
+                Text(
+                  staffName != null
+                      ? 'Effectué par : $staffName — ${staffRole == 'admin' ? 'Administrateur' : 'Opérateur'}'
+                      : 'Effectué par : Administrateur',
+                  style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _historyTypeIcon(String type) {
+    return switch (type) {
+      'cashback_redeem' => LucideIcons.circleMinus,
+      _ => LucideIcons.circlePlus,
+    };
+  }
+
+  String _historyTypeLabel(String type, dynamic value) {
+    final n = value is num ? value : 0;
+    return switch (type) {
+      'stamp' => n == 1 ? '+1 tampon' : '+$n points',
+      'cashback_earn' => '+$n FCFA de cashback crédité',
+      'cashback_redeem' => '-$n FCFA de cashback utilisé',
+      _ => type,
+    };
   }
 
   Widget _infoRow(IconData icon, String label, String value, {Color? valueColor}) {

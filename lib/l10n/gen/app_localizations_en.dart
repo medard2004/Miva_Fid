@@ -836,6 +836,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errLoginAccountNotFound => 'This account doesn\'t exist yet.';
 
   @override
+  String get errLoginAccountDeactivated =>
+      'This account has been deactivated. Contact your administrator.';
+
+  @override
+  String get errTeamActionFailed =>
+      'Couldn\'t complete this action. Try again.';
+
+  @override
   String get errLoginFailed => 'We can\'t sign you in right now. Try again.';
 
   @override

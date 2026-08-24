@@ -51,6 +51,13 @@ class RestaurantAccount {
   /// (défauts appliqués côté serveur, voir `RestaurantAuthController`).
   final Map<String, bool> notificationPreferences;
 
+  /// `restaurant` (le propriétaire, toujours admin) ou `staff` (membre de
+  /// l'équipe). Absent de la réponse (comptes créés avant cette
+  /// fonctionnalité) : retombe sur `restaurant`/`admin`.
+  final String actorType;
+  final String? staffName;
+  final String staffRole;
+
   const RestaurantAccount({
     required this.id,
     required this.uuid,
@@ -79,6 +86,9 @@ class RestaurantAccount {
     this.plan = 'free',
     this.smsCredits = 0,
     this.notificationPreferences = const {},
+    this.actorType = 'restaurant',
+    this.staffName,
+    this.staffRole = 'admin',
   });
 
   factory RestaurantAccount.fromJson(Map<String, dynamic> json) {
@@ -114,6 +124,9 @@ class RestaurantAccount {
       notificationPreferences:
           (json['notification_preferences'] as Map?)?.cast<String, bool>() ??
               const {},
+      actorType: (json['actor'] as Map?)?['type'] as String? ?? 'restaurant',
+      staffName: (json['actor'] as Map?)?['name'] as String?,
+      staffRole: (json['actor'] as Map?)?['role'] as String? ?? 'admin',
     );
   }
 }

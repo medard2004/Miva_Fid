@@ -74,6 +74,18 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
+  Future<bool> staffLogin(String email, String password) async {
+    state = state.copyWith(clearError: true);
+    try {
+      final restaurant = await _authRepository.staffLogin(email, password);
+      state = MerchantAuthState(isAuthenticated: true, restaurant: restaurant);
+      return true;
+    } catch (e) {
+      state = state.copyWith(lastError: e);
+      return false;
+    }
+  }
+
   /// Échange un `id_token` Google/Apple contre une session marchande.
   /// `action: 'signup'` autorise la création d'un compte si aucun n'existe.
   Future<bool> socialLogin(
@@ -251,4 +263,12 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
 final merchantAuthProvider =
     StateNotifierProvider<MerchantAuthNotifier, MerchantAuthState>((ref) {
   return MerchantAuthNotifier(ref.watch(merchantAuthRepositoryProvider));
+});
+
+/// `true` pour un compte Restaurant classique ou un membre d'équipe rôle
+/// admin ; `false` pour un opérateur — pilote la navigation réduite
+/// (`MerchantShell`) et la redirection du router.
+final isAdminProvider = Provider<bool>((ref) {
+  final restaurant = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
+  return restaurant == null || restaurant.staffRole == 'admin';
 });

@@ -69,6 +69,15 @@ class MerchantAuthService {
         return response.data as Map<String, dynamic>;
       });
 
+  Future<Map<String, dynamic>> staffLogin(String email, String password) =>
+      _guard(() async {
+        final response = await _apiClient.dio.post('/auth/merchant/staff/login', data: {
+          'email': email,
+          'password': password,
+        });
+        return response.data as Map<String, dynamic>;
+      });
+
   Future<Map<String, dynamic>> socialLogin(
     String provider,
     String idToken, {
