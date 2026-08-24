@@ -853,6 +853,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errLoginAccountNotFound => 'Ce compte n\'existe pas encore.';
 
   @override
+  String get errLoginAccountDeactivated =>
+      'Ce compte a été désactivé. Contactez votre administrateur.';
+
+  @override
+  String get errTeamActionFailed =>
+      'Impossible d\'effectuer cette action. Réessayez.';
+
+  @override
   String get errLoginFailed =>
       'Impossible de vous connecter pour le moment. Réessayez.';
 

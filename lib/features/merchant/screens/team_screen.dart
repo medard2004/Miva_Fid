@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -70,7 +72,8 @@ class TeamScreen extends ConsumerWidget {
                 loading: saving,
                 onPressed: () async {
                   setSheetState(() => saving = true);
-                  final ok = await ref.read(teamNotifierProvider.notifier).invite(
+                  final notifier = ref.read(teamNotifierProvider.notifier);
+                  final ok = await notifier.invite(
                         name: nameCtrl.text.trim(),
                         email: emailCtrl.text.trim(),
                         phone: phoneCtrl.text.trim(),
@@ -82,8 +85,16 @@ class TeamScreen extends ConsumerWidget {
                     Navigator.pop(sheetContext);
                   } else {
                     setSheetState(() => saving = false);
+                    // Le motif réel (ex. e-mail déjà utilisé) vient du
+                    // backend via `lastError` : un message générique ici
+                    // masquerait la cause à l'administrateur.
+                    final message = ErrorTranslator.translate(
+                      notifier.lastError,
+                      context: ErrorContext.manageTeam,
+                    ).displayMessage ??
+                        'Impossible d\'inviter ce membre.';
                     ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      const SnackBar(content: Text('Impossible d\'inviter ce membre.')),
+                      SnackBar(content: Text(message)),
                     );
                   }
                 },
@@ -116,7 +127,13 @@ class TeamScreen extends ConsumerWidget {
       body: teamAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
-          child: Text('Erreur : $e', style: AppTextStyles.bodyMd()),
+          child: Text(
+            ErrorTranslator.translate(e, context: ErrorContext.manageTeam)
+                    .displayMessage ??
+                'Une erreur est survenue. Réessayez.',
+            style: AppTextStyles.bodyMd(),
+            textAlign: TextAlign.center,
+          ),
         ),
         data: (team) => team.isEmpty
             ? Center(
@@ -169,10 +186,16 @@ class _TeamMemberTile extends ConsumerWidget {
             activeThumbColor: Colors.white,
             activeTrackColor: AppColors.merchant,
             onChanged: (val) async {
-              final ok = await ref.read(teamNotifierProvider.notifier).toggleActive(member.id, val);
+              final notifier = ref.read(teamNotifierProvider.notifier);
+              final ok = await notifier.toggleActive(member.id, val);
               if (!ok && context.mounted) {
+                final message = ErrorTranslator.translate(
+                  notifier.lastError,
+                  context: ErrorContext.manageTeam,
+                ).displayMessage ??
+                    'Impossible de modifier le statut de ce membre.';
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Impossible de modifier le statut de ce membre.')),
+                  SnackBar(content: Text(message)),
                 );
               }
             },

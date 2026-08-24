@@ -1598,6 +1598,18 @@ abstract class AppLocalizations {
   /// **'Ce compte n\'existe pas encore.'**
   String get errLoginAccountNotFound;
 
+  /// No description provided for @errLoginAccountDeactivated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce compte a été désactivé. Contactez votre administrateur.'**
+  String get errLoginAccountDeactivated;
+
+  /// No description provided for @errTeamActionFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'effectuer cette action. Réessayez.'**
+  String get errTeamActionFailed;
+
   /// No description provided for @errLoginFailed.
   ///
   /// In fr, this message translates to:

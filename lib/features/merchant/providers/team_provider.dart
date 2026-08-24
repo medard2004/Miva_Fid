@@ -18,6 +18,13 @@ class TeamNotifier extends StateNotifier<AsyncValue<List<TeamMember>>> {
     refresh();
   }
 
+  /// Erreur brute de la dernière tentative d'[invite]/[toggleActive], `null`
+  /// si elle a réussi (ou si aucune n'a encore eu lieu). Exposée telle
+  /// quelle — non traduite — pour que l'appelant (l'écran) la fasse passer
+  /// par `ErrorTranslator` et affiche le vrai motif (ex. e-mail déjà pris)
+  /// plutôt qu'un message générique.
+  Object? lastError;
+
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     try {
@@ -37,9 +44,11 @@ class TeamNotifier extends StateNotifier<AsyncValue<List<TeamMember>>> {
   }) async {
     try {
       await _service.invite(name: name, email: email, phone: phone, password: password, role: role);
+      lastError = null;
       await refresh();
       return true;
-    } catch (_) {
+    } catch (e) {
+      lastError = e;
       return false;
     }
   }
@@ -47,15 +56,21 @@ class TeamNotifier extends StateNotifier<AsyncValue<List<TeamMember>>> {
   Future<bool> toggleActive(int id, bool isActive) async {
     try {
       await _service.toggleActive(id, isActive);
+      lastError = null;
       await refresh();
       return true;
-    } catch (_) {
+    } catch (e) {
+      lastError = e;
       return false;
     }
   }
 }
 
-final teamNotifierProvider =
-    StateNotifierProvider<TeamNotifier, AsyncValue<List<TeamMember>>>((ref) {
+// `.autoDispose` : sans lui, l'équipe du premier admin connecté sur cet
+// appareil resterait en cache et s'afficherait brièvement à un second admin
+// qui se connecte ensuite — le provider doit repartir de zéro à chaque
+// (re)montée de l'écran Équipe.
+final teamNotifierProvider = StateNotifierProvider.autoDispose<TeamNotifier,
+    AsyncValue<List<TeamMember>>>((ref) {
   return TeamNotifier(ref.watch(teamServiceProvider));
 });

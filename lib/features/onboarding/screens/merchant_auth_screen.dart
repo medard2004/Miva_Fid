@@ -414,8 +414,12 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     .animate(key: ValueKey('pass_$_isLogin'))
                     .fadeIn(duration: 300.ms),
 
-                // "Mot de passe oublié" for login
-                if (_isLogin) ...[
+                // "Mot de passe oublié" for login — le flux `/auth/forgot-password`
+                // réinitialise le mot de passe du compte Restaurant, pas celui
+                // d'un `StaffUser` : un opérateur qui l'emprunterait se
+                // retrouverait à réinitialiser un mot de passe qui n'est pas le
+                // sien. Un opérateur doit passer par son administrateur.
+                if (_isLogin && !_loginAsStaff) ...[
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(

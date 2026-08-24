@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
@@ -9,6 +10,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/validate_provider.dart';
@@ -280,6 +282,19 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     await _lookupAndShowSheet(code);
   }
 
+  Future<void> _signOut() async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Se déconnecter ?',
+      message: 'Vous devrez vous reconnecter pour accéder à votre espace marchand.',
+      confirmLabel: 'Se déconnecter',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    await ref.read(merchantAuthProvider.notifier).signOut();
+    if (context.mounted) context.go('/auth/merchant/auth');
+  }
+
   @override
   Widget build(BuildContext context) {
     // Ces ecrans peignent via les tokens statiques d'AppColors,
@@ -287,12 +302,52 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     // la luminosite effective est leur seul declencheur de rebuild sur
     // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
+    // Un opérateur n'a pas accès au dashboard (`MerchantShell` le confine à
+    // cet écran) : sans ce menu, il n'aurait aucun moyen de changer son mot
+    // de passe ou de se déconnecter.
+    final isAdmin = ref.watch(isAdminProvider);
+    final staffName = ref.watch(merchantAuthProvider).restaurant?.staffName;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text('Valider un achat', style: AppTextStyles.h3()),
+          actions: !isAdmin
+              ? [
+                  PopupMenuButton<String>(
+                    icon: const Icon(LucideIcons.userCircle),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'change-password':
+                          context.push('/merchant/more/account/change-password');
+                          break;
+                        case 'sign-out':
+                          _signOut();
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (staffName != null && staffName.isNotEmpty)
+                        PopupMenuItem<String>(
+                          enabled: false,
+                          child: Text(
+                            staffName,
+                            style: AppTextStyles.labelBold(),
+                          ),
+                        ),
+                      const PopupMenuItem<String>(
+                        value: 'change-password',
+                        child: Text('Changer mon mot de passe'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'sign-out',
+                        child: Text('Se déconnecter'),
+                      ),
+                    ],
+                  ),
+                ]
+              : null,
           bottom: TabBar(
             indicator: const BoxDecoration(
               color: AppColors.merchant,

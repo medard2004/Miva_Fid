@@ -173,10 +173,17 @@ class ErrorTranslator {
   static String _unauthorizedMessage(ErrorContext context, String rawMessage) {
     switch (context) {
       case ErrorContext.login:
-        // Le backend distingue déjà « aucun compte » (guide vers l'inscription)
-        // de « mot de passe incorrect » (identifiants à revérifier) : les deux
-        // sont volontairement affichés différemment plutôt que fusionnés.
-        return _has(_normalize(rawMessage), ['aucun compte'])
+        // Le backend distingue déjà « aucun compte » (guide vers l'inscription),
+        // « compte désactivé » (opérateur retiré de l'équipe — voir
+        // `StaffAuthController::login`) et « mot de passe incorrect »
+        // (identifiants à revérifier) : les trois sont volontairement
+        // affichés différemment plutôt que fusionnés, sinon un opérateur
+        // désactivé croit avoir simplement mal tapé son mot de passe.
+        final raw = _normalize(rawMessage);
+        if (_has(raw, ['desactive', 'deactivat'])) {
+          return ErrorMessages.loginAccountDeactivated;
+        }
+        return _has(raw, ['aucun compte'])
             ? ErrorMessages.loginAccountNotFound
             : ErrorMessages.loginInvalidCredentials;
       case ErrorContext.socialLogin:
@@ -286,6 +293,8 @@ class ErrorTranslator {
         return ErrorMessages.passwordChangeFailed;
       case ErrorContext.createLoyaltyProgram:
         return ErrorMessages.profileSaveFailed;
+      case ErrorContext.manageTeam:
+        return ErrorMessages.teamActionFailed;
     }
   }
 

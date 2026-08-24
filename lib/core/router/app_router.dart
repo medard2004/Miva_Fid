@@ -218,8 +218,13 @@ GoRouter appRouter(AppRouterRef ref) {
 
         // Opérateur : uniquement l'écran de validation, jamais le dashboard,
         // la clientèle, les campagnes ou la configuration (voir spec équipe).
+        // Le changement de mot de passe reste accessible : sans lui, le menu
+        // compte de l'opérateur sur `/merchant/validate` mènerait à une route
+        // aussitôt renvoyée ici.
         final isAdmin = ref.read(isAdminProvider);
-        if (!isAdmin && !location.startsWith('/merchant/validate')) {
+        final isOperatorReachable = location.startsWith('/merchant/validate') ||
+            location == '/merchant/more/account/change-password';
+        if (!isAdmin && !isOperatorReachable) {
           return '/merchant/validate';
         }
 

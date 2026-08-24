@@ -52,4 +52,5 @@ enum ErrorContext {
   verifyPassword,
   changePassword,
   createLoyaltyProgram,
+  manageTeam,
 }

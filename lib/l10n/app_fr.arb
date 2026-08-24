@@ -343,6 +343,8 @@
   "errMissingRequiredFields": "Veuillez renseigner tous les champs obligatoires.",
   "errLoginInvalidCredentials": "Numéro de téléphone ou mot de passe incorrect.",
   "errLoginAccountNotFound": "Ce compte n'existe pas encore.",
+  "errLoginAccountDeactivated": "Ce compte a été désactivé. Contactez votre administrateur.",
+  "errTeamActionFailed": "Impossible d'effectuer cette action. Réessayez.",
   "errLoginFailed": "Impossible de vous connecter pour le moment. Réessayez.",
   "errAccountUsesGoogle": "Ce compte utilise une connexion Google. Connectez-vous avec Google pour accéder à votre compte.",
   "errAccountUsesApple": "Ce compte utilise une connexion Apple. Connectez-vous avec Apple pour accéder à votre compte.",
