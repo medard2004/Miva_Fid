@@ -233,7 +233,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                         ),
                         const SizedBox(height: Sp.md),
                         TextButton(
-                          onPressed: () => context.go('/merchant'),
+                          onPressed: () => context.go('/merchant/validate'),
                           child: Text(
                             'Accéder à mon espace →',
                             style: AppTextStyles.bodyMd().copyWith(

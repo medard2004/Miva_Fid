@@ -89,7 +89,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
       // précédent, et préremplit un onboarding repris en cours de route.
       ref.read(onboardingNotifierProvider.notifier).hydrateFrom(restaurant);
       if (restaurant?.hasLoyaltyProgram ?? false) {
-        context.go('/merchant');
+        context.go('/merchant/validate');
       } else {
         context.go('/auth/merchant/step1');
       }
@@ -144,7 +144,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
 
         final restaurant = ref.read(merchantAuthProvider).restaurant;
         if (restaurant?.hasBusinessInfo ?? false) {
-          context.go('/merchant');
+          context.go('/merchant/validate');
         } else {
           context.go('/auth/merchant/step1');
         }

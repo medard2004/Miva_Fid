@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../client/providers/settings_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_provider.dart';
 
@@ -54,13 +55,18 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
   Widget build(BuildContext context) {
     final merchant = ref.watch(merchantNotifierProvider).value;
     final smsAsync = ref.watch(smsNotifierProvider);
+    // Ces ecrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le systeme de dependances de Flutter : observer
+    // la luminosite effective est leur seul declencheur de rebuild sur
+    // une bascule clair/sombre.
+    ref.watch(appBrightnessProvider);
 
     final smsRemaining = merchant?.smsRemaining ?? 87;
     const smsTotal = 100;
     final progress = (smsRemaining / smsTotal).clamp(0.0, 1.0);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
@@ -186,7 +192,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Renouvellement le 1er septembre • Plan Pro',
+                      'Renouvellement le 1er septembre • ${(merchant?.isPro ?? false) ? "Plan Pro" : "Plan Standard"}',
                       style: AppTextStyles.caption().copyWith(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -239,7 +245,15 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     child: CircularProgressIndicator(),
                   ),
                 ),
-                error: (_, __) => _buildCampaignsList(_mockCampaigns),
+                error: (err, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      'Erreur: $err',
+                      style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
+                    ),
+                  ),
+                ),
                 data: (campaignList) {
                   final dbCampaigns = campaignList.map((c) => _MockCampaign(
                         title: c.message.length > 20

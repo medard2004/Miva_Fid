@@ -49,7 +49,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
         color1: Color(0xFFF59E0B),
         color2: Color(0xFF78350F),
         emoji3D: '🍹',
-        showButton: true,
+        showButton: false,
       ),
     ),
   ];
