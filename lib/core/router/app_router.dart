@@ -240,11 +240,11 @@ GoRouter appRouter(AppRouterRef ref) {
         final merchantAuth = ref.read(merchantAuthProvider);
         if (merchantAuth.isAuthenticated) {
           // `/auth/merchant/success` est l'écran d'arrivée juste après la
-          // création du programme : le renvoyer au dashboard priverait le
-          // marchand de son QR code et de la feuille comptoir.
+          // création du programme : le renvoyer directement à la validation
+          // priverait le marchand de son QR code et de la feuille comptoir.
           if ((merchantAuth.restaurant?.hasLoyaltyProgram ?? false) &&
               location != '/auth/merchant/success') {
-            return '/merchant';
+            return '/merchant/validate';
           }
           if (_merchantEntryRoutes.contains(location)) {
             return '/auth/merchant/step1';

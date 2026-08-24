@@ -46,7 +46,7 @@ class SplashScreen extends ConsumerWidget {
               restaurant?.hasLocation ?? false,
               restaurant?.hasBusinessInfo ?? false,
             )) {
-              (true, _, _) => '/merchant',
+              (true, _, _) => '/merchant/validate',
               (false, true, _) => '/auth/merchant/step2',
               (false, false, true) => '/auth/merchant/location',
               _ => '/auth/merchant/step1',
