@@ -41,9 +41,11 @@ class AppError {
 /// l'écran (un 401 à la connexion n'est pas un 401 sur le profil).
 enum ErrorContext {
   login,
+  merchantLogin,
   socialLogin,
   signup,
   forgotPassword,
+  merchantForgotPassword,
   verifyOtp,
   resetPassword,
   completeProfile,

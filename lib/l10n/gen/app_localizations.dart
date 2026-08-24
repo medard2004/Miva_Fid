@@ -1592,6 +1592,12 @@ abstract class AppLocalizations {
   /// **'Numéro de téléphone ou mot de passe incorrect.'**
   String get errLoginInvalidCredentials;
 
+  /// No description provided for @errMerchantLoginInvalidCredentials.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail ou mot de passe incorrect.'**
+  String get errMerchantLoginInvalidCredentials;
+
   /// No description provided for @errLoginAccountNotFound.
   ///
   /// In fr, this message translates to:
@@ -1693,6 +1699,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun compte n\'est associé à ce numéro de téléphone.'**
   String get errForgotAccountNotFound;
+
+  /// No description provided for @errMerchantForgotAccountNotFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun compte n\'est associé à cette adresse e-mail.'**
+  String get errMerchantForgotAccountNotFound;
 
   /// No description provided for @errForgotCodeSent.
   ///

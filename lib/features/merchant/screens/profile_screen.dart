@@ -80,14 +80,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
-    final merchant = ref.watch(merchantNotifierProvider).value;
+    final merchantAsync = ref.watch(merchantNotifierProvider);
+    final merchantState = ref.watch(merchantAuthProvider);
+    final merchant = merchantAsync.value;
 
     if (merchant != null && !_initialized) {
       _nameController.text = merchant.name;
       _phoneController.text = merchant.phone ?? '';
-      _emailController.text =
-          ref.read(merchantAuthProvider).restaurant?.email ?? '';
+      _emailController.text = merchantState.restaurant?.email ?? '';
       _initialized = true;
+    }
+
+    if (merchantAsync.isLoading && merchant == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Profil'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.merchant),
+        ),
+      );
     }
 
     return Scaffold(
@@ -215,7 +230,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
-                    onPressed: () => context.push('/merchant/more/account/change-password'),
+                    onPressed: () => context.push('/merchant/more/change-password'),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                     child: Text(
                       'Changer le mot de passe',

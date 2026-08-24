@@ -223,7 +223,7 @@ GoRouter appRouter(AppRouterRef ref) {
         // aussitôt renvoyée ici.
         final isAdmin = ref.read(isAdminProvider);
         final isOperatorReachable = location.startsWith('/merchant/validate') ||
-            location == '/merchant/more/account/change-password';
+            location == '/merchant/more/change-password';
         if (!isAdmin && !isOperatorReachable) {
           return '/merchant/validate';
         }
@@ -610,21 +610,22 @@ GoRouter appRouter(AppRouterRef ref) {
                     ),
                   ],
                 ),
+                // Profil — route directe, plus de sous-imbrication account/profile
+                GoRoute(
+                  path: 'profile',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const merchant_profile.ProfileScreen()),
+                ),
+                GoRoute(
+                  path: 'change-password',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
+                ),
                 GoRoute(
                   path: 'account',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, __) => _slide(const AccountCategoryScreen()),
                   routes: [
-                    GoRoute(
-                      path: 'profile',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const merchant_profile.ProfileScreen()),
-                    ),
-                    GoRoute(
-                      path: 'change-password',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
-                    ),
                     GoRoute(
                       path: 'vitrine',
                       parentNavigatorKey: rootNavigatorKey,

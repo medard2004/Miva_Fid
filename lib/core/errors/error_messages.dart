@@ -47,6 +47,8 @@ class ErrorMessages {
   // ── Connexion ──
   static String get loginInvalidCredentials => _t?.errLoginInvalidCredentials ?? 'Numéro de téléphone ou mot de passe incorrect.';
 
+  static String get merchantLoginInvalidCredentials => _t?.errMerchantLoginInvalidCredentials ?? 'Adresse e-mail ou mot de passe incorrect.';
+
   static String get loginAccountNotFound => _t?.errLoginAccountNotFound ?? 'Ce compte n\'existe pas encore.';
 
   static String get loginAccountDeactivated => _t?.errLoginAccountDeactivated ?? 'Ce compte a été désactivé. Contactez votre administrateur.';
@@ -81,6 +83,8 @@ class ErrorMessages {
 
   // ── Mot de passe oublié / réinitialisation ──
   static String get forgotAccountNotFound => _t?.errForgotAccountNotFound ?? 'Aucun compte n\'est associé à ce numéro de téléphone.';
+
+  static String get merchantForgotAccountNotFound => _t?.errMerchantForgotAccountNotFound ?? 'Aucun compte n\'est associé à cette adresse e-mail.';
 
   static String get forgotCodeSent => _t?.errForgotCodeSent ?? 'Un code de réinitialisation vient d\'être envoyé.';
 

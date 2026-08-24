@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -35,12 +36,13 @@ class MerchantAvatar extends StatelessWidget {
       Widget imageFallback() => _buildInitials(effectiveBgColor);
 
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        childWidget = Image.network(
-          url,
+        childWidget = CachedNetworkImage(
+          imageUrl: url,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => imageFallback(),
+          placeholder: (_, __) => imageFallback(),
+          errorWidget: (_, __, ___) => imageFallback(),
         );
       } else {
         try {

@@ -186,6 +186,14 @@ class ErrorTranslator {
         return _has(raw, ['aucun compte'])
             ? ErrorMessages.loginAccountNotFound
             : ErrorMessages.loginInvalidCredentials;
+      case ErrorContext.merchantLogin:
+        final raw = _normalize(rawMessage);
+        if (_has(raw, ['desactive', 'deactivat'])) {
+          return ErrorMessages.loginAccountDeactivated;
+        }
+        return _has(raw, ['aucun compte'])
+            ? ErrorMessages.loginAccountNotFound
+            : ErrorMessages.merchantLoginInvalidCredentials;
       case ErrorContext.socialLogin:
         return ErrorMessages.socialAccountNotFound;
       case ErrorContext.verifyPassword:
@@ -222,15 +230,22 @@ class ErrorTranslator {
     if (_has(raw, ['not found', 'introuvable', 'existe pas', 'aucun compte'])) {
       switch (context) {
         case ErrorContext.login:
+        case ErrorContext.merchantLogin:
           return AppError.general(ErrorMessages.loginAccountNotFound);
         case ErrorContext.forgotPassword:
           return AppError.general(ErrorMessages.forgotAccountNotFound);
+        case ErrorContext.merchantForgotPassword:
+          return AppError.general(ErrorMessages.merchantForgotAccountNotFound);
         default:
           return AppError.general(_fallbackMessage(context));
       }
     }
     if (_has(raw, ['identifiants', 'credentials'])) {
-      return AppError.general(ErrorMessages.loginInvalidCredentials);
+      return AppError.general(
+        context == ErrorContext.merchantLogin
+            ? ErrorMessages.merchantLoginInvalidCredentials
+            : ErrorMessages.loginInvalidCredentials,
+      );
     }
     if (_has(raw, ['expire', 'expired'])) {
       switch (context) {
@@ -271,12 +286,14 @@ class ErrorTranslator {
   static String _fallbackMessage(ErrorContext context) {
     switch (context) {
       case ErrorContext.login:
+      case ErrorContext.merchantLogin:
         return ErrorMessages.loginFailed;
       case ErrorContext.socialLogin:
         return ErrorMessages.loginFailed;
       case ErrorContext.signup:
         return ErrorMessages.signupFailed;
       case ErrorContext.forgotPassword:
+      case ErrorContext.merchantForgotPassword:
         return ErrorMessages.forgotSendFailed;
       case ErrorContext.verifyOtp:
         return ErrorMessages.otpInvalid;

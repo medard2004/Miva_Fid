@@ -320,7 +320,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                     onSelected: (value) {
                       switch (value) {
                         case 'change-password':
-                          context.push('/merchant/more/account/change-password');
+                          context.push('/merchant/more/change-password');
                           break;
                         case 'sign-out':
                           _signOut();
@@ -370,10 +370,17 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   }
 }
 
-class _ScannerTab extends StatelessWidget {
+class _ScannerTab extends StatefulWidget {
   const _ScannerTab({required this.controller, required this.onDetect});
   final MobileScannerController controller;
   final void Function(BarcodeCapture) onDetect;
+
+  @override
+  State<_ScannerTab> createState() => _ScannerTabState();
+}
+
+class _ScannerTabState extends State<_ScannerTab> {
+  bool _isCameraActive = false;
 
   @override
   Widget build(BuildContext context) {
@@ -381,33 +388,193 @@ class _ScannerTab extends StatelessWidget {
       padding: const EdgeInsets.all(Sp.md),
       child: Column(
         children: [
-          Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: Rd.card,
-                  child: MobileScanner(controller: controller, onDetect: onDetect),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.textPrimary.withValues(alpha: 0.03),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
-                const ScanFrameWidget(),
               ],
             ),
-          ),
-          const SizedBox(height: Sp.md),
-          Text('Pointez vers le QR code du client',
-              style: AppTextStyles.bodyMd(), textAlign: TextAlign.center),
-          const SizedBox(height: Sp.sm),
-          IconButton.filled(
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(Colors.black.withValues(alpha: 0.12))),
-            icon: const Icon(LucideIcons.flashlight, color: Colors.white),
-            onPressed: controller.toggleTorch,
-          ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Scanner area — camera always rendered, overlay hides it
+                Container(
+                  width: double.infinity,
+                  height: 300, // Fixed height to prevent stretching
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: const Color(0xFFFAFAFE),
+                  ),
+                  child: CustomPaint(
+                    painter: _DashedBorderPainter(
+                      color: _isCameraActive
+                          ? AppColors.merchant.withValues(alpha: 0.4)
+                          : const Color(0xFFD1D5DB),
+                      strokeWidth: 1.5,
+                      dashWidth: 6,
+                      dashSpace: 4,
+                      radius: 20,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(
+                        children: [
+                          // Camera — always built and running
+                          Positioned.fill(
+                            child: MobileScanner(
+                              controller: widget.controller,
+                              onDetect: widget.onDetect,
+                            ),
+                          ),
+                          // Overlay cover — hides camera until activated
+                          if (!_isCameraActive)
+                            Positioned.fill(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isCameraActive = true),
+                                child: Container(
+                                  color: const Color(0xFFFAFAFE),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        InkWell(
+                                          onTap: () => setState(() => _isCameraActive = true),
+                                          borderRadius: BorderRadius.circular(16),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Icon(
+                                              LucideIcons.scan,
+                                              size: 64,
+                                              color: Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: Sp.sm),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                                          child: Text(
+                                            'Placez le QR code du client dans le cadre',
+                                            style: AppTextStyles.bodyMd().copyWith(
+                                              color: AppColors.textSecondary,
+                                              fontSize: 13.5,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          // Scan frame overlay — visible when camera active
+                          if (_isCameraActive)
+                            const Positioned.fill(
+                              child: Center(child: ScanFrameWidget(size: 240)), // Ensure square aspect ratio and perfect centering
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                  const SizedBox(height: Sp.lg),
+                  // Toggle button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: () => setState(() => _isCameraActive = !_isCameraActive),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.merchant,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: Icon(
+                        _isCameraActive ? LucideIcons.cameraOff : LucideIcons.camera,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      label: Text(
+                        _isCameraActive ? 'Désactiver la caméra' : 'Activer la caméra',
+                        style: AppTextStyles.labelBold().copyWith(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: Sp.md),
         ],
       ),
     );
   }
+}
+
+/// Dashed border painter for the scanner frame.
+class _DashedBorderPainter extends CustomPainter {
+  _DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashWidth,
+    required this.dashSpace,
+    required this.radius,
+  });
+
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashSpace;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final nextDistance = distance + dashWidth;
+        final extractPath = metric.extractPath(
+          distance,
+          nextDistance > metric.length ? metric.length : nextDistance,
+        );
+        canvas.drawPath(extractPath, paint);
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.dashWidth != dashWidth ||
+      oldDelegate.dashSpace != dashSpace ||
+      oldDelegate.radius != radius;
 }
 
 class _ManualTab extends StatelessWidget {

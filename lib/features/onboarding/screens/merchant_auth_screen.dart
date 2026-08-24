@@ -136,8 +136,8 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
 
         if (!ok) {
           ToastService.showError(_translatedError(
-            ErrorContext.login,
-            fallback: ErrorMessages.loginFailed,
+            ErrorContext.merchantLogin,
+            fallback: ErrorMessages.merchantLoginInvalidCredentials,
           ));
           return;
         }
@@ -171,9 +171,9 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
       debugPrint("Merchant auth error: $e");
       ToastService.showError(ErrorTranslator.translate(
             e,
-            context: _isLogin ? ErrorContext.login : ErrorContext.signup,
+            context: _isLogin ? ErrorContext.merchantLogin : ErrorContext.signup,
           ).displayMessage ??
-          (_isLogin ? ErrorMessages.loginFailed : ErrorMessages.signupFailed));
+          (_isLogin ? ErrorMessages.merchantLoginInvalidCredentials : ErrorMessages.signupFailed));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

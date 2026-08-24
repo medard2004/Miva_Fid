@@ -148,7 +148,7 @@ class MerchantShell extends ConsumerWidget {
                           logoUrl: merchant?.logoUrl,
                           initials: initials,
                           radius: 20,
-                          onTap: () => context.push('/merchant/more/account/profile'),
+                          onTap: () => context.push('/merchant/more/profile'),
                         ),
                         const SizedBox(width: Sp.sm),
                         Expanded(

@@ -850,6 +850,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Numéro de téléphone ou mot de passe incorrect.';
 
   @override
+  String get errMerchantLoginInvalidCredentials =>
+      'Adresse e-mail ou mot de passe incorrect.';
+
+  @override
   String get errLoginAccountNotFound => 'Ce compte n\'existe pas encore.';
 
   @override
@@ -911,6 +915,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errForgotAccountNotFound =>
       'Aucun compte n\'est associé à ce numéro de téléphone.';
+
+  @override
+  String get errMerchantForgotAccountNotFound =>
+      'Aucun compte n\'est associé à cette adresse e-mail.';
 
   @override
   String get errForgotCodeSent =>

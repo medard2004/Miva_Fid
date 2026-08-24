@@ -36,7 +36,7 @@ class AccountCategoryScreen extends ConsumerWidget {
                 context,
                 icon: LucideIcons.user,
                 label: 'Profil',
-                route: '/merchant/more/account/profile',
+                route: '/merchant/more/profile',
               ),
               const Divider(height: 0, indent: Sp.md),
               _buildCommonTile(
@@ -79,7 +79,7 @@ class AccountCategoryScreen extends ConsumerWidget {
         size: 18,
         color: AppColors.textSecondary,
       ),
-      onTap: () => context.go(route),
+      onTap: () => context.push(route),
       contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 2),
     );
   }

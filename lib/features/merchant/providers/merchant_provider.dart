@@ -183,9 +183,9 @@ MerchantModel _fromRestaurant(RestaurantAccount r) {
 
   final configLogo = asString('logo_url')?.trim();
   final rLogo = r.logoUrl?.trim();
-  final String? resolvedLogoUrl = (configLogo != null && configLogo.isNotEmpty)
-      ? configLogo
-      : ((rLogo != null && rLogo.isNotEmpty) ? rLogo : null);
+  final String? resolvedLogoUrl = (rLogo != null && rLogo.isNotEmpty)
+      ? rLogo
+      : ((configLogo != null && configLogo.isNotEmpty) ? configLogo : null);
 
   return MerchantModel(
     id: r.id,

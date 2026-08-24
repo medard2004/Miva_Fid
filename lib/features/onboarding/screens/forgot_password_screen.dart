@@ -59,7 +59,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       } else {
         ToastService.showError(ErrorTranslator.translate(
               error,
-              context: ErrorContext.forgotPassword,
+              context: ErrorContext.merchantForgotPassword,
             ).displayMessage ??
             ErrorMessages.forgotSendFailed);
       }

@@ -833,6 +833,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Incorrect phone number or password.';
 
   @override
+  String get errMerchantLoginInvalidCredentials =>
+      'Incorrect email address or password.';
+
+  @override
   String get errLoginAccountNotFound => 'This account doesn\'t exist yet.';
 
   @override
@@ -893,6 +897,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errForgotAccountNotFound =>
       'No account is linked to this phone number.';
+
+  @override
+  String get errMerchantForgotAccountNotFound =>
+      'No account is linked to this email address.';
 
   @override
   String get errForgotCodeSent => 'A reset code has just been sent.';

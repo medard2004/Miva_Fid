@@ -46,7 +46,7 @@ class MoreScreen extends ConsumerWidget {
                 color: Colors.transparent,
                 borderRadius: Rd.card,
                 child: InkWell(
-                  onTap: () => context.push('/merchant/more/account/profile'),
+                  onTap: () => context.push('/merchant/more/profile'),
                   borderRadius: Rd.card,
                   child: Container(
                     padding: const EdgeInsets.all(Sp.md),
@@ -117,7 +117,14 @@ class MoreScreen extends ConsumerWidget {
                     _buildMenuItem(
                       context: context,
                       icon: LucideIcons.user,
-                      label: 'Compte & Profil',
+                      label: 'Profil du commerce',
+                      route: '/merchant/more/profile',
+                    ),
+                    const Divider(height: 0, indent: Sp.md),
+                    _buildMenuItem(
+                      context: context,
+                      icon: LucideIcons.store,
+                      label: 'Vitrine & QR Code',
                       route: '/merchant/more/account',
                     ),
                     const Divider(height: 0, indent: Sp.md),
@@ -254,7 +261,7 @@ class MoreScreen extends ConsumerWidget {
         ),
       ),
       trailing: route != null ? Icon(LucideIcons.chevronRight, size: 18, color: AppColors.textSecondary) : null,
-      onTap: onTap ?? (route != null ? () => context.go(route) : null),
+      onTap: onTap ?? (route != null ? () => context.push(route) : null),
       contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 2),
     );
   }
