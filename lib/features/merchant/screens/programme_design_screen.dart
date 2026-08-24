@@ -1,15 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
 import '../../onboarding/widgets/color_palette_picker.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../widgets/merchant_avatar.dart';
 
 class ProgrammeDesignScreen extends ConsumerStatefulWidget {
   const ProgrammeDesignScreen({super.key});
@@ -20,6 +25,7 @@ class ProgrammeDesignScreen extends ConsumerStatefulWidget {
 
 class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
   bool _saving = false;
+  bool _uploadingLogo = false;
   bool _initialized = false;
   bool _showPreview = true;
 
@@ -44,11 +50,43 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
       notifier.setStampDesignType(m.stampDesignType);
       notifier.setStampIcon(m.stampIcon);
       notifier.setStampEmoji(m.stampEmoji);
+      notifier.setLogoUrl(m.logoUrl ?? '');
       
       setState(() {
         _initialized = true;
       });
     }
+  }
+
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (!mounted || file == null) return;
+
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).uploadLogo(File(file.path));
+    if (!mounted) return;
+    if (ok) {
+      final updatedLogo = ref.read(merchantAuthProvider).restaurant?.logoUrl;
+      ref.read(onboardingNotifierProvider.notifier).setLogoUrl(updatedLogo ?? file.path);
+      ToastService.showSuccess('Logo mis à jour avec succès');
+    } else {
+      ToastService.showError('Impossible de mettre à jour le logo');
+    }
+    setState(() => _uploadingLogo = false);
+  }
+
+  Future<void> _removeLogo() async {
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).deleteLogo();
+    if (!mounted) return;
+    if (ok) {
+      ref.read(onboardingNotifierProvider.notifier).setLogoUrl('');
+      ToastService.showSuccess('Logo supprimé');
+    } else {
+      ToastService.showError('Impossible de supprimer le logo');
+    }
+    setState(() => _uploadingLogo = false);
   }
 
   Future<void> _save() async {
@@ -65,6 +103,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
         'stamp_design_type': state.stampDesignType,
         'stamp_icon': state.stampIcon,
         'stamp_emoji': state.stampEmoji,
+        'logo_url': state.logoUrl,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -280,6 +319,105 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                       const LoyaltyCardPreview(previewStamps: 6),
                       const SizedBox(height: Sp.xl),
                     ],
+
+                    // Logo Section
+                    Text('Logo du commerce', style: AppTextStyles.labelBold()),
+                    const SizedBox(height: Sp.xs),
+                    Text(
+                      'Ce logo apparaîtra sur votre carte de fidélité et sur vos profils.',
+                      style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: Sp.md),
+                    Builder(
+                      builder: (context) {
+                        final bool hasLogo = (state.logoUrl != null && state.logoUrl!.isNotEmpty) ||
+                            (merchant.logoUrl != null && merchant.logoUrl!.isNotEmpty);
+                        final String displayUrl = (state.logoUrl != null && state.logoUrl!.isNotEmpty)
+                            ? state.logoUrl!
+                            : (merchant.logoUrl ?? '');
+
+                        return Container(
+                          padding: const EdgeInsets.all(Sp.md),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  MerchantAvatar(
+                                    logoUrl: displayUrl,
+                                    initials: merchant.initials,
+                                    radius: 26,
+                                  ),
+                                  if (_uploadingLogo)
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black38,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(width: Sp.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      hasLogo ? 'Logo présent' : 'Aucun logo',
+                                      style: AppTextStyles.labelBold().copyWith(fontSize: 14),
+                                    ),
+                                    Text(
+                                      'Format carré recommandé',
+                                      style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary, fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: _uploadingLogo ? null : _pickLogo,
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: AppColors.border),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                icon: const Icon(LucideIcons.camera, size: 14, color: AppColors.merchant),
+                                label: Text(
+                                  hasLogo ? 'Modifier' : 'Ajouter',
+                                  style: AppTextStyles.caption().copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              if (hasLogo) ...[
+                                const SizedBox(width: 4),
+                                IconButton(
+                                  onPressed: _uploadingLogo ? null : _removeLogo,
+                                  tooltip: 'Supprimer',
+                                  icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: Sp.xl),
 
                     Text('Couleur principale', style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.xs),

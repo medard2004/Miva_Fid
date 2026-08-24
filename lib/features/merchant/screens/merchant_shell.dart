@@ -13,6 +13,8 @@ import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
+import '../widgets/merchant_avatar.dart';
+
 class MerchantShell extends ConsumerWidget {
   const MerchantShell({super.key, required this.navigationShell});
   final StatefulNavigationShell navigationShell;
@@ -142,17 +144,11 @@ class MerchantShell extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 8),
                     child: Row(
                       children: [
-                        CircleAvatar(
+                        MerchantAvatar(
+                          logoUrl: merchant?.logoUrl,
+                          initials: initials,
                           radius: 20,
-                          backgroundColor: AppColors.merchant,
-                          child: Text(
-                            initials,
-                            style: AppTextStyles.monoLg().copyWith(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          onTap: () => context.push('/merchant/more/account/profile'),
                         ),
                         const SizedBox(width: Sp.sm),
                         Expanded(

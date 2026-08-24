@@ -181,13 +181,19 @@ MerchantModel _fromRestaurant(RestaurantAccount r) {
     return null;
   }
 
+  final configLogo = asString('logo_url')?.trim();
+  final rLogo = r.logoUrl?.trim();
+  final String? resolvedLogoUrl = (configLogo != null && configLogo.isNotEmpty)
+      ? configLogo
+      : ((rLogo != null && rLogo.isNotEmpty) ? rLogo : null);
+
   return MerchantModel(
     id: r.id,
     userId: r.uuid,
     name: r.name ?? '',
     category: r.category ?? '',
     address: r.address,
-    logoUrl: asString('logo_url') ?? r.logoUrl,
+    logoUrl: resolvedLogoUrl,
     description: r.description,
     phone: r.phone,
     whatsapp: r.whatsapp,

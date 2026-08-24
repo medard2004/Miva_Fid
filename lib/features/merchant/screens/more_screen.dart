@@ -11,6 +11,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../widgets/merchant_avatar.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -40,58 +41,65 @@ class MoreScreen extends ConsumerWidget {
               ),
               const SizedBox(height: Sp.md),
 
-              // En-tête profil
-              Container(
-                padding: const EdgeInsets.all(Sp.md),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+              // En-tête profil (cliquable pour ouvrir la modification du profil)
+              Material(
+                color: Colors.transparent,
+                borderRadius: Rd.card,
+                child: InkWell(
+                  onTap: () => context.push('/merchant/more/account/profile'),
                   borderRadius: Rd.card,
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundColor: AppColors.merchant,
-                      child: Text(
-                        initials,
-                        style: AppTextStyles.monoLg().copyWith(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  child: Container(
+                    padding: const EdgeInsets.all(Sp.md),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: Rd.card,
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        MerchantAvatar(
+                          logoUrl: merchant?.logoUrl,
+                          initials: initials,
+                          radius: 26,
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: Sp.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            merchantName,
-                            style: AppTextStyles.labelBold().copyWith(fontSize: 16),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.merchant.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              planLabel,
-                              style: TextStyle(
-                                color: AppColors.merchant,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: Sp.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                merchantName,
+                                style: AppTextStyles.labelBold().copyWith(fontSize: 16),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.merchant.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  planLabel,
+                                  style: const TextStyle(
+                                    color: AppColors.merchant,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: Sp.xs),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: Sp.lg),

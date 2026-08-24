@@ -11,6 +11,11 @@ import '../providers/merchant_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '../../../core/utils/toast_service.dart';
+import '../widgets/merchant_avatar.dart';
+
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -25,6 +30,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late final TextEditingController _emailController;
   String _selectedLanguage = 'Français';
   bool _isSavingProfile = false;
+  bool _uploadingLogo = false;
   bool _initialized = false;
 
   @override
@@ -41,6 +47,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (!mounted || file == null) return;
+
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).uploadLogo(File(file.path));
+    if (!mounted) return;
+    if (ok) {
+      ToastService.showSuccess('Logo mis à jour avec succès');
+    } else {
+      ToastService.showError('Impossible de mettre à jour le logo. Réessayez.');
+    }
+    setState(() => _uploadingLogo = false);
+  }
+
+  Future<void> _removeLogo() async {
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).deleteLogo();
+    if (!mounted) return;
+    if (ok) {
+      ToastService.showSuccess('Logo supprimé avec succès');
+    } else {
+      ToastService.showError('Impossible de supprimer le logo. Réessayez.');
+    }
+    setState(() => _uploadingLogo = false);
   }
 
   @override
@@ -77,6 +111,73 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Photo de profil / Logo section
+                Center(
+                  child: Column(
+                    children: [
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          MerchantAvatar(
+                            logoUrl: merchant?.logoUrl,
+                            initials: merchant?.initials ?? 'RS',
+                            radius: 44,
+                          ),
+                          if (_uploadingLogo)
+                            Positioned.fill(
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.black38,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: Sp.sm),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _uploadingLogo ? null : _pickLogo,
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: AppColors.border),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Icon(LucideIcons.camera, size: 16, color: AppColors.merchant),
+                            label: Text(
+                              merchant?.logoUrl != null && merchant!.logoUrl!.isNotEmpty
+                                  ? 'Changer la photo'
+                                  : 'Ajouter une photo',
+                              style: AppTextStyles.caption().copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          if (merchant?.logoUrl != null && merchant!.logoUrl!.isNotEmpty) ...[
+                            const SizedBox(width: Sp.xs),
+                            IconButton(
+                              onPressed: _uploadingLogo ? null : _removeLogo,
+                              tooltip: 'Supprimer le logo',
+                              icon: const Icon(LucideIcons.trash2, size: 18, color: AppColors.danger),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Sp.lg),
                 _buildInputLabel('NOM DU COMMERCE'),
                 const SizedBox(height: Sp.xs),
                 TextFormField(
