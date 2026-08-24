@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_provider.dart';
-import '../../client/providers/settings_provider.dart';
 
 class SmsCampaignScreen extends ConsumerStatefulWidget {
   const SmsCampaignScreen({super.key});
@@ -19,34 +20,23 @@ class SmsCampaignScreen extends ConsumerStatefulWidget {
 }
 
 class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
-  // Mockup campaigns data to populate if database list is empty
   static const _mockCampaigns = [
     _MockCampaign(
-      title: 'Relance inactifs',
-      target: 'Inactifs +14j',
-      time: 'il y a 2j',
-      stats: '12/12 envoyés  •  75% ouverts',
-      isSent: true,
-    ),
-    _MockCampaign(
       title: 'Promo week-end',
-      target: 'Tous actifs',
-      time: 'il y a 5j',
-      stats: '47/47 envoyés  •  81% ouverts',
+      message: 'La Saveur : -15% ce week-end sur tous les plats. À bientôt !',
+      stats: '24/24 envoyés • 17 août 2026',
       isSent: true,
     ),
     _MockCampaign(
-      title: 'Anniv. Akosua',
-      target: 'Akosua Tetteh',
-      time: 'Demain 10h',
-      stats: '0/1 envoyés',
-      isSent: false, // Planifiée
+      title: 'Clients inactifs',
+      message: 'Vous nous manquez ! Un tampon offert sur votre prochaine visite.',
+      stats: '17/18 envoyés • 9 août 2026',
+      isSent: true,
     ),
     _MockCampaign(
-      title: 'Nouveauté menu',
-      target: 'VIP Or & Platine',
-      time: 'il y a 10j',
-      stats: '16/16 envoyés  •  88% ouverts',
+      title: 'Récompense disponible',
+      message: 'Votre carte est complète : votre plat offert vous attend.',
+      stats: '6/6 envoyés • 2 août 2026',
       isSent: true,
     ),
   ];
@@ -62,181 +52,268 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Ces ecrans peignent via les tokens statiques d'AppColors,
-    // invisibles pour le systeme de dependances de Flutter : observer
-    // la luminosite effective est leur seul declencheur de rebuild sur
-    // une bascule clair/sombre.
-    ref.watch(appBrightnessProvider);
-    ref.watch(merchantNotifierProvider); // reserved for future merchant-specific UI
+    final merchant = ref.watch(merchantNotifierProvider).value;
     final smsAsync = ref.watch(smsNotifierProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: Sp.sm),
+    final smsRemaining = merchant?.smsRemaining ?? 87;
+    const smsTotal = 100;
+    final progress = (smsRemaining / smsTotal).clamp(0.0, 1.0);
 
-          // 2. Title and "+ Nouvelle" Button Row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-              child: Row(
+    return Scaffold(
+      backgroundColor: AppColors.bgLight,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header Title and Circular "+" Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'SMS',
+                        'Campagnes SMS',
                         style: AppTextStyles.h1().copyWith(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        'Campagnes & messages',
+                        'Restez en contact avec vos clients',
                         style: AppTextStyles.caption().copyWith(
                           color: AppColors.textSecondary,
-                          fontSize: 12,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  ElevatedButton.icon(
-                    onPressed: () => _openNewCampaignSheet(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.merchant,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  GestureDetector(
+                    onTap: () => _openNewCampaignSheet(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.merchant,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.merchant.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                    icon: const Icon(LucideIcons.plus, color: Colors.white, size: 16),
-                    label: Text(
-                      'Nouvelle',
-                      style: AppTextStyles.caption().copyWith(
+                      child: const Icon(
+                        LucideIcons.plus,
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        size: 22,
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: Sp.lg),
+              const SizedBox(height: Sp.md),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: Sp.md),
-              child: Row(
+              // Quota SMS Card
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Quota SMS du mois',
+                          style: AppTextStyles.labelBold().copyWith(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          '$smsRemaining/$smsTotal',
+                          style: AppTextStyles.labelBold().copyWith(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Amber/Gold Gradient Progress Bar
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F4F6),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (ctx, constraints) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              width: constraints.maxWidth * progress,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(99),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFF59E0B),
+                                    Color(0xFFD97706),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Renouvellement le 1er septembre • Plan Pro',
+                      style: AppTextStyles.caption().copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Sp.md),
+
+              // 2 Stats Cards
+              const Row(
                 children: [
                   Expanded(
-                    child: _StatCard(value: '12', label: 'Envoyées'),
+                    child: _MiniMetricCard(
+                      icon: LucideIcons.users,
+                      value: '47',
+                      label: 'Contacts joignables',
+                    ),
                   ),
                   SizedBox(width: Sp.sm),
                   Expanded(
-                    child: _StatCard(value: '82%', label: 'Ouverture'),
-                  ),
-                  SizedBox(width: Sp.sm),
-                  Expanded(
-                    child: _StatCard(value: '143', label: 'Atteints'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: Sp.lg),
-
-            // 4. Historique Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-              child: Row(
-                children: [
-                  Text(
-                    'Historique',
-                    style: AppTextStyles.labelBold().copyWith(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '4 campagnes',
-                    style: AppTextStyles.caption().copyWith(
-                      color: AppColors.textSecondary,
+                    child: _MiniMetricCard(
+                      icon: LucideIcons.checkCheck,
+                      value: '98 %',
+                      label: 'Taux de livraison',
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: Sp.sm),
+              const SizedBox(height: Sp.lg),
 
-            // 5. Campaigns List
-            Expanded(
-              child: smsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Erreur: $err')),
+              // Historique Header
+              Text(
+                'HISTORIQUE',
+                style: AppTextStyles.caption().copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: Sp.sm),
+
+              // Campaign List
+              smsAsync.when(
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (_, __) => _buildCampaignsList(_mockCampaigns),
                 data: (campaignList) {
-                  // Merge Supabase sent campaigns with mockups for visual excellence
                   final dbCampaigns = campaignList.map((c) => _MockCampaign(
-                        title: c.message.length > 20 ? '${c.message.substring(0, 20)}...' : c.message,
-                        target: c.recipientType == 'all' ? 'Tous actifs' : 'Sélection',
-                        time: 'Récemment',
-                        stats: '${c.recipientsCount}/${c.recipientsCount} envoyés  •  100% ouverts',
+                        title: c.message.length > 20
+                            ? '${c.message.substring(0, 20)}...'
+                            : c.message,
+                        message: c.message,
+                        stats: '${c.recipientsCount}/${c.recipientsCount} envoyés • Récemment',
                         isSent: c.status == 'sent',
                       ));
 
                   final displayList = [...dbCampaigns, ..._mockCampaigns];
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-                    itemCount: displayList.length,
-                    itemBuilder: (ctx, i) {
-                      final c = displayList[i];
-                      return _CampaignCard(campaign: c)
-                          .animate()
-                          .fadeIn(
-                            duration: 350.ms,
-                            delay: Duration(milliseconds: 80 * i),
-                          )
-                          .slideY(begin: 0.07, end: 0);
-                    },
-                  );
+                  return _buildCampaignsList(displayList);
                 },
               ),
-            ),
-          ],
+              const SizedBox(height: Sp.xl),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCampaignsList(List<_MockCampaign> list) {
+    return Column(
+      children: [
+        for (int i = 0; i < list.length; i++)
+          _CampaignCard(campaign: list[i])
+              .animate()
+              .fadeIn(
+                duration: 350.ms,
+                delay: Duration(milliseconds: 80 * i),
+              )
+              .slideY(begin: 0.05, end: 0),
+      ],
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.value, required this.label});
+class _MiniMetricCard extends StatelessWidget {
+  const _MiniMetricCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
   final String value;
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: Rd.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.03),
-            blurRadius: 8,
+            color: AppColors.textPrimary.withValues(alpha: 0.02),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(icon, color: AppColors.textPrimary, size: 20),
+          const SizedBox(height: 10),
           Text(
             value,
             style: AppTextStyles.h1().copyWith(
-              fontSize: 20,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
               color: AppColors.textPrimary,
             ),
@@ -246,96 +323,9 @@ class _StatCard extends StatelessWidget {
             label,
             style: AppTextStyles.caption().copyWith(
               color: AppColors.textSecondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CampaignCard extends StatelessWidget {
-  const _CampaignCard({required this.campaign});
-  final _MockCampaign campaign;
-
-  @override
-  Widget build(BuildContext context) {
-    final badgeColor = campaign.isSent ? AppColors.success : AppColors.warningDark;
-    final badgeBg = campaign.isSent ? AppColors.successTint : AppColors.warningTint;
-    final badgeText = campaign.isSent ? 'Envoyée' : 'Planifiée';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: Sp.sm),
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      campaign.title,
-                      style: AppTextStyles.labelBold().copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: badgeBg,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        badgeText,
-                        style: TextStyle(
-                          color: badgeColor,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${campaign.target}  •  ${campaign.time}',
-                  style: AppTextStyles.caption().copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  campaign.stats,
-                  style: AppTextStyles.caption().copyWith(
-                    color: AppColors.textSecondary.withValues(alpha: 0.7),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            LucideIcons.chevronRight,
-            color: AppColors.textSecondary,
           ),
         ],
       ),
@@ -346,19 +336,93 @@ class _CampaignCard extends StatelessWidget {
 class _MockCampaign {
   const _MockCampaign({
     required this.title,
-    required this.target,
-    required this.time,
+    required this.message,
     required this.stats,
     required this.isSent,
   });
+
   final String title;
-  final String target;
-  final String time;
+  final String message;
   final String stats;
   final bool isSent;
 }
 
-// "Nouvelle Campagne" Bottom Sheet modal
+class _CampaignCard extends StatelessWidget {
+  const _CampaignCard({required this.campaign});
+
+  final _MockCampaign campaign;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                campaign.title,
+                style: AppTextStyles.labelBold().copyWith(
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  campaign.isSent ? 'Envoyée' : 'Planifiée',
+                  style: const TextStyle(
+                    color: Color(0xFF15803D),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            campaign.message,
+            style: AppTextStyles.bodyMd().copyWith(
+              color: const Color(0xFF4B5563),
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            campaign.stats,
+            style: AppTextStyles.caption().copyWith(
+              color: AppColors.gray400,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _NewCampaignSheet extends ConsumerStatefulWidget {
   const _NewCampaignSheet();
 
@@ -367,253 +431,130 @@ class _NewCampaignSheet extends ConsumerStatefulWidget {
 }
 
 class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
-  final _nameCtrl = TextEditingController();
   final _msgCtrl = TextEditingController();
-  String _selectedTarget = 'Tous mes clients (47)';
-  bool _sending = false;
+  String _target = 'all';
+  bool _loading = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _msgCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _send() async {
-    if (_msgCtrl.text.trim().isEmpty) return;
-    setState(() => _sending = true);
+    final msg = _msgCtrl.text.trim();
+    if (msg.isEmpty) {
+      AppToast.error(context, 'Veuillez saisir un message');
+      return;
+    }
+
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Envoyer la campagne SMS ?',
+      message: 'Ce message sera envoyé à vos clients.',
+      confirmLabel: 'Envoyer',
+    );
+    if (!confirmed) return;
+
+    setState(() => _loading = true);
     try {
       await ref.read(smsNotifierProvider.notifier).sendCampaign(
-            message: _msgCtrl.text.trim(),
-            recipientType: 'all',
+            message: msg,
+            recipientType: _target,
           );
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Campagne envoyée avec succès')),
-        );
+        AppToast.success(context, 'Campagne SMS envoyée avec succès !');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
-      }
+      if (mounted) AppToast.error(context, 'Erreur: $e');
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.fromLTRB(Sp.md, Sp.md, Sp.md, Sp.md + bottomPadding),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Close and Title Header Row
-            Row(
-              children: [
-                Text(
-                  'Nouvelle campagne',
-                  style: AppTextStyles.h3().copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: Icon(LucideIcons.x, color: AppColors.textSecondary),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: Sp.md),
-
-            // NOM field
-            Text(
-              'NOM',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-                color: AppColors.textSecondary.withValues(alpha: 0.8),
+      padding: EdgeInsets.only(
+        top: 20,
+        left: Sp.md,
+        right: Sp.md,
+        bottom: MediaQuery.of(context).viewInsets.bottom + Sp.md,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Nouvelle Campagne SMS',
+                style: AppTextStyles.h2().copyWith(fontSize: 18),
               ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _nameCtrl,
-              decoration: InputDecoration(
-                hintText: 'Ex. Promo week-end',
-                hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
-                filled: true,
-                fillColor: AppColors.background.withValues(alpha: 0.5),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.border, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.border, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.merchant, width: 1.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: Sp.md),
-
-            // CIBLE field
-            Text(
-              'CIBLE',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-                color: AppColors.textSecondary.withValues(alpha: 0.8),
-              ),
-            ),
-            const SizedBox(height: 6),
-            InkWell(
-              onTap: () {
-                // simple target toggle for mockup demonstration
-                setState(() {
-                  _selectedTarget = _selectedTarget.contains('Tous')
-                      ? 'Clients Or & Platine (26)'
-                      : 'Tous mes clients (47)';
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.background.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.border, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      _selectedTarget,
-                      style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
-                    ),
-                    const Spacer(),
-                    Icon(LucideIcons.chevronDown, color: AppColors.textSecondary),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: Sp.md),
-
-            // MESSAGE field
-            Text(
-              'MESSAGE',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-                color: AppColors.textSecondary.withValues(alpha: 0.8),
-              ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _msgCtrl,
-              maxLines: 4,
-              maxLength: 160,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                hintText: 'Écrivez votre message...',
-                hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
-                filled: true,
-                fillColor: AppColors.background.withValues(alpha: 0.5),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                counterText: '', // Hide default counter
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.border, width: 1),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.border, width: 1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.merchant, width: 1.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Text(
-                  '${_msgCtrl.text.length}/160 caractères',
-                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withValues(alpha: 0.8)),
-                ),
-                const Spacer(),
-                Text(
-                  '${(_msgCtrl.text.length / 160).ceil()} SMS',
-                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withValues(alpha: 0.8)),
-                ),
-              ],
-            ),
-            const SizedBox(height: Sp.lg),
-
-            // Buttons
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _msgCtrl.text.trim().isEmpty ? null : _send,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.merchant,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                icon: const Icon(LucideIcons.send, color: Colors.white, size: 16),
-                label: _sending
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : Text(
-                        'Envoyer maintenant',
-                        style: AppTextStyles.labelBold().copyWith(color: Colors.white),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
+              IconButton(
+                icon: const Icon(LucideIcons.x, size: 20),
                 onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColors.border),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  'Enregistrer brouillon',
-                  style: AppTextStyles.labelBold().copyWith(color: AppColors.textPrimary),
-                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Sp.md),
+          Text(
+            'Destinataires',
+            style: AppTextStyles.labelBold().copyWith(fontSize: 13),
+          ),
+          const SizedBox(height: Sp.xs),
+          DropdownButtonFormField<String>(
+            initialValue: _target,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
             ),
-          ],
-        ),
+            items: const [
+              DropdownMenuItem(value: 'all', child: Text('Tous les clients actifs (47)')),
+              DropdownMenuItem(value: 'inactive', child: Text('Clients inactifs > 14 jours (12)')),
+              DropdownMenuItem(value: 'close_to_reward', child: Text('Proches d\'une récompense (8)')),
+            ],
+            onChanged: (v) => setState(() => _target = v!),
+          ),
+          const SizedBox(height: Sp.md),
+          Text(
+            'Message SMS',
+            style: AppTextStyles.labelBold().copyWith(fontSize: 13),
+          ),
+          const SizedBox(height: Sp.xs),
+          TextField(
+            controller: _msgCtrl,
+            maxLines: 4,
+            maxLength: 160,
+            decoration: InputDecoration(
+              hintText: 'Ex: Promotion spéciale ce week-end ! -15% sur toute l\'addition.',
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+            ),
+          ),
+          const SizedBox(height: Sp.md),
+          AppButton.primary(
+            'Envoyer la campagne',
+            onPressed: _send,
+            loading: _loading,
+            icon: LucideIcons.send,
+          ),
+        ],
       ),
     );
   }
