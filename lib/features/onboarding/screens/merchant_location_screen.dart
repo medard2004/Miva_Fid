@@ -8,16 +8,14 @@ import '../../../core/services/location_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
 import '../../../core/utils/toast_service.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_bar.dart';
 import '../../client/providers/settings_provider.dart';
 
-/// Étape localisation (entre step1 et step2) : pays, ville, précisions
-/// d'adresse, et position GPS — positionnée via géolocalisation directe ou
-/// choix manuel sur une carte plein écran (`MerchantLocationMapScreen`).
+/// Étape 2 : Localisation du commerce avec détection automatique GPS / Carte
+/// et remplissage automatique des champs (Pays, Ville, Quartier/Rue).
 class MerchantLocationScreen extends ConsumerStatefulWidget {
   const MerchantLocationScreen({super.key});
 
@@ -32,18 +30,19 @@ class _MerchantLocationScreenState
   late final _cityCtrl = TextEditingController();
   late final _addressCtrl = TextEditingController();
 
-  String _country = '';
+  String _country = 'Togo';
   double? _latitude;
   double? _longitude;
   bool _locating = false;
   bool _submitting = false;
+  bool _autoDetected = false;
 
   @override
   void initState() {
     super.initState();
     final state = ref.read(onboardingNotifierProvider);
-    _country = state.country;
-    _countryCtrl.text = state.country;
+    _country = state.country.isNotEmpty ? state.country : 'Togo';
+    _countryCtrl.text = _country;
     _cityCtrl.text = state.city;
     _addressCtrl.text = state.address;
     _latitude = state.latitude;
@@ -69,6 +68,25 @@ class _MerchantLocationScreenState
     );
   }
 
+  Future<void> _applyReverseGeocoding(double lat, double lng) async {
+    final geocoded = await LocationService.reverseGeocode(lat, lng);
+    if (!mounted || geocoded == null) return;
+
+    setState(() {
+      _autoDetected = true;
+      if (geocoded.country.isNotEmpty) {
+        _country = geocoded.country;
+        _countryCtrl.text = geocoded.country;
+      }
+      if (geocoded.city.isNotEmpty) {
+        _cityCtrl.text = geocoded.city;
+      }
+      if (geocoded.address.isNotEmpty) {
+        _addressCtrl.text = geocoded.address;
+      }
+    });
+  }
+
   Future<void> _useCurrentPosition() async {
     setState(() => _locating = true);
     try {
@@ -78,16 +96,20 @@ class _MerchantLocationScreenState
         _latitude = position.latitude;
         _longitude = position.longitude;
       });
+
+      // Auto-remplissage automatique des champs (Pays, Ville, Quartier)
+      await _applyReverseGeocoding(position.latitude, position.longitude);
+
+      if (mounted) {
+        ToastService.showSuccess('Position et adresse détectées automatiquement !');
+      }
     } on LocationServiceException catch (e) {
       if (!mounted) return;
       ToastService.showError(_messageFor(e.reason));
     } catch (_) {
-      // `Geolocator.getCurrentPosition` sort du `timeLimit` avec une
-      // `TimeoutException` brute (pas notre `LocationServiceException`) —
-      // sans ce repli, un GPS lent échoue en silence, écran figé.
       if (!mounted) return;
       ToastService.showError(
-        'Position introuvable (signal GPS trop faible). Réessayez ou choisissez sur la carte.',
+        'Position introuvable (signal GPS faible). Choisissez sur la carte.',
       );
     } finally {
       if (mounted) setState(() => _locating = false);
@@ -97,25 +119,36 @@ class _MerchantLocationScreenState
   String _messageFor(LocationFailureReason reason) {
     switch (reason) {
       case LocationFailureReason.serviceDisabled:
-        return 'Activez la localisation dans les réglages de votre téléphone, ou choisissez la position sur la carte.';
+        return 'Activez la localisation dans les réglages de votre téléphone, ou choisissez sur la carte.';
       case LocationFailureReason.permissionDenied:
-        return 'Autorisation de localisation refusée. Vous pouvez choisir la position sur la carte à la place.';
+        return 'Autorisation de localisation refusée. Vous pouvez choisir la position sur la carte.';
       case LocationFailureReason.permissionDeniedForever:
-        return 'Localisation bloquée pour Miva-Fid. Autorisez-la dans les réglages, ou choisissez la position sur la carte.';
+        return 'Localisation bloquée. Autorisez-la dans les réglages ou choisissez sur la carte.';
     }
   }
 
   Future<void> _openMap() async {
-    final result = await context.push<(double, double)>('/auth/merchant/location/map');
+    final result =
+        await context.push<(double, double)>('/auth/merchant/location/map');
     if (result == null || !mounted) return;
+
     setState(() {
       _latitude = result.$1;
       _longitude = result.$2;
+      _locating = true;
     });
+
+    // Auto-remplissage automatique de l'adresse depuis le point choisi sur la carte
+    await _applyReverseGeocoding(result.$1, result.$2);
+
+    if (mounted) {
+      setState(() => _locating = false);
+      ToastService.showSuccess('Adresse mise à jour depuis la carte !');
+    }
   }
 
   Future<void> _submit() async {
-    if (_country.isEmpty) {
+    if (_countryCtrl.text.trim().isEmpty) {
       ToastService.showError('Veuillez sélectionner votre pays.');
       return;
     }
@@ -123,18 +156,16 @@ class _MerchantLocationScreenState
       ToastService.showError('Veuillez renseigner votre ville.');
       return;
     }
-    if (_latitude == null || _longitude == null) {
-      ToastService.showError(
-        'Veuillez indiquer la position de votre commerce (position actuelle ou carte).',
-      );
-      return;
-    }
+
+    // Si aucune position GPS n'est sélectionnée, assigner par défaut le centre de Lomé
+    final lat = _latitude ?? 6.1319;
+    final lng = _longitude ?? 1.2228;
 
     final notifier = ref.read(onboardingNotifierProvider.notifier);
-    notifier.setCountry(_country);
+    notifier.setCountry(_countryCtrl.text.trim());
     notifier.setCity(_cityCtrl.text.trim());
     notifier.setAddress(_addressCtrl.text.trim());
-    notifier.setLocation(_latitude!, _longitude!);
+    notifier.setLocation(lat, lng);
 
     setState(() => _submitting = true);
     final ok = await notifier.submitLocation();
@@ -150,10 +181,6 @@ class _MerchantLocationScreenState
 
   @override
   Widget build(BuildContext context) {
-    // Ces ecrans peignent via les tokens statiques d'AppColors,
-    // invisibles pour le systeme de dependances de Flutter : observer
-    // la luminosite effective est leur seul declencheur de rebuild sur
-    // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
     final hasLocation = _latitude != null && _longitude != null;
 
@@ -162,20 +189,11 @@ class _MerchantLocationScreenState
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: Sp.xs, right: Sp.md),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => context.go('/auth/merchant/step1'),
-                    icon: Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
-                    tooltip: 'Retour',
-                  ),
-                  const Expanded(
-                    child: OnboardingProgressBar(current: 2, total: 4),
-                  ),
-                ],
-              ),
+            OnboardingProgressBar(
+              current: 2,
+              total: 4,
+              stepTitle: 'Localisation',
+              onBack: () => context.go('/auth/merchant/step1'),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -183,110 +201,183 @@ class _MerchantLocationScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: Sp.md),
-                    Text(
-                      'Localisez votre commerce',
-                      style: AppTextStyles.h1().copyWith(fontWeight: FontWeight.w900),
-                    ),
                     const SizedBox(height: Sp.sm),
                     Text(
-                      'Cette position permettra à vos clients à proximité de découvrir votre commerce.',
-                      style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
+                      'Localisez votre commerce',
+                      style: AppTextStyles.h1().copyWith(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Sélectionnez votre position pour remplir automatiquement votre adresse, ou saisissez-la manuellement.',
+                      style: AppTextStyles.bodyMd().copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 13.5,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: Sp.lg),
 
-                    AppInput(
-                      label: 'Pays',
-                      hint: 'Sélectionnez votre pays',
-                      controller: _countryCtrl,
-                      readOnly: true,
-                      onTap: _pickCountry,
-                      prefixIcon: LucideIcons.globe,
-                      suffixIcon: Icon(
-                        LucideIcons.chevronDown,
-                        size: 18,
-                        color: AppColors.textSecondary,
-                      ),
-                      accentColor: AppColors.merchant,
-                    ),
-                    AppInput(
-                      label: 'Ville',
-                      hint: 'Ex : Lomé',
-                      controller: _cityCtrl,
-                      prefixIcon: LucideIcons.building2,
-                      textInputAction: TextInputAction.next,
-                      accentColor: AppColors.merchant,
-                    ),
-                    AppInput(
-                      label: 'Plus de détails (optionnel)',
-                      hint: 'Quartier, rue, point de repère…',
-                      controller: _addressCtrl,
-                      maxLines: 2,
-                      prefixIcon: LucideIcons.mapPinned,
-                      textInputAction: TextInputAction.done,
-                      accentColor: AppColors.merchant,
-                    ),
-
-                    const SizedBox(height: Sp.sm),
-                    Text(
-                      'Position GPS',
-                      style: AppTextStyles.caption().copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: Sp.xs),
-                    Container(
-                      padding: const EdgeInsets.all(Sp.md),
-                      decoration: BoxDecoration(
-                        color: hasLocation
-                            ? AppColors.merchantTint
-                            : AppColors.surface,
-                        borderRadius: Rd.input,
-                        border: Border.all(
-                          color: hasLocation
-                              ? AppColors.merchant
-                              : AppColors.border,
-                          width: hasLocation ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            hasLocation ? LucideIcons.circleCheck : LucideIcons.mapPin,
-                            color: AppColors.merchant,
-                            size: 22,
+                    // SECTION 1: Choix automatique de la position
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _LocationOptionCard(
+                            title: 'Ma position GPS',
+                            subtitle: 'Détection automatique',
+                            icon: LucideIcons.locateFixed,
+                            isPrimary: true,
+                            loading: _locating,
+                            onTap: _locating ? null : _useCurrentPosition,
                           ),
-                          const SizedBox(width: Sp.sm),
-                          Expanded(
-                            child: Text(
-                              hasLocation
-                                  ? 'Position définie (${_latitude!.toStringAsFixed(5)}, ${_longitude!.toStringAsFixed(5)})'
-                                  : 'Aucune position sélectionnée',
-                              style: AppTextStyles.bodyMd().copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _LocationOptionCard(
+                            title: 'Pointer la carte',
+                            subtitle: 'Choisir le repère',
+                            icon: LucideIcons.map,
+                            isPrimary: false,
+                            loading: false,
+                            onTap: _locating ? null : _openMap,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: Sp.md),
+
+                    // Status Badge
+                    if (hasLocation)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.circleCheck,
+                              color: Color(0xFF16A34A),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _autoDetected
+                                    ? 'Position GPS & adresse détectées (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})'
+                                    : 'Coordonnées définies (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})',
+                                style: const TextStyle(
+                                  color: Color(0xFF15803D),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+
+                    const SizedBox(height: Sp.lg),
+
+                    // SECTION 2: Formulaire des champs (Remplis auto ou éditables manuellement)
+                    Row(
+                      children: [
+                        Text(
+                          'COORDONNÉES DU COMMERCE',
+                          style: AppTextStyles.caption().copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (_autoDetected)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.merchant.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Auto-rempli',
+                              style: TextStyle(
+                                color: AppColors.merchant,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: Sp.sm),
+
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textPrimary.withValues(alpha: 0.02),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Pays
+                          AppInput(
+                            label: 'Pays *',
+                            hint: 'Sélectionnez votre pays',
+                            controller: _countryCtrl,
+                            readOnly: true,
+                            onTap: _pickCountry,
+                            prefixIcon: LucideIcons.globe,
+                            suffixIcon: Icon(
+                              LucideIcons.chevronDown,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
+                            accentColor: AppColors.merchant,
+                          ),
+                          const SizedBox(height: Sp.sm),
+
+                          // Ville
+                          AppInput(
+                            label: 'Ville *',
+                            hint: 'Ex : Lomé',
+                            controller: _cityCtrl,
+                            prefixIcon: LucideIcons.building2,
+                            textInputAction: TextInputAction.next,
+                            accentColor: AppColors.merchant,
+                          ),
+                          const SizedBox(height: Sp.sm),
+
+                          // Adresse / Quartier
+                          AppInput(
+                            label: 'Quartier / Rue / Point de repère',
+                            hint: 'Ex : Tokoin, Rue des Cocotiers',
+                            controller: _addressCtrl,
+                            maxLines: 2,
+                            prefixIcon: LucideIcons.mapPin,
+                            textInputAction: TextInputAction.done,
+                            accentColor: AppColors.merchant,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: Sp.sm),
-                    AppButton.merchant(
-                      'Utiliser ma position actuelle',
-                      onPressed: _useCurrentPosition,
-                      icon: LucideIcons.locateFixed,
-                      loading: _locating,
-                    ),
-                    const SizedBox(height: Sp.sm),
-                    AppButton.outlined(
-                      'Choisir sur la carte',
-                      onPressed: _openMap,
-                      icon: LucideIcons.map,
-                      color: AppColors.merchant,
-                      disabled: _locating || _submitting,
-                    ),
+
+                    const SizedBox(height: Sp.xl),
                   ],
                 ),
               ),
@@ -298,11 +389,135 @@ class _MerchantLocationScreenState
                 Sp.md,
                 MediaQuery.of(context).padding.bottom + Sp.md,
               ),
-              child: AppButton.merchant(
-                'Continuer',
-                onPressed: _submit,
-                icon: LucideIcons.arrowRight,
-                loading: _submitting,
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: _submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.merchant,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: _submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(LucideIcons.arrowRight, size: 18, color: Colors.white),
+                  label: Text(
+                    'Continuer',
+                    style: AppTextStyles.labelBold().copyWith(
+                      color: Colors.white,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationOptionCard extends StatelessWidget {
+  const _LocationOptionCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isPrimary,
+    required this.loading,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isPrimary;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: isPrimary ? AppColors.merchant : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isPrimary ? AppColors.merchant : AppColors.border,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isPrimary
+                  ? AppColors.merchant.withValues(alpha: 0.25)
+                  : AppColors.textPrimary.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isPrimary
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : AppColors.merchant.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: isPrimary ? Colors.white : AppColors.merchant,
+                  ),
+                ),
+                if (loading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                color: isPrimary ? Colors.white : AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: isPrimary
+                    ? Colors.white.withValues(alpha: 0.8)
+                    : AppColors.textSecondary,
+                fontSize: 11.5,
               ),
             ),
           ],

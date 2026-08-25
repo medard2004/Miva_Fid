@@ -150,7 +150,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
 
                     _ReviewSection(
                       stepBadge: 'Étape 1',
-                      title: 'Commerce & Informations',
+                      title: 'Commerce & Contacts',
                       onEdit: () => context.go('/auth/merchant/step1'),
                       rows: [
                         _ReviewRow(
@@ -168,6 +168,12 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                           label: 'Téléphone',
                           value: state.phone.isEmpty ? '—' : state.phone,
                         ),
+                        if (state.whatsapp.isNotEmpty)
+                          _ReviewRow(
+                            icon: LucideIcons.messageCircle,
+                            label: 'WhatsApp',
+                            value: state.whatsapp,
+                          ),
                       ],
                     ).animate(delay: 120.ms).fadeIn(duration: 350.ms),
                     const SizedBox(height: Sp.md),
@@ -191,7 +197,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                           icon: LucideIcons.locateFixed,
                           label: 'Position GPS',
                           value: state.latitude != null && state.longitude != null
-                              ? '${state.latitude!.toStringAsFixed(5)}, ${state.longitude!.toStringAsFixed(5)}'
+                              ? '${state.latitude!.toStringAsFixed(4)}, ${state.longitude!.toStringAsFixed(4)}'
                               : 'Non définie',
                         ),
                       ],
@@ -200,52 +206,79 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
 
                     _ReviewSection(
                       stepBadge: 'Étape 3',
-                      title: 'Réseaux sociaux & Contacts',
-                      onEdit: () => context.go('/auth/merchant/step1'),
+                      title: 'Programme de fidélité',
+                      onEdit: () => context.go('/auth/merchant/step2'),
                       rows: [
                         _ReviewRow(
-                          icon: LucideIcons.messageCircle,
-                          label: 'WhatsApp',
-                          value: state.whatsapp.isEmpty ? 'Non renseigné' : state.whatsapp,
+                          icon: LucideIcons.layoutGrid,
+                          label: 'Mode de fidélité',
+                          value: _modeLabel,
                         ),
-                        _ReviewRow(
-                          icon: LucideIcons.camera,
-                          label: 'Instagram',
-                          value: state.instagram.isEmpty ? 'Non renseigné' : state.instagram,
-                        ),
-                        _ReviewRow(
-                          icon: LucideIcons.globe,
-                          label: 'Facebook',
-                          value: state.facebook.isEmpty ? 'Non renseigné' : state.facebook,
-                        ),
-                        _ReviewRow(
-                          icon: LucideIcons.music,
-                          label: 'TikTok',
-                          value: state.tiktok.isEmpty ? 'Non renseigné' : state.tiktok,
-                        ),
+                        if (state.loyaltyMode == 'stamps') ...[
+                          _ReviewRow(
+                            icon: LucideIcons.stamp,
+                            label: 'Objectif',
+                            value: '${state.stampsRequired} tampons',
+                          ),
+                          _ReviewRow(
+                            icon: LucideIcons.gift,
+                            label: 'Récompense offerte',
+                            value: state.rewardDescription.isEmpty
+                                ? 'Non renseignée'
+                                : state.rewardDescription,
+                          ),
+                        ] else if (state.loyaltyMode == 'spend') ...[
+                          _ReviewRow(
+                            icon: LucideIcons.coins,
+                            label: 'Taux de conversion',
+                            value: '1 point = ${state.fcfaPerPoint} FCFA',
+                          ),
+                          _ReviewRow(
+                            icon: LucideIcons.target,
+                            label: 'Objectif',
+                            value: '${state.stampsRequired} points (${state.fcfaPerPoint * state.stampsRequired} FCFA)',
+                          ),
+                          _ReviewRow(
+                            icon: LucideIcons.gift,
+                            label: 'Récompense offerte',
+                            value: state.rewardDescription.isEmpty
+                                ? 'Non renseignée'
+                                : state.rewardDescription,
+                          ),
+                        ] else if (state.loyaltyMode == 'cashback') ...[
+                          _ReviewRow(
+                            icon: LucideIcons.percent,
+                            label: 'Pourcentage reversé',
+                            value: '${state.cashbackPercentage}% de chaque achat',
+                          ),
+                          if (state.cashbackExpiryDays != null)
+                            _ReviewRow(
+                              icon: LucideIcons.calendarClock,
+                              label: 'Validité du solde',
+                              value: '${state.cashbackExpiryDays} jours',
+                            ),
+                        ],
                       ],
                     ).animate(delay: 160.ms).fadeIn(duration: 350.ms),
                     const SizedBox(height: Sp.md),
 
                     _ReviewSection(
                       stepBadge: 'Étape 4',
-                      title: 'Programme & Récompenses',
-                      onEdit: () => context.go('/auth/merchant/step2'),
+                      title: 'Design de la carte',
+                      onEdit: () => context.go('/auth/merchant/step3'),
                       rows: [
                         _ReviewRow(
-                          icon: LucideIcons.layoutGrid,
-                          label: 'Mode de fidélité',
-                          value: '$_modeLabel (${state.tiers.length} palier${state.tiers.length > 1 ? 's' : ''})',
+                          icon: LucideIcons.palette,
+                          label: 'Couleur principale',
+                          value: state.colorPrimaryHex,
                         ),
-                        ...state.tiers.asMap().entries.map((entry) {
-                          final idx = entry.key;
-                          final reward = entry.value;
-                          return _ReviewRow(
-                            icon: LucideIcons.gift,
-                            label: 'Palier #${idx + 1}',
-                            value: 'À ${reward.goal} : ${reward.rewardDescription.isEmpty ? 'Aucune description' : reward.rewardDescription}',
-                          );
-                        }),
+                        _ReviewRow(
+                          icon: LucideIcons.sparkles,
+                          label: 'Style des tampons',
+                          value: state.stampDesignType == 'emoji'
+                              ? 'Emoji (${state.stampEmoji})'
+                              : 'Icône (${state.stampIcon})',
+                        ),
                       ],
                     ).animate(delay: 180.ms).fadeIn(duration: 350.ms),
                     const SizedBox(height: Sp.xl),
