@@ -22,7 +22,7 @@
 
 ---
 
-## Task B1: `icon_key` de palier + refonte de `LoyaltyTierService` (position, suppression des emoji)
+## Task 1: `icon_key` de palier + refonte de `LoyaltyTierService` (position, suppression des emoji)
 
 **Repo:** `restaurant-loyalty-api`
 
@@ -575,7 +575,7 @@ git commit -m "feat: expose la position et l'icon_key des paliers, supprime les 
 
 ---
 
-## Task B2: Commande one-shot — renommage canonique des 5 premiers paliers
+## Task 2: Commande one-shot — renommage canonique des 5 premiers paliers
 
 **Repo:** `restaurant-loyalty-api`
 
@@ -770,7 +770,7 @@ git commit -m "feat: commande one-shot pour imposer les noms canoniques aux 5 pr
 
 ---
 
-## Task F1: `LoyaltyLevel.forPosition` + nouvelle palette `TierIconPalette`
+## Task 3: `LoyaltyLevel.forPosition` + nouvelle palette `TierIconPalette`
 
 **Repo:** `Miva_Fid`
 
@@ -915,7 +915,7 @@ git commit -m "feat: LoyaltyLevel.forPosition et palette d'icones pour paliers c
 
 ---
 
-## Task F2: `ProgramTier`/`CardTier`/`LoyaltyCardModel` — champs `position`/`iconKey`
+## Task 4: `ProgramTier`/`CardTier`/`LoyaltyCardModel` — champs `position`/`iconKey`
 
 **Repo:** `Miva_Fid`
 
@@ -1392,7 +1392,7 @@ git commit -m "feat: ajoute position/icon_key aux modeles de palier (ProgramTier
 
 ---
 
-## Task F3: Widget partagé `TierLevelIcon`
+## Task 5: Widget partagé `TierLevelIcon`
 
 **Repo:** `Miva_Fid`
 
@@ -1401,7 +1401,7 @@ git commit -m "feat: ajoute position/icon_key aux modeles de palier (ProgramTier
 - Test: `test/core/widgets/tier_level_icon_test.dart`
 
 **Interfaces:**
-- Consumes: `LoyaltyLevel.forPosition` et `TierIconPalette.byKey` (Task F1).
+- Consumes: `LoyaltyLevel.forPosition` et `TierIconPalette.byKey` (Task 3).
 - Produces: `TierLevelIcon({int? position, String? iconKey, double size, Color? color})` — un `Widget`. Consommé par F4, F5, F6.
 
 - [ ] **Step 1: Écrire le test (avant d'implémenter)**
@@ -1501,7 +1501,7 @@ git commit -m "feat: widget TierLevelIcon partage pour le rendu des niveaux de p
 
 ---
 
-## Task F4: `TierEditorForm` — verrouillage positions 1-5, sélecteur d'icône pour 6+
+## Task 6: `TierEditorForm` — verrouillage positions 1-5, sélecteur d'icône pour 6+
 
 **Repo:** `Miva_Fid`
 
@@ -1511,7 +1511,7 @@ git commit -m "feat: widget TierLevelIcon partage pour le rendu des niveaux de p
 - Test: `test/features/merchant/widgets/tier_editor_form_test.dart`
 
 **Interfaces:**
-- Consumes: `ProgramTier.iconKey` (F2), `LoyaltyLevel.forPosition` (F1), `TierIconPalette` (F1), `TierLevelIcon` (F3).
+- Consumes: `ProgramTier.iconKey` (Task 4), `LoyaltyLevel.forPosition` (Task 3), `TierIconPalette` (Task 3), `TierLevelIcon` (Task 5).
 - Produces: `showTierIconPickerSheet(BuildContext, String? currentKey) -> Future<String?>`.
 
 - [ ] **Step 1: Écrire le test (avant d'implémenter)**
@@ -2183,7 +2183,7 @@ git commit -m "feat: verrouille nom/icone des 5 premiers paliers, ajoute le pick
 
 ---
 
-## Task F5: Rendu client — remplace les emoji par `TierLevelIcon`
+## Task 7: Rendu client — remplace les emoji par `TierLevelIcon`
 
 **Repo:** `Miva_Fid`
 
@@ -2192,7 +2192,7 @@ git commit -m "feat: verrouille nom/icone des 5 premiers paliers, ajoute le pick
 - Modify: `lib/features/client/card_detail/card_detail_screen.dart`
 
 **Interfaces:**
-- Consumes: `TierLevelIcon` (F3), `CardTier.position`/`iconKey` (F2).
+- Consumes: `TierLevelIcon` (Task 5), `CardTier.position`/`iconKey` (Task 4).
 
 - [ ] **Step 1: `card_face_content.dart` — badge de niveau sur le logo**
 
@@ -2626,7 +2626,7 @@ git commit -m "feat: remplace les emoji de niveau par TierLevelIcon cote client"
 
 ---
 
-## Task F6: Rendu marchand — remplace les emoji/texte brut par `TierLevelIcon`
+## Task 8: Rendu marchand — remplace les emoji/texte brut par `TierLevelIcon`
 
 **Repo:** `Miva_Fid`
 
@@ -2635,7 +2635,7 @@ git commit -m "feat: remplace les emoji de niveau par TierLevelIcon cote client"
 - Modify: `lib/features/merchant/screens/client_detail_screen.dart`
 
 **Interfaces:**
-- Consumes: `TierLevelIcon` (F3), `LoyaltyCardModel.levelPosition`/`levelIconKey` (F2).
+- Consumes: `TierLevelIcon` (Task 5), `LoyaltyCardModel.levelPosition`/`levelIconKey` (Task 4).
 
 - [ ] **Step 1: `client_card_sheet.dart` — import**
 
@@ -2899,7 +2899,7 @@ git commit -m "feat: remplace le badge de niveau texte/emoji par TierLevelIcon c
 
 ---
 
-## Task F7: Vérification finale
+## Task 9: Vérification finale
 
 **Repo:** les deux
 
