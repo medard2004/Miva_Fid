@@ -6,6 +6,7 @@ import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/core/theme/app_radius.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
+import '../../../../core/widgets/tier_level_icon.dart';
 
 /// Sépare les milliers d'un nombre par un espace fine (ex. 12 400).
 String formatGroupedNumber(int number) {
@@ -77,7 +78,8 @@ class CardFaceContent extends StatelessWidget {
                   restaurantName: card.restaurantName,
                   textColor: textColor,
                   compact: compact,
-                  levelIcon: currentTier?.icon,
+                  levelPosition: currentTier?.position,
+                  levelIconKey: currentTier?.iconKey,
                 ),
                 SizedBox(width: compact ? 8 : 10),
                 Expanded(
@@ -153,14 +155,16 @@ class _CardLogo extends StatelessWidget {
   final String restaurantName;
   final Color textColor;
   final bool compact;
-  final String? levelIcon;
+  final int? levelPosition;
+  final String? levelIconKey;
 
   const _CardLogo({
     required this.logoUrl,
     required this.restaurantName,
     required this.textColor,
     required this.compact,
-    this.levelIcon,
+    this.levelPosition,
+    this.levelIconKey,
   });
 
   @override
@@ -196,7 +200,7 @@ class _CardLogo extends StatelessWidget {
       ),
     );
 
-    if (levelIcon == null) return medallion;
+    if (levelPosition == null && levelIconKey == null) return medallion;
 
     // Badge de niveau ancré côté gauche de la carte, sur le logo — pas en
     // bas de carte : dans les cartes courtes/compactes, la ligne de niveau
@@ -225,9 +229,10 @@ class _CardLogo extends StatelessWidget {
                 ),
               ],
             ),
-            child: Text(
-              levelIcon!,
-              style: TextStyle(fontSize: badgeSize * 0.62, height: 1),
+            child: TierLevelIcon(
+              position: levelPosition,
+              iconKey: levelIconKey,
+              size: badgeSize * 0.62,
             ),
           ),
         ),

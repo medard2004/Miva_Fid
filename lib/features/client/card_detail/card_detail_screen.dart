@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
@@ -16,9 +15,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
-import 'package:miva_fid/core/constants/reward_qr.dart';
+import 'package:miva_fid/features/client/widgets/shared/reward_detail_sheet.dart';
 import '../wallet/widgets/card_face_content.dart';
 import 'card_export_service.dart';
+import '../../../core/widgets/tier_level_icon.dart';
 
 class CardDetailScreen extends ConsumerWidget {
   final String cardId;
@@ -131,20 +131,22 @@ class CardDetailScreen extends ConsumerWidget {
                                 return _DetailedRewardCard(
                                   reward: rewards[i],
                                   t: t,
-                                  onTap: () => _showRewardDetailSheet(
-                                      context, ref, rewards[i], t),
+                                  onTap: () => showRewardDetailSheet(
+                                      context, ref, rewards[i]),
                                 );
                               }
                               if (showLockedTiers) {
                                 return _LockedTierCard(
                                   t: t,
                                   tier: lockedTiers[i - rewards.length],
+                                  isLevelTier: true,
                                 );
                               }
                               return _LockedTierCard(
                                 t: t,
                                 tier: card.nextReward,
                                 fallbackGoal: card.stampsGoal,
+                                isLevelTier: false,
                               );
                             },
                           ),
@@ -548,7 +550,7 @@ class _TierRoadmapRow extends StatelessWidget {
                 : (isCurrent ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surfaceMuted),
             border: isCurrent ? Border.all(color: AppColors.primary, width: 1.5) : null,
           ),
-          child: Text(tier.icon, style: const TextStyle(fontSize: 16)),
+          child: TierLevelIcon(position: tier.position, iconKey: tier.iconKey, size: 18),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -660,15 +662,25 @@ class _LockedTierCard extends StatelessWidget {
   final AppLocalizations t;
   final CardTier? tier;
   final int? fallbackGoal;
-  const _LockedTierCard({required this.t, this.tier, this.fallbackGoal});
+
+  /// `true` quand [tier] est un vrai palier de la roadmap de niveau (icône
+  /// pilotée par sa position/icon_key) ; `false` pour l'aperçu générique de
+  /// prochaine récompense d'un programme mono-palier (pas de niveau, voir
+  /// `LoyaltyTierService` — icône générique de cadeau).
+  final bool isLevelTier;
+
+  const _LockedTierCard({
+    required this.t,
+    this.tier,
+    this.fallbackGoal,
+    required this.isLevelTier,
+  });
 
   @override
   Widget build(BuildContext context) {
     final goal = tier?.goal ?? fallbackGoal;
     final description = tier?.rewardDescription ?? '';
-    final title = description.isNotEmpty
-        ? (tier != null ? '${tier!.icon} $description' : description)
-        : t.cardDetailDefaultOfferTitle;
+    final title = description.isNotEmpty ? description : t.cardDetailDefaultOfferTitle;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -686,11 +698,24 @@ class _LockedTierCard extends StatelessWidget {
                 icon: LucideIcons.lock,
               ),
               const SizedBox(height: 8),
-              Text(
-                title,
-                style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (tier != null) ...[
+                    isLevelTier
+                        ? TierLevelIcon(position: tier!.position, iconKey: tier!.iconKey, size: 15)
+                        : Icon(Icons.card_giftcard, size: 15, color: AppColors.inkMuted(opacity: 0.6)),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
               if (goal != null) ...[
                 const SizedBox(height: 3),
@@ -744,7 +769,7 @@ class _CurrentLevelCard extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.12),
               border: Border.all(color: AppColors.primary, width: 1.5),
             ),
-            child: Text(tier?.icon ?? '⭐', style: const TextStyle(fontSize: 16)),
+            child: TierLevelIcon(position: tier?.position, iconKey: tier?.iconKey, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -998,378 +1023,6 @@ class _CardQr extends StatelessWidget {
       dataModuleStyle: const QrDataModuleStyle(
         dataModuleShape: QrDataModuleShape.square,
         color: AppColors.inkSolid,
-      ),
-    );
-  }
-}
-
-/// Affiche une modale contenant le détail d'une récompense (popup dédié avec QR et expiration)
-void _showRewardDetailSheet(
-    BuildContext context, WidgetRef ref, Reward reward, AppLocalizations t) {
-  final dateFormatLocale =
-      Localizations.localeOf(context).languageCode == 'fr' ? 'fr_FR' : 'en_US';
-      
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-    ),
-    builder: (context) {
-      final isReady = reward.isRedeemable;
-      final statusLabel = isReady 
-          ? t.rewardStatusReady 
-          : (reward.isExpired ? t.rewardStatusExpired : t.rewardStatusUsed);
-      final statusTone = isReady 
-          ? StatusTone.success 
-          : (reward.isExpired ? StatusTone.error : StatusTone.neutral);
-      final statusIcon = isReady ? LucideIcons.circleCheckBig : (reward.isExpired ? LucideIcons.circleX : LucideIcons.circleCheckBig);
-
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Handle for bottom sheet
-              Center(
-                child: Container(
-                  width: 48,
-                  height: 6,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-              
-              // Header Icon
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: statusTone == StatusTone.success 
-                        ? AppColors.successTint 
-                        : (statusTone == StatusTone.error ? AppColors.errorTint : AppColors.surfaceMuted),
-                  ),
-                  child: Icon(
-                    isReady ? LucideIcons.gift : (reward.isExpired ? LucideIcons.calendarX : LucideIcons.calendarCheck),
-                    size: 32,
-                    color: statusTone == StatusTone.success 
-                        ? AppColors.success 
-                        : (statusTone == StatusTone.error ? AppColors.error : AppColors.inkMuted()),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Title & Subtitle
-              Text(
-                reward.title,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.displayLarge(),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                reward.restaurantName,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodyLarge(color: AppColors.inkMuted()),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Status Badge centered
-              Center(
-                child: StatusBadge(
-                  label: statusLabel,
-                  tone: statusTone,
-                  icon: statusIcon,
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Central Content: QR Code or Info Box
-              if (isReady) ...[
-                if (reward.expiresAt != null)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _RewardCountdown(
-                        expiresAt: reward.expiresAt!,
-                        t: t,
-                      ),
-                    ),
-                  ),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: AppColors.border, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.ink.withValues(alpha: 0.05),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        QrImageView(
-                          data: '$rewardQrPrefix${reward.redeemToken}',
-                          size: 220,
-                          backgroundColor: Colors.white,
-                          eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.square,
-                            color: AppColors.inkSolid,
-                          ),
-                          dataModuleStyle: const QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.square,
-                            color: AppColors.inkSolid,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              reward.redeemToken.replaceAll('-', ' - '),
-                              style: AppTextStyles.monoMedium(color: AppColors.inkSolid)
-                                  .copyWith(fontSize: 18),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () async {
-                                await Clipboard.setData(ClipboardData(text: reward.redeemToken));
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(t.cardDetailIdCopied)),
-                                  );
-                                }
-                              },
-                              behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(
-                                  LucideIcons.copy,
-                                  size: 16,
-                                  color: AppColors.inkSolid.withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  t.rewardQrInstructions2,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyMedium(color: AppColors.inkMuted()),
-                ),
-              ] else if (reward.usedAt != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(LucideIcons.calendarCheck, size: 40, color: AppColors.inkMuted()),
-                      const SizedBox(height: 16),
-                      Text(
-                        t.rewardUsedDate,
-                        style: AppTextStyles.label(color: AppColors.inkMuted()),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        reward.formattedUsedDate(dateFormatLocale),
-                        style: AppTextStyles.displayMedium(color: AppColors.ink),
-                      ),
-                    ],
-                  ),
-                )
-              ] else if (reward.isExpired) ...[
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.errorTint,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(LucideIcons.calendarX, size: 40, color: AppColors.error),
-                      const SizedBox(height: 16),
-                      Text(
-                        t.rewardStatusExpired,
-                        style: AppTextStyles.displayMedium(color: AppColors.error),
-                      ),
-                    ],
-                  ),
-                )
-              ],
-
-              // Expiration Date at bottom
-              if (reward.expiresAt != null && isReady) ...[
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: reward.isExpiringSoon ? AppColors.errorTint : AppColors.surfaceCard,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: reward.isExpiringSoon 
-                          ? AppColors.error.withValues(alpha: 0.3) 
-                          : AppColors.border
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: reward.isExpiringSoon 
-                              ? AppColors.error.withValues(alpha: 0.1) 
-                              : AppColors.surfaceMuted,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          LucideIcons.calendarClock, 
-                          size: 20, 
-                          color: reward.isExpiringSoon 
-                              ? AppColors.error 
-                              : AppColors.inkMuted()
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.rewardExpirationDate,
-                              style: AppTextStyles.label(
-                                  color: reward.isExpiringSoon 
-                                      ? AppColors.error 
-                                      : AppColors.inkMuted()),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              DateFormat('dd MMMM yyyy', dateFormatLocale).format(reward.expiresAt!),
-                              style: AppTextStyles.monoMedium(
-                                color: reward.isExpiringSoon 
-                                    ? AppColors.error 
-                                    : AppColors.ink
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-
-class _RewardCountdown extends StatefulWidget {
-  final DateTime expiresAt;
-  final AppLocalizations t;
-
-  const _RewardCountdown({required this.expiresAt, required this.t});
-
-  @override
-  State<_RewardCountdown> createState() => _RewardCountdownState();
-}
-
-class _RewardCountdownState extends State<_RewardCountdown> {
-  late Timer _timer;
-  late Duration _timeLeft;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateTimeLeft();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {
-          _updateTimeLeft();
-        });
-      }
-    });
-  }
-
-  void _updateTimeLeft() {
-    final now = DateTime.now();
-    _timeLeft = widget.expiresAt.difference(now);
-    if (_timeLeft.isNegative) {
-      _timeLeft = Duration.zero;
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_timeLeft == Duration.zero) return const SizedBox.shrink();
-
-    final days = _timeLeft.inDays;
-    final hours = _timeLeft.inHours.remainder(24).toString().padLeft(2, '0');
-    final minutes = _timeLeft.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = _timeLeft.inSeconds.remainder(60).toString().padLeft(2, '0');
-    
-    final isExpiringSoon = _timeLeft.inHours < 48;
-    
-    final timeString = days > 0 
-        ? '$days ${widget.t.commonCountdownPrefix.replaceAll('-', '')} $hours:$minutes:$seconds' 
-        : '$hours:$minutes:$seconds';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isExpiringSoon ? AppColors.errorTint : AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(
-          color: isExpiringSoon ? AppColors.error.withValues(alpha: 0.3) : AppColors.border
-        )
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(LucideIcons.calendarClock, size: 16, color: isExpiringSoon ? AppColors.error : AppColors.inkMuted()),
-          const SizedBox(width: 8),
-          Text(
-            timeString,
-            style: AppTextStyles.monoMedium(
-              color: isExpiringSoon ? AppColors.error : AppColors.ink
-            ).copyWith(fontWeight: FontWeight.w700),
-          ),
-        ],
       ),
     );
   }
