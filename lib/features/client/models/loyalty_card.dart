@@ -10,30 +10,39 @@ enum VipTier { none, silver, gold, platinum }
 /// vide tant que le programme n'a qu'un seul palier configuré.
 class CardTier {
   final int order;
+
+  /// Rang 1-based du palier dans le programme — pilote l'icône/couleur
+  /// fixe pour les positions 1 à 5 (voir `LoyaltyLevel.forPosition`).
+  final int? position;
   final int goal;
   final String? levelName;
   final String rewardDescription;
-  final String icon;
+
+  /// Icône choisie par le marchand pour un palier custom (position > 5,
+  /// voir `TierIconPalette`) — `null` pour les positions 1 à 5.
+  final String? iconKey;
 
   /// `reached`, `current` ou `upcoming`.
   final String status;
 
   const CardTier({
     required this.order,
+    this.position,
     required this.goal,
     this.levelName,
     required this.rewardDescription,
-    required this.icon,
+    this.iconKey,
     required this.status,
   });
 
   factory CardTier.fromJson(Map<String, dynamic> json) {
     return CardTier(
       order: (json['order'] as num?)?.toInt() ?? 0,
+      position: (json['position'] as num?)?.toInt(),
       goal: (json['goal'] as num?)?.toInt() ?? 0,
       levelName: json['level_name'] as String?,
       rewardDescription: json['reward_description'] as String? ?? '',
-      icon: json['icon'] as String? ?? '⭐',
+      iconKey: json['icon_key'] as String?,
       status: json['status'] as String? ?? 'upcoming',
     );
   }

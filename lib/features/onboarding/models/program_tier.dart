@@ -5,6 +5,9 @@ class ProgramTier {
   final int goal;
 
   /// Nom du niveau — libre, masqué côté UI si un seul palier est configuré.
+  /// Pour les paliers en position 1-5 d'un programme multi-palier, ce champ
+  /// est toujours le nom canonique imposé (voir `LoyaltyLevel.forPosition`),
+  /// non éditable par le marchand.
   final String? levelName;
   final String rewardDescription;
 
@@ -18,12 +21,18 @@ class ProgramTier {
   /// autres visibles.
   final bool revealReward;
 
+  /// Icône choisie par le marchand pour un palier au-delà du 5ᵉ (voir
+  /// `TierIconPalette`) — toujours `null` pour les 5 premiers, dont l'icône
+  /// est fixe (`LoyaltyLevel.forPosition`), jamais stockée.
+  final String? iconKey;
+
   const ProgramTier({
     required this.goal,
     this.levelName,
     required this.rewardDescription,
     this.validityDays,
     this.revealReward = true,
+    this.iconKey,
   });
 
   ProgramTier copyWith({
@@ -34,6 +43,8 @@ class ProgramTier {
     int? validityDays,
     bool clearValidityDays = false,
     bool? revealReward,
+    String? iconKey,
+    bool clearIconKey = false,
   }) {
     return ProgramTier(
       goal: goal ?? this.goal,
@@ -42,6 +53,7 @@ class ProgramTier {
       validityDays:
           clearValidityDays ? null : (validityDays ?? this.validityDays),
       revealReward: revealReward ?? this.revealReward,
+      iconKey: clearIconKey ? null : (iconKey ?? this.iconKey),
     );
   }
 
@@ -52,6 +64,7 @@ class ProgramTier {
       'reward_description': rewardDescription,
       if (validityDays != null) 'validity_days': validityDays,
       'reveal_reward': revealReward,
+      if (iconKey != null) 'icon_key': iconKey,
     };
   }
 
@@ -62,6 +75,7 @@ class ProgramTier {
       rewardDescription: (json['reward_description'] as String?) ?? '',
       validityDays: (json['validity_days'] as num?)?.toInt(),
       revealReward: json['reveal_reward'] as bool? ?? true,
+      iconKey: json['icon_key'] as String?,
     );
   }
 }
