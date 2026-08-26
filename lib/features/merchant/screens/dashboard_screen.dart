@@ -4,13 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/skeleton_loader.dart';
-import '../providers/dashboard_stats_provider.dart';
-import '../providers/merchant_provider.dart';
-import '../widgets/activity_row.dart';
 import '../../client/providers/settings_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -18,709 +11,492 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Ces ecrans peignent via les tokens statiques d'AppColors,
-    // invisibles pour le systeme de dependances de Flutter : observer
-    // la luminosite effective est leur seul declencheur de rebuild sur
-    // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
-    final merchantAsync = ref.watch(merchantNotifierProvider);
-    final statsAsync = ref.watch(dashboardStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: merchantAsync.when(
-        loading: () => const _DashboardLoadingSkeleton(),
-        error: (err, _) => Center(
-          child: Text('Erreur: $err', style: AppTextStyles.bodyMd()),
-        ),
-        data: (merchant) {
-          final merchantName = merchant?.name ?? 'Votre Commerce';
-
-          return statsAsync.when(
-            loading: () => const _DashboardLoadingSkeleton(),
-            error: (err, _) => Center(
-              child: Text('Erreur stats: $err', style: AppTextStyles.bodyMd()),
-            ),
-              data: (stats) {
-                // Determine activities list, fallback to mockup items if none exist
-                final displayActivity = stats.recentActivity.isNotEmpty
-                    ? stats.recentActivity
-                    : const [
-                        ActivityItem(
-                          clientName: 'Afi Mensah',
-                          action: 'Tampon validé',
-                          time: 'il y a 2h',
-                          initials: 'AM',
-                        ),
-                        ActivityItem(
-                          clientName: 'Kofi Agbeko',
-                          action: 'Tampon validé',
-                          time: 'il y a 3h',
-                          initials: 'KA',
-                        ),
-                        ActivityItem(
-                          clientName: 'Mawuli Dossou',
-                          action: 'Récompense utilisée',
-                          time: 'hier',
-                          initials: 'MD',
-                        ),
-                      ];
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(merchantNotifierProvider);
-                    ref.invalidate(dashboardStatsProvider);
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── TOP HEADER ──────────────────────────────────────────────
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      LucideIcons.chartColumnBig,
+                      color: Color(0xFF5B50EC),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 2. Greeting Section
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Bonjour, $merchantName ☀️',
-                              style: AppTextStyles.h1().copyWith(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Votre activité de juin 2026',
-                              style: AppTextStyles.caption().copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ).animate().fadeIn(duration: 350.ms, delay: 100.ms).slideY(begin: 0.08, end: 0),
-                        const SizedBox(height: Sp.lg),
-
-                        // 3. Primary Actions Grid
-                        Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => context.go('/merchant/validate'),
-                                borderRadius: Rd.card,
-                                child: Container(
-                                  height: 68,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.merchant,
-                                    borderRadius: Rd.card,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.merchant.withValues(alpha: 0.2),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          LucideIcons.scanLine,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Valider\nun tampon',
-                                          style: AppTextStyles.labelBold().copyWith(
-                                            color: Colors.white,
-                                            height: 1.1,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.06, end: 0),
-                            const SizedBox(width: Sp.sm),
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => context.go('/merchant/clients'),
-                                borderRadius: Rd.card,
-                                child: Container(
-                                  height: 68,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.merchantTint,
-                                    borderRadius: Rd.card,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.merchant.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          LucideIcons.userPlus,
-                                          color: AppColors.merchant,
-                                          size: 22,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Ajouter\nun client',
-                                          style: AppTextStyles.labelBold().copyWith(
-                                            color: AppColors.merchant,
-                                            height: 1.1,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ).animate().fadeIn(duration: 400.ms, delay: 280.ms).slideX(begin: 0.06, end: 0),
-                          ],
-                        ),
-                        const SizedBox(height: Sp.lg),
-
-                        // 4. KPI Row (Three columns)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _KpiCard(
-                                icon: LucideIcons.users,
-                                value: stats.totalClients == 0 ? '47' : stats.totalClients.toString(),
-                                label: 'Clients',
-                                trend: '+12',
-                                trendColor: AppColors.success,
-                              ).animate().fadeIn(duration: 400.ms, delay: 350.ms).slideY(begin: 0.1, end: 0),
-                            ),
-                            const SizedBox(width: Sp.sm),
-                            Expanded(
-                              child: _KpiCard(
-                                icon: LucideIcons.circleCheck,
-                                value: stats.stampsToday == 0 ? '183' : stats.stampsToday.toString(),
-                                label: 'Tampons',
-                                subtext: 'ce mois',
-                              ).animate().fadeIn(duration: 400.ms, delay: 420.ms).slideY(begin: 0.1, end: 0),
-                            ),
-                            const SizedBox(width: Sp.sm),
-                            Expanded(
-                              child: _KpiCard(
-                                icon: LucideIcons.gift,
-                                value: stats.activeRewards == 0 ? '9' : stats.activeRewards.toString(),
-                                label: 'Récomp.',
-                                subtext: 'utilisées',
-                              ).animate().fadeIn(duration: 400.ms, delay: 490.ms).slideY(begin: 0.1, end: 0),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: Sp.lg),
-
-                        // 5. Monthly Activity Chart
-                        const _ActivityChartCard().animate().fadeIn(duration: 500.ms, delay: 550.ms).slideY(begin: 0.06, end: 0),
-                        const SizedBox(height: Sp.lg),
-
-                        // 6. Recent Activity Section
-                        _SectionCard(
-                          title: 'Dernières validations',
-                          actionLabel: 'Voir tout',
-                          onAction: () => context.go('/merchant/clients'),
-                          child: Column(
-                            children: displayActivity
-                                .take(3)
-                                .toList()
-                                .asMap()
-                                .entries
-                                .map((e) => ActivityRow(item: e.value)
-                                    .animate()
-                                    .fadeIn(duration: 350.ms, delay: Duration(milliseconds: 620 + e.key * 60))
-                                    .slideX(begin: 0.04, end: 0))
-                                .toList(),
+                      children: const [
+                        Text(
+                          'Statistiques',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
                           ),
-                        ).animate().fadeIn(duration: 400.ms, delay: 600.ms),
-                        const SizedBox(height: Sp.lg),
-
-                        // 7. Relance Auto Section Card
-                        const _RelanceAutoCard().animate().fadeIn(duration: 400.ms, delay: 750.ms).slideY(begin: 0.06, end: 0),
-                        const SizedBox(height: Sp.xl),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Aperçu de votre activité — juin 2026',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-// KPI Card widget layout
-class _KpiCard extends StatelessWidget {
-  const _KpiCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-    this.subtext,
-    this.trend,
-    this.trendColor,
-  });
-
-  final IconData icon;
-  final String value;
-  final String label;
-  final String? subtext;
-  final String? trend;
-  final Color? trendColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Sp.sm, vertical: Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Icon & optional trend badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.06),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: AppColors.textSecondary.withValues(alpha: 0.7),
-                  size: 16,
-                ),
-              ),
-              if (trend != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      LucideIcons.arrowUp,
-                      color: trendColor ?? AppColors.success,
-                      size: 11,
+                  InkWell(
+                    onTap: () => context.push('/merchant/more/notifications'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: const Icon(
+                            LucideIcons.bell,
+                            size: 18,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      trend!,
-                      style: AppTextStyles.caption().copyWith(
-                        color: trendColor ?? AppColors.success,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // ── 3 TOP KPI STAT CARDS ─────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTopKpiCard(
+                      icon: LucideIcons.users,
+                      value: '47',
+                      label: 'Clients',
+                      badge: '↑ +12',
+                      badgeColor: const Color(0xFF16A34A),
+                      delay: 50,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildTopKpiCard(
+                      icon: LucideIcons.circleCheck,
+                      value: '183',
+                      label: 'Tampons',
+                      sublabel: 'ce mois',
+                      delay: 100,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildTopKpiCard(
+                      icon: LucideIcons.gift,
+                      value: '9',
+                      label: 'Récomp.',
+                      sublabel: 'utilisées',
+                      delay: 150,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // ── CARD: ACTIVITÉ DU MOIS (BAR CHART) ───────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFEDF0F7)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Activité du mois',
+                      style: TextStyle(
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        fontSize: 11,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Validations par semaine',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Chart with animation
+                    SizedBox(
+                      height: 170,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // Y-Axis markers
+                          SizedBox(
+                            width: 24,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text('60', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                                Text('45', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                                Text('30', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                                Text('15', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                                Text('0', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Bars Area
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                // Dashed Grid Lines
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: List.generate(
+                                    5,
+                                    (index) => Container(
+                                      height: 1,
+                                      color: const Color(0xFFF1F5F9),
+                                    ),
+                                  ),
+                                ),
+
+                                // Vertical Bars
+                                Positioned.fill(
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _buildBar(heightFactor: 35 / 60, label: 'Sem 1', delay: 200),
+                                      _buildBar(heightFactor: 47 / 60, label: 'Sem 2', delay: 300),
+                                      _buildBar(heightFactor: 56 / 60, label: 'Sem 3', delay: 400),
+                                      _buildBar(heightFactor: 44 / 60, label: 'Sem 4', delay: 500),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 16),
+
+              // ── CARD: RÉPARTITION VIP (PROGRESS BARS) ─────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFEDF0F7)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Répartition VIP',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Vos clients par niveau',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Tier 1: Argent
+                    _buildTierProgress(
+                      tierName: 'Argent',
+                      count: '31',
+                      percentage: '66%',
+                      factor: 0.66,
+                      barColor: const Color(0xFF94A3B8),
+                      delay: 200,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Tier 2: Or
+                    _buildTierProgress(
+                      tierName: 'Or',
+                      count: '12',
+                      percentage: '26%',
+                      factor: 0.26,
+                      barColor: const Color(0xFFF59E0B),
+                      delay: 350,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Tier 3: Platine
+                    _buildTierProgress(
+                      tierName: 'Platine',
+                      count: '4',
+                      percentage: '9%',
+                      factor: 0.09,
+                      barColor: const Color(0xFF7C3AED),
+                      delay: 500,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
-          const SizedBox(height: 14),
-          // KPI value
-          Text(
-            value,
-            style: AppTextStyles.h1().copyWith(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          // Label
-          Text(
-            label,
-            style: AppTextStyles.caption().copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          // Optional subtext
-          if (subtext != null)
-            Text(
-              subtext!,
-              style: AppTextStyles.caption().copyWith(
-                color: AppColors.textSecondary.withValues(alpha: 0.6),
-                fontSize: 10,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
-}
 
-// Activity Chart Widget representing the Monthly activity from mockup
-class _ActivityChartCard extends StatelessWidget {
-  const _ActivityChartCard();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTopKpiCard({
+    required IconData icon,
+    required String value,
+    required String label,
+    String? sublabel,
+    String? badge,
+    Color? badgeColor,
+    required int delay,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(Sp.md),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEDF0F7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8F9FD),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 15, color: const Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 10),
           Text(
-            'Activité du mois',
-            style: AppTextStyles.labelBold().copyWith(
-              color: AppColors.textPrimary,
-              fontSize: 15,
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1E293B),
             ),
           ),
-          Text(
-            'Validations par semaine',
-            style: AppTextStyles.caption().copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Chart Graphic
-          SizedBox(
-            height: 120,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Y-Axis markers
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: ['60', '45', '30', '15', '0']
-                      .map((val) => Text(
-                            val,
-                            style: AppTextStyles.caption().copyWith(
-                              fontSize: 10,
-                              color: AppColors.textSecondary.withValues(alpha: 0.6),
-                            ),
-                          ))
-                      .toList(),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
                 ),
-                const SizedBox(width: 8),
-                // Chart Bars Area
-                Expanded(
-                  child: Stack(
-                    children: [
-                      // Horizontal grid dashed lines (only over the plot height of 100)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(
-                            5,
-                            (_) => Container(
-                              height: 1,
-                              color: AppColors.border.withValues(alpha: 0.35),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Bars
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _buildBar('Sem 1', 38),
-                          _buildBar('Sem 2', 47),
-                          _buildBar('Sem 3', 54),
-                          _buildBar('Sem 4', 43),
-                        ],
-                      ),
-                    ],
+              ),
+              if (sublabel != null) ...[
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    sublabel,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
-            ),
+              if (badge != null) ...[
+                const SizedBox(width: 4),
+                Text(
+                  badge,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: badgeColor ?? const Color(0xFF16A34A),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay)).slideY(begin: 0.05, end: 0);
   }
 
-  Widget _buildBar(String weekLabel, int val) {
-    // scale max value 60 to height of 92px
-    final double barHeight = (val / 60) * 92;
+  Widget _buildBar({
+    required double heightFactor,
+    required String label,
+    required int delay,
+  }) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Container(
-          width: 28,
-          height: barHeight,
-          decoration: const BoxDecoration(
-            color: AppColors.merchant,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(6),
-              topRight: Radius.circular(6),
+        Expanded(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: FractionallySizedBox(
+              heightFactor: heightFactor,
+              child: Container(
+                width: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF5B50EC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              )
+                  .animate()
+                  .scaleY(
+                    begin: 0,
+                    end: 1,
+                    duration: 600.ms,
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.bottomCenter,
+                    delay: Duration(milliseconds: delay),
+                  )
+                  .fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
-          weekLabel,
-          style: AppTextStyles.caption().copyWith(
-            fontSize: 10,
-            color: AppColors.textSecondary,
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
-}
 
-// Container card for sections
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.child,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final String title;
-  final Widget child;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.labelBold().copyWith(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                ),
-              ),
-              const Spacer(),
-              if (actionLabel != null && onAction != null)
-                TextButton(
-                  onPressed: onAction,
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    actionLabel!,
-                    style: AppTextStyles.caption().copyWith(
-                      color: AppColors.merchant,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: Sp.sm),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-// Relance Auto Card at the bottom of page
-class _RelanceAutoCard extends StatelessWidget {
-  const _RelanceAutoCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: Rd.card,
-        child: Stack(
+  Widget _buildTierProgress({
+    required String tierName,
+    required String count,
+    required String percentage,
+    required double factor,
+    required Color barColor,
+    required int delay,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left thick line border accent
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 4,
-                color: AppColors.merchant,
+            Text(
+              tierName,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1E293B),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(Sp.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'RELANCE AUTO',
-                        style: AppTextStyles.caption().copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: Sp.sm),
-                  Text(
-                    '3 clients n\'ont pas visité depuis 14 jours',
-                    style: AppTextStyles.bodyMd().copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: Sp.md),
-                  OutlinedButton(
-                    onPressed: () => context.go('/merchant/clients'),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.merchant),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    ),
-                    child: Text(
-                      'Voir les inactifs',
-                      style: AppTextStyles.caption().copyWith(
-                        color: AppColors.merchant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+            Text(
+              '$count • $percentage',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// Full page skeleton loading layout
-class _DashboardLoadingSkeleton extends StatelessWidget {
-  const _DashboardLoadingSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(Sp.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              SkeletonLoader(width: 40, height: 40, borderRadius: BorderRadius.circular(20)),
-              const SizedBox(width: Sp.sm),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonLoader(width: 120, height: 16),
-                    SizedBox(height: 6),
-                    SkeletonLoader(width: 80, height: 12),
-                  ],
-                ),
-              ),
-            ],
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            height: 5,
+            width: double.infinity,
+            color: const Color(0xFFF1F5F9),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: factor,
+              child: Container(color: barColor)
+                  .animate()
+                  .scaleX(
+                    begin: 0,
+                    end: 1,
+                    duration: 600.ms,
+                    alignment: Alignment.centerLeft,
+                    curve: Curves.easeOutCubic,
+                    delay: Duration(milliseconds: delay),
+                  ),
+            ),
           ),
-          const SizedBox(height: Sp.xl),
-          const SkeletonLoader(width: 200, height: 28),
-          const SizedBox(height: 8),
-          const SkeletonLoader(width: 140, height: 16),
-          const SizedBox(height: Sp.xl),
-          const Row(
-            children: [
-              Expanded(child: SkeletonLoader(height: 68)),
-              SizedBox(width: Sp.md),
-              Expanded(child: SkeletonLoader(height: 68)),
-            ],
-          ),
-          const SizedBox(height: Sp.xl),
-          const Row(
-            children: [
-              Expanded(child: SkeletonLoader(height: 100)),
-              SizedBox(width: Sp.md),
-              Expanded(child: SkeletonLoader(height: 100)),
-              SizedBox(width: Sp.md),
-              Expanded(child: SkeletonLoader(height: 100)),
-            ],
-          ),
-          const SizedBox(height: Sp.xl),
-          const SkeletonLoader(width: double.infinity, height: 160),
-          const SizedBox(height: Sp.xl),
-          const SkeletonLoader(width: double.infinity, height: 200),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

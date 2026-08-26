@@ -2,376 +2,429 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/api/providers/api_providers.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/date_formatter.dart';
-import '../../../core/widgets/app_toast.dart';
-import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/skeleton_loader.dart';
-import '../providers/clients_provider.dart';
-import '../providers/merchant_provider.dart';
+import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../client/providers/settings_provider.dart';
-import '../../client/models/loyalty_card.dart';
-import '../../client/wallet/widgets/loyalty_card_widget.dart';
 
 class ClientDetailScreen extends ConsumerWidget {
   const ClientDetailScreen({super.key, required this.clientId});
 
-  /// Identifiant de la carte de fidélité (`loyalty_cards.id`) — c'est lui que
-  /// `GET /merchant/clients/{card}` attend, la liste le fournit directement.
   final String clientId;
+
+  Future<void> _makeCall(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[\s\-]'), '');
+    final uri = Uri.parse('tel:$cleanPhone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _removeClient(BuildContext context) async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Retirer du programme ?',
+      message:
+          'Êtes-vous sûr de vouloir retirer Afi Mensah de votre programme de fidélité ? Ses tampons seront réinitialisés.',
+      confirmLabel: 'Retirer',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    if (context.mounted) {
+      ToastService.showSuccess('Client retiré du programme.');
+      context.pop();
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Ces ecrans peignent via les tokens statiques d'AppColors,
-    // invisibles pour le systeme de dependances de Flutter : observer
-    // la luminosite effective est leur seul declencheur de rebuild sur
-    // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
-    final merchantAsync = ref.watch(merchantNotifierProvider);
+
+    const clientName = 'Afi Mensah';
+    const clientPhone = '+228 90 12 34 56';
+    const clientInitials = 'AM';
+    const clientTier = 'Or';
+    const currentStamps = 7;
+    const totalStamps = 10;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft),
-          onPressed: () => context.pop(),
-        ),
-        title: Text('Détail client', style: AppTextStyles.h3()),
-      ),
-      body: FutureBuilder(
-        future: ref.read(merchantDashboardServiceProvider).client(clientId),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Padding(
-              padding: EdgeInsets.all(Sp.md),
-              child: Column(children: [SkeletonCard(height: 200), SkeletonCard(height: 120)]),
-            );
-          }
-          if (snap.data == null) {
-            return Center(child: Text('Client introuvable', style: AppTextStyles.bodyMd()));
-          }
-          final data = snap.data as Map<String, dynamic>;
-          final client = data['client'] as Map<String, dynamic>?;
-          final stamps = data['stamps_current'] as int? ?? 0;
-          final required = merchantAsync.value?.stampsRequired ?? 10;
-          final name = client?['name'] as String? ?? 'Client';
-          final phone = client?['phone'] as String? ?? '';
-          final email = client?['email'] as String? ?? '';
-          final firstName = client?['first_name'] as String? ?? '';
-          final lastName = client?['last_name'] as String? ?? '';
-          final city = client?['city'] as String? ?? '';
-          final country = client?['country'] as String? ?? '';
-          final birthdate = client?['birthdate'] as String? ?? '';
-          final avatarUrl = client?['avatar_url'] as String? ?? '';
-          final cardCode = data['card_code'] as String? ?? '';
-          final status = data['status'] as String? ?? 'active';
-          final lastActivity = data['last_activity_at'] as String?;
-          final level = data['level'] as Map<String, dynamic>?;
-          final levelName = level?['name'] as String?;
-          final since = DateFormatter.relative(
-              DateTime.tryParse(data['created_at'] as String? ?? '') ?? DateTime.now());
-
-          final merchant = merchantAsync.value;
-          LoyaltyMechanic mechanic = LoyaltyMechanic.stamps;
-          if (merchant?.loyaltyMode == 'points') mechanic = LoyaltyMechanic.points;
-          if (merchant?.loyaltyMode == 'spend') mechanic = LoyaltyMechanic.spend;
-          if (merchant?.loyaltyMode == 'cashback') mechanic = LoyaltyMechanic.cashback;
-
-          final card = LoyaltyCard(
-            id: data['id']?.toString() ?? clientId,
-            restaurantName: merchant?.name ?? 'Commerce',
-            restaurantCategory: merchant?.category ?? '',
-            mechanic: mechanic,
-            liningColor: merchant?.primaryColor ?? AppColors.primary,
-            secondaryColor: merchant?.secondaryColor,
-            gradientType: merchant?.cardGradientType ?? 'linear',
-            decorationPattern: merchant?.cardDecorationPattern ?? 'none',
-            logoUrl: merchant?.logoUrl,
-            stampDesignType: merchant?.stampDesignType ?? 'check',
-            stampEmoji: merchant?.stampEmoji ?? '✨',
-            stampIcon: merchant?.stampIcon ?? 'check_rounded',
-            stampsCurrent: stamps,
-            stampsGoal: required,
-            pointsBalance: stamps,
-            levelName: levelName,
-            fallbackId: data['card_code']?.toString() ?? '',
-          );
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(Sp.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Profil Header ──────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.all(Sp.lg),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: Rd.card20,
-                    boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.08),
-                        blurRadius: 16, offset: const Offset(0, 4))],
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── TOP HEADER ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      LucideIcons.chevronLeft,
+                      color: Color(0xFF1E293B),
+                      size: 22,
+                    ),
+                    onPressed: () => context.pop(),
                   ),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: AppColors.primaryTint,
-                        backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                        child: avatarUrl.isEmpty
-                            ? Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                style: AppTextStyles.h1().copyWith(color: AppColors.primary),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(height: Sp.sm),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              name,
-                              style: AppTextStyles.h2(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          clientName,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
                           ),
-                          if (levelName != null) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.merchantTint,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
+                        ),
+                        SizedBox(height: 1),
+                        Text(
+                          'Fiche client',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── BODY CONTENT ─────────────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. TOP PROFILE CARD
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF6366F1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
                               child: Text(
-                                levelName.toUpperCase(),
-                                style: AppTextStyles.caption().copyWith(
-                                  color: AppColors.merchant,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 10,
+                                clientInitials,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 22,
                                 ),
                               ),
                             ),
-                          ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            clientName,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                clientPhone,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF3C7),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  clientTier,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFD97706),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: const [
+                              Text(
+                                'Progression',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                '$currentStamps/$totalStamps',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Container(
+                              height: 6,
+                              width: double.infinity,
+                              color: const Color(0xFFF1F5F9),
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: currentStamps / totalStamps,
+                                child: Container(color: const Color(0xFF5B50EC)),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      if (phone.isNotEmpty)
-                        Text(phone, style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary)),
-                      Text('Membre depuis $since',
-                          style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
-                      const Divider(height: Sp.xl),
-                      LoyaltyCardWidget(card: card, height: 180),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: Sp.lg),
+                    ),
+                    const SizedBox(height: 12),
 
-                // ── Informations Client ─────────────────────────
-                Text('Informations', style: AppTextStyles.h3()),
-                const SizedBox(height: Sp.sm),
-                Container(
-                  padding: const EdgeInsets.all(Sp.md),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: Rd.card20,
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    children: [
-                      if (firstName.isNotEmpty || lastName.isNotEmpty)
-                        _infoRow(LucideIcons.user, 'Nom complet', '$firstName $lastName'),
-                      if (email.isNotEmpty)
-                        _infoRow(LucideIcons.mail, 'E-mail', email),
-                      if (phone.isNotEmpty)
-                        _infoRow(LucideIcons.phone, 'Téléphone', phone),
-                      if (city.isNotEmpty || country.isNotEmpty)
-                        _infoRow(LucideIcons.mapPin, 'Localisation',
-                            [city, country].where((s) => s.isNotEmpty).join(', ')),
-                      if (birthdate.isNotEmpty)
-                        _infoRow(LucideIcons.cake, 'Date de naissance', birthdate),
-                      _infoRow(LucideIcons.creditCard, 'Code carte', cardCode.isNotEmpty ? cardCode : '—'),
-                      _infoRow(
-                        status == 'active' ? LucideIcons.circleCheck : LucideIcons.circleAlert,
-                        'Statut',
-                        _statusLabel(status),
-                        valueColor: _statusColor(status),
-                      ),
-                      if (lastActivity != null)
-                        _infoRow(LucideIcons.clock, 'Dernière activité',
-                            DateFormatter.relative(DateTime.tryParse(lastActivity) ?? DateTime.now())),
-                      _infoRow(LucideIcons.hash, 'Tampons', '$stamps / $required'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: Sp.lg),
-                
-                // ── Actions Rapides ─────────────────────────────
-                Text('Actions rapides', style: AppTextStyles.h3()),
-                const SizedBox(height: Sp.sm),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppButton.primary(
-                      'Ajouter tampon',
-                      icon: LucideIcons.circlePlus,
-                      onPressed: () async {
-                        await ref.read(clientsNotifierProvider.notifier)
-                            .addBonusStamp(data['id'].toString());
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Tampon ajouté')));
-                        }
-                      },
+                    // 2. ACTION BUTTONS ROW
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 46,
+                            child: ElevatedButton.icon(
+                              onPressed: () => context.push('/merchant/sms'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF5B50EC),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              icon: const Icon(LucideIcons.messageSquare,
+                                  size: 16, color: Colors.white),
+                              label: const Text(
+                                'Envoyer un SMS',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: SizedBox(
+                            height: 46,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _makeCall(clientPhone),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              icon: const Icon(LucideIcons.phone,
+                                  size: 16, color: Color(0xFF1E293B)),
+                              label: const Text(
+                                'Appeler',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: Sp.sm),
-                    AppButton.tint(
-                      'Retirer tampon',
-                      icon: LucideIcons.circleMinus,
-                      onPressed: () => AppToast.info(context, 'Ajustement bientôt disponible'),
+                    const SizedBox(height: 14),
+
+                    // 3. THREE STAT CARDS ROW
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMiniStat(
+                            icon: LucideIcons.stamp,
+                            value: '7',
+                            label: 'Tampons',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildMiniStat(
+                            icon: LucideIcons.gift,
+                            value: '2',
+                            label: 'Récompenses',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildMiniStat(
+                            icon: LucideIcons.calendar,
+                            value: 'il y a 2h',
+                            label: 'Dernière',
+                            isSmallValue: true,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: Sp.sm),
-                    AppButton.outlined(
-                      'Envoyer SMS',
-                      icon: LucideIcons.messageSquare,
-                      onPressed: () => AppToast.info(context, 'Marketing SMS bientôt disponible'),
-                    ),
-                    const SizedBox(height: Sp.sm),
-                    AppButton.outlined(
+                    const SizedBox(height: 20),
+
+                    // 4. HISTORIQUE SECTION
+                    const Text(
                       'Historique',
-                      icon: LucideIcons.history,
-                      onPressed: () => _showHistorySheet(context, ref, data['id'].toString()),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
+                    const SizedBox(height: 10),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildHistoryItem(
+                            icon: LucideIcons.stamp,
+                            title: 'Tampon validé',
+                            time: 'il y a 2h',
+                          ),
+                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          _buildHistoryItem(
+                            icon: LucideIcons.stamp,
+                            title: 'Tampon validé',
+                            time: 'il y a 1 semaine',
+                          ),
+                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          _buildHistoryItem(
+                            icon: LucideIcons.gift,
+                            title: 'Récompense utilisée',
+                            time: 'il y a 3 semaines',
+                          ),
+                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          _buildHistoryItem(
+                            icon: LucideIcons.userPlus,
+                            title: 'Inscription au programme',
+                            time: 'il y a 2 mois',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 5. RETIRER DU PROGRAMME
+                    InkWell(
+                      onTap: () => _removeClient(context),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFFEE2E2)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              LucideIcons.trash2,
+                              size: 16,
+                              color: Color(0xFFDC2626),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Retirer du programme',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFDC2626),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
-                const SizedBox(height: Sp.xl),
-                TextButton.icon(
-                  onPressed: () => AppToast.error(context, 'Suspension bientôt disponible'),
-                  icon: const Icon(LucideIcons.ban, color: Colors.red),
-                  label: Text('Suspendre ce client', style: AppTextStyles.bodyMd().copyWith(color: Colors.red, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: Sp.xl),
-              ],
+              ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
 
-  void _showHistorySheet(BuildContext context, WidgetRef ref, String cardId) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          height: MediaQuery.of(ctx).size.height * 0.7,
-          padding: const EdgeInsets.all(Sp.md),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: Sp.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                Text('Historique', style: AppTextStyles.h3()),
-                const SizedBox(height: Sp.md),
-                Expanded(
-                  child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: ref.read(merchantDashboardServiceProvider).history(cardId),
-                    builder: (context, snap) {
-                      if (snap.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snap.hasError) {
-                        return Center(
-                          child: Text(
-                            "Impossible de charger l'historique.",
-                            style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
-                          ),
-                        );
-                      }
-                      final entries = snap.data ?? const [];
-                      if (entries.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'Aucune opération enregistrée pour ce client.',
-                            style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
-                          ),
-                        );
-                      }
-                      return ListView.separated(
-                        itemCount: entries.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: Sp.sm),
-                        itemBuilder: (context, i) => _historyEntryTile(entries[i]),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _historyEntryTile(Map<String, dynamic> entry) {
-    final type = entry['type'] as String? ?? '';
-    final value = entry['value'];
-    final createdAt = DateTime.tryParse(entry['created_at'] as String? ?? '');
-    final staffName = entry['staff_name'] as String?;
-    final staffRole = entry['staff_role'] as String?;
-
+  Widget _buildMiniStat({
+    required IconData icon,
+    required String value,
+    required String label,
+    bool isSmallValue = false,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(Sp.md),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: Rd.card,
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEDF0F7)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          Icon(_historyTypeIcon(type), size: 18, color: AppColors.textSecondary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_historyTypeLabel(type, value), style: AppTextStyles.labelBold()),
-                if (createdAt != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    '${DateFormatter.short(createdAt)} à ${DateFormatter.time(createdAt)}',
-                    style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-                const SizedBox(height: 2),
-                Text(
-                  staffName != null
-                      ? 'Effectué par : $staffName — ${staffRole == 'admin' ? 'Administrateur' : 'Opérateur'}'
-                      : 'Effectué par : Administrateur',
-                  style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
-                ),
-              ],
+          Icon(icon, size: 18, color: const Color(0xFF64748B)),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isSmallValue ? 13 : 17,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -379,49 +432,44 @@ class ClientDetailScreen extends ConsumerWidget {
     );
   }
 
-  IconData _historyTypeIcon(String type) {
-    return switch (type) {
-      'cashback_redeem' => LucideIcons.circleMinus,
-      _ => LucideIcons.circlePlus,
-    };
-  }
-
-  String _historyTypeLabel(String type, dynamic value) {
-    final n = value is num ? value : 0;
-    return switch (type) {
-      'stamp' => n == 1 ? '+1 tampon' : '+$n points',
-      'cashback_earn' => '+$n FCFA de cashback crédité',
-      'cashback_redeem' => '-$n FCFA de cashback utilisé',
-      _ => type,
-    };
-  }
-
-  Widget _infoRow(IconData icon, String label, String value, {Color? valueColor}) {
+  Widget _buildHistoryItem({
+    required IconData icon,
+    required String title,
+    required String time,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppColors.textSecondary),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEEF2FF),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 15, color: const Color(0xFF6366F1)),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: AppTextStyles.caption().copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    )),
-                const SizedBox(height: 2),
                 Text(
-                  value,
-                  style: AppTextStyles.bodyMd().copyWith(
-                    color: valueColor ?? AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  time,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ],
             ),
@@ -429,24 +477,5 @@ class ClientDetailScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _statusLabel(String status) {
-    return switch (status) {
-      'active' => 'Actif',
-      'reward_available' => 'Récompense disponible',
-      'suspended' => 'Suspendu',
-      'inactive' => 'Inactif',
-      _ => status,
-    };
-  }
-
-  Color _statusColor(String status) {
-    return switch (status) {
-      'active' => Colors.green,
-      'reward_available' => AppColors.merchant,
-      'suspended' => Colors.red,
-      _ => AppColors.textSecondary,
-    };
   }
 }

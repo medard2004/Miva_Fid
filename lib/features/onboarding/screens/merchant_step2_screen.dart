@@ -139,32 +139,35 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: Sp.sm),
+                      const SizedBox(height: 4),
                       Text(
                         'Choisissez votre programme',
                         style: AppTextStyles.h1().copyWith(
                           fontWeight: FontWeight.w900,
-                          fontSize: 24,
+                          fontSize: 22,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        'Définissez la manière dont vos clients seront récompensés.',
+                        'Définissez la formule de fidélité pour vos clients.',
                         style: AppTextStyles.bodyMd().copyWith(
                           color: AppColors.textSecondary,
-                          fontSize: 13.5,
-                          height: 1.4,
+                          fontSize: 13,
                         ),
                       ),
-                      const SizedBox(height: Sp.lg),
+                      const SizedBox(height: Sp.md),
 
-                      // 3 Modes Cards
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _LoyaltyModeTab(
-                              title: 'Tampons',
-                              subtitle: 'Par visite',
+                      // Compact Single-Line Segmented Mode Selector
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F2F6),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildModeTab(
+                              label: 'Tampons',
                               icon: LucideIcons.stamp,
                               isSelected: state.loyaltyMode == 'stamps',
                               onTap: () {
@@ -172,12 +175,8 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                                 setState(() {});
                               },
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _LoyaltyModeTab(
-                              title: 'Achats',
-                              subtitle: 'Par points',
+                            _buildModeTab(
+                              label: 'Achats',
                               icon: LucideIcons.shoppingBag,
                               isSelected: state.loyaltyMode == 'spend',
                               onTap: () {
@@ -185,12 +184,8 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                                 setState(() {});
                               },
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _LoyaltyModeTab(
-                              title: 'Cashback',
-                              subtitle: 'Cagnotte en %',
+                            _buildModeTab(
+                              label: 'Cashback',
                               icon: LucideIcons.wallet,
                               isSelected: state.loyaltyMode == 'cashback',
                               onTap: () {
@@ -198,10 +193,10 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                                 setState(() {});
                               },
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: Sp.lg),
+                      const SizedBox(height: Sp.md),
 
                       // CONTENT FOR SELECTED MODE
                       if (state.loyaltyMode == 'stamps')
@@ -211,7 +206,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       else if (state.loyaltyMode == 'cashback')
                         _buildCashbackSection(),
 
-                      const SizedBox(height: Sp.xl),
+                      const SizedBox(height: Sp.lg),
                     ],
                   ),
                 ),
@@ -225,7 +220,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                 ),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton.icon(
                     onPressed: _next,
                     style: ElevatedButton.styleFrom(
@@ -233,7 +228,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     icon: const Icon(LucideIcons.arrowRight, size: 18, color: Colors.white),
@@ -244,6 +239,60 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                         fontSize: 15,
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeTab({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: isSelected ? AppColors.merchant : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isSelected ? AppColors.merchant : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ),
@@ -267,15 +316,15 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionTitle(
-          title: 'CONFIGURATION DU PROGRAMME TAMPONS',
+          title: 'CONFIGURATION TAMPONS',
           badgeText: 'Simple & Populaire',
         ),
-        const SizedBox(height: Sp.sm),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
@@ -284,27 +333,28 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
               // Nombre de tampons
               Text(
                 'Nombre de tampons requis *',
-                style: AppTextStyles.labelBold().copyWith(fontSize: 13.5),
+                style: AppTextStyles.labelBold().copyWith(fontSize: 13),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Row(
                 children: [5, 8, 10, 12, 15].map((count) {
                   final isSelected = goal == count;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.only(right: 5),
                     child: ChoiceChip(
                       label: Text('$count'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
                       backgroundColor: const Color(0xFFF3F4F6),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: 12.5,
                       ),
                       showCheckmark: false,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       onSelected: (_) {
                         setState(() {
@@ -315,7 +365,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               AppInput(
                 label: 'Ou saisissez un nombre personnalisé',
                 hint: 'Ex: 10',
@@ -327,17 +377,17 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                 validator: (v) {
                   final parsed = int.tryParse(v?.trim() ?? '');
                   if (parsed == null || parsed <= 0) {
-                    return 'Veuillez entrer un nombre de tampons valide';
+                    return 'Entrez un nombre de tampons valide';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: Sp.md),
+              const SizedBox(height: Sp.sm),
 
               // Récompense offerte
               AppInput(
                 label: 'Récompense offerte *',
-                hint: 'Ex : 1 café offert, 10% sur l\'addition, etc.',
+                hint: 'Ex : 1 café offert, 10% de réduction, etc.',
                 controller: _stampsRewardCtrl,
                 prefixIcon: LucideIcons.gift,
                 accentColor: AppColors.merchant,
@@ -349,14 +399,14 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
             ],
           ),
         ),
-        const SizedBox(height: Sp.md),
+        const SizedBox(height: 10),
 
         // Carte Explication Claire
         _ExplanationCard(
           icon: LucideIcons.info,
           title: 'Fonctionnement pour vos clients',
           description:
-              'Chaque visite ou achat donne 1 tampon sur la carte.\nAu bout de $goal tampons, le client débloque : "$reward".',
+              'Chaque visite donne 1 tampon.\nAu bout de $goal tampons, le client débloque : "$reward".',
         ),
       ],
     );
@@ -377,15 +427,15 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionTitle(
-          title: 'CONFIGURATION DU PROGRAMME PAR POINTS',
-          badgeText: 'Idéal pour paniers variables',
+          title: 'CONFIGURATION ACHATS PAR POINTS',
+          badgeText: 'Paniers variables',
         ),
-        const SizedBox(height: Sp.sm),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
@@ -394,32 +444,33 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
               // Taux de conversion
               Text(
                 'Taux de conversion *',
-                style: AppTextStyles.labelBold().copyWith(fontSize: 13.5),
+                style: AppTextStyles.labelBold().copyWith(fontSize: 13),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
-                '1 point est accordé tous les combien de FCFA dépensés ?',
-                style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                '1 point est accordé tous les combien de FCFA ?',
+                style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary, fontSize: 11.5),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Row(
                 children: [100, 500, 1000].map((val) {
                   final isSelected = fcfaPerPoint == val;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.only(right: 5),
                     child: ChoiceChip(
                       label: Text('$val F'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
                       backgroundColor: const Color(0xFFF3F4F6),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: 12.5,
                       ),
                       showCheckmark: false,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       onSelected: (_) {
                         setState(() {
@@ -430,7 +481,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               AppInput(
                 label: 'Montant FCFA par point',
                 hint: 'Ex: 100',
@@ -442,16 +493,16 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                 validator: (v) {
                   final parsed = int.tryParse(v?.trim() ?? '');
                   if (parsed == null || parsed <= 0) {
-                    return 'Veuillez entrer un montant supérieur à 0';
+                    return 'Entrez un montant supérieur à 0';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: Sp.md),
+              const SizedBox(height: Sp.sm),
 
               // Objectif de points
               AppInput(
-                label: 'Objectif de points pour la récompense *',
+                label: 'Objectif de points *',
                 hint: 'Ex: 100',
                 controller: _pointsGoalCtrl,
                 keyboardType: TextInputType.number,
@@ -461,12 +512,12 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                 validator: (v) {
                   final parsed = int.tryParse(v?.trim() ?? '');
                   if (parsed == null || parsed <= 0) {
-                    return 'Veuillez entrer un objectif supérieur à 0';
+                    return 'Entrez un objectif supérieur à 0';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: Sp.md),
+              const SizedBox(height: Sp.sm),
 
               // Récompense offerte
               AppInput(
@@ -483,14 +534,14 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
             ],
           ),
         ),
-        const SizedBox(height: Sp.md),
+        const SizedBox(height: 10),
 
         // Carte Explication Claire & Calcul
         _ExplanationCard(
           icon: LucideIcons.calculator,
-          title: 'Calcul en direct pour vos clients',
+          title: 'Calcul en direct',
           description:
-              '• 1 point = $fcfaPerPoint FCFA dépensés\n• Un achat de ${(fcfaPerPoint * 10)} FCFA donne 10 points\n• Avec $pointsGoal points ($totalSpendRequired FCFA cumulés), le client obtient : "$reward".',
+              '• 1 point = $fcfaPerPoint FCFA dépensés\n• Avec $pointsGoal points ($totalSpendRequired FCFA cumulés), le client obtient : "$reward".',
         ),
       ],
     );
@@ -511,14 +562,14 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
       children: [
         _SectionTitle(
           title: 'CONFIGURATION DU CASHBACK',
-          badgeText: 'Cagnotte en argent',
+          badgeText: 'Cagnotte en %',
         ),
-        const SizedBox(height: Sp.sm),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
@@ -527,27 +578,28 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
               // Pourcentage
               Text(
                 'Pourcentage de cashback reversé *',
-                style: AppTextStyles.labelBold().copyWith(fontSize: 13.5),
+                style: AppTextStyles.labelBold().copyWith(fontSize: 13),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Row(
                 children: [3, 5, 10, 15].map((count) {
                   final isSelected = pct == count.toDouble();
                   return Padding(
-                    padding: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.only(right: 5),
                     child: ChoiceChip(
                       label: Text('$count%'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
                       backgroundColor: const Color(0xFFF3F4F6),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: 12.5,
                       ),
                       showCheckmark: false,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       onSelected: (_) {
                         setState(() {
@@ -558,7 +610,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               AppInput(
                 label: 'Pourcentage de cashback (%)',
                 hint: 'Ex: 5',
@@ -576,7 +628,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                   return null;
                 },
               ),
-              const SizedBox(height: Sp.md),
+              const SizedBox(height: Sp.sm),
 
               // Seuil minimal d'utilisation
               AppInput(
@@ -588,12 +640,12 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                 accentColor: AppColors.merchant,
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: Sp.md),
+              const SizedBox(height: Sp.sm),
 
               // Expiration
               AppInput(
                 label: 'Durée de validité du solde (jours, optionnel)',
-                hint: 'Ex: 365 (laisser vide si pas d\'expiration)',
+                hint: 'Ex: 365 (vide = pas d\'expiration)',
                 controller: _cashbackExpiryCtrl,
                 keyboardType: TextInputType.number,
                 prefixIcon: LucideIcons.calendarClock,
@@ -602,14 +654,14 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
             ],
           ),
         ),
-        const SizedBox(height: Sp.md),
+        const SizedBox(height: 10),
 
         // Carte Explication Claire Cashback
         _ExplanationCard(
           icon: LucideIcons.sparkles,
           title: 'Fonctionnement du cashback',
           description:
-              '• Pour un achat de 20 000 FCFA, le client gagne $earnedOn20k FCFA dans sa cagnotte ($pct%).\n• Dès $minRedeem FCFA cumulés, il peut déduire ce solde directement lors de son prochain passage.',
+              '• Pour 20 000 FCFA d\'achat, le client gagne $earnedOn20k FCFA ($pct%).\n• Dès $minRedeem FCFA cumulés, il peut déduire son solde.',
         ),
       ],
     );
@@ -634,104 +686,27 @@ class _SectionTitle extends StatelessWidget {
             style: AppTextStyles.caption().copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
+              letterSpacing: 0.4,
               fontSize: 11,
             ),
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: AppColors.merchant.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(5),
           ),
           child: Text(
             badgeText,
             style: const TextStyle(
               color: AppColors.merchant,
-              fontSize: 10.5,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _LoyaltyModeTab extends StatelessWidget {
-  const _LoyaltyModeTab({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.merchant : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppColors.merchant : AppColors.border,
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColors.merchant.withValues(alpha: 0.25)
-                  : AppColors.textPrimary.withValues(alpha: 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isSelected ? Colors.white : AppColors.merchant,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.8)
-                    : AppColors.textSecondary,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -750,24 +725,24 @@ class _ExplanationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFEEF2FF),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFC7D2FE)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: AppColors.merchant.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 16, color: AppColors.merchant),
+            child: Icon(icon, size: 14, color: AppColors.merchant),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -777,16 +752,16 @@ class _ExplanationCard extends StatelessWidget {
                   style: const TextStyle(
                     color: Color(0xFF312E81),
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   description,
                   style: const TextStyle(
                     color: Color(0xFF4338CA),
-                    fontSize: 12,
-                    height: 1.45,
+                    fontSize: 11.5,
+                    height: 1.4,
                   ),
                 ),
               ],

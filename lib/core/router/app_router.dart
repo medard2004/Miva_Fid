@@ -50,7 +50,10 @@ import '../../features/merchant/screens/profile_screen.dart' as merchant_profile
 import '../../features/merchant/screens/subscription_screen.dart';
 import '../../features/merchant/screens/team_screen.dart';
 import '../../features/merchant/screens/notifications_screen.dart' as merchant_notifs;
+import '../../features/merchant/screens/language_theme_screen.dart';
 import '../../features/merchant/screens/sms_campaign_screen.dart';
+import '../../features/merchant/screens/sms_conversation_screen.dart';
+import '../../features/merchant/screens/sms_campaign_detail_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
@@ -581,6 +584,20 @@ GoRouter appRouter(AppRouterRef ref) {
             GoRoute(
               path: '/merchant/sms',
               pageBuilder: (_, __) => _fade(const SmsCampaignScreen()),
+              routes: [
+                GoRoute(
+                  path: 'conversation',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const SmsConversationScreen()),
+                ),
+                GoRoute(
+                  path: 'campaign/:id',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, state) => _slide(SmsCampaignDetailScreen(
+                    campaignId: state.pathParameters['id'] ?? '1',
+                  )),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -617,6 +634,36 @@ GoRouter appRouter(AppRouterRef ref) {
                   pageBuilder: (_, __) => _slide(const merchant_profile.ProfileScreen()),
                 ),
                 GoRoute(
+                  path: 'notifications',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const merchant_notifs.NotificationsScreen()),
+                ),
+                GoRoute(
+                  path: 'preferences',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const merchant_notifs.NotificationsScreen()),
+                ),
+                GoRoute(
+                  path: 'team',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const TeamScreen()),
+                ),
+                GoRoute(
+                  path: 'language',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const LanguageThemeScreen()),
+                ),
+                GoRoute(
+                  path: 'hours',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                ),
+                GoRoute(
+                  path: 'socials',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                ),
+                GoRoute(
                   path: 'change-password',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
@@ -641,7 +688,7 @@ GoRouter appRouter(AppRouterRef ref) {
                 GoRoute(
                   path: 'subscription',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const SubscriptionCategoryScreen()),
+                  pageBuilder: (_, __) => _slide(const SubscriptionScreen()),
                   routes: [
                     GoRoute(
                       path: 'plan',
@@ -654,11 +701,6 @@ GoRouter appRouter(AppRouterRef ref) {
                       pageBuilder: (_, __) => _slide(const TeamScreen()),
                     ),
                   ],
-                ),
-                GoRoute(
-                  path: 'preferences',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const merchant_notifs.NotificationsScreen()),
                 ),
               ],
             ),

@@ -157,7 +157,6 @@ class _MerchantLocationScreenState
       return;
     }
 
-    // Si aucune position GPS n'est sélectionnée, assigner par défaut le centre de Lomé
     final lat = _latitude ?? 6.1319;
     final lng = _longitude ?? 1.2228;
 
@@ -201,61 +200,56 @@ class _MerchantLocationScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: Sp.sm),
+                    const SizedBox(height: 4),
                     Text(
                       'Localisez votre commerce',
                       style: AppTextStyles.h1().copyWith(
                         fontWeight: FontWeight.w900,
-                        fontSize: 24,
+                        fontSize: 22,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
-                      'Sélectionnez votre position pour remplir automatiquement votre adresse, ou saisissez-la manuellement.',
+                      'Définissez votre position pour remplir automatiquement votre adresse.',
                       style: AppTextStyles.bodyMd().copyWith(
                         color: AppColors.textSecondary,
-                        fontSize: 13.5,
-                        height: 1.4,
+                        fontSize: 13,
                       ),
                     ),
-                    const SizedBox(height: Sp.lg),
+                    const SizedBox(height: Sp.md),
 
-                    // SECTION 1: Choix automatique de la position
+                    // SECTION 1: Boutons d'action compacts
                     Row(
                       children: [
                         Expanded(
-                          child: _LocationOptionCard(
-                            title: 'Ma position GPS',
-                            subtitle: 'Détection automatique',
+                          child: _CompactLocationAction(
+                            label: 'Ma position GPS',
                             icon: LucideIcons.locateFixed,
-                            isPrimary: true,
                             loading: _locating,
                             onTap: _locating ? null : _useCurrentPosition,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
-                          child: _LocationOptionCard(
-                            title: 'Pointer la carte',
-                            subtitle: 'Choisir le repère',
-                            icon: LucideIcons.map,
-                            isPrimary: false,
+                          child: _CompactLocationAction(
+                            label: 'Pointer la carte',
+                            icon: LucideIcons.mapPin,
                             loading: false,
                             onTap: _locating ? null : _openMap,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: Sp.md),
+                    const SizedBox(height: Sp.sm),
 
-                    // Status Badge
-                    if (hasLocation)
+                    // Status Badge (compact)
+                    if (hasLocation) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: const Color(0xFFBBF7D0)),
                         ),
                         child: Row(
@@ -263,17 +257,17 @@ class _MerchantLocationScreenState
                             const Icon(
                               LucideIcons.circleCheck,
                               color: Color(0xFF16A34A),
-                              size: 18,
+                              size: 16,
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _autoDetected
-                                    ? 'Position GPS & adresse détectées (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})'
-                                    : 'Coordonnées définies (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})',
+                                    ? 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)} (Auto-détecté)'
+                                    : 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}',
                                 style: const TextStyle(
                                   color: Color(0xFF15803D),
-                                  fontSize: 12.5,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -281,10 +275,12 @@ class _MerchantLocationScreenState
                           ],
                         ),
                       ),
+                      const SizedBox(height: Sp.sm),
+                    ],
 
-                    const SizedBox(height: Sp.lg),
+                    const SizedBox(height: Sp.xs),
 
-                    // SECTION 2: Formulaire des champs (Remplis auto ou éditables manuellement)
+                    // SECTION 2: Formulaire des champs
                     Row(
                       children: [
                         Text(
@@ -293,7 +289,7 @@ class _MerchantLocationScreenState
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
-                            fontSize: 11.5,
+                            fontSize: 11,
                           ),
                         ),
                         const Spacer(),
@@ -316,21 +312,14 @@ class _MerchantLocationScreenState
                           ),
                       ],
                     ),
-                    const SizedBox(height: Sp.sm),
+                    const SizedBox(height: 6),
 
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColors.border),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.textPrimary.withValues(alpha: 0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,12 +352,12 @@ class _MerchantLocationScreenState
                           ),
                           const SizedBox(height: Sp.sm),
 
-                          // Adresse / Quartier
+                          // Adresse / Quartier (Compacte, 1 ligne)
                           AppInput(
                             label: 'Quartier / Rue / Point de repère',
                             hint: 'Ex : Tokoin, Rue des Cocotiers',
                             controller: _addressCtrl,
-                            maxLines: 2,
+                            maxLines: 1,
                             prefixIcon: LucideIcons.mapPin,
                             textInputAction: TextInputAction.done,
                             accentColor: AppColors.merchant,
@@ -377,7 +366,7 @@ class _MerchantLocationScreenState
                       ),
                     ),
 
-                    const SizedBox(height: Sp.xl),
+                    const SizedBox(height: Sp.lg),
                   ],
                 ),
               ),
@@ -391,7 +380,7 @@ class _MerchantLocationScreenState
               ),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 50,
                 child: ElevatedButton.icon(
                   onPressed: _submitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
@@ -399,7 +388,7 @@ class _MerchantLocationScreenState
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   icon: _submitting
@@ -429,20 +418,16 @@ class _MerchantLocationScreenState
   }
 }
 
-class _LocationOptionCard extends StatelessWidget {
-  const _LocationOptionCard({
-    required this.title,
-    required this.subtitle,
+class _CompactLocationAction extends StatelessWidget {
+  const _CompactLocationAction({
+    required this.label,
     required this.icon,
-    required this.isPrimary,
     required this.loading,
     required this.onTap,
   });
 
-  final String title;
-  final String subtitle;
+  final String label;
   final IconData icon;
-  final bool isPrimary;
   final bool loading;
   final VoidCallback? onTap;
 
@@ -450,74 +435,50 @@ class _LocationOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: isPrimary ? AppColors.merchant : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isPrimary ? AppColors.merchant : AppColors.border,
-            width: 1.5,
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: isPrimary
-                  ? AppColors.merchant.withValues(alpha: 0.25)
-                  : AppColors.textPrimary.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isPrimary
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : AppColors.merchant.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 20,
-                    color: isPrimary ? Colors.white : AppColors.merchant,
-                  ),
+            if (loading)
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  color: AppColors.merchant,
+                  strokeWidth: 2,
                 ),
-                if (loading)
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                color: isPrimary ? Colors.white : AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
+              )
+            else
+              Icon(
+                icon,
+                size: 16,
+                color: AppColors.merchant,
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: isPrimary
-                    ? Colors.white.withValues(alpha: 0.8)
-                    : AppColors.textSecondary,
-                fontSize: 11.5,
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                ),
               ),
             ),
           ],
