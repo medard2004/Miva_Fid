@@ -58,6 +58,8 @@ class CardFaceContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtextColor = textColor.withValues(alpha: 0.7);
+    final currentTier =
+        card.tiers.where((t) => t.status == 'reached').lastOrNull;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,6 +77,7 @@ class CardFaceContent extends StatelessWidget {
                   restaurantName: card.restaurantName,
                   textColor: textColor,
                   compact: compact,
+                  levelIcon: currentTier?.icon,
                 ),
                 SizedBox(width: compact ? 8 : 10),
                 Expanded(
@@ -150,18 +153,20 @@ class _CardLogo extends StatelessWidget {
   final String restaurantName;
   final Color textColor;
   final bool compact;
+  final String? levelIcon;
 
   const _CardLogo({
     required this.logoUrl,
     required this.restaurantName,
     required this.textColor,
     required this.compact,
+    this.levelIcon,
   });
 
   @override
   Widget build(BuildContext context) {
     final size = compact ? 30.0 : 38.0;
-    return Container(
+    final medallion = Container(
       width: size,
       height: size,
       padding: const EdgeInsets.all(1.4),
@@ -189,6 +194,44 @@ class _CardLogo extends StatelessWidget {
           child: _content(size),
         ),
       ),
+    );
+
+    if (levelIcon == null) return medallion;
+
+    // Badge de niveau ancré côté gauche de la carte, sur le logo — pas en
+    // bas de carte : dans les cartes courtes/compactes, la ligne de niveau
+    // en pied de carte se faisait pousser hors cadre ou wrap.
+    final badgeSize = compact ? 15.0 : 18.0;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        medallion,
+        Positioned(
+          left: -4,
+          bottom: -4,
+          child: Container(
+            width: badgeSize,
+            height: badgeSize,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.95),
+              border: Border.all(color: textColor.withValues(alpha: 0.25)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.22),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Text(
+              levelIcon!,
+              style: TextStyle(fontSize: badgeSize * 0.62, height: 1),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -277,7 +320,6 @@ class _MechanicStat extends StatelessWidget {
                 t.cardCashbackLabel,
                 formatGroupedNumber(card.cashbackBalanceFcfa),
                 t.cardCashbackSuffix),
-            _levelRow(),
           ],
         );
       case LoyaltyMechanic.points:
@@ -287,7 +329,6 @@ class _MechanicStat extends StatelessWidget {
           children: [
             _valueRow(t.cardPointsLabel,
                 formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix),
-            _levelRow(),
           ],
         );
       // Mode "Achat" : même compteur que "Points" côté données, mais un
@@ -301,7 +342,6 @@ class _MechanicStat extends StatelessWidget {
             _valueRow(t.cardSpendLabel,
                 formatGroupedNumber(card.pointsBalance), t.cardPointsSuffix,
                 percent: card.percent),
-            _levelRow(),
           ],
         );
       case LoyaltyMechanic.stamps:
@@ -312,7 +352,6 @@ class _MechanicStat extends StatelessWidget {
             _valueRow(t.cardStampsLabel,
                 '${card.stampsCurrent}/${card.stampsGoal}', null,
                 percent: card.percent),
-            _levelRow(),
           ],
         );
     }
@@ -353,39 +392,6 @@ class _MechanicStat extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-
-  /// Niveau de fidélité — indépendant du programme (Tampons/Achats/Cashback) :
-  /// jamais le montant cumulé dépensé/gagné, uniquement le nom du niveau et
-  /// le pourcentage vers le suivant, calculés côté serveur
-  /// (`LoyaltyLevelService`).
-  Widget _levelRow() {
-    if (card.levelName == null) return const SizedBox.shrink();
-    final currentTier =
-        card.tiers.where((t) => t.status == 'reached').lastOrNull;
-    final icon = currentTier?.icon;
-    return Padding(
-      padding: EdgeInsets.only(top: compact ? 2 : 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Text(icon, style: const TextStyle(fontSize: 12)),
-            const SizedBox(width: 4),
-          ],
-          Flexible(
-            child: Text(
-              card.isMaxLevel
-                  ? '${card.levelName} · niveau maximum'
-                  : '${card.levelName} · ${card.levelPercentToNext ?? 0}% vers le niveau suivant',
-              style: AppTextStyles.monoSmall(color: subtextColor),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
