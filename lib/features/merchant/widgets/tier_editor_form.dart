@@ -1,28 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/domain/loyalty_level.dart';
+import '../../../core/domain/tier_icon_palette.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/tier_level_icon.dart';
 import '../../onboarding/models/program_tier.dart';
-
-/// Icônes de niveau — automatiques par rang, jamais choisies par le
-/// marchand (miroir de `LoyaltyTierService::iconForRank` côté API : mise à
-/// l'échelle sur `totalTiers` pour que le dernier palier obtienne toujours
-/// l'icône maximale 👑, même avec seulement 2 paliers).
-const List<String> tierRankIcons = ['🥉', '🥈', '🥇', '💎', '👑'];
-String iconForTierRank(int rank, int totalTiers) {
-  final maxIndex = tierRankIcons.length - 1;
-  final index = totalTiers <= 1
-      ? maxIndex
-      : (((rank - 1) / (totalTiers - 1)) * maxIndex).round();
-  return tierRankIcons[index.clamp(0, maxIndex)];
-}
+import 'tier_icon_picker_sheet.dart';
 
 /// Éditeur de paliers réutilisé par l'onboarding (step2) et les réglages
 /// marchand — un palier = objectif + nom de niveau (masqué si un seul
 /// palier) + récompense + validité optionnelle.
+///
+/// Nom/icône des 5 premiers paliers d'un programme multi-palier sont
+/// imposés par leur position (`LoyaltyLevel.forPosition`, ordre Bronze <
+/// Argent < Or < Platine < Fidèle), non éditables. Au-delà de la position
+/// 5, le marchand choisit nom libre + icône (`TierIconPalette`).
 class TierEditorForm extends StatefulWidget {
   final List<ProgramTier> initialTiers;
   final String goalUnit;
@@ -48,6 +44,7 @@ class TierEditorFormState extends State<TierEditorForm> {
   final List<TextEditingController> _levelNameCtrls = [];
   final List<TextEditingController> _descCtrls = [];
   final List<TextEditingController> _validityCtrls = [];
+  final List<String?> _iconKeys = [];
   final List<bool> _isExpanded = [];
   final List<bool> _revealReward = [];
 
@@ -68,6 +65,7 @@ class TierEditorFormState extends State<TierEditorForm> {
     _descCtrls.add(TextEditingController(text: tier.rewardDescription));
     _validityCtrls
         .add(TextEditingController(text: tier.validityDays?.toString() ?? ''));
+    _iconKeys.add(tier.iconKey);
     _isExpanded.add(expanded);
     _revealReward.add(tier.revealReward);
   }
@@ -78,12 +76,20 @@ class TierEditorFormState extends State<TierEditorForm> {
 
   /// Snapshot lisible par l'appelant à tout moment (ex. juste avant soumission).
   List<ProgramTier> currentTiers() {
+    final isMultiTier = _goalCtrls.length > 1;
     return List.generate(_goalCtrls.length, (i) {
+      final position = i + 1;
+      final isLocked = position <= 5;
       return ProgramTier(
         goal: int.tryParse(_goalCtrls[i].text.trim()) ?? 10,
-        levelName: _goalCtrls.length > 1 && _levelNameCtrls[i].text.trim().isNotEmpty
-            ? _levelNameCtrls[i].text.trim()
-            : null,
+        levelName: !isMultiTier
+            ? null
+            : (isLocked
+                ? LoyaltyLevel.forPosition(position)?.label
+                : (_levelNameCtrls[i].text.trim().isNotEmpty
+                    ? _levelNameCtrls[i].text.trim()
+                    : null)),
+        iconKey: !isMultiTier || isLocked ? null : _iconKeys[i],
         rewardDescription: _descCtrls[i].text.trim(),
         validityDays: int.tryParse(_validityCtrls[i].text.trim()),
         revealReward: _revealReward[i],
@@ -114,6 +120,7 @@ class TierEditorFormState extends State<TierEditorForm> {
       _levelNameCtrls.removeAt(index);
       _descCtrls.removeAt(index);
       _validityCtrls.removeAt(index);
+      _iconKeys.removeAt(index);
       _isExpanded.removeAt(index);
       _revealReward.removeAt(index);
     });
@@ -149,8 +156,10 @@ class TierEditorFormState extends State<TierEditorForm> {
         if (isMultiTier) ...[
           const SizedBox(height: Sp.xs),
           Text(
-            'Chaque palier attribue un niveau nommé par vous et débloque sa '
-            'propre récompense, sans jamais redescendre une fois atteint.',
+            'Chaque palier attribue un niveau et débloque sa propre '
+            'récompense, sans jamais redescendre une fois atteint. Les 5 '
+            'premiers niveaux (Bronze, Argent, Or, Platine, Fidèle) sont '
+            'fixes ; au-delà, vous choisissez le nom et l\'icône.',
             style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
           ),
         ],
@@ -170,11 +179,18 @@ class TierEditorFormState extends State<TierEditorForm> {
           separatorBuilder: (_, __) => const SizedBox(height: Sp.md),
           itemBuilder: (context, index) {
             final isExpanded = _isExpanded[index];
+            final position = index + 1;
+            final isLocked = position <= 5;
+            final fixedLevel = isLocked ? LoyaltyLevel.forPosition(position) : null;
             final levelName = _levelNameCtrls[index].text.trim();
             final goal = _goalCtrls[index].text.trim();
             final reward = _descCtrls[index].text.trim();
 
-            final summaryTitle = levelName.isNotEmpty ? levelName : 'Palier ${index + 1}';
+            final summaryTitle = !isMultiTier
+                ? 'Palier ${index + 1}'
+                : (isLocked
+                    ? fixedLevel!.label
+                    : (levelName.isNotEmpty ? levelName : 'Palier ${index + 1}'));
             String summarySubtitle = '';
             if (goal.isNotEmpty && reward.isNotEmpty) {
               summarySubtitle = '$goal ${widget.goalUnit} • $reward';
@@ -227,10 +243,13 @@ class TierEditorFormState extends State<TierEditorForm> {
                                   color: isExpanded ? AppColors.merchantTint : AppColors.background,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Text(
-                                  iconForTierRank(index + 1, _goalCtrls.length),
-                                  style: const TextStyle(fontSize: 20),
-                                ),
+                                child: !isMultiTier
+                                    ? const Icon(Icons.flag_outlined, size: 20)
+                                    : TierLevelIcon(
+                                        position: isLocked ? position : null,
+                                        iconKey: isLocked ? null : _iconKeys[index],
+                                        size: 20,
+                                      ),
                               ),
                               const SizedBox(width: Sp.md),
                               Expanded(
@@ -311,20 +330,35 @@ class TierEditorFormState extends State<TierEditorForm> {
                             ),
                             if (isMultiTier) ...[
                               const SizedBox(height: Sp.sm),
-                              AppInput(
-                                label: 'Nom du niveau *',
-                                hint: 'Ex : Découverte, Habitué, VIP',
-                                controller: _levelNameCtrls[index],
-                                prefixIcon: LucideIcons.award,
-                                accentColor: AppColors.merchant,
-                                onChanged: (_) {
-                                  setState(() {});
-                                  _emitChange();
-                                },
-                                validator: (v) => (v?.trim() ?? '').isEmpty
-                                    ? 'Le nom du niveau est obligatoire'
-                                    : null,
-                              ),
+                              if (isLocked) ...[
+                                _LockedLevelPreview(level: fixedLevel!),
+                              ] else ...[
+                                AppInput(
+                                  label: 'Nom du niveau *',
+                                  hint: 'Ex : Ambassadeur, Légende',
+                                  controller: _levelNameCtrls[index],
+                                  prefixIcon: LucideIcons.award,
+                                  accentColor: AppColors.merchant,
+                                  onChanged: (_) {
+                                    setState(() {});
+                                    _emitChange();
+                                  },
+                                  validator: (v) => (v?.trim() ?? '').isEmpty
+                                      ? 'Le nom du niveau est obligatoire'
+                                      : null,
+                                ),
+                                const SizedBox(height: Sp.sm),
+                                _IconPickerField(
+                                  iconKey: _iconKeys[index],
+                                  onPick: () async {
+                                    final picked = await showTierIconPickerSheet(context, _iconKeys[index]);
+                                    if (picked != null) {
+                                      setState(() => _iconKeys[index] = picked);
+                                      _emitChange();
+                                    }
+                                  },
+                                ),
+                              ],
                             ],
                             const SizedBox(height: Sp.sm),
                             AppInput(
@@ -409,6 +443,71 @@ class TierEditorFormState extends State<TierEditorForm> {
           },
         ),
       ],
+    );
+  }
+}
+
+/// Aperçu non modifiable du nom/icône imposés pour les 5 premiers paliers
+/// (Bronze/Argent/Or/Platine/Fidèle).
+class _LockedLevelPreview extends StatelessWidget {
+  final LoyaltyLevel level;
+  const _LockedLevelPreview({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(level.icon, size: 18, color: level.color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text('Niveau : ${level.label}', style: AppTextStyles.bodyMd()),
+          ),
+          Icon(LucideIcons.lock, size: 14, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+/// Déclencheur du sélecteur d'icône pour un palier custom (position > 5).
+class _IconPickerField extends StatelessWidget {
+  final String? iconKey;
+  final VoidCallback onPick;
+  const _IconPickerField({required this.iconKey, required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    final option = TierIconPalette.byKey(iconKey);
+    return InkWell(
+      onTap: onPick,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(option.icon, size: 18, color: AppColors.merchant),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                iconKey == null ? 'Choisir une icône' : option.label,
+                style: AppTextStyles.bodyMd(),
+              ),
+            ),
+            Icon(LucideIcons.chevronRight, size: 16, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
     );
   }
 }
