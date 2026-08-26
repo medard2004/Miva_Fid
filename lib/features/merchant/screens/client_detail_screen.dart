@@ -4,14 +4,46 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/utils/toast_service.dart';
+import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/api/providers/api_providers.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_toast.dart';
+import '../providers/clients_provider.dart';
+import '../providers/merchant_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
-class ClientDetailScreen extends ConsumerWidget {
+class ClientDetailScreen extends ConsumerStatefulWidget {
   const ClientDetailScreen({super.key, required this.clientId});
 
+  /// Identifiant de la carte de fidélité (`loyalty_cards.id`) — c'est lui que
+  /// `GET /merchant/clients/{card}` attend, la liste le fournit directement.
   final String clientId;
+
+  @override
+  ConsumerState<ClientDetailScreen> createState() => _ClientDetailScreenState();
+}
+
+class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
+  late Future<Map<String, dynamic>?> _clientFuture;
+  Future<List<Map<String, dynamic>>>? _historyFuture;
+  String? _historyCardId;
+
+  @override
+  void initState() {
+    super.initState();
+    _clientFuture = ref.read(merchantDashboardServiceProvider).client(widget.clientId);
+  }
+
+  void _reload() {
+    setState(() {
+      _clientFuture = ref.read(merchantDashboardServiceProvider).client(widget.clientId);
+      _historyFuture = null;
+      _historyCardId = null;
+    });
+  }
 
   Future<void> _makeCall(String phone) async {
     final cleanPhone = phone.replaceAll(RegExp(r'[\s\-]'), '');
@@ -21,371 +53,410 @@ class ClientDetailScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _removeClient(BuildContext context) async {
+  Future<void> _removeStamp(Map<String, dynamic> data) async {
+    try {
+      await ref
+          .read(clientsNotifierProvider.notifier)
+          .removeBonusStamp(data['id'].toString());
+      if (!mounted) return;
+      AppToast.success(context, 'Tampon retiré');
+      _reload();
+    } on ApiException catch (e) {
+      if (mounted) AppToast.error(context, e.message);
+    }
+  }
+
+  Future<void> _removeClient(String clientName) async {
     final confirmed = await AppDialog.confirm(
       context,
       title: 'Retirer du programme ?',
       message:
-          'Êtes-vous sûr de vouloir retirer Afi Mensah de votre programme de fidélité ? Ses tampons seront réinitialisés.',
+          'Êtes-vous sûr de vouloir retirer $clientName de votre programme de fidélité ? Ses tampons seront réinitialisés.',
       confirmLabel: 'Retirer',
       destructive: true,
     );
     if (!confirmed) return;
-    if (context.mounted) {
-      ToastService.showSuccess('Client retiré du programme.');
-      context.pop();
-    }
+    if (mounted) AppToast.info(context, 'Suspension bientôt disponible');
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    // Ces écrans peignent via les tokens statiques d'AppColors,
+    // invisibles pour le système de dépendances de Flutter : observer
+    // la luminosité effective est leur seul déclencheur de rebuild sur
+    // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
-
-    const clientName = 'Afi Mensah';
-    const clientPhone = '+228 90 12 34 56';
-    const clientInitials = 'AM';
-    const clientTier = 'Or';
-    const currentStamps = 7;
-    const totalStamps = 10;
+    final merchantAsync = ref.watch(merchantNotifierProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            // ── TOP HEADER ──────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      LucideIcons.chevronLeft,
-                      color: Color(0xFF1E293B),
-                      size: 22,
-                    ),
-                    onPressed: () => context.pop(),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          clientName,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        SizedBox(height: 1),
-                        Text(
-                          'Fiche client',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        child: FutureBuilder<Map<String, dynamic>?>(
+          future: _clientFuture,
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final data = snap.data;
+            if (data == null) {
+              return Center(
+                child: Text(
+                  'Client introuvable',
+                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                ),
+              );
+            }
 
-            // ── BODY CONTENT ─────────────────────────────────────────────
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. TOP PROFILE CARD
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFEDF0F7)),
+            final client = data['client'] as Map<String, dynamic>?;
+            final stamps = data['stamps_current'] as int? ?? 0;
+            final required = merchantAsync.value?.stampsRequired ?? 10;
+            final firstName = client?['first_name'] as String? ?? '';
+            final lastName = client?['last_name'] as String? ?? '';
+            final clientName =
+                ('$firstName $lastName').trim().isNotEmpty ? ('$firstName $lastName').trim() : (client?['name'] as String? ?? 'Client');
+            final clientPhone = client?['phone'] as String? ?? '';
+            final clientInitials = clientName.isNotEmpty
+                ? clientName.trim().split(RegExp(r'\s+')).map((w) => w[0].toUpperCase()).take(2).join()
+                : '?';
+            final level = data['level'] as Map<String, dynamic>?;
+            final clientTier = level?['name'] as String? ?? 'Bronze';
+            final lastActivity = data['last_activity_at'] as String?;
+            final lastActivityLabel = lastActivity != null
+                ? DateFormatter.relative(DateTime.tryParse(lastActivity) ?? DateTime.now())
+                : '—';
+
+            return Column(
+              children: [
+                // ── TOP HEADER ──────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          LucideIcons.chevronLeft,
+                          color: AppColors.textPrimary,
+                          size: 22,
+                        ),
+                        onPressed: () => context.pop(),
                       ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF6366F1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Center(
-                              child: Text(
-                                clientInitials,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 22,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            clientName,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                clientPhone,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF3C7),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  clientTier,
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFFD97706),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
-                                'Progression',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: Color(0xFF64748B),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                '$currentStamps/$totalStamps',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1E293B),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Container(
-                              height: 6,
-                              width: double.infinity,
-                              color: const Color(0xFFF1F5F9),
-                              child: FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: currentStamps / totalStamps,
-                                child: Container(color: const Color(0xFF5B50EC)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // 2. ACTION BUTTONS ROW
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              onPressed: () => context.push('/merchant/sms'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF5B50EC),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              icon: const Icon(LucideIcons.messageSquare,
-                                  size: 16, color: Colors.white),
-                              label: const Text(
-                                'Envoyer un SMS',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: OutlinedButton.icon(
-                              onPressed: () => _makeCall(clientPhone),
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                side: const BorderSide(color: Color(0xFFE2E8F0)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              icon: const Icon(LucideIcons.phone,
-                                  size: 16, color: Color(0xFF1E293B)),
-                              label: const Text(
-                                'Appeler',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1E293B),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // 3. THREE STAT CARDS ROW
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildMiniStat(
-                            icon: LucideIcons.stamp,
-                            value: '7',
-                            label: 'Tampons',
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildMiniStat(
-                            icon: LucideIcons.gift,
-                            value: '2',
-                            label: 'Récompenses',
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildMiniStat(
-                            icon: LucideIcons.calendar,
-                            value: 'il y a 2h',
-                            label: 'Dernière',
-                            isSmallValue: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // 4. HISTORIQUE SECTION
-                    const Text(
-                      'Historique',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFEDF0F7)),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildHistoryItem(
-                            icon: LucideIcons.stamp,
-                            title: 'Tampon validé',
-                            time: 'il y a 2h',
-                          ),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                          _buildHistoryItem(
-                            icon: LucideIcons.stamp,
-                            title: 'Tampon validé',
-                            time: 'il y a 1 semaine',
-                          ),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                          _buildHistoryItem(
-                            icon: LucideIcons.gift,
-                            title: 'Récompense utilisée',
-                            time: 'il y a 3 semaines',
-                          ),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                          _buildHistoryItem(
-                            icon: LucideIcons.userPlus,
-                            title: 'Inscription au programme',
-                            time: 'il y a 2 mois',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 5. RETIRER DU PROGRAMME
-                    InkWell(
-                      onTap: () => _removeClient(context),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFFEE2E2)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              LucideIcons.trash2,
-                              size: 16,
-                              color: Color(0xFFDC2626),
-                            ),
-                            SizedBox(width: 8),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              'Retirer du programme',
+                              clientName,
                               style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFDC2626),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              'Fiche client',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
+
+                // ── BODY CONTENT ─────────────────────────────────────────────
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. TOP PROFILE CARD
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF6366F1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    clientInitials,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 22,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                clientName,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (clientPhone.isNotEmpty)
+                                    Text(
+                                      clientPhone,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  if (clientPhone.isNotEmpty) const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.warningTint,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      clientTier.toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.warningDark,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Progression',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$stamps/$required',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: Container(
+                                  height: 6,
+                                  width: double.infinity,
+                                  color: AppColors.border,
+                                  child: FractionallySizedBox(
+                                    alignment: Alignment.centerLeft,
+                                    widthFactor: required > 0 ? (stamps / required).clamp(0.0, 1.0) : 0.0,
+                                    child: Container(color: AppColors.primary),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 2. ACTION BUTTONS ROW
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 46,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => context.push('/merchant/sms'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  icon: const Icon(LucideIcons.messageSquare,
+                                      size: 16, color: Colors.white),
+                                  label: const Text(
+                                    'Envoyer un SMS',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: SizedBox(
+                                height: 46,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _makeCall(clientPhone),
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: AppColors.surface,
+                                    side: BorderSide(color: AppColors.border),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  icon: Icon(LucideIcons.phone,
+                                      size: 16, color: AppColors.textPrimary),
+                                  label: Text(
+                                    'Appeler',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: Sp.sm),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 42,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _removeStamp(data),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: AppColors.surface,
+                              side: const BorderSide(color: AppColors.dangerTint),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            icon: const Icon(LucideIcons.circleMinus,
+                                size: 16, color: AppColors.danger),
+                            label: const Text(
+                              'Retirer un tampon',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.danger,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // 3. THREE STAT CARDS ROW
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildMiniStat(
+                                icon: LucideIcons.stamp,
+                                value: '$stamps/$required',
+                                label: 'Tampons',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildMiniStat(
+                                icon: LucideIcons.medal,
+                                value: clientTier,
+                                label: 'Niveau',
+                                isSmallValue: true,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildMiniStat(
+                                icon: LucideIcons.calendar,
+                                value: lastActivityLabel,
+                                label: 'Dernière',
+                                isSmallValue: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // 4. HISTORIQUE SECTION
+                        Text(
+                          'Historique',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildHistory(data['id'].toString()),
+                        const SizedBox(height: 16),
+
+                        // 5. RETIRER DU PROGRAMME
+                        InkWell(
+                          onTap: () => _removeClient(clientName),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.dangerTint),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  LucideIcons.trash2,
+                                  size: 16,
+                                  color: AppColors.danger,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Retirer du programme',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.danger,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Sp.xl),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -400,13 +471,13 @@ class ClientDetailScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF64748B)),
+          Icon(icon, size: 18, color: AppColors.textSecondary),
           const SizedBox(height: 6),
           Text(
             value,
@@ -415,15 +486,15 @@ class ClientDetailScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: isSmallValue ? 13 : 17,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF64748B),
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -432,11 +503,72 @@ class ClientDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHistoryItem({
-    required IconData icon,
-    required String title,
-    required String time,
-  }) {
+  Future<List<Map<String, dynamic>>> _historyFor(String cardId) {
+    if (_historyFuture == null || _historyCardId != cardId) {
+      _historyCardId = cardId;
+      _historyFuture =
+          ref.read(merchantDashboardServiceProvider).history(cardId);
+    }
+    return _historyFuture!;
+  }
+
+  Widget _buildHistory(String cardId) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _historyFor(cardId),
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(Sp.lg),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snap.hasError) {
+            return Padding(
+              padding: const EdgeInsets.all(Sp.lg),
+              child: Center(
+                child: Text(
+                  "Impossible de charger l'historique.",
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+              ),
+            );
+          }
+          final entries = snap.data ?? const [];
+          if (entries.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(Sp.lg),
+              child: Center(
+                child: Text(
+                  'Aucune opération enregistrée pour ce client.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+              ),
+            );
+          }
+          return Column(
+            children: [
+              for (var i = 0; i < entries.length; i++) ...[
+                if (i > 0) Divider(height: 1, color: AppColors.border),
+                _buildHistoryItem(entries[i]),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(Map<String, dynamic> entry) {
+    final type = entry['type'] as String? ?? '';
+    final value = entry['value'];
+    final createdAt = DateTime.tryParse(entry['created_at'] as String? ?? '');
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
@@ -448,7 +580,7 @@ class ClientDetailScreen extends ConsumerWidget {
               color: Color(0xFFEEF2FF),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 15, color: const Color(0xFF6366F1)),
+            child: Icon(_historyTypeIcon(type), size: 15, color: const Color(0xFF6366F1)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -456,26 +588,69 @@ class ClientDetailScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(
+                  _historyTypeLabel(type, value),
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 1),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: Color(0xFF64748B),
+                if (createdAt != null) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    DateFormatter.relative(createdAt),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  IconData _historyTypeIcon(String type) {
+    return switch (type) {
+      'cashback_redeem' || 'stamp_reversal' => LucideIcons.circleMinus,
+      'reward' => LucideIcons.gift,
+      'signup' => LucideIcons.userPlus,
+      _ => LucideIcons.stamp,
+    };
+  }
+
+  String _loyaltyMode() =>
+      ref.read(merchantNotifierProvider).value?.loyaltyMode ?? 'stamps';
+
+  bool get _isPointsMode {
+    final mode = _loyaltyMode();
+    return mode == 'points' || mode == 'spend';
+  }
+
+  String _historyTypeLabel(String type, dynamic value) {
+    final n = value is num ? value : 0;
+    if (type == 'stamp') {
+      if (_isPointsMode) {
+        return n > 1 ? '+$n points' : '+$n point';
+      }
+      return n == 1 ? '+1 tampon' : '+$n tampons';
+    }
+    if (type == 'stamp_reversal') {
+      final a = n.abs();
+      if (_isPointsMode) {
+        return a > 1 ? '-$a points' : '-$a point';
+      }
+      return a == 1 ? '-1 tampon' : '-$a tampons';
+    }
+    return switch (type) {
+      'cashback_earn' => '+$n FCFA de cashback crédité',
+      'cashback_redeem' => '-$n FCFA de cashback utilisé',
+      'reward' => 'Récompense utilisée',
+      'signup' => 'Inscription au programme',
+      _ => type,
+    };
   }
 }
