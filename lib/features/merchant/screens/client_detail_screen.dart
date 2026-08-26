@@ -11,6 +11,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/tier_level_icon.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../../client/providers/settings_provider.dart';
@@ -119,7 +120,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                 ? clientName.trim().split(RegExp(r'\s+')).map((w) => w[0].toUpperCase()).take(2).join()
                 : '?';
             final level = data['level'] as Map<String, dynamic>?;
-            final clientTier = level?['name'] as String? ?? 'Bronze';
+            final clientTier = level?['name'] as String?;
+            final clientTierPosition = level?['position'] as int?;
+            final clientTierIconKey = level?['icon_key'] as String?;
             final lastActivity = data['last_activity_at'] as String?;
             final lastActivityLabel = lastActivity != null
                 ? DateFormatter.relative(DateTime.tryParse(lastActivity) ?? DateTime.now())
@@ -228,22 +231,35 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                                       ),
                                     ),
                                   if (clientPhone.isNotEmpty) const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.warningTint,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      clientTier.toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.warningDark,
+                                  if (clientTier != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.warningTint,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          TierLevelIcon(
+                                            position: clientTierPosition,
+                                            iconKey: clientTierIconKey,
+                                            size: 11,
+                                            color: AppColors.warningDark,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            clientTier.toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.warningDark,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
                                 ],
                               ),
                               const SizedBox(height: 16),
@@ -384,8 +400,15 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: _buildMiniStat(
-                                icon: LucideIcons.medal,
-                                value: clientTier,
+                                icon: clientTier == null ? LucideIcons.medal : null,
+                                iconWidget: clientTier == null
+                                    ? null
+                                    : TierLevelIcon(
+                                        position: clientTierPosition,
+                                        iconKey: clientTierIconKey,
+                                        size: 18,
+                                      ),
+                                value: clientTier ?? '—',
                                 label: 'Niveau',
                                 isSmallValue: true,
                               ),
@@ -463,7 +486,8 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   }
 
   Widget _buildMiniStat({
-    required IconData icon,
+    IconData? icon,
+    Widget? iconWidget,
     required String value,
     required String label,
     bool isSmallValue = false,
@@ -477,7 +501,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: AppColors.textSecondary),
+          iconWidget ?? Icon(icon, size: 18, color: AppColors.textSecondary),
           const SizedBox(height: 6),
           Text(
             value,

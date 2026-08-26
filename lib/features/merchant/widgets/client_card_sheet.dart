@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/tier_level_icon.dart';
 import '../../../models/loyalty_card_model.dart';
 import 'stamp_grid_widget.dart';
 
@@ -362,7 +363,11 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                                   ),
                                   if (card.levelName != null) ...[
                                     const SizedBox(width: 6),
-                                    _LevelBadge(name: card.levelName!),
+                                    _LevelBadge(
+                                      name: card.levelName!,
+                                      position: card.levelPosition,
+                                      iconKey: card.levelIconKey,
+                                    ),
                                   ],
                                 ],
                               ),
@@ -513,7 +518,9 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
 /// client.
 class _LevelBadge extends StatelessWidget {
   final String name;
-  const _LevelBadge({required this.name});
+  final int? position;
+  final String? iconKey;
+  const _LevelBadge({required this.name, this.position, this.iconKey});
 
   @override
   Widget build(BuildContext context) {
@@ -523,13 +530,20 @@ class _LevelBadge extends StatelessWidget {
         color: AppColors.merchantTint,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(
-        name.toUpperCase(),
-        style: AppTextStyles.caption().copyWith(
-          color: AppColors.merchant,
-          fontWeight: FontWeight.w700,
-          fontSize: 10,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TierLevelIcon(position: position, iconKey: iconKey, size: 11, color: AppColors.merchant),
+          const SizedBox(width: 4),
+          Text(
+            name.toUpperCase(),
+            style: AppTextStyles.caption().copyWith(
+              color: AppColors.merchant,
+              fontWeight: FontWeight.w700,
+              fontSize: 10,
+            ),
+          ),
+        ],
       ),
     );
   }
