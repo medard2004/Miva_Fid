@@ -2002,6 +2002,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'No cashback balance to use for this client.';
 
   @override
+  String merchantValidateBelowCashbackThreshold(
+      String threshold, String balance) {
+    return 'Threshold not reached: $threshold required to use cashback (current balance: $balance).';
+  }
+
+  @override
   String get merchantValidatePurchaseAmountLabel => 'Purchase amount';
 
   @override

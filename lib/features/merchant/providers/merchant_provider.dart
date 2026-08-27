@@ -111,8 +111,8 @@ class MerchantNotifier extends _$MerchantNotifier {
           'fcfa_per_point': config['fcfa_per_point'] ?? 100,
         if (restaurant.loyaltyType == 'cashback') ...{
           'cashback_percentage': config['cashback_percentage'] ?? 5,
-          if (config['cashback_redeem_cap_percent'] != null)
-            'cashback_redeem_cap_percent': config['cashback_redeem_cap_percent'],
+          if (config['cashback_redeem_threshold_fcfa'] != null)
+            'cashback_redeem_threshold_fcfa': config['cashback_redeem_threshold_fcfa'],
           if (config['cashback_expiry_days'] != null)
             'cashback_expiry_days': config['cashback_expiry_days'],
         },
@@ -158,7 +158,7 @@ const _configKeys = {
   'logo_url',
   'fcfa_per_point',
   'cashback_percentage',
-  'cashback_redeem_cap_percent',
+  'cashback_redeem_threshold_fcfa',
   'cashback_expiry_days',
   'tiers',
   'loops',

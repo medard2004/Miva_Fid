@@ -791,6 +791,10 @@
   "merchantValidateCreditCashbackButton": "Credit cashback",
   "merchantValidateRedeemCashbackButton": "Use cashback",
   "merchantValidateNoCashbackBalance": "No cashback balance to use for this client.",
+  "merchantValidateBelowCashbackThreshold": "Threshold not reached: {threshold} required to use cashback (current balance: {balance}).",
+  "@merchantValidateBelowCashbackThreshold": {
+    "placeholders": { "threshold": { "type": "String" }, "balance": { "type": "String" } }
+  },
   "merchantValidatePurchaseAmountLabel": "Purchase amount",
   "merchantValidateCashbackCreditedHelper": "{percent}% credited as cashback",
   "@merchantValidateCashbackCreditedHelper": {

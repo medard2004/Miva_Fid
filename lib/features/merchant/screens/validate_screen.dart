@@ -67,6 +67,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     return (config['cashback_percentage'] as num?)?.toDouble() ?? 0;
   }
 
+  double? get _cashbackRedeemThresholdFcfa {
+    final config =
+        ref.read(merchantAuthProvider).restaurant?.loyaltyConfig ?? const {};
+    return (config['cashback_redeem_threshold_fcfa'] as num?)?.toDouble();
+  }
+
   Future<void> _onQrDetected(BarcodeCapture capture) async {
     if (_processing) return;
     final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
@@ -124,6 +130,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         goal: _goal,
         fcfaPerPoint: _fcfaPerPoint,
         cashbackPercentage: _cashbackPercentage,
+        cashbackRedeemThresholdFcfa: _cashbackRedeemThresholdFcfa,
         onValidate: (amount) => _validateStamp(resolvedCard, amount),
         onRedeemCashback: (purchaseAmount, redeemAmount) => _redeemCashback(
           resolvedCard,

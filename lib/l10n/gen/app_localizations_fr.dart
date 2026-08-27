@@ -2037,6 +2037,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun solde cashback à utiliser pour ce client.';
 
   @override
+  String merchantValidateBelowCashbackThreshold(
+      String threshold, String balance) {
+    return 'Seuil non atteint : $threshold requis pour utiliser le cashback (solde actuel : $balance).';
+  }
+
+  @override
   String get merchantValidatePurchaseAmountLabel => 'Montant de l\'achat';
 
   @override

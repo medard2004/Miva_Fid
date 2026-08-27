@@ -26,7 +26,7 @@ class OnboardingState {
     this.loops = true,
     this.fcfaPerPoint = 100,
     this.cashbackPercentage = 5,
-    this.cashbackRedeemCapPercent = 50,
+    this.cashbackRedeemThresholdFcfa,
     this.cashbackExpiryDays,
     this.showReviewButton = false,
     this.googleReviewUrl = '',
@@ -64,9 +64,9 @@ class OnboardingState {
   final int fcfaPerPoint;
   /// Mode "Cashback" : pourcentage de chaque achat crédité en solde.
   final double cashbackPercentage;
-  /// Mode "Cashback" : part maximale (%) d'un achat réglable avec le solde
-  /// cashback — `null` = pas de plafond.
-  final int? cashbackRedeemCapPercent;
+  /// Mode "Cashback" : solde minimum (FCFA) que le client doit atteindre
+  /// avant de pouvoir l'utiliser — `null` = utilisable dès le premier FCFA.
+  final double? cashbackRedeemThresholdFcfa;
   /// Mode "Cashback" : le solde expire après ce nombre de jours sans
   /// nouveau crédit — `null` = pas d'expiration.
   final int? cashbackExpiryDays;
@@ -114,8 +114,8 @@ class OnboardingState {
     bool? loops,
     int? fcfaPerPoint,
     double? cashbackPercentage,
-    int? cashbackRedeemCapPercent,
-    bool clearCashbackRedeemCap = false,
+    double? cashbackRedeemThresholdFcfa,
+    bool clearCashbackRedeemThreshold = false,
     int? cashbackExpiryDays,
     bool clearCashbackExpiryDays = false,
     bool? showReviewButton,
@@ -150,9 +150,9 @@ class OnboardingState {
       loops: loops ?? this.loops,
       fcfaPerPoint: fcfaPerPoint ?? this.fcfaPerPoint,
       cashbackPercentage: cashbackPercentage ?? this.cashbackPercentage,
-      cashbackRedeemCapPercent: clearCashbackRedeemCap
+      cashbackRedeemThresholdFcfa: clearCashbackRedeemThreshold
           ? null
-          : (cashbackRedeemCapPercent ?? this.cashbackRedeemCapPercent),
+          : (cashbackRedeemThresholdFcfa ?? this.cashbackRedeemThresholdFcfa),
       cashbackExpiryDays: clearCashbackExpiryDays
           ? null
           : (cashbackExpiryDays ?? this.cashbackExpiryDays),
@@ -195,8 +195,8 @@ class OnboardingState {
       if (!isCashback) 'loops': loops,
       if (loyaltyMode == 'spend') 'fcfa_per_point': fcfaPerPoint,
       if (isCashback) 'cashback_percentage': cashbackPercentage,
-      if (isCashback && cashbackRedeemCapPercent != null)
-        'cashback_redeem_cap_percent': cashbackRedeemCapPercent,
+      if (isCashback && cashbackRedeemThresholdFcfa != null)
+        'cashback_redeem_threshold_fcfa': cashbackRedeemThresholdFcfa,
       if (isCashback && cashbackExpiryDays != null)
         'cashback_expiry_days': cashbackExpiryDays,
     };
@@ -292,11 +292,11 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       state = state.copyWith(fcfaPerPoint: v.clamp(1, 1000000));
   void setCashbackPercentage(double v) =>
       state = state.copyWith(cashbackPercentage: v.clamp(0.1, 100));
-  void setCashbackRedeemCapPercent(int? v) {
+  void setCashbackRedeemThresholdFcfa(double? v) {
     if (v == null) {
-      state = state.copyWith(clearCashbackRedeemCap: true);
+      state = state.copyWith(clearCashbackRedeemThreshold: true);
     } else {
-      state = state.copyWith(cashbackRedeemCapPercent: v.clamp(1, 100));
+      state = state.copyWith(cashbackRedeemThresholdFcfa: v.clamp(0, double.infinity));
     }
   }
   void setCashbackExpiryDays(int? v) {
@@ -448,8 +448,8 @@ class OnboardingNotifier extends _$OnboardingNotifier {
           int.tryParse(config['fcfa_per_point']?.toString() ?? '') ?? 100,
       cashbackPercentage:
           double.tryParse(config['cashback_percentage']?.toString() ?? '') ?? 5,
-      cashbackRedeemCapPercent:
-          int.tryParse(config['cashback_redeem_cap_percent']?.toString() ?? ''),
+      cashbackRedeemThresholdFcfa: double.tryParse(
+          config['cashback_redeem_threshold_fcfa']?.toString() ?? ''),
       cashbackExpiryDays:
           int.tryParse(config['cashback_expiry_days']?.toString() ?? ''),
       showReviewButton: config['show_review_button'] == true,

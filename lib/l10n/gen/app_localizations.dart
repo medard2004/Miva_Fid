@@ -3716,6 +3716,13 @@ abstract class AppLocalizations {
   /// **'Aucun solde cashback à utiliser pour ce client.'**
   String get merchantValidateNoCashbackBalance;
 
+  /// No description provided for @merchantValidateBelowCashbackThreshold.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seuil non atteint : {threshold} requis pour utiliser le cashback (solde actuel : {balance}).'**
+  String merchantValidateBelowCashbackThreshold(
+      String threshold, String balance);
+
   /// No description provided for @merchantValidatePurchaseAmountLabel.
   ///
   /// In fr, this message translates to:

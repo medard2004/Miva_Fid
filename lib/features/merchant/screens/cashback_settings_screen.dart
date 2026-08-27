@@ -18,7 +18,7 @@ class CashbackSettingsScreen extends ConsumerStatefulWidget {
 
 class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen> {
   late final TextEditingController _percentageCtrl;
-  late final TextEditingController _capCtrl;
+  late final TextEditingController _thresholdCtrl;
   late final TextEditingController _expiryCtrl;
 
   bool _isSaving = false;
@@ -28,14 +28,14 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
   void initState() {
     super.initState();
     _percentageCtrl = TextEditingController();
-    _capCtrl = TextEditingController();
+    _thresholdCtrl = TextEditingController();
     _expiryCtrl = TextEditingController();
   }
 
   @override
   void dispose() {
     _percentageCtrl.dispose();
-    _capCtrl.dispose();
+    _thresholdCtrl.dispose();
     _expiryCtrl.dispose();
     super.dispose();
   }
@@ -47,12 +47,12 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
       ToastService.showError('Entrez un pourcentage de cashback entre 0.1 et 100.');
       return;
     }
-    final capText = _capCtrl.text.trim();
-    final cap = capText.isEmpty
+    final thresholdText = _thresholdCtrl.text.trim();
+    final threshold = thresholdText.isEmpty
         ? null
-        : double.tryParse(capText.replaceAll(',', '.'));
-    if (capText.isNotEmpty && (cap == null || cap <= 0 || cap > 100)) {
-      ToastService.showError('Le plafond d\'utilisation doit être entre 1 et 100 %.');
+        : double.tryParse(thresholdText.replaceAll(',', '.'));
+    if (thresholdText.isNotEmpty && (threshold == null || threshold < 0)) {
+      ToastService.showError('Le seuil d\'utilisation doit être un montant FCFA valide.');
       return;
     }
 
@@ -60,7 +60,7 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
     try {
       await ref.read(merchantNotifierProvider.notifier).updateProgramme({
         'cashback_percentage': percentage,
-        'cashback_redeem_cap_percent': cap,
+        'cashback_redeem_threshold_fcfa': threshold,
         if (_expiryCtrl.text.trim().isNotEmpty)
           'cashback_expiry_days': int.tryParse(_expiryCtrl.text.trim()),
       });
@@ -85,7 +85,7 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
       _percentageCtrl.text = asText(config['cashback_percentage']).isEmpty
           ? '5'
           : asText(config['cashback_percentage']);
-      _capCtrl.text = asText(config['cashback_redeem_cap_percent']);
+      _thresholdCtrl.text = asText(config['cashback_redeem_threshold_fcfa']);
       _expiryCtrl.text = asText(config['cashback_expiry_days']);
       _initialized = true;
     }
@@ -208,10 +208,10 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
                           ),
                           const SizedBox(height: 14),
                           _buildLabel(
-                              "PLAFOND D'UTILISATION PAR ACHAT (% DU TICKET, OPTIONNEL)"),
+                              "SEUIL MINIMUM AVANT UTILISATION (FCFA, OPTIONNEL)"),
                           const SizedBox(height: 8),
                           TextField(
-                            controller: _capCtrl,
+                            controller: _thresholdCtrl,
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             style: const TextStyle(
@@ -223,7 +223,8 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
                               isDense: true,
                               prefixIcon: const Icon(LucideIcons.gauge,
                                   size: 16, color: Color(0xFF64748B)),
-                              hintText: 'Ex: 50 (le client ne peut déduire que 50 % du ticket)',
+                              hintText:
+                                  'Ex: 10000 (le client doit atteindre 10 000 FCFA avant de pouvoir utiliser son solde)',
                               hintStyle: const TextStyle(
                                   color: Color(0xFF94A3B8), fontSize: 12),
                               filled: true,
