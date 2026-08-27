@@ -17,7 +17,7 @@ class KpiPill extends StatelessWidget {
       margin: const EdgeInsets.only(right: Sp.sm),
       constraints: const BoxConstraints(minWidth: 100),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: Rd.card,
         boxShadow: [
           BoxShadow(

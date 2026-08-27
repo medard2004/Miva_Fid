@@ -45,6 +45,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsTitle => 'Paramètres';
 
   @override
+  String get settingsPreferences => 'Préférences';
+
+  @override
   String get settingsAppearance => 'Apparence';
 
   @override
@@ -1117,4 +1120,1101 @@ class AppLocalizationsFr extends AppLocalizations {
   String editProfileConnectedVia(String provider) {
     return 'Connecté via $provider';
   }
+
+  @override
+  String get merchantNavClients => 'Clients';
+
+  @override
+  String get merchantNavStats => 'Stats';
+
+  @override
+  String get merchantNavValidate => 'Valider';
+
+  @override
+  String get merchantNavSms => 'SMS';
+
+  @override
+  String get merchantNavSettings => 'Réglages';
+
+  @override
+  String get merchantMoreBusinessProfile => 'Profil du commerce';
+
+  @override
+  String get merchantMoreCompleteProfile => 'Compléter mon profil';
+
+  @override
+  String get merchantMoreLogoBusiness => 'Logo du commerce';
+
+  @override
+  String get merchantMoreSocials => 'Réseaux sociaux';
+
+  @override
+  String get merchantMoreGoogleReviewLink => 'Lien d\'avis Google';
+
+  @override
+  String get merchantMoreSectionAccount => 'COMPTE';
+
+  @override
+  String get merchantMoreHours => 'Horaires d\'ouverture';
+
+  @override
+  String get merchantMoreToComplete => 'À compléter';
+
+  @override
+  String get merchantMoreSubscription => 'Abonnement';
+
+  @override
+  String get merchantMoreProTag => 'Pro';
+
+  @override
+  String get merchantMoreLanguageTheme => 'Langue & thème';
+
+  @override
+  String get merchantMoreTeam => 'Équipe';
+
+  @override
+  String get merchantMoreSectionLoyaltyCard => 'MA CARTE DE FIDÉLITÉ';
+
+  @override
+  String get merchantMoreCustomizeCard => 'Personnaliser la carte';
+
+  @override
+  String get merchantMoreGoalReward => 'Objectif & récompense';
+
+  @override
+  String get merchantMoreLoyaltyProgram => 'Programme de fidélité';
+
+  @override
+  String get merchantMoreMyQrCode => 'Mon QR code';
+
+  @override
+  String get merchantMoreMyShowcase => 'Ma vitrine';
+
+  @override
+  String get merchantMoreSectionSupport => 'ASSISTANCE';
+
+  @override
+  String get merchantMoreLegalPrivacy => 'Confidentialité';
+
+  @override
+  String get merchantMoreLegalTerms => 'Conditions d\'utilisation';
+
+  @override
+  String get merchantMoreWhatsappSupport => 'Support WhatsApp';
+
+  @override
+  String get merchantSignOutConfirmTitle => 'Se déconnecter ?';
+
+  @override
+  String get merchantSignOutConfirmMessage =>
+      'Vous devrez vous reconnecter pour accéder à votre espace commerçant.';
+
+  @override
+  String get merchantSignOutConfirm => 'Se déconnecter';
+
+  @override
+  String get changePasswordConfirmLabel => 'Confirmer le nouveau mot de passe';
+
+  @override
+  String get merchantAccountTitle => 'Compte & Profil';
+
+  @override
+  String get merchantAccountProfile => 'Profil';
+
+  @override
+  String get merchantSubscriptionCategoryTitle => 'Abonnement & Équipe';
+
+  @override
+  String get merchantSubscriptionMyPlan => 'Mon Abonnement';
+
+  @override
+  String get merchantSubscriptionTeamMembers => 'Membres de l\'équipe';
+
+  @override
+  String get merchantNotifUpdateError =>
+      'Impossible de mettre à jour cette préférence. Réessayez.';
+
+  @override
+  String get merchantNotifNewClientTitle => 'Nouveau client';
+
+  @override
+  String get merchantNotifNewClientSubtitle => 'Notif. à chaque inscription';
+
+  @override
+  String get merchantNotifRewardTitle => 'Récompense gagnée';
+
+  @override
+  String get merchantNotifRewardSubtitle => 'Quand un palier est atteint';
+
+  @override
+  String get merchantNotifLowSmsTitle => 'Quota SMS faible';
+
+  @override
+  String get merchantNotifLowSmsSubtitle => 'Sous 20 SMS restants';
+
+  @override
+  String get merchantNotifWeeklyReportTitle => 'Rapport hebdomadaire';
+
+  @override
+  String get merchantNotifWeeklyReportSubtitle => 'Tous les lundis matin';
+
+  @override
+  String get merchantNotifPromotionsTitle => 'Promotions Miva-Fid';
+
+  @override
+  String get merchantNotifPromotionsSubtitle => 'Offres et nouveautés';
+
+  @override
+  String get merchantTeamInviteTitle => 'Inviter un membre';
+
+  @override
+  String get merchantTeamNameLabel => 'Nom';
+
+  @override
+  String get merchantTeamPhoneOptionalLabel => 'Téléphone (optionnel)';
+
+  @override
+  String get merchantTeamPasswordLabel => 'Mot de passe';
+
+  @override
+  String get merchantTeamRoleOperator => 'Opérateur';
+
+  @override
+  String get merchantTeamRoleAdmin => 'Administrateur';
+
+  @override
+  String get merchantTeamInviteButton => 'Inviter';
+
+  @override
+  String get merchantTeamInviteError => 'Impossible d\'inviter ce membre.';
+
+  @override
+  String get merchantTeamEmptyState =>
+      'Aucun membre d\'équipe. Invitez votre premier opérateur.';
+
+  @override
+  String get merchantTeamToggleStatusError =>
+      'Impossible de modifier le statut de ce membre.';
+
+  @override
+  String get merchantTierSilver => 'Argent';
+
+  @override
+  String get merchantTierGold => 'Or';
+
+  @override
+  String get merchantTierPlatinum => 'Platine';
+
+  @override
+  String get merchantDashboardTitle => 'Statistiques';
+
+  @override
+  String get merchantDashboardSubtitle =>
+      'Aperçu de votre activité — juin 2026';
+
+  @override
+  String get merchantDashboardStampsLabel => 'Tampons';
+
+  @override
+  String get merchantDashboardThisMonthLabel => 'ce mois';
+
+  @override
+  String get merchantDashboardRewardsLabel => 'Récomp.';
+
+  @override
+  String get merchantDashboardUsedLabel => 'utilisées';
+
+  @override
+  String get merchantDashboardMonthActivityTitle => 'Activité du mois';
+
+  @override
+  String get merchantDashboardValidationsPerWeekSubtitle =>
+      'Validations par semaine';
+
+  @override
+  String merchantDashboardWeekLabel(String number) {
+    return 'Sem $number';
+  }
+
+  @override
+  String get merchantDashboardVipDistributionTitle => 'Répartition VIP';
+
+  @override
+  String get merchantDashboardClientsByTierSubtitle => 'Vos clients par niveau';
+
+  @override
+  String get merchantClientsTitle => 'Mes clients';
+
+  @override
+  String merchantClientsActiveCount(String count) {
+    return '$count clients actifs';
+  }
+
+  @override
+  String get merchantClientsAddSoonToast =>
+      'Ajout manuel d\'un client bientôt disponible.';
+
+  @override
+  String get merchantClientsExportToast =>
+      'Exportation de la liste clients au format CSV lancée !';
+
+  @override
+  String get merchantClientsExportButton => 'Exporter la liste';
+
+  @override
+  String get merchantClientsSearchHint => 'Rechercher un client...';
+
+  @override
+  String get merchantClientsFilterAll => 'Tous';
+
+  @override
+  String get merchantClientsFilterInactive30d => '+30j';
+
+  @override
+  String merchantClientsPaginationInfo(String from, String to, String total) {
+    return '$from-$to sur $total';
+  }
+
+  @override
+  String get merchantClientsPrevious => '< Préc.';
+
+  @override
+  String get merchantClientsNext => 'Suiv. >';
+
+  @override
+  String get merchantClientDetailRemoveTitle => 'Retirer du programme ?';
+
+  @override
+  String merchantClientDetailRemoveMessage(String name) {
+    return 'Êtes-vous sûr de vouloir retirer $name de votre programme de fidélité ? Ses tampons seront réinitialisés.';
+  }
+
+  @override
+  String get merchantClientDetailRemoveConfirm => 'Retirer';
+
+  @override
+  String get merchantClientDetailRemoveToast => 'Client retiré du programme.';
+
+  @override
+  String get merchantClientDetailSubtitle => 'Fiche client';
+
+  @override
+  String get merchantClientDetailProgress => 'Progression';
+
+  @override
+  String get merchantClientDetailSendSms => 'Envoyer un SMS';
+
+  @override
+  String get merchantClientDetailCall => 'Appeler';
+
+  @override
+  String get merchantClientDetailRewardsLabel => 'Récompenses';
+
+  @override
+  String get merchantClientDetailLastLabel => 'Dernière';
+
+  @override
+  String get merchantClientDetailHistoryTitle => 'Historique';
+
+  @override
+  String get merchantClientDetailHistoryStampValidated => 'Tampon validé';
+
+  @override
+  String get merchantClientDetailHistoryRewardUsed => 'Récompense utilisée';
+
+  @override
+  String get merchantClientDetailHistoryEnrolled => 'Inscription au programme';
+
+  @override
+  String get merchantClientDetailRemoveButton => 'Retirer du programme';
+
+  @override
+  String get merchantValidateQrInvalid => 'QR code invalide ou illisible.';
+
+  @override
+  String get merchantValidateNetworkError =>
+      'Connexion impossible. Vérifiez votre réseau.';
+
+  @override
+  String get merchantValidateNoCardFound =>
+      'Aucune carte de fidélité trouvée pour ce commerce.';
+
+  @override
+  String get merchantValidateNoRewardFound =>
+      'Aucune récompense de votre commerce ne correspond à ce code.';
+
+  @override
+  String get merchantValidateRewardSuccess =>
+      'Récompense validée avec succès !';
+
+  @override
+  String get merchantValidateRewardError => 'Erreur lors de la validation.';
+
+  @override
+  String get merchantValidateFailedRetry =>
+      'Échec de la validation. Réessayez.';
+
+  @override
+  String get merchantValidateDefaultClientName => 'Client';
+
+  @override
+  String get merchantValidateTitle => 'Valider une visite';
+
+  @override
+  String get merchantValidateSubtitle => 'Scannez ou saisissez l\'identifiant';
+
+  @override
+  String get merchantValidateTabScanner => 'Scanner';
+
+  @override
+  String get merchantValidateTabPhone => 'Identifiant';
+
+  @override
+  String get merchantValidateScanInstruction =>
+      'Pointez la caméra vers le QR du client';
+
+  @override
+  String get merchantValidateDisableCamera => 'Désactiver la caméra';
+
+  @override
+  String get merchantValidateEnableCamera => 'Activer la caméra';
+
+  @override
+  String get merchantValidateManualSearchTitle => 'Recherche par identifiant';
+
+  @override
+  String get merchantValidateManualSearchSubtitle =>
+      'Entrez l\'identifiant du client pour valider sa visite.';
+
+  @override
+  String get merchantValidateManualSearchHint => 'Identifiant du client';
+
+  @override
+  String get merchantValidateSearchButton => 'Rechercher le client';
+
+  @override
+  String get merchantSmsCampaignSubtitle => 'Campagnes & messages';
+
+  @override
+  String get merchantSmsCampaignSentLabel => 'Envoyées';
+
+  @override
+  String get merchantSmsCampaignOpenRateLabel => 'Ouverture';
+
+  @override
+  String get merchantSmsCampaignReachedLabel => 'Atteints';
+
+  @override
+  String merchantSmsCampaignCount(String count) {
+    return '$count campagnes';
+  }
+
+  @override
+  String get merchantSmsCampaignDetailSentBadge => 'Envoyée';
+
+  @override
+  String get merchantSmsCampaignDetailRecipients => 'Destinataires';
+
+  @override
+  String get merchantSmsCampaignDetailSent => 'Envoyés';
+
+  @override
+  String get merchantSmsCampaignDetailOpened => 'Ouverts';
+
+  @override
+  String get merchantSmsCampaignDetailOpenRate => 'Taux d\'ouverture';
+
+  @override
+  String get merchantSmsCampaignDetailMessageTitle => 'Message envoyé';
+
+  @override
+  String get merchantSmsCampaignDetailDuplicateToast =>
+      'Campagne dupliquée dans un nouveau brouillon !';
+
+  @override
+  String get merchantSmsCampaignDetailDuplicateButton =>
+      'Dupliquer cette campagne';
+
+  @override
+  String get merchantSmsConversationSentToast => 'SMS envoyé avec succès !';
+
+  @override
+  String get merchantSmsConversationLabel => 'Conversation SMS';
+
+  @override
+  String get merchantSmsConversationInputHint => 'Écrire un message...';
+
+  @override
+  String get merchantProfileLogoSuccess => 'Logo mis à jour avec succès';
+
+  @override
+  String get merchantProfileLogoError => 'Impossible de mettre à jour le logo.';
+
+  @override
+  String get merchantProfileSaveSuccess => 'Modifications enregistrées !';
+
+  @override
+  String get merchantProfileLogoHint => 'PNG ou JPG, carré, max 2 Mo.';
+
+  @override
+  String get merchantProfileLoadingEllipsis => 'Chargement...';
+
+  @override
+  String get merchantProfileChangeLink => 'Changer';
+
+  @override
+  String get merchantProfileSectionInfo => 'INFORMATIONS';
+
+  @override
+  String get merchantProfileBusinessNameLabel => 'NOM DU COMMERCE';
+
+  @override
+  String get merchantProfileCategoryLabel => 'CATÉGORIE';
+
+  @override
+  String get merchantProfileDescriptionLabel => 'DESCRIPTION';
+
+  @override
+  String merchantProfileCharCount(String count) {
+    return '$count/200 caractères';
+  }
+
+  @override
+  String get merchantProfileSectionContact => 'CONTACT';
+
+  @override
+  String get merchantProfileEmailLabel => 'EMAIL';
+
+  @override
+  String get merchantProfilePhoneLabel => 'TÉLÉPHONE';
+
+  @override
+  String get merchantProfileWhatsappLabel => 'WHATSAPP';
+
+  @override
+  String get merchantProfileSectionAddress => 'ADRESSE';
+
+  @override
+  String get merchantProfileCityLabel => 'VILLE';
+
+  @override
+  String get merchantProfileAddressLabel => 'ADRESSE / QUARTIER';
+
+  @override
+  String get merchantProfileSaveButton => 'Enregistrer les modifications';
+
+  @override
+  String get merchantVitrineLogoUploadError =>
+      'Impossible d\'envoyer le logo. Réessayez.';
+
+  @override
+  String get merchantVitrineLogoRemoveError =>
+      'Impossible de supprimer le logo. Réessayez.';
+
+  @override
+  String get merchantVitrineSaveSuccess => 'Vitrine mise à jour avec succès';
+
+  @override
+  String merchantVitrineSaveError(String error) {
+    return 'Erreur : $error';
+  }
+
+  @override
+  String get merchantVitrinePreviewTitle => 'Aperçu public';
+
+  @override
+  String get merchantVitrineTitle => 'Ma Vitrine';
+
+  @override
+  String get merchantVitrineSubtitle => 'Page publique de votre commerce';
+
+  @override
+  String get merchantVitrinePreviewButton => 'Aperçu';
+
+  @override
+  String get merchantVitrineCoverPhotoSection => 'Photo de couverture';
+
+  @override
+  String get merchantVitrineInfoSection => 'Informations';
+
+  @override
+  String get merchantVitrineDescriptionHint => 'Description...';
+
+  @override
+  String get merchantVitrineContactAddressSection => 'Contact & adresse';
+
+  @override
+  String get merchantVitrineHoursSection => 'Horaires';
+
+  @override
+  String get merchantVitrineDayMonday => 'Lundi';
+
+  @override
+  String get merchantVitrineDayTuesday => 'Mardi';
+
+  @override
+  String get merchantVitrineDayWednesday => 'Mercredi';
+
+  @override
+  String get merchantVitrineDayThursday => 'Jeudi';
+
+  @override
+  String get merchantVitrineDayFriday => 'Vendredi';
+
+  @override
+  String get merchantVitrineDaySaturday => 'Samedi';
+
+  @override
+  String get merchantVitrineDaySunday => 'Dimanche';
+
+  @override
+  String get merchantVitrineClosedLabel => 'Fermé';
+
+  @override
+  String get merchantVitrinePublishButton => 'Publier les modifications';
+
+  @override
+  String get merchantVitrineAddPhotoLabel => 'Ajouter une photo';
+
+  @override
+  String get merchantSubscriptionPlanStarterName => 'Démarrage';
+
+  @override
+  String get merchantSubscriptionPlanBusinessName => 'Business';
+
+  @override
+  String get merchantSubscriptionNextInvoiceLabel => 'Prochaine facture';
+
+  @override
+  String get merchantSubscriptionCurrentBadge => 'ACTUEL';
+
+  @override
+  String get merchantSubscriptionChooseButton => 'Choisir';
+
+  @override
+  String merchantSubscriptionPlanChangedSuccess(String plan) {
+    return 'Abonnement modifié : plan $plan sélectionné';
+  }
+
+  @override
+  String merchantSubscriptionPlanChangeError(String error) {
+    return 'Erreur lors du changement de plan : $error';
+  }
+
+  @override
+  String get merchantQrCodeLoadError => 'Erreur';
+
+  @override
+  String get merchantQrCodeSubtitle =>
+      'Affichez-le pour que les clients scannent';
+
+  @override
+  String get merchantQrCodeScanToEarnLabel => 'Scannez pour gagner un tampon';
+
+  @override
+  String get merchantQrCodePngSavedToast =>
+      'Image enregistrée dans la galerie !';
+
+  @override
+  String get merchantQrCodeShareButton => 'Partager';
+
+  @override
+  String get merchantQrCodeUniqueCodeSection => 'CODE UNIQUE';
+
+  @override
+  String get merchantQrCodeCodeCopiedToast =>
+      'Code copié dans le presse-papiers !';
+
+  @override
+  String get merchantQrCodeThisWeekLabel => 'Cette semaine';
+
+  @override
+  String get merchantQrCodeThisMonthLabel => 'Ce mois';
+
+  @override
+  String get merchantQrCodeNewLabel => 'Nouveaux';
+
+  @override
+  String get merchantQrCodeTipLabel => 'Astuce';
+
+  @override
+  String get merchantQrCodeTipMessage =>
+      'Placez le QR à la caisse ou sur les tables pour maximiser les scans.';
+
+  @override
+  String get merchantQrCodePdfScanMessage =>
+      'Scannez pour cumuler vos points !';
+
+  @override
+  String get merchantQrCodePdfPoweredBy => 'Powered by Miva-Fid';
+
+  @override
+  String merchantQrCodeWhatsappShareMessage(String name) {
+    return 'Rejoignez mon programme de fidélité Miva-Fid chez $name !';
+  }
+
+  @override
+  String get merchantProgrammeTitle => 'Fidélisation';
+
+  @override
+  String get merchantProgrammeCardPreviewLabel => 'Aperçu de la carte';
+
+  @override
+  String get merchantProgrammeConfigTitle => 'Configuration';
+
+  @override
+  String get merchantProgrammeConfigSubtitle =>
+      'Gérez les détails de votre programme de fidélité';
+
+  @override
+  String get merchantProgrammeAppearanceTitle => 'Apparence de la carte';
+
+  @override
+  String get merchantProgrammeAppearanceSubtitle =>
+      'Personnalisez les couleurs et le style';
+
+  @override
+  String get merchantProgrammeTiersTitle => 'Paliers de fidélité';
+
+  @override
+  String get merchantProgrammeTiersSubtitle =>
+      'Objectifs, niveaux et récompenses de votre programme';
+
+  @override
+  String get merchantProgrammeRulesTitle => 'Règles d\'accumulation';
+
+  @override
+  String get merchantProgrammeRulesSubtitle =>
+      'Configuration du ratio (ex: 1 point = 500 FCFA)';
+
+  @override
+  String get merchantProgrammeLoopTitle => 'Programme en boucle';
+
+  @override
+  String get merchantProgrammeLoopEnabledSubtitle =>
+      'Dernier palier atteint : nouveau cycle automatique.';
+
+  @override
+  String get merchantProgrammeLoopDisabledSubtitle =>
+      'Dernier palier atteint : carte terminée définitivement.';
+
+  @override
+  String get merchantProgrammeTiersLoadingTitle => 'Paliers';
+
+  @override
+  String get merchantProgrammeGoalUnitPoints => 'points / FCFA';
+
+  @override
+  String get merchantProgrammeGoalUnitCashback => 'FCFA de cashback cumulés';
+
+  @override
+  String get merchantProgrammeGoalUnitStamps => 'tampons';
+
+  @override
+  String get merchantProgrammeTiersSaveSuccess =>
+      'Paliers mis à jour avec succès';
+
+  @override
+  String merchantProgrammeTiersSaveError(String error) {
+    return 'Erreur : $error';
+  }
+
+  @override
+  String get merchantProgrammeAddTierButton => 'Ajouter un palier';
+
+  @override
+  String merchantProgrammeRulesNotApplicable(String mode) {
+    return 'Votre programme est configuré en mode \"$mode\".\n\nAucune règle de conversion FCFA -> Points n\'est requise.';
+  }
+
+  @override
+  String get merchantProgrammeRulesSaveSuccess =>
+      'Règle de conversion mise à jour avec succès';
+
+  @override
+  String merchantProgrammeRulesSaveError(String error) {
+    return 'Erreur : $error';
+  }
+
+  @override
+  String get merchantProgrammeRulesConversionLabel =>
+      'Conversion FCFA -> Points';
+
+  @override
+  String get merchantProgrammeRulesConversionSubtitle =>
+      'Définissez combien le client doit dépenser pour gagner 1 point.';
+
+  @override
+  String get merchantProgrammeRulesInputLabel =>
+      '1 point tous les combien de FCFA ? *';
+
+  @override
+  String get merchantProgrammeRulesInputHint => 'Ex: 500';
+
+  @override
+  String get merchantProgrammeRulesValidatorError =>
+      'Veuillez entrer un nombre supérieur à 0';
+
+  @override
+  String get merchantProgrammeDesignLogoRemovedToast => 'Logo supprimé';
+
+  @override
+  String get merchantProgrammeDesignSaveSuccess =>
+      'Design mis à jour avec succès';
+
+  @override
+  String merchantProgrammeDesignSaveError(String error) {
+    return 'Erreur : $error';
+  }
+
+  @override
+  String get merchantProgrammeDesignLoadingTitle => 'Apparence';
+
+  @override
+  String get merchantProgrammeDesignChooseIconTitle => 'Choisir une icône';
+
+  @override
+  String get merchantProgrammeDesignChooseEmojiTitle => 'Choisir un emoji';
+
+  @override
+  String get merchantProgrammeDesignLogoHint =>
+      'Ce logo apparaîtra sur votre carte de fidélité et sur vos profils.';
+
+  @override
+  String get merchantProgrammeDesignLogoPresent => 'Logo présent';
+
+  @override
+  String get merchantProgrammeDesignNoLogo => 'Aucun logo';
+
+  @override
+  String get merchantProgrammeDesignSquareFormatHint =>
+      'Format carré recommandé';
+
+  @override
+  String get merchantProgrammeDesignAddButton => 'Ajouter';
+
+  @override
+  String get merchantProgrammeDesignRemoveTooltip => 'Supprimer';
+
+  @override
+  String get merchantProgrammeDesignPrimaryColorLabel => 'Couleur principale';
+
+  @override
+  String get merchantProgrammeDesignColorHint =>
+      'Choisissez la couleur dominante de votre carte de fidélité.';
+
+  @override
+  String get merchantProgrammeDesignPatternLabel => 'Motif de fond';
+
+  @override
+  String get merchantProgrammeDesignPatternNone => 'Aucun';
+
+  @override
+  String get merchantProgrammeDesignPatternLines => 'Traits';
+
+  @override
+  String get merchantProgrammeDesignPatternWaves => 'Vagues';
+
+  @override
+  String get merchantProgrammeDesignPatternDots => 'Points';
+
+  @override
+  String get merchantProgrammeDesignStampStyleLabel => 'Style des tampons';
+
+  @override
+  String get merchantProgrammeDesignStampTypeIcon => 'Icône';
+
+  @override
+  String get merchantProgrammeDesignStampTypeEmoji => 'Emoji';
+
+  @override
+  String get merchantProgrammeDesignIconSelectedLabel => 'Icône sélectionnée';
+
+  @override
+  String get merchantProgrammeDesignEmojiSelectedLabel => 'Emoji sélectionné';
+
+  @override
+  String get merchantProgrammeDesignSaveButton => 'Enregistrer le design';
+
+  @override
+  String get merchantPlanUpgradeTitle => 'Passez à Pro';
+
+  @override
+  String get merchantPlanUpgradeSubtitle =>
+      'Campagnes SMS illimitées, analytics avancés et support prioritaire.';
+
+  @override
+  String get merchantPlanUpgradeButton => 'Découvrir Pro';
+
+  @override
+  String get merchantPlanUpgradeToast => 'Offre Pro bientôt disponible';
+
+  @override
+  String get merchantValidateRewardUnlockedTitle => 'Récompense débloquée !';
+
+  @override
+  String merchantValidateCashbackCreditedTitle(String amount, String name) {
+    return '$amount FCFA crédités à $name !';
+  }
+
+  @override
+  String merchantValidateStampGrantedTitle(String name) {
+    return 'Tampon accordé à $name !';
+  }
+
+  @override
+  String merchantValidatePointsGrantedTitle(String points, String name) {
+    return '$points point(s) accordé(s) à $name !';
+  }
+
+  @override
+  String get merchantValidateRewardUnlockedSubtitle =>
+      'Le client peut réclamer sa récompense dès maintenant.';
+
+  @override
+  String get merchantValidateCashbackCreditedSubtitle =>
+      'Cashback crédité sur le solde du client.';
+
+  @override
+  String merchantValidateStampProgressSubtitle(String current, String goal) {
+    return '$current sur $goal tampons';
+  }
+
+  @override
+  String merchantValidatePointsProgressSubtitle(String current, String goal) {
+    return '$current sur $goal points';
+  }
+
+  @override
+  String get merchantValidateNextStepButton => 'Étape suivante';
+
+  @override
+  String get merchantValidateRewardStatusUsed => 'Déjà utilisée';
+
+  @override
+  String get merchantValidateRewardStatusCanceled => 'Annulée';
+
+  @override
+  String get merchantValidateRewardStatusExpired => 'Expirée';
+
+  @override
+  String get merchantValidateRewardStatusAvailable => 'Disponible';
+
+  @override
+  String get merchantValidateRewardSheetTitle => 'Récompense';
+
+  @override
+  String merchantValidateRewardClientLabel(String name) {
+    return 'Client : $name';
+  }
+
+  @override
+  String get merchantValidateRewardConfirmButton => 'Valider l\'utilisation';
+
+  @override
+  String get merchantValidateRewardCancelButton => 'Annuler cette récompense';
+
+  @override
+  String get merchantValidateCardInactive => 'Carte inactive';
+
+  @override
+  String get merchantValidateConfirmAndCredit => 'Confirmer et créditer';
+
+  @override
+  String get merchantValidateCreditCashback => 'Créditer le cashback';
+
+  @override
+  String get merchantValidateValidateStamp => 'Valider le tampon';
+
+  @override
+  String get merchantValidateCreditCashbackButton => 'Créditer du cashback';
+
+  @override
+  String get merchantValidateRedeemCashbackButton => 'Utiliser du cashback';
+
+  @override
+  String get merchantValidateNoCashbackBalance =>
+      'Aucun solde cashback à utiliser pour ce client.';
+
+  @override
+  String get merchantValidatePurchaseAmountLabel => 'Montant de l\'achat';
+
+  @override
+  String merchantValidateCashbackCreditedHelper(String percent) {
+    return '$percent% crédités en cashback';
+  }
+
+  @override
+  String get merchantValidateEnterAmountCashbackHint =>
+      'Saisissez le montant pour voir le cashback crédité.';
+
+  @override
+  String merchantValidateCashbackCreditedResult(String amount) {
+    return '= $amount de cashback crédités';
+  }
+
+  @override
+  String get merchantValidateCashbackToUseLabel => 'Cashback à utiliser';
+
+  @override
+  String merchantValidateAvailableBalance(String amount) {
+    return 'Solde disponible : $amount';
+  }
+
+  @override
+  String merchantValidateAmountToPay(String amount) {
+    return '= $amount à payer';
+  }
+
+  @override
+  String get merchantValidateExceedsBalance => 'Dépasse le solde disponible.';
+
+  @override
+  String get merchantValidateExceedsPurchase =>
+      'Ne peut pas dépasser le montant de l\'achat.';
+
+  @override
+  String get merchantValidateViewSummaryButton => 'Voir le résumé';
+
+  @override
+  String get merchantValidateSummaryPurchase => 'Achat';
+
+  @override
+  String get merchantValidateSummaryCashbackUsed => 'Cashback utilisé';
+
+  @override
+  String get merchantValidateSummaryToPay => 'À payer';
+
+  @override
+  String get merchantValidateSummaryCashbackGenerated => 'Cashback généré';
+
+  @override
+  String get merchantValidateSummaryNewBalance => 'Nouveau solde';
+
+  @override
+  String get merchantValidateConfirmUsageButton => 'Confirmer l\'utilisation';
+
+  @override
+  String get merchantValidateInactiveBadge => 'Inactive';
+
+  @override
+  String merchantValidatePointsRatioHelper(String amount) {
+    return '1 point tous les $amount FCFA d\'achat';
+  }
+
+  @override
+  String get merchantValidateEnterAmountPointsHint =>
+      'Saisissez le montant pour voir les points crédités.';
+
+  @override
+  String merchantValidatePointsCreditedResult(String points) {
+    return '= $points point(s) crédité(s)';
+  }
+
+  @override
+  String get merchantValidateCashbackLabel => 'CASHBACK';
+
+  @override
+  String get merchantValidateAvailableBalanceLabel => 'solde disponible';
+
+  @override
+  String get merchantValidatePurchasesLabel => 'ACHATS';
+
+  @override
+  String get merchantValidatePointsLabel => 'POINTS';
+
+  @override
+  String merchantValidateSpendGoalLabel(String goal) {
+    return 'sur $goal pts (achats)';
+  }
+
+  @override
+  String merchantValidatePointsGoalLabel(String goal) {
+    return 'sur $goal points';
+  }
+
+  @override
+  String get merchantTierEditorTitle => 'Vos paliers';
+
+  @override
+  String merchantTierEditorCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count paliers',
+      one: '$count palier',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get merchantTierEditorMultiTierHint =>
+      'Chaque palier attribue un niveau nommé par vous et débloque sa propre récompense, sans jamais redescendre une fois atteint.';
+
+  @override
+  String get merchantTierEditorEmptyState =>
+      'Aucun palier configuré — le cashback fonctionne normalement sans palier.';
+
+  @override
+  String merchantTierEditorDefaultTierName(String number) {
+    return 'Palier $number';
+  }
+
+  @override
+  String get merchantTierEditorConfigurePrompt => 'Configurer ce palier';
+
+  @override
+  String get merchantTierEditorDeleteTooltip => 'Supprimer ce palier';
+
+  @override
+  String merchantTierEditorGoalLabel(String unit) {
+    return 'Objectif ($unit) *';
+  }
+
+  @override
+  String get merchantTierEditorGoalRequired => 'L\'objectif est obligatoire';
+
+  @override
+  String merchantTierEditorMustExceedPrevious(String value) {
+    return 'Doit être supérieur au palier précédent ($value)';
+  }
+
+  @override
+  String get merchantTierEditorLevelNameLabel => 'Nom du niveau *';
+
+  @override
+  String get merchantTierEditorLevelNameHint => 'Ex : Découverte, Habitué, VIP';
+
+  @override
+  String get merchantTierEditorLevelNameRequired =>
+      'Le nom du niveau est obligatoire';
+
+  @override
+  String get merchantTierEditorRewardLabel => 'Récompense offerte *';
+
+  @override
+  String get merchantTierEditorRewardHint =>
+      'Ex : 1 café offert, 10% de réduction';
+
+  @override
+  String get merchantTierEditorRewardRequired =>
+      'La description de la récompense est obligatoire';
+
+  @override
+  String get merchantTierEditorSurpriseRewardLabel => 'Récompense surprise 🎁';
+
+  @override
+  String get merchantTierEditorSurpriseRewardHint =>
+      'Cacher ce palier au client jusqu\'à ce qu\'il le débloque.';
+
+  @override
+  String get merchantTierEditorValidityLabel => 'Validité (jours, optionnel)';
+
+  @override
+  String get merchantTierEditorValidityHint =>
+      'Ex: 30 — vide = pas d\'expiration';
+
+  @override
+  String get merchantTierEditorValidityError =>
+      'Veuillez entrer un nombre de jours supérieur à 0';
 }

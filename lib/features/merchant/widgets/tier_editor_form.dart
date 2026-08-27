@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/models/program_tier.dart';
 
 /// Icônes de niveau — automatiques par rang, jamais choisies par le
@@ -130,6 +131,7 @@ class TierEditorFormState extends State<TierEditorForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final isMultiTier = _goalCtrls.length > 1;
 
     return Column(
@@ -138,9 +140,9 @@ class TierEditorFormState extends State<TierEditorForm> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Vos paliers', style: AppTextStyles.labelBold()),
+            Text(t.merchantTierEditorTitle, style: AppTextStyles.labelBold()),
             Text(
-              '${_goalCtrls.length} palier${_goalCtrls.length > 1 ? 's' : ''}',
+              t.merchantTierEditorCount(_goalCtrls.length),
               style: AppTextStyles.caption()
                   .copyWith(color: AppColors.merchant, fontWeight: FontWeight.bold),
             ),
@@ -149,8 +151,7 @@ class TierEditorFormState extends State<TierEditorForm> {
         if (isMultiTier) ...[
           const SizedBox(height: Sp.xs),
           Text(
-            'Chaque palier attribue un niveau nommé par vous et débloque sa '
-            'propre récompense, sans jamais redescendre une fois atteint.',
+            t.merchantTierEditorMultiTierHint,
             style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
           ),
         ],
@@ -159,7 +160,7 @@ class TierEditorFormState extends State<TierEditorForm> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Sp.sm),
             child: Text(
-              'Aucun palier configuré — le cashback fonctionne normalement sans palier.',
+              t.merchantTierEditorEmptyState,
               style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
             ),
           ),
@@ -174,7 +175,7 @@ class TierEditorFormState extends State<TierEditorForm> {
             final goal = _goalCtrls[index].text.trim();
             final reward = _descCtrls[index].text.trim();
 
-            final summaryTitle = levelName.isNotEmpty ? levelName : 'Palier ${index + 1}';
+            final summaryTitle = levelName.isNotEmpty ? levelName : t.merchantTierEditorDefaultTierName((index + 1).toString());
             String summarySubtitle = '';
             if (goal.isNotEmpty && reward.isNotEmpty) {
               summarySubtitle = '$goal ${widget.goalUnit} • $reward';
@@ -183,14 +184,14 @@ class TierEditorFormState extends State<TierEditorForm> {
             } else if (reward.isNotEmpty) {
               summarySubtitle = reward;
             } else {
-              summarySubtitle = 'Configurer ce palier';
+              summarySubtitle = t.merchantTierEditorConfigurePrompt;
             }
 
             return AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                     color: isExpanded ? AppColors.merchant : AppColors.border,
@@ -260,7 +261,7 @@ class TierEditorFormState extends State<TierEditorForm> {
                                 IconButton(
                                   icon: Icon(LucideIcons.trash2, size: isExpanded ? 20 : 18, color: isExpanded ? AppColors.danger : AppColors.textSecondary),
                                   onPressed: () => removeTier(index),
-                                  tooltip: 'Supprimer ce palier',
+                                  tooltip: t.merchantTierEditorDeleteTooltip,
                                 ),
                               const SizedBox(width: Sp.xs),
                               Icon(
@@ -283,8 +284,8 @@ class TierEditorFormState extends State<TierEditorForm> {
                             const Divider(height: 1),
                             const SizedBox(height: Sp.md),
                             AppInput(
-                              label: 'Objectif (${widget.goalUnit}) *',
-                              hint: 'Ex: 500',
+                              label: t.merchantTierEditorGoalLabel(widget.goalUnit),
+                              hint: t.merchantProgrammeRulesInputHint,
                               controller: _goalCtrls[index],
                               keyboardType: TextInputType.number,
                               prefixIcon: LucideIcons.target,
@@ -295,15 +296,15 @@ class TierEditorFormState extends State<TierEditorForm> {
                               },
                               validator: (v) {
                                 final val = v?.trim() ?? '';
-                                if (val.isEmpty) return "L'objectif est obligatoire";
+                                if (val.isEmpty) return t.merchantTierEditorGoalRequired;
                                 final parsed = int.tryParse(val);
                                 if (parsed == null || parsed <= 0) {
-                                  return 'Veuillez entrer un nombre supérieur à 0';
+                                  return t.merchantProgrammeRulesValidatorError;
                                 }
                                 if (index > 0) {
                                   final prev = int.tryParse(_goalCtrls[index - 1].text.trim());
                                   if (prev != null && parsed <= prev) {
-                                    return 'Doit être supérieur au palier précédent ($prev)';
+                                    return t.merchantTierEditorMustExceedPrevious(prev.toString());
                                   }
                                 }
                                 return null;
@@ -312,8 +313,8 @@ class TierEditorFormState extends State<TierEditorForm> {
                             if (isMultiTier) ...[
                               const SizedBox(height: Sp.sm),
                               AppInput(
-                                label: 'Nom du niveau *',
-                                hint: 'Ex : Découverte, Habitué, VIP',
+                                label: t.merchantTierEditorLevelNameLabel,
+                                hint: t.merchantTierEditorLevelNameHint,
                                 controller: _levelNameCtrls[index],
                                 prefixIcon: LucideIcons.award,
                                 accentColor: AppColors.merchant,
@@ -322,14 +323,14 @@ class TierEditorFormState extends State<TierEditorForm> {
                                   _emitChange();
                                 },
                                 validator: (v) => (v?.trim() ?? '').isEmpty
-                                    ? 'Le nom du niveau est obligatoire'
+                                    ? t.merchantTierEditorLevelNameRequired
                                     : null,
                               ),
                             ],
                             const SizedBox(height: Sp.sm),
                             AppInput(
-                              label: 'Récompense offerte *',
-                              hint: 'Ex : 1 café offert, 10% de réduction',
+                              label: t.merchantTierEditorRewardLabel,
+                              hint: t.merchantTierEditorRewardHint,
                               controller: _descCtrls[index],
                               prefixIcon: LucideIcons.gift,
                               accentColor: AppColors.merchant,
@@ -339,7 +340,7 @@ class TierEditorFormState extends State<TierEditorForm> {
                                 _emitChange();
                               },
                               validator: (v) => (v?.trim() ?? '').isEmpty
-                                  ? 'La description de la récompense est obligatoire'
+                                  ? t.merchantTierEditorRewardRequired
                                   : null,
                             ),
                             const SizedBox(height: Sp.sm),
@@ -355,11 +356,11 @@ class TierEditorFormState extends State<TierEditorForm> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text('Récompense surprise 🎁',
+                                        Text(t.merchantTierEditorSurpriseRewardLabel,
                                             style: AppTextStyles.caption()
                                                 .copyWith(fontWeight: FontWeight.bold)),
                                         Text(
-                                          'Cacher ce palier au client jusqu\'à ce qu\'il le débloque.',
+                                          t.merchantTierEditorSurpriseRewardHint,
                                           style: AppTextStyles.caption()
                                               .copyWith(color: AppColors.textSecondary, fontSize: 11),
                                         ),
@@ -379,8 +380,8 @@ class TierEditorFormState extends State<TierEditorForm> {
                             ),
                             const SizedBox(height: Sp.sm),
                             AppInput(
-                              label: 'Validité (jours, optionnel)',
-                              hint: "Ex: 30 — vide = pas d'expiration",
+                              label: t.merchantTierEditorValidityLabel,
+                              hint: t.merchantTierEditorValidityHint,
                               controller: _validityCtrls[index],
                               keyboardType: TextInputType.number,
                               prefixIcon: LucideIcons.calendarClock,
@@ -391,7 +392,7 @@ class TierEditorFormState extends State<TierEditorForm> {
                                 if (trimmed.isEmpty) return null;
                                 final parsed = int.tryParse(trimmed);
                                 if (parsed == null || parsed <= 0) {
-                                  return 'Veuillez entrer un nombre de jours supérieur à 0';
+                                  return t.merchantTierEditorValidityError;
                                 }
                                 return null;
                               },

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/merchant_provider.dart';
 
@@ -20,13 +21,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final merchant = ref.watch(merchantNotifierProvider).value;
     final currentPlan = merchant?.plan ?? 'free';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Mon Abonnement'),
+        title: Text(t.merchantSubscriptionMyPlan),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -36,7 +38,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildPlanCard(
-              title: 'Démarrage',
+              t,
+              title: t.merchantSubscriptionPlanStarterName,
               price: '0 F/mois',
               details: '50 clients • 30 SMS',
               planKey: 'free',
@@ -44,7 +47,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             ),
             const SizedBox(height: Sp.sm),
             _buildPlanCard(
-              title: 'Pro',
+              t,
+              title: t.merchantMoreProTag,
               price: '9 900 F/mois',
               details: '500 clients • 100 SMS',
               planKey: 'pro',
@@ -52,7 +56,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             ),
             const SizedBox(height: Sp.sm),
             _buildPlanCard(
-              title: 'Business',
+              t,
+              title: t.merchantSubscriptionPlanBusinessName,
               price: '24 900 F/mois',
               details: 'Illimité • 500 SMS',
               planKey: 'business',
@@ -62,7 +67,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             Container(
               padding: const EdgeInsets.all(Sp.md),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: Rd.card,
                 border: Border.all(color: AppColors.border),
               ),
@@ -73,7 +78,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Prochaine facture',
+                        t.merchantSubscriptionNextInvoiceLabel,
                         style: AppTextStyles.labelBold().copyWith(color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: 2),
@@ -104,7 +109,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     );
   }
 
-  Widget _buildPlanCard({
+  Widget _buildPlanCard(
+    AppLocalizations t, {
     required String title,
     required String price,
     required String details,
@@ -117,7 +123,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.all(Sp.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: Rd.card,
         border: Border.all(
           color: isCurrent ? AppColors.merchant : AppColors.border,
@@ -158,7 +164,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'ACTUEL',
+                          t.merchantSubscriptionCurrentBadge,
                           style: AppTextStyles.caption().copyWith(
                             color: Colors.white,
                             fontSize: 9,
@@ -199,7 +205,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Abonnement modifié : plan $title sélectionné'),
+                                  content: Text(t.merchantSubscriptionPlanChangedSuccess(title)),
                                   backgroundColor: AppColors.success,
                                 ),
                               );
@@ -208,7 +214,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Erreur lors du changement de plan : $e'),
+                                  content: Text(t.merchantSubscriptionPlanChangeError(e.toString())),
                                   backgroundColor: AppColors.danger,
                                 ),
                               );
@@ -220,7 +226,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     child: Text(
-                      'Choisir',
+                      t.merchantSubscriptionChooseButton,
                       style: AppTextStyles.labelBold().copyWith(
                         color: AppColors.merchant,
                         fontSize: 13,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 
 class SubscriptionCategoryScreen extends ConsumerWidget {
@@ -14,11 +15,12 @@ class SubscriptionCategoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Abonnement & Équipe'),
+        title: Text(t.merchantSubscriptionCategoryTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -26,7 +28,7 @@ class SubscriptionCategoryScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(Sp.md),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: Rd.card,
             border: Border.all(color: AppColors.border),
           ),
@@ -35,14 +37,14 @@ class SubscriptionCategoryScreen extends ConsumerWidget {
               _buildCommonTile(
                 context,
                 icon: LucideIcons.creditCard,
-                label: 'Mon Abonnement',
+                label: t.merchantSubscriptionMyPlan,
                 route: '/merchant/more/subscription/plan',
               ),
               const Divider(height: 0, indent: Sp.md),
               _buildCommonTile(
                 context,
                 icon: LucideIcons.users,
-                label: 'Membres de l\'équipe',
+                label: t.merchantSubscriptionTeamMembers,
                 route: '/merchant/more/subscription/team',
               ),
             ],

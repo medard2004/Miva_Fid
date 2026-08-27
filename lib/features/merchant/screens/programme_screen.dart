@@ -7,11 +7,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/skeleton_loader.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/models/program_tier.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../../client/providers/settings_provider.dart';
 
 class ProgrammeScreen extends ConsumerStatefulWidget {
   const ProgrammeScreen({super.key});
@@ -80,7 +82,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
       child: Container(
         padding: const EdgeInsets.all(Sp.md),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: Rd.card,
           border: Border.all(color: AppColors.border),
         ),
@@ -119,12 +121,14 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final merchantAsync = ref.watch(merchantNotifierProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Fidélisation'),
+        title: Text(t.merchantProgrammeTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -134,7 +138,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
             padding: EdgeInsets.all(Sp.md),
             child: Column(children: [SkeletonCard(height: 200), SkeletonCard()]),
           ),
-          error: (_, __) => Center(child: Text('Erreur', style: AppTextStyles.bodyMd())),
+          error: (_, __) => Center(child: Text(t.merchantQrCodeLoadError, style: AppTextStyles.bodyMd())),
           data: (merchant) {
             if (!_initialized || merchant == null) {
               return const Center(child: CircularProgressIndicator());
@@ -147,31 +151,31 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Aperçu de la carte', style: AppTextStyles.labelBold()),
+                  Text(t.merchantProgrammeCardPreviewLabel, style: AppTextStyles.labelBold()),
                   const SizedBox(height: Sp.sm),
                   const LoyaltyCardPreview(previewStamps: 6),
-                  
+
                   const SizedBox(height: Sp.xl),
-                  Text('Configuration', style: AppTextStyles.h2()),
+                  Text(t.merchantProgrammeConfigTitle, style: AppTextStyles.h2()),
                   const SizedBox(height: Sp.sm),
                   Text(
-                    'Gérez les détails de votre programme de fidélité',
+                    t.merchantProgrammeConfigSubtitle,
                     style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: Sp.lg),
 
                   _buildCategoryItem(
                     icon: LucideIcons.palette,
-                    title: 'Apparence de la carte',
-                    subtitle: 'Personnalisez les couleurs et le style',
+                    title: t.merchantProgrammeAppearanceTitle,
+                    subtitle: t.merchantProgrammeAppearanceSubtitle,
                     onTap: () => context.go('/merchant/more/programme/design'),
                   ),
                   const SizedBox(height: Sp.md),
 
                   _buildCategoryItem(
                     icon: LucideIcons.gift,
-                    title: 'Paliers de fidélité',
-                    subtitle: 'Objectifs, niveaux et récompenses de votre programme',
+                    title: t.merchantProgrammeTiersTitle,
+                    subtitle: t.merchantProgrammeTiersSubtitle,
                     onTap: () => context.go('/merchant/more/programme/tiers'),
                   ),
                   const SizedBox(height: Sp.md),
@@ -179,8 +183,8 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                   if (loyaltyMode == 'spend') ...[
                     _buildCategoryItem(
                       icon: LucideIcons.calculator,
-                      title: 'Règles d\'accumulation',
-                      subtitle: 'Configuration du ratio (ex: 1 point = 500 FCFA)',
+                      title: t.merchantProgrammeRulesTitle,
+                      subtitle: t.merchantProgrammeRulesSubtitle,
                       onTap: () => context.go('/merchant/more/programme/rules'),
                     ),
                     const SizedBox(height: Sp.md),
@@ -190,7 +194,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     Container(
                       padding: const EdgeInsets.all(Sp.md),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: Rd.card,
                         border: Border.all(color: AppColors.border),
                       ),
@@ -199,11 +203,11 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                         onChanged: (v) => ref
                             .read(merchantNotifierProvider.notifier)
                             .updateProgramme({'loops': v}),
-                        title: Text('Programme en boucle', style: AppTextStyles.labelBold()),
+                        title: Text(t.merchantProgrammeLoopTitle, style: AppTextStyles.labelBold()),
                         subtitle: Text(
                           merchant.loops
-                              ? 'Dernier palier atteint : nouveau cycle automatique.'
-                              : 'Dernier palier atteint : carte terminée définitivement.',
+                              ? t.merchantProgrammeLoopEnabledSubtitle
+                              : t.merchantProgrammeLoopDisabledSubtitle,
                           style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
                         ),
                         activeThumbColor: Colors.white,

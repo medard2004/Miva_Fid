@@ -15,6 +15,7 @@
   "commonDone": "Done",
 
   "settingsTitle": "Settings",
+  "settingsPreferences": "Preferences",
   "settingsAppearance": "Appearance",
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
@@ -421,5 +422,457 @@
   "editProfileConnectedVia": "Connected via {provider}",
   "@editProfileConnectedVia": {
     "placeholders": { "provider": { "type": "String" } }
-  }
+  },
+
+  "merchantNavClients": "Clients",
+  "merchantNavStats": "Stats",
+  "merchantNavValidate": "Validate",
+  "merchantNavSms": "SMS",
+  "merchantNavSettings": "Settings",
+
+  "merchantMoreBusinessProfile": "Business profile",
+  "merchantMoreCompleteProfile": "Complete my profile",
+  "merchantMoreLogoBusiness": "Business logo",
+  "merchantMoreSocials": "Social media",
+  "merchantMoreGoogleReviewLink": "Google review link",
+  "merchantMoreSectionAccount": "ACCOUNT",
+  "merchantMoreHours": "Opening hours",
+  "merchantMoreToComplete": "To complete",
+  "merchantMoreSubscription": "Subscription",
+  "merchantMoreProTag": "Pro",
+  "merchantMoreLanguageTheme": "Language & theme",
+  "merchantMoreTeam": "Team",
+  "merchantMoreSectionLoyaltyCard": "MY LOYALTY CARD",
+  "merchantMoreCustomizeCard": "Customize the card",
+  "merchantMoreGoalReward": "Goal & reward",
+  "merchantMoreLoyaltyProgram": "Loyalty program",
+  "merchantMoreMyQrCode": "My QR code",
+  "merchantMoreMyShowcase": "My showcase",
+  "merchantMoreSectionSupport": "SUPPORT",
+  "merchantMoreLegalPrivacy": "Privacy",
+  "merchantMoreLegalTerms": "Terms of use",
+  "merchantMoreWhatsappSupport": "WhatsApp support",
+  "merchantSignOutConfirmTitle": "Sign out?",
+  "merchantSignOutConfirmMessage": "You'll need to sign in again to access your merchant space.",
+  "merchantSignOutConfirm": "Sign out",
+
+  "changePasswordConfirmLabel": "Confirm new password",
+
+  "merchantAccountTitle": "Account & Profile",
+  "merchantAccountProfile": "Profile",
+
+  "merchantSubscriptionCategoryTitle": "Subscription & Team",
+  "merchantSubscriptionMyPlan": "My Subscription",
+  "merchantSubscriptionTeamMembers": "Team members",
+
+  "merchantNotifUpdateError": "Couldn't update this preference. Try again.",
+  "merchantNotifNewClientTitle": "New client",
+  "merchantNotifNewClientSubtitle": "Notify on every sign-up",
+  "merchantNotifRewardTitle": "Reward earned",
+  "merchantNotifRewardSubtitle": "When a tier is reached",
+  "merchantNotifLowSmsTitle": "Low SMS quota",
+  "merchantNotifLowSmsSubtitle": "Under 20 SMS remaining",
+  "merchantNotifWeeklyReportTitle": "Weekly report",
+  "merchantNotifWeeklyReportSubtitle": "Every Monday morning",
+  "merchantNotifPromotionsTitle": "Miva-Fid promotions",
+  "merchantNotifPromotionsSubtitle": "Offers and news",
+
+  "merchantTeamInviteTitle": "Invite a member",
+  "merchantTeamNameLabel": "Name",
+  "merchantTeamPhoneOptionalLabel": "Phone (optional)",
+  "merchantTeamPasswordLabel": "Password",
+  "merchantTeamRoleOperator": "Operator",
+  "merchantTeamRoleAdmin": "Administrator",
+  "merchantTeamInviteButton": "Invite",
+  "merchantTeamInviteError": "Couldn't invite this member.",
+  "merchantTeamEmptyState": "No team members yet. Invite your first operator.",
+  "merchantTeamToggleStatusError": "Couldn't update this member's status.",
+
+  "merchantTierSilver": "Silver",
+  "merchantTierGold": "Gold",
+  "merchantTierPlatinum": "Platinum",
+
+  "merchantDashboardTitle": "Statistics",
+  "merchantDashboardSubtitle": "Overview of your activity — June 2026",
+  "merchantDashboardStampsLabel": "Stamps",
+  "merchantDashboardThisMonthLabel": "this month",
+  "merchantDashboardRewardsLabel": "Rewards",
+  "merchantDashboardUsedLabel": "used",
+  "merchantDashboardMonthActivityTitle": "Activity this month",
+  "merchantDashboardValidationsPerWeekSubtitle": "Validations per week",
+  "merchantDashboardWeekLabel": "Week {number}",
+  "@merchantDashboardWeekLabel": {
+    "placeholders": { "number": { "type": "String" } }
+  },
+  "merchantDashboardVipDistributionTitle": "VIP breakdown",
+  "merchantDashboardClientsByTierSubtitle": "Your clients by tier",
+
+  "merchantClientsTitle": "My clients",
+  "merchantClientsActiveCount": "{count} active clients",
+  "@merchantClientsActiveCount": {
+    "placeholders": { "count": { "type": "String" } }
+  },
+  "merchantClientsAddSoonToast": "Manually adding a client will be available soon.",
+  "merchantClientsExportToast": "Exporting the client list as CSV has started!",
+  "merchantClientsExportButton": "Export list",
+  "merchantClientsSearchHint": "Search for a client...",
+  "merchantClientsFilterAll": "All",
+  "merchantClientsFilterInactive30d": "+30d",
+  "merchantClientsPaginationInfo": "{from}-{to} of {total}",
+  "@merchantClientsPaginationInfo": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" },
+      "total": { "type": "String" }
+    }
+  },
+  "merchantClientsPrevious": "< Prev.",
+  "merchantClientsNext": "Next >",
+
+  "merchantClientDetailRemoveTitle": "Remove from program?",
+  "merchantClientDetailRemoveMessage": "Are you sure you want to remove {name} from your loyalty program? Their stamps will be reset.",
+  "@merchantClientDetailRemoveMessage": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "merchantClientDetailRemoveConfirm": "Remove",
+  "merchantClientDetailRemoveToast": "Client removed from the program.",
+  "merchantClientDetailSubtitle": "Client profile",
+  "merchantClientDetailProgress": "Progress",
+  "merchantClientDetailSendSms": "Send an SMS",
+  "merchantClientDetailCall": "Call",
+  "merchantClientDetailRewardsLabel": "Rewards",
+  "merchantClientDetailLastLabel": "Last",
+  "merchantClientDetailHistoryTitle": "History",
+  "merchantClientDetailHistoryStampValidated": "Stamp validated",
+  "merchantClientDetailHistoryRewardUsed": "Reward used",
+  "merchantClientDetailHistoryEnrolled": "Enrolled in the program",
+  "merchantClientDetailRemoveButton": "Remove from program",
+
+  "merchantValidateQrInvalid": "Invalid or unreadable QR code.",
+  "merchantValidateNetworkError": "Can't connect. Check your network.",
+  "merchantValidateNoCardFound": "No loyalty card found for this business.",
+  "merchantValidateNoRewardFound": "No reward from your business matches this code.",
+  "merchantValidateRewardSuccess": "Reward validated successfully!",
+  "merchantValidateRewardError": "Error while validating.",
+  "merchantValidateFailedRetry": "Validation failed. Try again.",
+  "merchantValidateDefaultClientName": "Client",
+  "merchantValidateTitle": "Validate a visit",
+  "merchantValidateSubtitle": "Scan or enter the ID",
+  "merchantValidateTabScanner": "Scanner",
+  "merchantValidateTabPhone": "ID",
+  "merchantValidateScanInstruction": "Point the camera at the client's QR code",
+  "merchantValidateDisableCamera": "Turn off camera",
+  "merchantValidateEnableCamera": "Turn on camera",
+  "merchantValidateManualSearchTitle": "Search by ID",
+  "merchantValidateManualSearchSubtitle": "Enter the client's ID to validate their visit.",
+  "merchantValidateManualSearchHint": "Client ID",
+  "merchantValidateSearchButton": "Search for client",
+
+  "merchantSmsCampaignSubtitle": "Campaigns & messages",
+  "merchantSmsCampaignSentLabel": "Sent",
+  "merchantSmsCampaignOpenRateLabel": "Open rate",
+  "merchantSmsCampaignReachedLabel": "Reached",
+  "merchantSmsCampaignCount": "{count} campaigns",
+  "@merchantSmsCampaignCount": {
+    "placeholders": { "count": { "type": "String" } }
+  },
+
+  "merchantSmsCampaignDetailSentBadge": "Sent",
+  "merchantSmsCampaignDetailRecipients": "Recipients",
+  "merchantSmsCampaignDetailSent": "Sent",
+  "merchantSmsCampaignDetailOpened": "Opened",
+  "merchantSmsCampaignDetailOpenRate": "Open rate",
+  "merchantSmsCampaignDetailMessageTitle": "Message sent",
+  "merchantSmsCampaignDetailDuplicateToast": "Campaign duplicated into a new draft!",
+  "merchantSmsCampaignDetailDuplicateButton": "Duplicate this campaign",
+
+  "merchantSmsConversationSentToast": "SMS sent successfully!",
+  "merchantSmsConversationLabel": "SMS conversation",
+  "merchantSmsConversationInputHint": "Write a message...",
+
+  "merchantProfileLogoSuccess": "Logo updated successfully",
+  "merchantProfileLogoError": "Couldn't update the logo.",
+  "merchantProfileSaveSuccess": "Changes saved!",
+  "merchantProfileLogoHint": "PNG or JPG, square, max 2 MB.",
+  "merchantProfileLoadingEllipsis": "Loading...",
+  "merchantProfileChangeLink": "Change",
+  "merchantProfileSectionInfo": "INFORMATION",
+  "merchantProfileBusinessNameLabel": "BUSINESS NAME",
+  "merchantProfileCategoryLabel": "CATEGORY",
+  "merchantProfileDescriptionLabel": "DESCRIPTION",
+  "merchantProfileCharCount": "{count}/200 characters",
+  "@merchantProfileCharCount": {
+    "placeholders": { "count": { "type": "String" } }
+  },
+  "merchantProfileSectionContact": "CONTACT",
+  "merchantProfileEmailLabel": "EMAIL",
+  "merchantProfilePhoneLabel": "PHONE",
+  "merchantProfileWhatsappLabel": "WHATSAPP",
+  "merchantProfileSectionAddress": "ADDRESS",
+  "merchantProfileCityLabel": "CITY",
+  "merchantProfileAddressLabel": "ADDRESS / NEIGHBORHOOD",
+  "merchantProfileSaveButton": "Save changes",
+
+  "merchantVitrineLogoUploadError": "Couldn't upload the logo. Try again.",
+  "merchantVitrineLogoRemoveError": "Couldn't remove the logo. Try again.",
+  "merchantVitrineSaveSuccess": "Showcase updated successfully",
+  "merchantVitrineSaveError": "Error: {error}",
+  "@merchantVitrineSaveError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "merchantVitrinePreviewTitle": "Public preview",
+  "merchantVitrineTitle": "My Showcase",
+  "merchantVitrineSubtitle": "Public page for your business",
+  "merchantVitrinePreviewButton": "Preview",
+  "merchantVitrineCoverPhotoSection": "Cover photo",
+  "merchantVitrineInfoSection": "Information",
+  "merchantVitrineDescriptionHint": "Description...",
+  "merchantVitrineContactAddressSection": "Contact & address",
+  "merchantVitrineHoursSection": "Hours",
+  "merchantVitrineDayMonday": "Monday",
+  "merchantVitrineDayTuesday": "Tuesday",
+  "merchantVitrineDayWednesday": "Wednesday",
+  "merchantVitrineDayThursday": "Thursday",
+  "merchantVitrineDayFriday": "Friday",
+  "merchantVitrineDaySaturday": "Saturday",
+  "merchantVitrineDaySunday": "Sunday",
+  "merchantVitrineClosedLabel": "Closed",
+  "merchantVitrinePublishButton": "Publish changes",
+  "merchantVitrineAddPhotoLabel": "Add a photo",
+
+  "merchantSubscriptionPlanStarterName": "Starter",
+  "merchantSubscriptionPlanBusinessName": "Business",
+  "merchantSubscriptionNextInvoiceLabel": "Next invoice",
+  "merchantSubscriptionCurrentBadge": "CURRENT",
+  "merchantSubscriptionChooseButton": "Choose",
+  "merchantSubscriptionPlanChangedSuccess": "Subscription changed: {plan} plan selected",
+  "@merchantSubscriptionPlanChangedSuccess": {
+    "placeholders": { "plan": { "type": "String" } }
+  },
+  "merchantSubscriptionPlanChangeError": "Error while changing plan: {error}",
+  "@merchantSubscriptionPlanChangeError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "merchantQrCodeLoadError": "Error",
+  "merchantQrCodeSubtitle": "Display it so clients can scan",
+  "merchantQrCodeScanToEarnLabel": "Scan to earn a stamp",
+  "merchantQrCodePngSavedToast": "Image saved to gallery!",
+  "merchantQrCodeShareButton": "Share",
+  "merchantQrCodeUniqueCodeSection": "UNIQUE CODE",
+  "merchantQrCodeCodeCopiedToast": "Code copied to clipboard!",
+  "merchantQrCodeThisWeekLabel": "This week",
+  "merchantQrCodeThisMonthLabel": "This month",
+  "merchantQrCodeNewLabel": "New",
+  "merchantQrCodeTipLabel": "Tip",
+  "merchantQrCodeTipMessage": "Place the QR code at checkout or on tables to maximize scans.",
+  "merchantQrCodePdfScanMessage": "Scan to earn your points!",
+  "merchantQrCodePdfPoweredBy": "Powered by Miva-Fid",
+  "merchantQrCodeWhatsappShareMessage": "Join my Miva-Fid loyalty program at {name}!",
+  "@merchantQrCodeWhatsappShareMessage": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "merchantProgrammeTitle": "Loyalty",
+  "merchantProgrammeCardPreviewLabel": "Card preview",
+  "merchantProgrammeConfigTitle": "Configuration",
+  "merchantProgrammeConfigSubtitle": "Manage the details of your loyalty program",
+  "merchantProgrammeAppearanceTitle": "Card appearance",
+  "merchantProgrammeAppearanceSubtitle": "Customize the colors and style",
+  "merchantProgrammeTiersTitle": "Loyalty tiers",
+  "merchantProgrammeTiersSubtitle": "Goals, levels, and rewards for your program",
+  "merchantProgrammeRulesTitle": "Accumulation rules",
+  "merchantProgrammeRulesSubtitle": "Configure the ratio (e.g.: 1 point = 500 FCFA)",
+  "merchantProgrammeLoopTitle": "Looping program",
+  "merchantProgrammeLoopEnabledSubtitle": "Once the last tier is reached: a new cycle starts automatically.",
+  "merchantProgrammeLoopDisabledSubtitle": "Once the last tier is reached: the card is permanently complete.",
+
+  "merchantProgrammeTiersLoadingTitle": "Tiers",
+  "merchantProgrammeGoalUnitPoints": "points / FCFA",
+  "merchantProgrammeGoalUnitCashback": "FCFA of cumulative cashback",
+  "merchantProgrammeGoalUnitStamps": "stamps",
+  "merchantProgrammeTiersSaveSuccess": "Tiers updated successfully",
+  "merchantProgrammeTiersSaveError": "Error: {error}",
+  "@merchantProgrammeTiersSaveError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "merchantProgrammeAddTierButton": "Add a tier",
+
+  "merchantProgrammeRulesNotApplicable": "Your program is configured in \"{mode}\" mode.\n\nNo FCFA -> Points conversion rule is required.",
+  "@merchantProgrammeRulesNotApplicable": {
+    "placeholders": { "mode": { "type": "String" } }
+  },
+  "merchantProgrammeRulesSaveSuccess": "Conversion rule updated successfully",
+  "merchantProgrammeRulesSaveError": "Error: {error}",
+  "@merchantProgrammeRulesSaveError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "merchantProgrammeRulesConversionLabel": "FCFA -> Points conversion",
+  "merchantProgrammeRulesConversionSubtitle": "Set how much the client must spend to earn 1 point.",
+  "merchantProgrammeRulesInputLabel": "1 point per how many FCFA? *",
+  "merchantProgrammeRulesInputHint": "E.g.: 500",
+  "merchantProgrammeRulesValidatorError": "Please enter a number greater than 0",
+
+  "merchantProgrammeDesignLogoRemovedToast": "Logo removed",
+  "merchantProgrammeDesignSaveSuccess": "Design updated successfully",
+  "merchantProgrammeDesignSaveError": "Error: {error}",
+  "@merchantProgrammeDesignSaveError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "merchantProgrammeDesignLoadingTitle": "Appearance",
+  "merchantProgrammeDesignChooseIconTitle": "Choose an icon",
+  "merchantProgrammeDesignChooseEmojiTitle": "Choose an emoji",
+  "merchantProgrammeDesignLogoHint": "This logo will appear on your loyalty card and on your profiles.",
+  "merchantProgrammeDesignLogoPresent": "Logo present",
+  "merchantProgrammeDesignNoLogo": "No logo",
+  "merchantProgrammeDesignSquareFormatHint": "Square format recommended",
+  "merchantProgrammeDesignAddButton": "Add",
+  "merchantProgrammeDesignRemoveTooltip": "Remove",
+  "merchantProgrammeDesignPrimaryColorLabel": "Primary color",
+  "merchantProgrammeDesignColorHint": "Choose the dominant color of your loyalty card.",
+  "merchantProgrammeDesignPatternLabel": "Background pattern",
+  "merchantProgrammeDesignPatternNone": "None",
+  "merchantProgrammeDesignPatternLines": "Lines",
+  "merchantProgrammeDesignPatternWaves": "Waves",
+  "merchantProgrammeDesignPatternDots": "Dots",
+  "merchantProgrammeDesignStampStyleLabel": "Stamp style",
+  "merchantProgrammeDesignStampTypeIcon": "Icon",
+  "merchantProgrammeDesignStampTypeEmoji": "Emoji",
+  "merchantProgrammeDesignIconSelectedLabel": "Icon selected",
+  "merchantProgrammeDesignEmojiSelectedLabel": "Emoji selected",
+  "merchantProgrammeDesignSaveButton": "Save design",
+
+  "merchantPlanUpgradeTitle": "Upgrade to Pro",
+  "merchantPlanUpgradeSubtitle": "Unlimited SMS campaigns, advanced analytics, and priority support.",
+  "merchantPlanUpgradeButton": "Discover Pro",
+  "merchantPlanUpgradeToast": "Pro offer coming soon",
+
+  "merchantValidateRewardUnlockedTitle": "Reward unlocked!",
+  "merchantValidateCashbackCreditedTitle": "{amount} FCFA credited to {name}!",
+  "@merchantValidateCashbackCreditedTitle": {
+    "placeholders": { "amount": { "type": "String" }, "name": { "type": "String" } }
+  },
+  "merchantValidateStampGrantedTitle": "Stamp granted to {name}!",
+  "@merchantValidateStampGrantedTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "merchantValidatePointsGrantedTitle": "{points} point(s) granted to {name}!",
+  "@merchantValidatePointsGrantedTitle": {
+    "placeholders": { "points": { "type": "String" }, "name": { "type": "String" } }
+  },
+  "merchantValidateRewardUnlockedSubtitle": "The client can now claim their reward.",
+  "merchantValidateCashbackCreditedSubtitle": "Cashback credited to the client's balance.",
+  "merchantValidateStampProgressSubtitle": "{current} out of {goal} stamps",
+  "@merchantValidateStampProgressSubtitle": {
+    "placeholders": { "current": { "type": "String" }, "goal": { "type": "String" } }
+  },
+  "merchantValidatePointsProgressSubtitle": "{current} out of {goal} points",
+  "@merchantValidatePointsProgressSubtitle": {
+    "placeholders": { "current": { "type": "String" }, "goal": { "type": "String" } }
+  },
+  "merchantValidateNextStepButton": "Next step",
+
+  "merchantValidateRewardStatusUsed": "Already used",
+  "merchantValidateRewardStatusCanceled": "Canceled",
+  "merchantValidateRewardStatusExpired": "Expired",
+  "merchantValidateRewardStatusAvailable": "Available",
+  "merchantValidateRewardSheetTitle": "Reward",
+  "merchantValidateRewardClientLabel": "Client: {name}",
+  "@merchantValidateRewardClientLabel": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "merchantValidateRewardConfirmButton": "Confirm redemption",
+  "merchantValidateRewardCancelButton": "Cancel this reward",
+
+  "merchantValidateCardInactive": "Inactive card",
+  "merchantValidateConfirmAndCredit": "Confirm and credit",
+  "merchantValidateCreditCashback": "Credit the cashback",
+  "merchantValidateValidateStamp": "Validate the stamp",
+  "merchantValidateCreditCashbackButton": "Credit cashback",
+  "merchantValidateRedeemCashbackButton": "Use cashback",
+  "merchantValidateNoCashbackBalance": "No cashback balance to use for this client.",
+  "merchantValidatePurchaseAmountLabel": "Purchase amount",
+  "merchantValidateCashbackCreditedHelper": "{percent}% credited as cashback",
+  "@merchantValidateCashbackCreditedHelper": {
+    "placeholders": { "percent": { "type": "String" } }
+  },
+  "merchantValidateEnterAmountCashbackHint": "Enter the amount to see the cashback credited.",
+  "merchantValidateCashbackCreditedResult": "= {amount} of cashback credited",
+  "@merchantValidateCashbackCreditedResult": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "merchantValidateCashbackToUseLabel": "Cashback to use",
+  "merchantValidateAvailableBalance": "Available balance: {amount}",
+  "@merchantValidateAvailableBalance": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "merchantValidateAmountToPay": "= {amount} to pay",
+  "@merchantValidateAmountToPay": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "merchantValidateExceedsBalance": "Exceeds the available balance.",
+  "merchantValidateExceedsPurchase": "Cannot exceed the purchase amount.",
+  "merchantValidateViewSummaryButton": "View summary",
+  "merchantValidateSummaryPurchase": "Purchase",
+  "merchantValidateSummaryCashbackUsed": "Cashback used",
+  "merchantValidateSummaryToPay": "To pay",
+  "merchantValidateSummaryCashbackGenerated": "Cashback generated",
+  "merchantValidateSummaryNewBalance": "New balance",
+  "merchantValidateConfirmUsageButton": "Confirm usage",
+  "merchantValidateInactiveBadge": "Inactive",
+  "merchantValidatePointsRatioHelper": "1 point per {amount} FCFA spent",
+  "@merchantValidatePointsRatioHelper": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "merchantValidateEnterAmountPointsHint": "Enter the amount to see the points credited.",
+  "merchantValidatePointsCreditedResult": "= {points} point(s) credited",
+  "@merchantValidatePointsCreditedResult": {
+    "placeholders": { "points": { "type": "String" } }
+  },
+  "merchantValidateCashbackLabel": "CASHBACK",
+  "merchantValidateAvailableBalanceLabel": "available balance",
+  "merchantValidatePurchasesLabel": "PURCHASES",
+  "merchantValidatePointsLabel": "POINTS",
+  "merchantValidateSpendGoalLabel": "out of {goal} pts (purchases)",
+  "@merchantValidateSpendGoalLabel": {
+    "placeholders": { "goal": { "type": "String" } }
+  },
+  "merchantValidatePointsGoalLabel": "out of {goal} points",
+  "@merchantValidatePointsGoalLabel": {
+    "placeholders": { "goal": { "type": "String" } }
+  },
+
+  "merchantTierEditorTitle": "Your tiers",
+  "merchantTierEditorCount": "{count, plural, one{{count} tier} other{{count} tiers}}",
+  "@merchantTierEditorCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "merchantTierEditorMultiTierHint": "Each tier grants a level you name and unlocks its own reward, and never goes back down once reached.",
+  "merchantTierEditorEmptyState": "No tier configured — cashback works normally without a tier.",
+  "merchantTierEditorDefaultTierName": "Tier {number}",
+  "@merchantTierEditorDefaultTierName": {
+    "placeholders": { "number": { "type": "String" } }
+  },
+  "merchantTierEditorConfigurePrompt": "Configure this tier",
+  "merchantTierEditorDeleteTooltip": "Delete this tier",
+  "merchantTierEditorGoalLabel": "Goal ({unit}) *",
+  "@merchantTierEditorGoalLabel": {
+    "placeholders": { "unit": { "type": "String" } }
+  },
+  "merchantTierEditorGoalRequired": "The goal is required",
+  "merchantTierEditorMustExceedPrevious": "Must be greater than the previous tier ({value})",
+  "@merchantTierEditorMustExceedPrevious": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "merchantTierEditorLevelNameLabel": "Level name *",
+  "merchantTierEditorLevelNameHint": "E.g.: Discovery, Regular, VIP",
+  "merchantTierEditorLevelNameRequired": "The level name is required",
+  "merchantTierEditorRewardLabel": "Reward offered *",
+  "merchantTierEditorRewardHint": "E.g.: 1 free coffee, 10% off",
+  "merchantTierEditorRewardRequired": "The reward description is required",
+  "merchantTierEditorSurpriseRewardLabel": "Surprise reward 🎁",
+  "merchantTierEditorSurpriseRewardHint": "Hide this tier from the client until they unlock it.",
+  "merchantTierEditorValidityLabel": "Validity (days, optional)",
+  "merchantTierEditorValidityHint": "E.g.: 30 — empty = no expiration",
+  "merchantTierEditorValidityError": "Please enter a number of days greater than 0"
 }

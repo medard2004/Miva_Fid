@@ -3,8 +3,25 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
+
+/// Traduit un code de palier interne ('Argent'/'Or'/'Platine', utilisé comme
+/// valeur de données/filtre) vers son libellé localisé affiché à l'écran.
+String _tierLabel(AppLocalizations t, String tier) {
+  switch (tier) {
+    case 'Argent':
+      return t.merchantTierSilver;
+    case 'Or':
+      return t.merchantTierGold;
+    case 'Platine':
+      return t.merchantTierPlatinum;
+    default:
+      return tier;
+  }
+}
 
 class _ClientMock {
   final String id;
@@ -45,15 +62,15 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   String _selectedFilter = 'Tous';
   final _searchCtrl = TextEditingController();
 
-  static const _mockClients = [
+  static List<_ClientMock> get _mockClients => [
     _ClientMock(
       id: '1',
       initials: 'AM',
-      avatarColor: Color(0xFF6366F1),
+      avatarColor: const Color(0xFF6366F1),
       name: 'Afi Mensah',
       tier: 'Or',
-      tierBgColor: Color(0xFFFEF3C7),
-      tierTextColor: Color(0xFFD97706),
+      tierBgColor: AppColors.warningTint,
+      tierTextColor: AppColors.warningDark,
       phone: '+228 90 12 34 56',
       lastActivity: 'Il y a 2h',
       currentStamps: 7,
@@ -61,11 +78,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '2',
       initials: 'KA',
-      avatarColor: Color(0xFF6366F1),
+      avatarColor: const Color(0xFF6366F1),
       name: 'Kofi Agbeko',
       tier: 'Argent',
-      tierBgColor: Color(0xFFF1F5F9),
-      tierTextColor: Color(0xFF64748B),
+      tierBgColor: AppColors.border,
+      tierTextColor: AppColors.textSecondary,
       phone: '+228 91 23 45 67',
       lastActivity: 'Il y a 3h',
       currentStamps: 3,
@@ -73,11 +90,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '3',
       initials: 'MD',
-      avatarColor: Color(0xFF6366F1),
+      avatarColor: const Color(0xFF6366F1),
       name: 'Mawuli Dossou',
       tier: 'Platine',
-      tierBgColor: Color(0xFFF3E8FF),
-      tierTextColor: Color(0xFF9333EA),
+      tierBgColor: AppColors.merchantTint,
+      tierTextColor: AppColors.merchant,
       phone: '+228 92 34 56 78',
       lastActivity: 'Hier',
       currentStamps: 10,
@@ -85,11 +102,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '4',
       initials: 'AT',
-      avatarColor: Color(0xFF6366F1),
+      avatarColor: const Color(0xFF6366F1),
       name: 'Akosua Tetteh',
       tier: 'Argent',
-      tierBgColor: Color(0xFFF1F5F9),
-      tierTextColor: Color(0xFF64748B),
+      tierBgColor: AppColors.border,
+      tierTextColor: AppColors.textSecondary,
       phone: '+228 93 45 67 89',
       lastActivity: 'Hier',
       currentStamps: 5,
@@ -97,11 +114,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '5',
       initials: 'YK',
-      avatarColor: Color(0xFFF59E0B),
+      avatarColor: const Color(0xFFF59E0B),
       name: 'Yawa Kpodo',
       tier: 'Or',
-      tierBgColor: Color(0xFFFEF3C7),
-      tierTextColor: Color(0xFFD97706),
+      tierBgColor: AppColors.warningTint,
+      tierTextColor: AppColors.warningDark,
       phone: '+228 94 56 78 90',
       lastActivity: 'Il y a 2j',
       currentStamps: 8,
@@ -109,11 +126,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '6',
       initials: 'KA',
-      avatarColor: Color(0xFFF59E0B),
+      avatarColor: const Color(0xFFF59E0B),
       name: 'Komi Adjovi',
       tier: 'Argent',
-      tierBgColor: Color(0xFFF1F5F9),
-      tierTextColor: Color(0xFF64748B),
+      tierBgColor: AppColors.border,
+      tierTextColor: AppColors.textSecondary,
       phone: '+228 95 67 89 01',
       lastActivity: 'Il y a 4j',
       currentStamps: 2,
@@ -121,11 +138,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '7',
       initials: 'AS',
-      avatarColor: Color(0xFF06B6D4),
+      avatarColor: const Color(0xFF06B6D4),
       name: 'Ama Sossou',
       tier: 'Or',
-      tierBgColor: Color(0xFFFEF3C7),
-      tierTextColor: Color(0xFFD97706),
+      tierBgColor: AppColors.warningTint,
+      tierTextColor: AppColors.warningDark,
       phone: '+228 96 78 90 12',
       lastActivity: 'Il y a 5j',
       currentStamps: 6,
@@ -133,11 +150,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '8',
       initials: 'SA',
-      avatarColor: Color(0xFF6366F1),
+      avatarColor: const Color(0xFF6366F1),
       name: 'Sena Akakpo',
       tier: 'Platine',
-      tierBgColor: Color(0xFFF3E8FF),
-      tierTextColor: Color(0xFF9333EA),
+      tierBgColor: AppColors.merchantTint,
+      tierTextColor: AppColors.merchant,
       phone: '+228 97 89 01 23',
       lastActivity: 'Il y a 6j',
       currentStamps: 9,
@@ -145,11 +162,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '9',
       initials: 'EK',
-      avatarColor: Color(0xFF10B981),
+      avatarColor: const Color(0xFF10B981),
       name: 'Edem Kuevi',
       tier: 'Argent',
-      tierBgColor: Color(0xFFF1F5F9),
-      tierTextColor: Color(0xFF64748B),
+      tierBgColor: AppColors.border,
+      tierTextColor: AppColors.textSecondary,
       phone: '+228 98 90 12 34',
       lastActivity: 'Il y a 8j',
       currentStamps: 4,
@@ -157,11 +174,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     _ClientMock(
       id: '10',
       initials: 'FL',
-      avatarColor: Color(0xFF6366F1),
+      avatarColor: const Color(0xFF6366F1),
       name: 'Fafa Lawson',
       tier: 'Or',
-      tierBgColor: Color(0xFFFEF3C7),
-      tierTextColor: Color(0xFFD97706),
+      tierBgColor: AppColors.warningTint,
+      tierTextColor: AppColors.warningDark,
       phone: '+228 99 01 23 45',
       lastActivity: 'Il y a 10j',
       currentStamps: 7,
@@ -192,10 +209,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final clients = _filteredClients;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -208,7 +226,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -221,21 +239,21 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'Mes clients',
+                          t.merchantClientsTitle,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          '10 clients actifs',
+                          t.merchantClientsActiveCount('10'),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -243,7 +261,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   ),
                   InkWell(
                     onTap: () => ToastService.showSuccess(
-                        'Ajout manuel d\'un client bientôt disponible.'),
+                        t.merchantClientsAddSoonToast),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 36,
@@ -270,14 +288,14 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             LucideIcons.bell,
                             size: 18,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         Positioned(
@@ -304,31 +322,31 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: InkWell(
                 onTap: () => ToastService.showSuccess(
-                    'Exportation de la liste clients au format CSV lancée !'),
+                    t.merchantClientsExportToast),
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(
                         LucideIcons.download,
                         size: 16,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'Exporter la liste',
+                        t.merchantClientsExportButton,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1E293B),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -343,25 +361,25 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: TextField(
                   controller: _searchCtrl,
                   onChanged: (_) => setState(() {}),
                   style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
-                    hintText: 'Rechercher un client...',
-                    hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                    hintText: t.merchantClientsSearchHint,
+                    hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                     prefixIcon: Icon(
                       LucideIcons.search,
                       size: 16,
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.textSecondary,
                     ),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
                 ),
               ),
@@ -383,10 +401,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : const Color(0xFFF1F5F9),
+                          color: isSelected ? AppColors.surface : AppColors.border,
                           borderRadius: BorderRadius.circular(20),
                           border: isSelected
-                              ? Border.all(color: const Color(0xFF1E293B), width: 1.2)
+                              ? Border.all(color: AppColors.textPrimary, width: 1.2)
                               : null,
                         ),
                         child: Row(
@@ -396,21 +414,25 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                 LucideIcons.alignLeft,
                                 size: 12,
                                 color: isSelected
-                                    ? const Color(0xFF1E293B)
-                                    : const Color(0xFF64748B),
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(width: 4),
                             ],
                             Text(
-                              filter,
+                              filter == 'Tous'
+                                  ? t.merchantClientsFilterAll
+                                  : filter == '+30j'
+                                      ? t.merchantClientsFilterInactive30d
+                                      : _tierLabel(t, filter),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: isSelected
                                     ? FontWeight.w700
                                     : FontWeight.w500,
                                 color: isSelected
-                                    ? const Color(0xFF1E293B)
-                                    : const Color(0xFF64748B),
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -434,7 +456,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   return _ClientCard(
                     client: client,
                     onTap: () => context.push('/merchant/clients/${client.id}'),
-                    onSms: () => context.push('/merchant/sms'),
+                    onSms: () => context.push('/merchant/sms/conversation'),
                   );
                 },
               ),
@@ -446,21 +468,21 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    '1-10 sur 10',
+                  Text(
+                    t.merchantClientsPaginationInfo('1', '10', '10'),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   Row(
                     children: [
-                      const Text(
-                        '< Préc.',
+                      Text(
+                        t.merchantClientsPrevious,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -469,15 +491,15 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.border),
                         ),
-                        child: const Text(
-                          'Suiv. >',
+                        child: Text(
+                          t.merchantClientsNext,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -507,6 +529,7 @@ class _ClientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final progressFactor = (client.currentStamps / client.totalStamps).clamp(0.0, 1.0);
 
     return InkWell(
@@ -515,9 +538,9 @@ class _ClientCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEDF0F7)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           children: [
@@ -554,10 +577,10 @@ class _ClientCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               client.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
+                                color: AppColors.textPrimary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -571,7 +594,7 @@ class _ClientCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              client.tier,
+                              _tierLabel(t, client.tier),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -584,9 +607,9 @@ class _ClientCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         '${client.phone} • ${client.lastActivity}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF64748B),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -601,14 +624,14 @@ class _ClientCard extends StatelessWidget {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FD),
+                      color: AppColors.background,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.eye,
                       size: 14,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -620,14 +643,14 @@ class _ClientCard extends StatelessWidget {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FD),
+                      color: AppColors.background,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.messageSquare,
                       size: 14,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -643,7 +666,7 @@ class _ClientCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(3),
                     child: Container(
                       height: 4,
-                      color: const Color(0xFFF1F5F9),
+                      color: AppColors.border,
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
                         widthFactor: progressFactor,
@@ -655,10 +678,10 @@ class _ClientCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   '${client.currentStamps}/${client.totalStamps}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],

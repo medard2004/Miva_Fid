@@ -12,6 +12,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 import '../providers/merchant_provider.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -27,13 +28,14 @@ class QrCodeScreen extends ConsumerWidget {
     // la luminosite effective est leur seul declencheur de rebuild sur
     // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final merchantAsync = ref.watch(merchantNotifierProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: merchantAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Erreur')),
+        error: (_, __) => Center(child: Text(t.merchantQrCodeLoadError)),
         data: (merchant) {
           // Le QR encode le `qr_token` Laravel réel (celui que
           // `joinByQrToken` vérifie côté client) — jamais un identifiant
@@ -52,7 +54,7 @@ class QrCodeScreen extends ConsumerWidget {
               children: [
                 // Title and Subtitle
                 Text(
-                  'Mon QR Code',
+                  t.merchantMoreMyQrCode,
                   style: AppTextStyles.h1().copyWith(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -60,7 +62,7 @@ class QrCodeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Affichez-le pour que les clients scannent',
+                  t.merchantQrCodeSubtitle,
                   style: AppTextStyles.caption().copyWith(
                     color: AppColors.textSecondary,
                     fontSize: 13,
@@ -73,7 +75,7 @@ class QrCodeScreen extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(Sp.lg),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: Rd.card20,
                     boxShadow: [
                       BoxShadow(
@@ -139,7 +141,7 @@ class QrCodeScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Scannez pour gagner un tampon',
+                        t.merchantQrCodeScanToEarnLabel,
                         style: AppTextStyles.caption().copyWith(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -158,19 +160,19 @@ class QrCodeScreen extends ConsumerWidget {
                       label: 'PNG',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Image enregistrée dans la galerie !')),
+                          SnackBar(content: Text(t.merchantQrCodePngSavedToast)),
                         );
                       },
                     ),
                     _buildActionButton(
                       icon: LucideIcons.printer,
                       label: 'A4',
-                      onTap: () => _generatePdf(merchantName, merchantAddress, merchantPhone, qrData),
+                      onTap: () => _generatePdf(t, merchantName, merchantAddress, merchantPhone, qrData),
                     ),
                     _buildActionButton(
                       icon: LucideIcons.share,
-                      label: 'Partager',
-                      onTap: () => _shareWhatsApp(merchantName),
+                      label: t.merchantQrCodeShareButton,
+                      onTap: () => _shareWhatsApp(t, merchantName),
                     ),
                   ],
                 ),
@@ -179,11 +181,11 @@ class QrCodeScreen extends ConsumerWidget {
                 // CODE UNIQUE Section Card — alternative à taper à la main
                 // quand le client ne peut pas scanner le QR.
                 _buildSectionContainer(
-                  title: 'CODE UNIQUE',
+                  title: t.merchantQrCodeUniqueCodeSection,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.gray100,
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -206,7 +208,7 @@ class QrCodeScreen extends ConsumerWidget {
                               : () {
                                   Clipboard.setData(ClipboardData(text: shortCode));
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Code copié dans le presse-papiers !')),
+                                    SnackBar(content: Text(t.merchantQrCodeCodeCopiedToast)),
                                   );
                                 },
                           constraints: const BoxConstraints(),
@@ -220,14 +222,14 @@ class QrCodeScreen extends ConsumerWidget {
 
                 // Statistiques Section Card
                 _buildSectionContainer(
-                  title: 'Statistiques',
+                  title: t.merchantDashboardTitle,
                   child: Row(
                     children: [
-                      _buildStatBox(value: '43', label: 'Cette semaine'),
+                      _buildStatBox(value: '43', label: t.merchantQrCodeThisWeekLabel),
                       const SizedBox(width: Sp.xs),
-                      _buildStatBox(value: '183', label: 'Ce mois'),
+                      _buildStatBox(value: '183', label: t.merchantQrCodeThisMonthLabel),
                       const SizedBox(width: Sp.xs),
-                      _buildStatBox(value: '12', label: 'Nouveaux'),
+                      _buildStatBox(value: '12', label: t.merchantQrCodeNewLabel),
                     ],
                   ),
                 ),
@@ -258,7 +260,7 @@ class QrCodeScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Astuce',
+                                t.merchantQrCodeTipLabel,
                                 style: AppTextStyles.caption().copyWith(
                                   color: AppColors.merchant,
                                   fontWeight: FontWeight.w900,
@@ -267,7 +269,7 @@ class QrCodeScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: Sp.xs),
                               Text(
-                                'Placez le QR à la caisse ou sur les tables pour maximiser les scans.',
+                                t.merchantQrCodeTipMessage,
                                 style: AppTextStyles.bodyMd().copyWith(
                                   color: AppColors.textPrimary,
                                   fontWeight: FontWeight.w500,
@@ -299,7 +301,7 @@ class QrCodeScreen extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: Rd.card,
           boxShadow: [
             BoxShadow(
@@ -343,7 +345,7 @@ class QrCodeScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(Sp.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: Rd.card,
         boxShadow: [
           BoxShadow(
@@ -407,7 +409,7 @@ class QrCodeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _generatePdf(String name, String address, String phone, String qrData) async {
+  Future<void> _generatePdf(AppLocalizations t, String name, String address, String phone, String qrData) async {
     final doc = pw.Document();
     doc.addPage(pw.Page(
       pageFormat: PdfPageFormat.a5,
@@ -416,22 +418,22 @@ class QrCodeScreen extends ConsumerWidget {
         children: [
           pw.Text(name, style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 20),
-          pw.Text('Scannez pour cumuler vos points !', style: const pw.TextStyle(fontSize: 18)),
+          pw.Text(t.merchantQrCodePdfScanMessage, style: const pw.TextStyle(fontSize: 18)),
           pw.SizedBox(height: 20),
           pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: qrData, width: 200, height: 200),
           pw.SizedBox(height: 20),
           if (address.isNotEmpty) pw.Text(address, style: const pw.TextStyle(fontSize: 12)),
           if (phone.isNotEmpty) pw.Text(phone, style: const pw.TextStyle(fontSize: 12)),
           pw.SizedBox(height: 12),
-          pw.Text('Powered by Miva-Fid', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
+          pw.Text(t.merchantQrCodePdfPoweredBy, style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
         ],
       ),
     ));
     await Printing.sharePdf(bytes: await doc.save(), filename: 'mivafid-comptoir.pdf');
   }
 
-  Future<void> _shareWhatsApp(String name) async {
-    final msg = Uri.encodeComponent('Rejoignez mon programme de fidélité Miva-Fid chez $name !');
+  Future<void> _shareWhatsApp(AppLocalizations t, String name) async {
+    final msg = Uri.encodeComponent(t.merchantQrCodeWhatsappShareMessage(name));
     final url = Uri.parse('https://wa.me/?text=$msg');
     if (await canLaunchUrl(url)) await launchUrl(url);
   }

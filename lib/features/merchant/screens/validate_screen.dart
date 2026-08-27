@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/validate_provider.dart';
@@ -27,13 +29,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   final MobileScannerController _scanCtrl = MobileScannerController();
   bool _processing = false;
   bool _isCameraActive = false;
-  int _selectedTab = 0; // 0: Scanner, 1: Téléphone
-  final _phoneOrCodeCtrl = TextEditingController();
+  int _selectedTab = 0; // 0: Scanner, 1: Identifiant
+  final _identifierCtrl = TextEditingController();
 
   @override
   void dispose() {
     _scanCtrl.dispose();
-    _phoneOrCodeCtrl.dispose();
+    _identifierCtrl.dispose();
     super.dispose();
   }
 
@@ -62,7 +64,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     if (_processing) return;
     final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
     if (raw == null || raw.isEmpty) {
-      ToastService.showError('QR code invalide ou illisible.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateQrInvalid);
       return;
     }
     setState(() => _processing = true);
@@ -85,12 +87,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           await ref.read(validateNotifierProvider.notifier).lookupByCode(code);
     } on NetworkException {
       if (mounted) {
-        ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+        ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
       }
       return;
     } catch (_) {
       if (mounted) {
-        ToastService.showError('Une erreur est survenue, réessayez.');
+        ToastService.showError(AppLocalizations.of(context)!.errUnexpected);
       }
       return;
     }
@@ -98,7 +100,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     if (!mounted) return;
     if (card == null) {
       ToastService.showError(
-          'Aucune carte de fidélité trouvée pour ce commerce.');
+          AppLocalizations.of(context)!.merchantValidateNoCardFound);
       return;
     }
     final resolvedCard = card;
@@ -133,12 +135,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           .lookupReward(token);
     } on NetworkException {
       if (mounted) {
-        ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+        ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
       }
       return;
     } catch (_) {
       if (mounted) {
-        ToastService.showError('Une erreur est survenue, réessayez.');
+        ToastService.showError(AppLocalizations.of(context)!.errUnexpected);
       }
       return;
     }
@@ -146,7 +148,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     if (!mounted) return;
     if (reward == null) {
       ToastService.showError(
-          'Aucune récompense de votre commerce ne correspond à ce code.');
+          AppLocalizations.of(context)!.merchantValidateNoRewardFound);
       return;
     }
     final resolvedReward = reward;
@@ -175,12 +177,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       sheetNavigator.pop();
       await AppHaptics.heavy();
       if (mounted) {
-        ToastService.showSuccess('Récompense validée avec succès !');
+        ToastService.showSuccess(AppLocalizations.of(context)!.merchantValidateRewardSuccess);
       }
     } catch (_) {
       if (mounted) {
         sheetNavigator.pop();
-        ToastService.showError('Erreur lors de la validation.');
+        ToastService.showError(AppLocalizations.of(context)!.merchantValidateRewardError);
       }
     }
   }
@@ -200,7 +202,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       rootNavigator.push(MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => ValidationSuccessOverlay(
-          clientName: card.client?.name ?? 'Client',
+          clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
           mechanic: _mechanic,
           stampCount: outcome.stampsCurrent,
           goal: _goal,
@@ -217,16 +219,16 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError(
-        e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
+        e.statusCode == 409 ? e.message : AppLocalizations.of(context)!.merchantValidateFailedRetry,
       );
     } on NetworkException {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
     } catch (_) {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Échec de la validation. Réessayez.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateFailedRetry);
     }
   }
 
@@ -257,21 +259,21 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError(
-        e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
+        e.statusCode == 409 ? e.message : AppLocalizations.of(context)!.merchantValidateFailedRetry,
       );
     } on NetworkException {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
     } catch (_) {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Échec de la validation. Réessayez.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateFailedRetry);
     }
   }
 
-  Future<void> _searchClientByPhoneOrCode() async {
-    final query = _phoneOrCodeCtrl.text.trim();
+  Future<void> _searchClientByIdentifier() async {
+    final query = _identifierCtrl.text.trim();
     if (query.isEmpty) return;
     await _lookupAndShowSheet(query);
   }
@@ -279,9 +281,10 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -294,7 +297,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -307,21 +310,21 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'Valider un tampon',
+                          t.merchantValidateTitle,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'Scannez ou saisissez le numéro',
+                          t.merchantValidateSubtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -337,14 +340,14 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             LucideIcons.bell,
                             size: 18,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         Positioned(
@@ -372,7 +375,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F2F6),
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -384,11 +387,11 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: _selectedTab == 0
-                                ? Colors.white
+                                ? AppColors.surface
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             border: _selectedTab == 0
-                                ? Border.all(color: const Color(0xFFE5E7EB))
+                                ? Border.all(color: AppColors.border)
                                 : null,
                             boxShadow: _selectedTab == 0
                                 ? [
@@ -407,20 +410,20 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                                 LucideIcons.qrCode,
                                 size: 16,
                                 color: _selectedTab == 0
-                                    ? const Color(0xFF1E293B)
-                                    : const Color(0xFF64748B),
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Scanner',
+                                t.merchantValidateTabScanner,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: _selectedTab == 0
                                       ? FontWeight.w700
                                       : FontWeight.w500,
                                   color: _selectedTab == 0
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFF64748B),
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -435,11 +438,11 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: _selectedTab == 1
-                                ? Colors.white
+                                ? AppColors.surface
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             border: _selectedTab == 1
-                                ? Border.all(color: const Color(0xFFE5E7EB))
+                                ? Border.all(color: AppColors.border)
                                 : null,
                             boxShadow: _selectedTab == 1
                                 ? [
@@ -455,23 +458,23 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                LucideIcons.phone,
+                                LucideIcons.hash,
                                 size: 16,
                                 color: _selectedTab == 1
-                                    ? const Color(0xFF1E293B)
-                                    : const Color(0xFF64748B),
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Téléphone',
+                                t.merchantValidateTabPhone,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: _selectedTab == 1
                                       ? FontWeight.w700
                                       : FontWeight.w500,
                                   color: _selectedTab == 1
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFF64748B),
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -489,8 +492,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: _selectedTab == 0
-                    ? _buildScannerContent()
-                    : _buildManualPhoneContent(),
+                    ? _buildScannerContent(t)
+                    : _buildManualIdentifierContent(t),
               ),
             ),
           ],
@@ -499,14 +502,14 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     );
   }
 
-  Widget _buildScannerContent() {
+  Widget _buildScannerContent(AppLocalizations t) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -517,13 +520,17 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       ),
       child: Column(
         children: [
-          // Dark Viewfinder Area
+          // Cadre de scan — panneau sombre façon viseur d'appareil photo en
+          // mode sombre ; en clair, un panneau clair pour que la page reste
+          // cohérente avec le thème plutôt qu'un bloc noir fixe qui rendait
+          // les deux modes indiscernables l'un de l'autre.
           Container(
             width: double.infinity,
             height: 310,
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
+              color: AppColors.isDark ? const Color(0xFF0F172A) : AppColors.background,
               borderRadius: BorderRadius.circular(20),
+              border: AppColors.isDark ? null : Border.all(color: AppColors.border),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -553,15 +560,15 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                   if (!_isCameraActive)
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        SizedBox(height: 60),
+                      children: [
+                        const SizedBox(height: 60),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
-                            'Pointez la caméra vers le QR du client',
+                            t.merchantValidateScanInstruction,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF94A3B8),
+                              color: AppColors.textSecondary,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -597,7 +604,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                 color: Colors.white,
               ),
               label: Text(
-                _isCameraActive ? 'Désactiver la caméra' : 'Activer la caméra',
+                _isCameraActive ? t.merchantValidateDisableCamera : t.merchantValidateEnableCamera,
                 style: const TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w700,
@@ -611,14 +618,14 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     );
   }
 
-  Widget _buildManualPhoneContent() {
+  Widget _buildManualIdentifierContent(AppLocalizations t) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -630,41 +637,42 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recherche manuelle',
+          Text(
+            t.merchantValidateManualSearchTitle,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Entrez le numéro de téléphone ou le code client pour valider un tampon.',
+          Text(
+            t.merchantValidateManualSearchSubtitle,
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FD),
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.border),
             ),
             child: TextField(
-              controller: _phoneOrCodeCtrl,
-              keyboardType: TextInputType.phone,
+              controller: _identifierCtrl,
+              keyboardType: TextInputType.text,
+              textCapitalization: TextCapitalization.characters,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              decoration: const InputDecoration(
-                hintText: 'Ex : +228 90 12 34 56 ou CODE',
-                hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 13.5),
-                prefixIcon: Icon(LucideIcons.phone, color: Color(0xFF64748B), size: 18),
+              decoration: InputDecoration(
+                hintText: t.merchantValidateManualSearchHint,
+                hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                prefixIcon: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 18),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               ),
-              onSubmitted: (_) => _searchClientByPhoneOrCode(),
+              onSubmitted: (_) => _searchClientByIdentifier(),
             ),
           ),
           const SizedBox(height: 16),
@@ -672,7 +680,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: _searchClientByPhoneOrCode,
+              onPressed: _searchClientByIdentifier,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF5B50EC),
                 foregroundColor: Colors.white,
@@ -682,9 +690,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                 ),
               ),
               icon: const Icon(LucideIcons.search, size: 16, color: Colors.white),
-              label: const Text(
-                'Rechercher le client',
-                style: TextStyle(
+              label: Text(
+                t.merchantValidateSearchButton,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,

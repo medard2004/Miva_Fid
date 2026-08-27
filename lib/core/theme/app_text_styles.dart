@@ -11,22 +11,22 @@ class AppTextStyles {
       );
 
   static TextStyle h1() => GoogleFonts.plusJakartaSans(
-        fontSize: 26,
+        fontSize: 27,
         fontWeight: FontWeight.w800,
       );
 
   static TextStyle h2() => GoogleFonts.plusJakartaSans(
-        fontSize: 22,
+        fontSize: 23,
         fontWeight: FontWeight.w700,
       );
 
   static TextStyle h3() => GoogleFonts.plusJakartaSans(
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: FontWeight.w700,
       );
 
   static TextStyle labelBold() => GoogleFonts.plusJakartaSans(
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: FontWeight.w700,
       );
 

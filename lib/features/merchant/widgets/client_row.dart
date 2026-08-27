@@ -193,7 +193,7 @@ class ClientRow extends StatelessWidget {
       return (AppColors.warningTint, AppColors.warningDark);
     }
     if (n.contains('argent') || n.contains('silver')) {
-      return (AppColors.gray100, AppColors.gray600);
+      return (AppColors.border, AppColors.textSecondary);
     }
     if (n.contains('platine') || n.contains('platinum')) {
       return (AppColors.merchantTint, AppColors.merchant);
@@ -218,8 +218,8 @@ class _QuickActionBtn extends StatelessWidget {
       child: Container(
         width: 32,
         height: 32,
-        decoration: const BoxDecoration(
-          color: AppColors.gray100,
+        decoration: BoxDecoration(
+          color: AppColors.border,
           shape: BoxShape.circle,
         ),
         child: Icon(

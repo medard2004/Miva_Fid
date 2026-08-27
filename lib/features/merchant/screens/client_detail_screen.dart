@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 
 class ClientDetailScreen extends ConsumerWidget {
@@ -21,18 +23,18 @@ class ClientDetailScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _removeClient(BuildContext context) async {
+  Future<void> _removeClient(BuildContext context, String clientName) async {
+    final t = AppLocalizations.of(context)!;
     final confirmed = await AppDialog.confirm(
       context,
-      title: 'Retirer du programme ?',
-      message:
-          'Êtes-vous sûr de vouloir retirer Afi Mensah de votre programme de fidélité ? Ses tampons seront réinitialisés.',
-      confirmLabel: 'Retirer',
+      title: t.merchantClientDetailRemoveTitle,
+      message: t.merchantClientDetailRemoveMessage(clientName),
+      confirmLabel: t.merchantClientDetailRemoveConfirm,
       destructive: true,
     );
     if (!confirmed) return;
     if (context.mounted) {
-      ToastService.showSuccess('Client retiré du programme.');
+      ToastService.showSuccess(t.merchantClientDetailRemoveToast);
       context.pop();
     }
   }
@@ -40,6 +42,7 @@ class ClientDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     const clientName = 'Afi Mensah';
     const clientPhone = '+228 90 12 34 56';
@@ -49,7 +52,7 @@ class ClientDetailScreen extends ConsumerWidget {
     const totalStamps = 10;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -59,9 +62,9 @@ class ClientDetailScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       LucideIcons.chevronLeft,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.textPrimary,
                       size: 22,
                     ),
                     onPressed: () => context.pop(),
@@ -70,21 +73,21 @@ class ClientDetailScreen extends ConsumerWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           clientName,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 1),
+                        const SizedBox(height: 1),
                         Text(
-                          'Fiche client',
+                          t.merchantClientDetailSubtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -106,9 +109,9 @@ class ClientDetailScreen extends ConsumerWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         children: [
@@ -131,23 +134,23 @@ class ClientDetailScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             clientName,
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E293B),
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
+                              Text(
                                 clientPhone,
                                 style: TextStyle(
                                   fontSize: 12.5,
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -155,7 +158,7 @@ class ClientDetailScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF3C7),
+                                  color: AppColors.warningTint,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Text(
@@ -172,12 +175,12 @@ class ClientDetailScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
+                            children: [
                               Text(
-                                'Progression',
+                                t.merchantClientDetailProgress,
                                 style: TextStyle(
                                   fontSize: 12.5,
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textSecondary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -186,7 +189,7 @@ class ClientDetailScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1E293B),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
@@ -197,7 +200,7 @@ class ClientDetailScreen extends ConsumerWidget {
                             child: Container(
                               height: 6,
                               width: double.infinity,
-                              color: const Color(0xFFF1F5F9),
+                              color: AppColors.border,
                               child: FractionallySizedBox(
                                 alignment: Alignment.centerLeft,
                                 widthFactor: currentStamps / totalStamps,
@@ -217,7 +220,7 @@ class ClientDetailScreen extends ConsumerWidget {
                           child: SizedBox(
                             height: 46,
                             child: ElevatedButton.icon(
-                              onPressed: () => context.push('/merchant/sms'),
+                              onPressed: () => context.push('/merchant/sms/conversation'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF5B50EC),
                                 foregroundColor: Colors.white,
@@ -228,9 +231,9 @@ class ClientDetailScreen extends ConsumerWidget {
                               ),
                               icon: const Icon(LucideIcons.messageSquare,
                                   size: 16, color: Colors.white),
-                              label: const Text(
-                                'Envoyer un SMS',
-                                style: TextStyle(
+                              label: Text(
+                                t.merchantClientDetailSendSms,
+                                style: const TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
@@ -246,20 +249,20 @@ class ClientDetailScreen extends ConsumerWidget {
                             child: OutlinedButton.icon(
                               onPressed: () => _makeCall(clientPhone),
                               style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                backgroundColor: AppColors.surface,
+                                side: BorderSide(color: AppColors.border),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              icon: const Icon(LucideIcons.phone,
-                                  size: 16, color: Color(0xFF1E293B)),
-                              label: const Text(
-                                'Appeler',
+                              icon: Icon(LucideIcons.phone,
+                                  size: 16, color: AppColors.textPrimary),
+                              label: Text(
+                                t.merchantClientDetailCall,
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1E293B),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),
@@ -276,7 +279,7 @@ class ClientDetailScreen extends ConsumerWidget {
                           child: _buildMiniStat(
                             icon: LucideIcons.stamp,
                             value: '7',
-                            label: 'Tampons',
+                            label: t.merchantDashboardStampsLabel,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -284,7 +287,7 @@ class ClientDetailScreen extends ConsumerWidget {
                           child: _buildMiniStat(
                             icon: LucideIcons.gift,
                             value: '2',
-                            label: 'Récompenses',
+                            label: t.merchantClientDetailRewardsLabel,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -292,7 +295,7 @@ class ClientDetailScreen extends ConsumerWidget {
                           child: _buildMiniStat(
                             icon: LucideIcons.calendar,
                             value: 'il y a 2h',
-                            label: 'Dernière',
+                            label: t.merchantClientDetailLastLabel,
                             isSmallValue: true,
                           ),
                         ),
@@ -301,45 +304,45 @@ class ClientDetailScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
 
                     // 4. HISTORIQUE SECTION
-                    const Text(
-                      'Historique',
+                    Text(
+                      t.merchantClientDetailHistoryTitle,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 10),
 
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         children: [
                           _buildHistoryItem(
                             icon: LucideIcons.stamp,
-                            title: 'Tampon validé',
+                            title: t.merchantClientDetailHistoryStampValidated,
                             time: 'il y a 2h',
                           ),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          Divider(height: 1, color: AppColors.border),
                           _buildHistoryItem(
                             icon: LucideIcons.stamp,
-                            title: 'Tampon validé',
+                            title: t.merchantClientDetailHistoryStampValidated,
                             time: 'il y a 1 semaine',
                           ),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          Divider(height: 1, color: AppColors.border),
                           _buildHistoryItem(
                             icon: LucideIcons.gift,
-                            title: 'Récompense utilisée',
+                            title: t.merchantClientDetailHistoryRewardUsed,
                             time: 'il y a 3 semaines',
                           ),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          Divider(height: 1, color: AppColors.border),
                           _buildHistoryItem(
                             icon: LucideIcons.userPlus,
-                            title: 'Inscription au programme',
+                            title: t.merchantClientDetailHistoryEnrolled,
                             time: 'il y a 2 mois',
                           ),
                         ],
@@ -349,28 +352,28 @@ class ClientDetailScreen extends ConsumerWidget {
 
                     // 5. RETIRER DU PROGRAMME
                     InkWell(
-                      onTap: () => _removeClient(context),
+                      onTap: () => _removeClient(context, clientName),
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFFEE2E2)),
+                          border: Border.all(color: AppColors.dangerTint),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               LucideIcons.trash2,
                               size: 16,
                               color: Color(0xFFDC2626),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              'Retirer du programme',
-                              style: TextStyle(
+                              t.merchantClientDetailRemoveButton,
+                              style: const TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFFDC2626),
@@ -400,13 +403,13 @@ class ClientDetailScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF64748B)),
+          Icon(icon, size: 18, color: AppColors.textSecondary),
           const SizedBox(height: 6),
           Text(
             value,
@@ -415,15 +418,15 @@ class ClientDetailScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: isSmallValue ? 13 : 17,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -444,8 +447,8 @@ class ClientDetailScreen extends ConsumerWidget {
           Container(
             width: 32,
             height: 32,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEEF2FF),
+            decoration: BoxDecoration(
+              color: AppColors.primaryTint,
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 15, color: const Color(0xFF6366F1)),
@@ -457,18 +460,18 @@ class ClientDetailScreen extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 1),
                 Text(
                   time,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
-                    color: Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],

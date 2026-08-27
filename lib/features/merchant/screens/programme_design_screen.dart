@@ -9,12 +9,14 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
 import '../../onboarding/widgets/color_palette_picker.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../widgets/merchant_avatar.dart';
+import '../../client/providers/settings_provider.dart';
 
 class ProgrammeDesignScreen extends ConsumerStatefulWidget {
   const ProgrammeDesignScreen({super.key});
@@ -66,12 +68,13 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     setState(() => _uploadingLogo = true);
     final ok = await ref.read(merchantAuthProvider.notifier).uploadLogo(File(file.path));
     if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
     if (ok) {
       final updatedLogo = ref.read(merchantAuthProvider).restaurant?.logoUrl;
       ref.read(onboardingNotifierProvider.notifier).setLogoUrl(updatedLogo ?? file.path);
-      ToastService.showSuccess('Logo mis à jour avec succès');
+      ToastService.showSuccess(t.merchantProfileLogoSuccess);
     } else {
-      ToastService.showError('Impossible de mettre à jour le logo');
+      ToastService.showError(t.merchantProfileLogoError);
     }
     setState(() => _uploadingLogo = false);
   }
@@ -80,18 +83,20 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     setState(() => _uploadingLogo = true);
     final ok = await ref.read(merchantAuthProvider.notifier).deleteLogo();
     if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
     if (ok) {
       ref.read(onboardingNotifierProvider.notifier).setLogoUrl('');
-      ToastService.showSuccess('Logo supprimé');
+      ToastService.showSuccess(t.merchantProgrammeDesignLogoRemovedToast);
     } else {
-      ToastService.showError('Impossible de supprimer le logo');
+      ToastService.showError(t.merchantVitrineLogoRemoveError);
     }
     setState(() => _uploadingLogo = false);
   }
 
   Future<void> _save() async {
     final state = ref.read(onboardingNotifierProvider);
-    
+    final t = AppLocalizations.of(context)!;
+
     setState(() => _saving = true);
 
     final hexColor = '#${state.colorPrimary.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
@@ -107,12 +112,12 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Design mis à jour avec succès')));
+            SnackBar(content: Text(t.merchantProgrammeDesignSaveSuccess)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text(t.merchantProgrammeDesignSaveError(e.toString()))),
         );
       }
     } finally {
@@ -131,7 +136,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.merchant : Colors.white,
+          color: isSelected ? AppColors.merchant : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.merchant : AppColors.border,
@@ -172,9 +177,10 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     OnboardingNotifier notifier,
     String currentIcon,
   ) {
+    final t = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -184,7 +190,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Choisir une icône', style: AppTextStyles.h3()),
+            Text(t.merchantProgrammeDesignChooseIconTitle, style: AppTextStyles.h3()),
             const SizedBox(height: Sp.md),
             Wrap(
               spacing: Sp.sm,
@@ -225,9 +231,10 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     OnboardingNotifier notifier,
     String currentEmoji,
   ) {
+    final t = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -237,7 +244,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Choisir un emoji', style: AppTextStyles.h3()),
+            Text(t.merchantProgrammeDesignChooseEmojiTitle, style: AppTextStyles.h3()),
             const SizedBox(height: Sp.md),
             Wrap(
               spacing: Sp.sm,
@@ -275,6 +282,8 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final state = ref.watch(onboardingNotifierProvider);
     final notifier = ref.read(onboardingNotifierProvider.notifier);
     final merchant = ref.watch(merchantNotifierProvider).value;
@@ -282,7 +291,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     if (!_initialized || merchant == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Apparence')),
+        appBar: AppBar(title: Text(t.merchantProgrammeDesignLoadingTitle)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -290,7 +299,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Apparence de la carte'),
+        title: Text(t.merchantProgrammeAppearanceTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -306,7 +315,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Aperçu', style: AppTextStyles.labelBold()),
+                        Text(t.merchantVitrinePreviewButton, style: AppTextStyles.labelBold()),
                         Switch(
                           value: _showPreview,
                           onChanged: (val) => setState(() => _showPreview = val),
@@ -321,10 +330,10 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     ],
 
                     // Logo Section
-                    Text('Logo du commerce', style: AppTextStyles.labelBold()),
+                    Text(t.merchantMoreLogoBusiness, style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.xs),
                     Text(
-                      'Ce logo apparaîtra sur votre carte de fidélité et sur vos profils.',
+                      t.merchantProgrammeDesignLogoHint,
                       style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: Sp.md),
@@ -339,7 +348,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                         return Container(
                           padding: const EdgeInsets.all(Sp.md),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: AppColors.border),
                           ),
@@ -376,11 +385,11 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      hasLogo ? 'Logo présent' : 'Aucun logo',
+                                      hasLogo ? t.merchantProgrammeDesignLogoPresent : t.merchantProgrammeDesignNoLogo,
                                       style: AppTextStyles.labelBold().copyWith(fontSize: 14),
                                     ),
                                     Text(
-                                      'Format carré recommandé',
+                                      t.merchantProgrammeDesignSquareFormatHint,
                                       style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary, fontSize: 11),
                                     ),
                                   ],
@@ -397,7 +406,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                                 ),
                                 icon: const Icon(LucideIcons.camera, size: 14, color: AppColors.merchant),
                                 label: Text(
-                                  hasLogo ? 'Modifier' : 'Ajouter',
+                                  hasLogo ? t.commonEdit : t.merchantProgrammeDesignAddButton,
                                   style: AppTextStyles.caption().copyWith(
                                     color: AppColors.textPrimary,
                                     fontWeight: FontWeight.bold,
@@ -408,7 +417,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                                 const SizedBox(width: 4),
                                 IconButton(
                                   onPressed: _uploadingLogo ? null : _removeLogo,
-                                  tooltip: 'Supprimer',
+                                  tooltip: t.merchantProgrammeDesignRemoveTooltip,
                                   icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
                                 ),
                               ],
@@ -419,10 +428,10 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     ),
                     const SizedBox(height: Sp.xl),
 
-                    Text('Couleur principale', style: AppTextStyles.labelBold()),
+                    Text(t.merchantProgrammeDesignPrimaryColorLabel, style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.xs),
                     Text(
-                      'Choisissez la couleur dominante de votre carte de fidélité.',
+                      t.merchantProgrammeDesignColorHint,
                       style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: Sp.md),
@@ -430,7 +439,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     Container(
                       padding: const EdgeInsets.all(Sp.md),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -441,29 +450,29 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     ),
                     const SizedBox(height: Sp.xl),
 
-                    Text('Motif de fond', style: AppTextStyles.labelBold()),
+                    Text(t.merchantProgrammeDesignPatternLabel, style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.sm),
                     Wrap(
                       spacing: Sp.xs,
                       runSpacing: Sp.xs,
                       children: [
                         _buildSegmentButton(
-                          label: 'Aucun',
+                          label: t.merchantProgrammeDesignPatternNone,
                           isSelected: state.cardDecorationPattern == 'none',
                           onTap: () => notifier.setCardDecorationPattern('none'),
                         ),
                         _buildSegmentButton(
-                          label: 'Traits',
+                          label: t.merchantProgrammeDesignPatternLines,
                           isSelected: state.cardDecorationPattern == 'lines',
                           onTap: () => notifier.setCardDecorationPattern('lines'),
                         ),
                         _buildSegmentButton(
-                          label: 'Vagues',
+                          label: t.merchantProgrammeDesignPatternWaves,
                           isSelected: state.cardDecorationPattern == 'waves',
                           onTap: () => notifier.setCardDecorationPattern('waves'),
                         ),
                         _buildSegmentButton(
-                          label: 'Points',
+                          label: t.merchantProgrammeDesignPatternDots,
                           isSelected: state.cardDecorationPattern == 'dots',
                           onTap: () => notifier.setCardDecorationPattern('dots'),
                         ),
@@ -472,13 +481,13 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     const SizedBox(height: Sp.xl),
 
                     if (merchant.loyaltyMode == 'stamps') ...[
-                      Text('Style des tampons', style: AppTextStyles.labelBold()),
+                      Text(t.merchantProgrammeDesignStampStyleLabel, style: AppTextStyles.labelBold()),
                       const SizedBox(height: Sp.sm),
                       Row(
                         children: [
                           Expanded(
                             child: _buildSegmentButton(
-                              label: 'Icône',
+                              label: t.merchantProgrammeDesignStampTypeIcon,
                               isSelected: state.stampDesignType == 'icon',
                               onTap: () {
                                 notifier.setStampDesignType('icon');
@@ -489,7 +498,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                           const SizedBox(width: Sp.xs),
                           Expanded(
                             child: _buildSegmentButton(
-                              label: 'Emoji',
+                              label: t.merchantProgrammeDesignStampTypeEmoji,
                               isSelected: state.stampDesignType == 'emoji',
                               onTap: () {
                                 notifier.setStampDesignType('emoji');
@@ -534,8 +543,8 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                                 Expanded(
                                   child: Text(
                                     state.stampDesignType == 'icon'
-                                        ? 'Icône sélectionnée'
-                                        : 'Emoji sélectionné',
+                                        ? t.merchantProgrammeDesignIconSelectedLabel
+                                        : t.merchantProgrammeDesignEmojiSelectedLabel,
                                     style: AppTextStyles.caption().copyWith(
                                       color: AppColors.textPrimary,
                                       fontWeight: FontWeight.w600,
@@ -543,7 +552,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                                   ),
                                 ),
                                 Text(
-                                  'Modifier',
+                                  t.commonEdit,
                                   style: AppTextStyles.caption().copyWith(
                                     color: AppColors.merchant,
                                     fontWeight: FontWeight.w700,
@@ -563,7 +572,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
             Padding(
               padding: EdgeInsets.fromLTRB(Sp.md, 0, Sp.md, MediaQuery.of(context).padding.bottom + Sp.md),
               child: AppButton.primary(
-                'Enregistrer le design',
+                t.merchantProgrammeDesignSaveButton,
                 icon: LucideIcons.save,
                 onPressed: _save,
                 loading: _saving,

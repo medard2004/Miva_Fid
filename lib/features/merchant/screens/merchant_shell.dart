@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
@@ -20,7 +21,7 @@ class MerchantShell extends ConsumerWidget {
   }) {
     final bool isActive = currentIndex == index;
     const activeColor = Color(0xFF5B50EC);
-    const inactiveColor = Color(0xFF64748B);
+    final inactiveColor = AppColors.textSecondary;
 
     return Expanded(
       child: InkWell(
@@ -60,20 +61,21 @@ class MerchantShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final int currentIndex = navigationShell.currentIndex;
     final hideNav = ref.watch(hideMerchantNavProvider);
     final isAdmin = ref.watch(isAdminProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: navigationShell,
       bottomNavigationBar: (hideNav || !isAdmin)
           ? const SizedBox.shrink()
           : Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
                 border: Border(
-                  top: BorderSide(color: Color(0xFFEDF0F7), width: 1),
+                  top: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
               child: SafeArea(
@@ -86,31 +88,31 @@ class MerchantShell extends ConsumerWidget {
                       _buildNavItem(
                         index: 0,
                         icon: LucideIcons.users,
-                        label: 'Clients',
+                        label: t.merchantNavClients,
                         currentIndex: currentIndex,
                       ),
                       _buildNavItem(
                         index: 1,
                         icon: LucideIcons.chartColumnBig,
-                        label: 'Stats',
+                        label: t.merchantNavStats,
                         currentIndex: currentIndex,
                       ),
                       _buildNavItem(
                         index: 2,
                         icon: LucideIcons.qrCode,
-                        label: 'Valider',
+                        label: t.merchantNavValidate,
                         currentIndex: currentIndex,
                       ),
                       _buildNavItem(
                         index: 3,
                         icon: LucideIcons.messageSquare,
-                        label: 'SMS',
+                        label: t.merchantNavSms,
                         currentIndex: currentIndex,
                       ),
                       _buildNavItem(
                         index: 4,
                         icon: LucideIcons.settings,
-                        label: 'Réglages',
+                        label: t.merchantNavSettings,
                         currentIndex: currentIndex,
                       ),
                     ],

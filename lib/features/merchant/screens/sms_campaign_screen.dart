@@ -3,7 +3,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 
 class _CampaignMock {
@@ -78,9 +80,10 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -94,7 +97,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -107,21 +110,21 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'SMS',
+                          t.merchantNavSms,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'Campagnes & messages',
+                          t.merchantSmsCampaignSubtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -155,14 +158,14 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             LucideIcons.bell,
                             size: 18,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         Positioned(
@@ -190,21 +193,21 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                   Expanded(
                     child: _buildKpiBox(
                       value: '12',
-                      label: 'Envoyées',
+                      label: t.merchantSmsCampaignSentLabel,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _buildKpiBox(
                       value: '82%',
-                      label: 'Ouverture',
+                      label: t.merchantSmsCampaignOpenRateLabel,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _buildKpiBox(
                       value: '143',
-                      label: 'Atteints',
+                      label: t.merchantSmsCampaignReachedLabel,
                     ),
                   ),
                 ],
@@ -214,20 +217,20 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
               // ── SECTION HISTORIQUE ───────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text(
-                    'Historique',
+                    t.merchantClientDetailHistoryTitle,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
-                    '4 campagnes',
+                    t.merchantSmsCampaignCount('4'),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -244,9 +247,9 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,10 +258,10 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                             children: [
                               Text(
                                 camp.title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1E293B),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -267,13 +270,17 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: camp.isPlanned
-                                      ? const Color(0xFFFEF3C7)
-                                      : const Color(0xFFF0FDF4),
+                                      ? AppColors.warningTint
+                                      : AppColors.successTint,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
                                     color: camp.isPlanned
-                                        ? const Color(0xFFFDE68A)
-                                        : const Color(0xFFBBF7D0),
+                                        ? (AppColors.isDark
+                                            ? const Color(0xFF4A3A14)
+                                            : const Color(0xFFFDE68A))
+                                        : (AppColors.isDark
+                                            ? const Color(0xFF1F4A38)
+                                            : const Color(0xFFBBF7D0)),
                                   ),
                                 ),
                                 child: Row(
@@ -302,19 +309,19 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                                 ),
                               ),
                               const Spacer(),
-                              const Icon(
+                              Icon(
                                 LucideIcons.chevronRight,
                                 size: 16,
-                                color: Color(0xFF94A3B8),
+                                color: AppColors.textSecondary,
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${camp.target} • ${camp.time}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11.5,
-                              color: Color(0xFF64748B),
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -322,10 +329,10 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                             children: [
                               Text(
                                 camp.sentStats,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1E293B),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               if (camp.openStats != null) ...[
@@ -358,26 +365,26 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),

@@ -3,7 +3,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 
 class SmsCampaignDetailScreen extends ConsumerWidget {
@@ -21,9 +23,10 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -33,9 +36,9 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       LucideIcons.chevronLeft,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.textPrimary,
                       size: 22,
                     ),
                     onPressed: () => context.pop(),
@@ -47,18 +50,18 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           target,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -80,9 +83,9 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,18 +96,22 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF0FDF4),
+                                  color: AppColors.successTint,
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                                  border: Border.all(
+                                    color: AppColors.isDark
+                                        ? const Color(0xFF1F4A38)
+                                        : const Color(0xFFBBF7D0),
+                                  ),
                                 ),
                                 child: Row(
-                                  children: const [
-                                    Icon(LucideIcons.circleCheck,
+                                  children: [
+                                    const Icon(LucideIcons.circleCheck,
                                         size: 13, color: Color(0xFF16A34A)),
-                                    SizedBox(width: 4),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'Envoyée',
-                                      style: TextStyle(
+                                      t.merchantSmsCampaignDetailSentBadge,
+                                      style: const TextStyle(
                                         color: Color(0xFF16A34A),
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w700,
@@ -114,10 +121,10 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              const Text(
+                              Text(
                                 'il y a 2j',
                                 style: TextStyle(
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textSecondary,
                                   fontSize: 12,
                                 ),
                               ),
@@ -132,7 +139,7 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                                 child: _buildStatBox(
                                   icon: LucideIcons.users,
                                   value: '12',
-                                  label: 'Destinataires',
+                                  label: t.merchantSmsCampaignDetailRecipients,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -140,7 +147,7 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                                 child: _buildStatBox(
                                   icon: LucideIcons.send,
                                   value: '12',
-                                  label: 'Envoyés',
+                                  label: t.merchantSmsCampaignDetailSent,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -148,7 +155,7 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                                 child: _buildStatBox(
                                   icon: LucideIcons.eye,
                                   value: '75%',
-                                  label: 'Ouverts',
+                                  label: t.merchantSmsCampaignDetailOpened,
                                 ),
                               ),
                             ],
@@ -158,12 +165,12 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                           // Taux d'ouverture & Bar
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
+                            children: [
                               Text(
-                                'Taux d\'ouverture',
+                                t.merchantSmsCampaignDetailOpenRate,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textSecondary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -172,7 +179,7 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1E293B),
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
@@ -183,7 +190,7 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                             child: Container(
                               height: 6,
                               width: double.infinity,
-                              color: const Color(0xFFF1F5F9),
+                              color: AppColors.border,
                               child: FractionallySizedBox(
                                 alignment: Alignment.centerLeft,
                                 widthFactor: 9 / 12,
@@ -197,12 +204,12 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
 
                     // 2. MESSAGE ENVOYÉ SECTION
-                    const Text(
-                      'Message envoyé',
+                    Text(
+                      t.merchantSmsCampaignDetailMessageTitle,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -211,23 +218,23 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Vous nous manquez ! Passez cette semaine et profitez d\'un tampon offert.',
                             style: TextStyle(
                               fontSize: 13.5,
-                              color: Color(0xFF1E293B),
+                              color: AppColors.textPrimary,
                               height: 1.45,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: 14),
+                          const SizedBox(height: 14),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -235,14 +242,14 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                                 '72/160 caractères',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF94A3B8),
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                               Text(
                                 '1 SMS',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF94A3B8),
+                                  color: AppColors.textSecondary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -256,31 +263,31 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
                     // 3. DUPLIQUER CETTE CAMPAGNE BUTTON
                     InkWell(
                       onTap: () => ToastService.showSuccess(
-                          'Campagne dupliquée dans un nouveau brouillon !'),
+                          t.merchantSmsCampaignDetailDuplicateToast),
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Icon(
                               LucideIcons.copy,
                               size: 16,
-                              color: Color(0xFF1E293B),
+                              color: AppColors.textPrimary,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              'Dupliquer cette campagne',
+                              t.merchantSmsCampaignDetailDuplicateButton,
                               style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -306,27 +313,27 @@ class SmsCampaignDetailScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FD),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF64748B)),
+          Icon(icon, size: 16, color: AppColors.textSecondary),
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10.5,
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),

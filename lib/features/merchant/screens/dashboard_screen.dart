@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -12,9 +14,10 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -28,7 +31,7 @@ class DashboardScreen extends ConsumerWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -41,21 +44,21 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'Statistiques',
+                          t.merchantDashboardTitle,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'Aperçu de votre activité — juin 2026',
+                          t.merchantDashboardSubtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -71,14 +74,14 @@ class DashboardScreen extends ConsumerWidget {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             LucideIcons.bell,
                             size: 18,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         Positioned(
@@ -107,7 +110,7 @@ class DashboardScreen extends ConsumerWidget {
                     child: _buildTopKpiCard(
                       icon: LucideIcons.users,
                       value: '47',
-                      label: 'Clients',
+                      label: t.merchantNavClients,
                       badge: '↑ +12',
                       badgeColor: const Color(0xFF16A34A),
                       delay: 50,
@@ -118,8 +121,8 @@ class DashboardScreen extends ConsumerWidget {
                     child: _buildTopKpiCard(
                       icon: LucideIcons.circleCheck,
                       value: '183',
-                      label: 'Tampons',
-                      sublabel: 'ce mois',
+                      label: t.merchantDashboardStampsLabel,
+                      sublabel: t.merchantDashboardThisMonthLabel,
                       delay: 100,
                     ),
                   ),
@@ -128,8 +131,8 @@ class DashboardScreen extends ConsumerWidget {
                     child: _buildTopKpiCard(
                       icon: LucideIcons.gift,
                       value: '9',
-                      label: 'Récomp.',
-                      sublabel: 'utilisées',
+                      label: t.merchantDashboardRewardsLabel,
+                      sublabel: t.merchantDashboardUsedLabel,
                       delay: 150,
                     ),
                   ),
@@ -142,9 +145,9 @@ class DashboardScreen extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFEDF0F7)),
+                  border: Border.all(color: AppColors.border),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.02),
@@ -156,20 +159,20 @@ class DashboardScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Activité du mois',
+                    Text(
+                      t.merchantDashboardMonthActivityTitle,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'Validations par semaine',
+                    Text(
+                      t.merchantDashboardValidationsPerWeekSubtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -186,12 +189,12 @@ class DashboardScreen extends ConsumerWidget {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text('60', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                                Text('45', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                                Text('30', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                                Text('15', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                                Text('0', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                              children: [
+                                Text('60', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                Text('45', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                Text('30', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                Text('15', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                Text('0', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
                               ],
                             ),
                           ),
@@ -208,7 +211,7 @@ class DashboardScreen extends ConsumerWidget {
                                     5,
                                     (index) => Container(
                                       height: 1,
-                                      color: const Color(0xFFF1F5F9),
+                                      color: AppColors.border,
                                     ),
                                   ),
                                 ),
@@ -219,10 +222,10 @@ class DashboardScreen extends ConsumerWidget {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      _buildBar(heightFactor: 35 / 60, label: 'Sem 1', delay: 200),
-                                      _buildBar(heightFactor: 47 / 60, label: 'Sem 2', delay: 300),
-                                      _buildBar(heightFactor: 56 / 60, label: 'Sem 3', delay: 400),
-                                      _buildBar(heightFactor: 44 / 60, label: 'Sem 4', delay: 500),
+                                      _buildBar(heightFactor: 35 / 60, label: t.merchantDashboardWeekLabel('1'), delay: 200),
+                                      _buildBar(heightFactor: 47 / 60, label: t.merchantDashboardWeekLabel('2'), delay: 300),
+                                      _buildBar(heightFactor: 56 / 60, label: t.merchantDashboardWeekLabel('3'), delay: 400),
+                                      _buildBar(heightFactor: 44 / 60, label: t.merchantDashboardWeekLabel('4'), delay: 500),
                                     ],
                                   ),
                                 ),
@@ -242,9 +245,9 @@ class DashboardScreen extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFEDF0F7)),
+                  border: Border.all(color: AppColors.border),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.02),
@@ -256,27 +259,27 @@ class DashboardScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Répartition VIP',
+                    Text(
+                      t.merchantDashboardVipDistributionTitle,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'Vos clients par niveau',
+                    Text(
+                      t.merchantDashboardClientsByTierSubtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     // Tier 1: Argent
                     _buildTierProgress(
-                      tierName: 'Argent',
+                      tierName: t.merchantTierSilver,
                       count: '31',
                       percentage: '66%',
                       factor: 0.66,
@@ -287,7 +290,7 @@ class DashboardScreen extends ConsumerWidget {
 
                     // Tier 2: Or
                     _buildTierProgress(
-                      tierName: 'Or',
+                      tierName: t.merchantTierGold,
                       count: '12',
                       percentage: '26%',
                       factor: 0.26,
@@ -298,7 +301,7 @@ class DashboardScreen extends ConsumerWidget {
 
                     // Tier 3: Platine
                     _buildTierProgress(
-                      tierName: 'Platine',
+                      tierName: t.merchantTierPlatinum,
                       count: '4',
                       percentage: '9%',
                       factor: 0.09,
@@ -328,9 +331,9 @@ class DashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,19 +341,19 @@ class DashboardScreen extends ConsumerWidget {
           Container(
             width: 28,
             height: 28,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8F9FD),
+            decoration: BoxDecoration(
+              color: AppColors.background,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 15, color: const Color(0xFF64748B)),
+            child: Icon(icon, size: 15, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
@@ -358,9 +361,9 @@ class DashboardScreen extends ConsumerWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
-                  color: Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -369,9 +372,9 @@ class DashboardScreen extends ConsumerWidget {
                 Flexible(
                   child: Text(
                     sublabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10.5,
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.textSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -431,9 +434,9 @@ class DashboardScreen extends ConsumerWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: Color(0xFF64748B),
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -457,17 +460,17 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             Text(
               tierName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1E293B),
+                color: AppColors.textPrimary,
               ),
             ),
             Text(
               '$count • $percentage',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -479,7 +482,7 @@ class DashboardScreen extends ConsumerWidget {
           child: Container(
             height: 5,
             width: double.infinity,
-            color: const Color(0xFFF1F5F9),
+            color: AppColors.border,
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: factor,
