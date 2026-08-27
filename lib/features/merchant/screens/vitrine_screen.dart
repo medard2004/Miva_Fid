@@ -157,6 +157,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
     final merchant = merchantAsync.value;
+    final account = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
 
     // No duplicated header variables needed
 
@@ -235,7 +236,9 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                           const Icon(LucideIcons.globe, color: AppColors.merchant, size: 18),
                           const SizedBox(width: 8),
                           Text(
-                            'miva.fid/lasaveur',
+                            account?.shortCode?.isNotEmpty == true
+                                ? 'Code boutique : ${account!.shortCode}'
+                                : 'Code boutique à venir',
                             style: AppTextStyles.labelBold().copyWith(
                               color: AppColors.merchant,
                             ),
@@ -289,17 +292,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: const Column(
-                        children: [
-                          _HourRow(day: 'Lundi', hours: '08:00 - 22:00'),
-                          _HourRow(day: 'Mardi', hours: '08:00 - 22:00'),
-                          _HourRow(day: 'Mercredi', hours: '08:00 - 22:00'),
-                          _HourRow(day: 'Jeudi', hours: '08:00 - 22:00'),
-                          _HourRow(day: 'Vendredi', hours: '08:00 - 22:00'),
-                          _HourRow(day: 'Samedi', hours: '08:00 - 22:00'),
-                          _HourRow(day: 'Dimanche', hours: 'Fermé', isClosed: true),
-                        ],
-                      ),
+                      child: _buildHoursSection(account?.openingHours ?? const {}),
                     ).animate().fadeIn(duration: 400.ms, delay: 500.ms).slideY(begin: 0.05, end: 0),
                     const SizedBox(height: Sp.xl),
                   ],
@@ -345,6 +338,52 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
             ).animate().fadeIn(duration: 400.ms, delay: 550.ms).slideY(begin: 0.15, end: 0),
           ],
         ),
+    );
+  }
+
+  static const _dayLabels = [
+    ('mon', 'Lundi'),
+    ('tue', 'Mardi'),
+    ('wed', 'Mercredi'),
+    ('thu', 'Jeudi'),
+    ('fri', 'Vendredi'),
+    ('sat', 'Samedi'),
+    ('sun', 'Dimanche'),
+  ];
+
+  Widget _buildHoursSection(Map<String, dynamic> hours) {
+    if (hours.isEmpty) {
+      return Column(
+        children: [
+          Text(
+            "Aucun horaire renseigné pour le moment.",
+            style:
+                AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          InkWell(
+            onTap: () => context.push('/merchant/more/hours'),
+            child: Text(
+              "Définir mes horaires",
+              style: AppTextStyles.labelBold()
+                  .copyWith(color: AppColors.merchant),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: _dayLabels.map((entry) {
+        final (key, label) = entry;
+        final day = hours[key];
+        final isOpen = day is Map && day['open'] == true;
+        return _HourRow(
+          day: label,
+          hours: isOpen ? "${day['from']} - ${day['to']}" : 'Fermé',
+          isClosed: !isOpen,
+        );
+      }).toList(),
     );
   }
 

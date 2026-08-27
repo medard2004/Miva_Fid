@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -57,9 +59,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     }
 
     final error = ref.read(merchantAuthProvider).lastError;
+    final message = ErrorTranslator.translate(
+      error,
+      context: ErrorContext.changePassword,
+    ).displayMessage ??
+        'Le mot de passe actuel est incorrect.';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(error?.toString() ?? 'Le mot de passe actuel est incorrect.'),
+        content: Text(message),
         backgroundColor: AppColors.danger,
       ),
     );

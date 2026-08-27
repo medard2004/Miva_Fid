@@ -186,6 +186,21 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
+  /// Change l'email du commerce et met à jour la session. Lève l'[ApiException]
+  /// du serveur (mauvais mot de passe, email déjà pris) pour que l'appelant
+  /// puisse afficher le message exact.
+  Future<void> updateEmail(String email, String currentPassword) async {
+    final restaurant = await _authRepository.updateEmail(email, currentPassword);
+    state = state.copyWith(restaurant: restaurant);
+  }
+
+  /// Supprime le compte (soft delete serveur) puis purge la session locale.
+  /// Le token est révoqué côté serveur : l'appel logout échouera silencieusement.
+  Future<void> deleteAccount(String currentPassword) async {
+    await _authRepository.deleteAccount(currentPassword);
+    await signOut();
+  }
+
   Future<bool> verifyPassword(String currentPassword) async {
     state = state.copyWith(clearError: true);
     try {

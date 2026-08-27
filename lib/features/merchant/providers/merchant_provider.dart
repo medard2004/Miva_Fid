@@ -65,7 +65,10 @@ class MerchantNotifier extends _$MerchantNotifier {
     }
 
     if (businessPatch.isNotEmpty) {
-      await ref.read(merchantAuthProvider.notifier).updateBusinessInfo({
+      // `updateBusinessInfo` avale l'exception et renvoie false : sans cette
+      // vérification, un 422/erreur réseau serait annoncé comme un succès
+      // par les écrans (vitrine, socials...).
+      final ok = await ref.read(merchantAuthProvider.notifier).updateBusinessInfo({
         'name': restaurant.name,
         'category': restaurant.category,
         'phone': restaurant.phone,
@@ -78,6 +81,11 @@ class MerchantNotifier extends _$MerchantNotifier {
         'tiktok': restaurant.tiktok,
         ...businessPatch,
       });
+      if (!ok) {
+        final error = ref.read(merchantAuthProvider).lastError;
+        throw Exception(
+            'La mise à jour des informations du commerce a échoué${error == null ? '' : ' : $error'}');
+      }
     }
 
     if (configPatch.isNotEmpty) {
@@ -127,6 +135,7 @@ const _businessKeys = {
   'instagram',
   'facebook',
   'tiktok',
+  'opening_hours',
 };
 
 /// Clés portées par la `config` du programme (`POST /loyalty-programs`).
@@ -148,6 +157,8 @@ const _configKeys = {
   'card_gradient_type',
   'logo_url',
   'fcfa_per_point',
+  'cashback_percentage',
+  'cashback_redeem_cap_percent',
   'cashback_expiry_days',
   'tiers',
   'loops',

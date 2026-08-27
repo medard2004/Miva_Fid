@@ -27,6 +27,11 @@ class RestaurantAccount {
   /// Vrai une fois le restaurant positionné sur la carte (étape localisation).
   final bool hasLocation;
 
+  /// Horaires d'ouverture tels qu'enregistrés côté backend — clés
+  /// `mon`..`sun`, chaque jour : `{open: bool, from?: "HH:MM", to?: "HH:MM"}`.
+  /// Vide tant qu'aucun horaire n'a été renseigné.
+  final Map<String, dynamic> openingHours;
+
   /// Vrai une fois le programme de fidélité créé (step2/step3) — seul
   /// signal fiable d'un onboarding réellement terminé ([hasBusinessInfo]
   /// ne couvre que step1).
@@ -58,6 +63,19 @@ class RestaurantAccount {
   final String? staffName;
   final String staffRole;
 
+  /// Vrai si au moins un jour d'ouverture a été renseigné — signal de
+  /// complétion du profil.
+  bool get hasOpeningHours =>
+      openingHours.values.any((day) => day is Map && day['open'] == true);
+
+  /// Vrai si au moins un réseau social est renseigné (WhatsApp, Instagram,
+  /// Facebook, TikTok).
+  bool get hasSocials =>
+      (whatsapp?.isNotEmpty ?? false) ||
+      (instagram?.isNotEmpty ?? false) ||
+      (facebook?.isNotEmpty ?? false) ||
+      (tiktok?.isNotEmpty ?? false);
+
   const RestaurantAccount({
     required this.id,
     required this.uuid,
@@ -80,6 +98,7 @@ class RestaurantAccount {
     this.longitude,
     this.hasBusinessInfo = false,
     this.hasLocation = false,
+    this.openingHours = const {},
     this.hasLoyaltyProgram = false,
     this.loyaltyType,
     this.loyaltyConfig = const {},
@@ -115,6 +134,8 @@ class RestaurantAccount {
       longitude: (json['longitude'] as num?)?.toDouble(),
       hasBusinessInfo: json['has_business_info'] as bool? ?? false,
       hasLocation: json['has_location'] as bool? ?? false,
+      openingHours:
+          (json['opening_hours'] as Map?)?.cast<String, dynamic>() ?? const {},
       hasLoyaltyProgram: json['has_loyalty_program'] as bool? ?? false,
       loyaltyType: program?['type'] as String?,
       loyaltyConfig:

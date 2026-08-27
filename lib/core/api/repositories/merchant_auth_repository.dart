@@ -86,6 +86,17 @@ class MerchantAuthRepository {
     return RestaurantAccount.fromJson(response['restaurant'] ?? {});
   }
 
+  Future<RestaurantAccount> updateEmail(
+    String email,
+    String currentPassword,
+  ) async {
+    final response = await _authService.updateEmail(email, currentPassword);
+    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+  }
+
+  Future<void> deleteAccount(String currentPassword) =>
+      _authService.deleteAccount(currentPassword);
+
   Future<bool> verifyPassword(String currentPassword) async {
     final response = await _authService.verifyPassword(currentPassword);
     return response['valid'] == true;

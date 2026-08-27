@@ -164,7 +164,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     icon: LucideIcons.palette,
                     title: 'Apparence de la carte',
                     subtitle: 'Personnalisez les couleurs et le style',
-                    onTap: () => context.go('/merchant/more/programme/design'),
+                    onTap: () => context.push('/merchant/more/programme/design'),
                   ),
                   const SizedBox(height: Sp.md),
 
@@ -172,16 +172,26 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     icon: LucideIcons.gift,
                     title: 'Paliers de fidélité',
                     subtitle: 'Objectifs, niveaux et récompenses de votre programme',
-                    onTap: () => context.go('/merchant/more/programme/tiers'),
+                    onTap: () => context.push('/merchant/more/programme/tiers'),
                   ),
                   const SizedBox(height: Sp.md),
 
                   if (loyaltyMode == 'spend') ...[
                     _buildCategoryItem(
                       icon: LucideIcons.calculator,
-                      title: 'Règles d\'accumulation',
+                      title: "Règles d'accumulation",
                       subtitle: 'Configuration du ratio (ex: 1 point = 500 FCFA)',
-                      onTap: () => context.go('/merchant/more/programme/rules'),
+                      onTap: () => context.push('/merchant/more/programme/rules'),
+                    ),
+                    const SizedBox(height: Sp.md),
+                  ],
+
+                  if (loyaltyMode == 'cashback') ...[
+                    _buildCategoryItem(
+                      icon: LucideIcons.percent,
+                      title: 'Paramètres cashback',
+                      subtitle: 'Taux de remise, plafond d\'utilisation et validité du solde',
+                      onTap: () => context.push('/merchant/more/programme/cashback'),
                     ),
                     const SizedBox(height: Sp.md),
                   ],

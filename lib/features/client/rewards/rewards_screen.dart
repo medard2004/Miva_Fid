@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -9,10 +8,9 @@ import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
-import 'package:flutter/services.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
 import 'package:miva_fid/features/client/widgets/shared/notification_bell_button.dart';
-import 'package:miva_fid/core/constants/reward_qr.dart';
+import 'package:miva_fid/features/client/widgets/shared/reward_detail_sheet.dart';
 
 /// Écran des Récompenses et Privilèges.
 class RewardsScreen extends ConsumerWidget {
@@ -59,7 +57,7 @@ class RewardsScreen extends ConsumerWidget {
                               padding: const EdgeInsets.only(bottom: 12),
                               child: _ActiveRewardCard(
                                 reward: reward,
-                                onUse: () => _showRewardQr(context, ref, reward),
+                                onUse: () => showRewardDetailSheet(context, ref, reward),
                               ),
                             ))
                       else
@@ -104,119 +102,6 @@ class RewardsScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Affiche le QR unique de la récompense — le marchand le scanne et valide
-/// sur place (aucune action locale ne marque la récompense comme utilisée :
-/// seule la confirmation marchand le fait). Recharge la liste à la fermeture
-/// au cas où la validation aurait déjà eu lieu pendant que le QR était affiché.
-Future<void> _showRewardQr(BuildContext context, WidgetRef ref, Reward reward) async {
-  final t = AppLocalizations.of(context)!;
-  await showModalBottomSheet(
-    context: context,
-    backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (sheetContext) => Padding(
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(reward.title,
-              style: AppTextStyles.titleMedium(), textAlign: TextAlign.center),
-          const SizedBox(height: 4),
-          Text(reward.restaurantName,
-              style: AppTextStyles.bodyMedium(
-                  color: AppColors.inkMuted(opacity: 0.7)),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: AppColors.border, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: 0.05),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                )
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                QrImageView(
-                  data: '$rewardQrPrefix${reward.redeemToken}',
-                  size: 220,
-                  backgroundColor: Colors.white,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: AppColors.inkSolid,
-                  ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: AppColors.inkSolid,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        reward.redeemToken.replaceAll('-', ' - '),
-                        style: AppTextStyles.monoMedium(color: AppColors.inkSolid)
-                            .copyWith(fontSize: 18),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () async {
-                        await Clipboard.setData(ClipboardData(text: reward.redeemToken));
-                        if (sheetContext.mounted) {
-                          ScaffoldMessenger.of(sheetContext).showSnackBar(
-                            SnackBar(content: Text(t.cardDetailIdCopied)),
-                          );
-                        }
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          LucideIcons.copy,
-                          size: 16,
-                          color: AppColors.inkSolid.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            t.rewardsShowQrInstruction,
-            style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.65)),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          AppButton(
-            label: t.commonClose,
-            onTap: () => Navigator.of(sheetContext).pop(),
-            height: 46,
-          ),
-        ],
-      ),
-    ),
-  );
-  await ref.read(rewardsProvider.notifier).loadMine();
 }
 
 /// Carte de récompense disponible.

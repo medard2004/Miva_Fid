@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../client/providers/settings_provider.dart';
+import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
-import '../providers/merchant_provider.dart';
+import '../providers/team_provider.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -32,19 +35,106 @@ class MoreScreen extends ConsumerWidget {
     if (context.mounted) context.go('/auth/merchant/auth');
   }
 
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Supprimer votre compte ?',
+      message:
+          'Votre commerce, votre programme de fidélité et l\'accès de toute votre équipe seront désactivés. Cette action est définitive.',
+      confirmLabel: 'Continuer',
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var submitting = false;
+
+    final done = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Confirmer avec votre mot de passe'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: passwordCtrl,
+              obscureText: true,
+              autofocus: true,
+              decoration:
+                  const InputDecoration(labelText: 'Mot de passe actuel'),
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Mot de passe requis.' : null,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626)),
+              onPressed: submitting
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setDialogState(() => submitting = true);
+                      try {
+                        await ref
+                            .read(merchantAuthProvider.notifier)
+                            .deleteAccount(passwordCtrl.text);
+                        if (ctx.mounted) Navigator.of(ctx).pop(true);
+                      } on ValidationException catch (e) {
+                        setDialogState(() => submitting = false);
+                        if (ctx.mounted) ToastService.showError(e.message);
+                      } catch (_) {
+                        setDialogState(() => submitting = false);
+                        if (ctx.mounted) {
+                          ToastService.showError(
+                              'Impossible de supprimer le compte. Réessayez.');
+                        }
+                      }
+                    },
+              child: submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child:
+                          CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Supprimer définitivement'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (done == true && context.mounted) {
+      ToastService.showInfo('Compte supprimé.');
+      context.go('/auth/merchant/auth');
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
     final locale = ref.watch(localeProvider);
-    final merchant = ref.watch(merchantNotifierProvider).value;
-    final merchantName = merchant?.name.isNotEmpty == true
-        ? merchant!.name
-        : 'Restaurant La Saveur';
-    final city = merchant?.address?.isNotEmpty == true
-        ? 'Lomé'
-        : 'Lomé';
-    final category = 'Restaurant';
-    final initials = merchant?.initials ?? 'RL';
+    final account = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
+    final teamAsync = ref.watch(teamNotifierProvider);
+
+    final merchantName =
+        (account?.name?.isNotEmpty ?? false) ? account!.name! : 'Votre Commerce';
+    final category = (account?.category?.isNotEmpty ?? false)
+        ? account!.category!
+        : 'Commerce';
+    final city = (account?.city?.isNotEmpty ?? false)
+        ? account!.city!
+        : ((account?.address?.isNotEmpty ?? false) ? account!.address! : '');
+    final logoUrl = account?.logoUrl;
+    final initials = _initials(merchantName);
+
+    final completion = _profileCompletion(context, account);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -84,36 +174,19 @@ class MoreScreen extends ConsumerWidget {
                   InkWell(
                     onTap: () => context.push('/merchant/more/notifications'),
                     borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: const Icon(
-                            LucideIcons.bell,
-                            size: 18,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Icon(
+                        LucideIcons.bell,
+                        size: 18,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
                   ),
                 ],
@@ -136,20 +209,28 @@ class MoreScreen extends ConsumerWidget {
                       Container(
                         width: 44,
                         height: 44,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEEF2FF),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF2FF),
                           shape: BoxShape.circle,
+                          image: (logoUrl != null && logoUrl.isNotEmpty)
+                              ? DecorationImage(
+                                  image: NetworkImage(logoUrl),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Center(
-                          child: Text(
-                            initials,
-                            style: const TextStyle(
-                              color: Color(0xFF5B50EC),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
+                        child: (logoUrl == null || logoUrl.isEmpty)
+                            ? Center(
+                                child: Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5B50EC),
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -167,7 +248,7 @@ class MoreScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '$category • $city',
+                              city.isNotEmpty ? '$category • $city' : category,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF64748B),
@@ -187,7 +268,7 @@ class MoreScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
 
-              // ── 2. COMPLÉTER MON PROFIL 2/5 CARD ────────────────────────
+              // ── 2. COMPLÉTER MON PROFIL CARD ────────────────────────────
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -200,8 +281,8 @@ class MoreScreen extends ConsumerWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           'Compléter mon profil',
                           style: TextStyle(
                             fontSize: 13.5,
@@ -210,8 +291,8 @@ class MoreScreen extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          '2/5',
-                          style: TextStyle(
+                          '${completion.done}/${completion.total}',
+                          style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF64748B),
@@ -228,26 +309,27 @@ class MoreScreen extends ConsumerWidget {
                         color: const Color(0xFFEEF2FF),
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
-                          widthFactor: 0.4,
+                          widthFactor: completion.ratio,
                           child: Container(color: const Color(0xFF5B50EC)),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildTaskRow(
-                      title: 'Logo du commerce',
-                      onTap: () => context.push('/merchant/more/profile'),
-                    ),
-                    const Divider(height: 16, color: Color(0xFFF1F5F9)),
-                    _buildTaskRow(
-                      title: 'Réseaux sociaux',
-                      onTap: () => context.push('/merchant/more/socials'),
-                    ),
-                    const Divider(height: 16, color: Color(0xFFF1F5F9)),
-                    _buildTaskRow(
-                      title: 'Lien d\'avis Google',
-                      onTap: () => context.push('/merchant/more/profile'),
-                    ),
+                    ...completion.tasks.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final task = entry.value;
+                      return Column(
+                        children: [
+                          if (i > 0)
+                            const Divider(height: 16, color: Color(0xFFF1F5F9)),
+                          _buildTaskRow(
+                            title: task.label,
+                            done: task.done,
+                            onTap: task.onTap,
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -264,13 +346,16 @@ class MoreScreen extends ConsumerWidget {
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.clock,
-                  label: 'Horaires d\'ouverture',
+                  label: "Horaires d'ouverture",
+                  tag: completion.hoursDone ? 'Configuré' : null,
+                  tagDone: completion.hoursDone,
                   onTap: () => context.push('/merchant/more/hours'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.link,
                   label: 'Réseaux sociaux',
-                  tag: 'À compléter',
+                  tag: completion.socialsDone ? 'Configuré' : 'À compléter',
+                  tagDone: completion.socialsDone,
                   onTap: () => context.push('/merchant/more/socials'),
                 ),
                 _buildMenuItem(
@@ -293,8 +378,13 @@ class MoreScreen extends ConsumerWidget {
                 _buildMenuItem(
                   icon: LucideIcons.users,
                   label: 'Équipe',
-                  tag: '3',
+                  tag: teamAsync.value?.length.toString(),
                   onTap: () => context.push('/merchant/more/team'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.lock,
+                  label: 'Changer le mot de passe',
+                  onTap: () => context.push('/merchant/more/change-password'),
                 ),
               ]),
               const SizedBox(height: 20),
@@ -311,7 +401,6 @@ class MoreScreen extends ConsumerWidget {
                 _buildMenuItem(
                   icon: LucideIcons.gift,
                   label: 'Objectif & récompense',
-                  tag: '10 visites',
                   onTap: () => context.push('/merchant/more/programme/tiers'),
                 ),
                 _buildMenuItem(
@@ -325,7 +414,7 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/account/qrcode'),
                 ),
                 _buildMenuItem(
-                  icon: LucideIcons.globe,
+                  icon: LucideIcons.store,
                   label: 'Ma vitrine',
                   onTap: () => context.push('/merchant/more/account/vitrine'),
                 ),
@@ -343,7 +432,7 @@ class MoreScreen extends ConsumerWidget {
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.fileText,
-                  label: 'Conditions d\'utilisation',
+                  label: "Conditions d'utilisation",
                   onTap: () => context.push('/client/legal/terms'),
                 ),
                 _buildMenuItem(
@@ -354,7 +443,20 @@ class MoreScreen extends ConsumerWidget {
               ]),
               const SizedBox(height: 20),
 
-              // ── 6. SE DÉCONNECTER BUTTON ─────────────────────────────────
+              // ── 6. ZONE DANGEREUX ────────────────────────────────────────
+              _buildSectionLabel('ZONE DANGEREUSE'),
+              const SizedBox(height: 8),
+              _buildGroupCard([
+                _buildMenuItem(
+                  icon: LucideIcons.trash2,
+                  label: 'Supprimer mon compte',
+                  danger: true,
+                  onTap: () => _deleteAccount(context, ref),
+                ),
+              ]),
+              const SizedBox(height: 20),
+
+              // ── 7. SE DÉCONNECTER BUTTON ─────────────────────────────────
               InkWell(
                 onTap: () => _signOut(context, ref),
                 borderRadius: BorderRadius.circular(16),
@@ -385,7 +487,7 @@ class MoreScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // ── 7. FOOTER ────────────────────────────────────────────────
+              // ── 8. FOOTER ────────────────────────────────────────────────
               const Center(
                 child: Text(
                   'Miva-Fid v1.0.0',
@@ -400,6 +502,51 @@ class MoreScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  _ProfileCompletion _profileCompletion(
+    BuildContext context,
+    RestaurantAccount? account,
+  ) {
+    final hoursDone = account?.hasOpeningHours ?? false;
+    final socialsDone = account?.hasSocials ?? false;
+
+    final tasks = [
+      _CompletionTask(
+        label: 'Logo du commerce',
+        done: (account?.logoUrl?.isNotEmpty ?? false),
+        onTap: () => context.push('/merchant/more/profile'),
+      ),
+      _CompletionTask(
+        label: 'Description du commerce',
+        done: (account?.description?.isNotEmpty ?? false),
+        onTap: () => context.push('/merchant/more/profile'),
+      ),
+      _CompletionTask(
+        label: "Horaires d'ouverture",
+        done: hoursDone,
+        onTap: () => context.push('/merchant/more/hours'),
+      ),
+      _CompletionTask(
+        label: 'Réseaux sociaux',
+        done: socialsDone,
+        onTap: () => context.push('/merchant/more/socials'),
+      ),
+    ];
+
+    return _ProfileCompletion(
+      tasks: tasks,
+      total: tasks.length,
+      hoursDone: hoursDone,
+      socialsDone: socialsDone,
     );
   }
 
@@ -441,38 +588,46 @@ class MoreScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTaskRow({required String title, required VoidCallback onTap}) {
+  Widget _buildTaskRow({
+    required String title,
+    required bool done,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Row(
         children: [
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFF94A3B8),
-                width: 1.5,
-                strokeAlign: BorderSide.strokeAlignInside,
-              ),
-            ),
-          ),
+          done
+              ? const Icon(LucideIcons.circleCheck,
+                  size: 20, color: Color(0xFF10B981))
+              : Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF94A3B8),
+                      width: 1.5,
+                      strokeAlign: BorderSide.strokeAlignInside,
+                    ),
+                  ),
+                ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF334155),
+                color: done ? const Color(0xFF94A3B8) : const Color(0xFF334155),
                 fontWeight: FontWeight.w500,
+                decoration: done ? TextDecoration.lineThrough : null,
               ),
             ),
           ),
-          const Icon(
-            LucideIcons.chevronRight,
+          Icon(
+            done ? LucideIcons.check : LucideIcons.chevronRight,
             size: 16,
-            color: Color(0xFF94A3B8),
+            color: done ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
           ),
         ],
       ),
@@ -483,8 +638,12 @@ class MoreScreen extends ConsumerWidget {
     required IconData icon,
     required String label,
     String? tag,
+    bool tagDone = false,
+    bool danger = false,
     required VoidCallback onTap,
   }) {
+    final labelColor = danger ? const Color(0xFFDC2626) : const Color(0xFF1E293B);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -492,24 +651,24 @@ class MoreScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: const Color(0xFF475569)),
+            Icon(icon, size: 18, color: danger ? const Color(0xFFDC2626) : const Color(0xFF475569)),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+                  color: labelColor,
                 ),
               ),
             ),
             if (tag != null) ...[
               Text(
                 tag,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
-                  color: Color(0xFF64748B),
+                  color: tagDone ? const Color(0xFF10B981) : const Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -525,4 +684,34 @@ class MoreScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _CompletionTask {
+  const _CompletionTask({
+    required this.label,
+    required this.done,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool done;
+  final VoidCallback onTap;
+}
+
+class _ProfileCompletion {
+  const _ProfileCompletion({
+    required this.tasks,
+    required this.total,
+    required this.hoursDone,
+    required this.socialsDone,
+  });
+
+  final List<_CompletionTask> tasks;
+  final int total;
+  final bool hoursDone;
+  final bool socialsDone;
+
+  int get done => tasks.where((t) => t.done).length;
+
+  double get ratio => total == 0 ? 0 : done / total;
 }

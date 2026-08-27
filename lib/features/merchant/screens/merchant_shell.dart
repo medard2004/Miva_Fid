@@ -3,8 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../providers/clients_provider.dart';
+import '../providers/merchant_ui_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
@@ -31,6 +30,7 @@ class MerchantShell extends ConsumerWidget {
           );
         },
         child: Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -42,12 +42,16 @@ class MerchantShell extends ConsumerWidget {
                 size: 22,
               ),
               const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive ? activeColor : inactiveColor,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                    color: isActive ? activeColor : inactiveColor,
+                  ),
                 ),
               ),
             ],
@@ -78,43 +82,39 @@ class MerchantShell extends ConsumerWidget {
               ),
               child: SafeArea(
                 top: false,
-                child: SizedBox(
-                  height: 58,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildNavItem(
-                        index: 0,
-                        icon: LucideIcons.users,
-                        label: 'Clients',
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 1,
-                        icon: LucideIcons.chartColumnBig,
-                        label: 'Stats',
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 2,
-                        icon: LucideIcons.qrCode,
-                        label: 'Valider',
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 3,
-                        icon: LucideIcons.messageSquare,
-                        label: 'SMS',
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 4,
-                        icon: LucideIcons.settings,
-                        label: 'Réglages',
-                        currentIndex: currentIndex,
-                      ),
-                    ],
-                  ),
+                child: Row(
+                  children: [
+                    _buildNavItem(
+                      index: 0,
+                      icon: LucideIcons.users,
+                      label: 'Clients',
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 1,
+                      icon: LucideIcons.chartColumnBig,
+                      label: 'Stats',
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 2,
+                      icon: LucideIcons.qrCode,
+                      label: 'Valider',
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 3,
+                      icon: LucideIcons.messageSquare,
+                      label: 'SMS',
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 4,
+                      icon: LucideIcons.settings,
+                      label: 'Réglages',
+                      currentIndex: currentIndex,
+                    ),
+                  ],
                 ),
               ),
             ),

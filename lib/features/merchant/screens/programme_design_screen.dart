@@ -10,6 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
+import '../../onboarding/utils/card_colors.dart';
 import '../../onboarding/widgets/color_palette_picker.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -42,7 +43,9 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     if (m != null) {
       String hex = m.colorPrimary.replaceAll('#', '');
       if (hex.length == 6) hex = 'FF$hex';
-      final color = Color(int.parse(hex, radix: 16));
+      final parsed = int.tryParse(hex, radix: 16);
+      if (parsed == null) return;
+      final color = Color(parsed);
       
       final notifier = ref.read(onboardingNotifierProvider.notifier);
       notifier.setColorPrimary(color);
@@ -91,14 +94,20 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
 
   Future<void> _save() async {
     final state = ref.read(onboardingNotifierProvider);
-    
+
     setState(() => _saving = true);
 
     final hexColor = '#${state.colorPrimary.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+    // Le dégradé de la carte client dérive la secondaire de la primaire
+    // (voir LoyaltyCardPreview) : on renvoie la secondaire recalculée, sinon
+    // l'ancienne valeur figée à l'onboarding créerait un écart aperçu/carte.
+    final secondaryColor = deriveSecondaryColor(state.colorPrimary);
+    final hexSecondary = '#${secondaryColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
 
     try {
       await ref.read(merchantNotifierProvider.notifier).updateProgramme({
         'color_primary': hexColor,
+        'color_secondary': hexSecondary,
         'card_decoration_pattern': state.cardDecorationPattern,
         'stamp_design_type': state.stampDesignType,
         'stamp_icon': state.stampIcon,
@@ -174,7 +183,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -227,7 +236,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

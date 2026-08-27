@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/validate_provider.dart';
@@ -39,6 +41,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   String get _mechanic =>
       ref.read(merchantAuthProvider).restaurant?.loyaltyType ?? 'stamps';
+
+  String get _validationTitle => switch (_mechanic) {
+        'points' || 'spend' => 'Valider un achat',
+        'cashback' => 'Valider un cashback',
+        _ => 'Valider un tampon',
+      };
 
   int get _goal {
     final config =
@@ -105,7 +113,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
     await AppHaptics.medium();
     if (!mounted) return;
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -153,35 +161,90 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
     await AppHaptics.medium();
     if (!mounted) return;
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => RewardRedeemSheet(
         reward: resolvedReward,
-        onRedeem: () => _confirmRewardRedeem(resolvedReward.id),
-        onCancel: (_) async {},
+        onRedeem: () => _confirmRewardRedeem(resolvedReward),
+        onCancel: (reason) => _confirmRewardCancel(resolvedReward.id, reason: reason),
       ),
     );
   }
 
-  Future<void> _confirmRewardRedeem(String rewardId) async {
+  Future<void> _confirmRewardRedeem(MerchantReward reward) async {
     final sheetNavigator = Navigator.of(context);
     try {
       await ref
           .read(validateNotifierProvider.notifier)
-          .redeemReward(rewardId);
+          .redeemReward(reward.id, token: reward.token ?? '');
       if (!mounted) return;
       sheetNavigator.pop();
       await AppHaptics.heavy();
       if (mounted) {
         ToastService.showSuccess('Récompense validée avec succès !');
       }
+    } on ValidationException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(e.message);
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(
+        e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
+      );
+    } on NetworkException {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
     } catch (_) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Échec de la validation. Réessayez.');
+    }
+  }
+
+  Future<void> _confirmRewardCancel(String rewardId, {String? reason}) async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Annuler cette récompense ?',
+      message:
+          'Le client ne pourra plus utiliser cette récompense. Action tracée dans l\'historique.',
+      confirmLabel: 'Annuler la récompense',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    if (!mounted) return;
+    final sheetNavigator = Navigator.of(context);
+    try {
+      await ref
+          .read(validateNotifierProvider.notifier)
+          .cancelReward(rewardId, reason: reason);
+      if (!mounted) return;
+      sheetNavigator.pop();
       if (mounted) {
-        sheetNavigator.pop();
-        ToastService.showError('Erreur lors de la validation.');
+        ToastService.showSuccess('Récompense annulée.');
       }
+    } on ValidationException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(e.message);
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(
+        e.statusCode == 409 ? e.message : 'Échec de l\'annulation. Réessayez.',
+      );
+    } on NetworkException {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+    } catch (_) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Échec de l\'annulation. Réessayez.');
     }
   }
 
@@ -276,12 +339,30 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     await _lookupAndShowSheet(query);
   }
 
+  Future<void> _signOut() async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Se déconnecter ?',
+      message: 'Vous devrez vous reconnecter pour accéder à votre espace marchand.',
+      confirmLabel: 'Se déconnecter',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    await ref.read(merchantAuthProvider.notifier).signOut();
+    if (context.mounted) context.go('/auth/merchant/auth');
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    // Un opérateur n'a pas accès au dashboard (`MerchantShell` le confine à
+    // cet écran) : sans ce menu, il n'aurait aucun moyen de changer son mot
+    // de passe ou de se déconnecter.
+    final isAdmin = ref.watch(isAdminProvider);
+    final staffName = ref.watch(merchantAuthProvider).restaurant?.staffName;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -294,12 +375,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       LucideIcons.qrCode,
-                      color: Color(0xFF5B50EC),
+                      color: AppColors.primary,
                       size: 20,
                     ),
                   ),
@@ -307,26 +388,72 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'Valider un tampon',
+                          _validationTitle,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'Scannez ou saisissez le numéro',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  if (!isAdmin)
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        LucideIcons.userCircle,
+                        size: 20,
+                        color: AppColors.textPrimary,
+                      ),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'profile':
+                            context.push('/merchant/more/profile');
+                            break;
+                          case 'change-password':
+                            context.push('/merchant/more/change-password');
+                            break;
+                          case 'sign-out':
+                            _signOut();
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        if (staffName != null && staffName.isNotEmpty)
+                          PopupMenuItem<String>(
+                            enabled: false,
+                            child: Text(
+                              staffName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        const PopupMenuItem<String>(
+                          value: 'profile',
+                          child: Text('Mon profil'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'change-password',
+                          child: Text('Changer mon mot de passe'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'sign-out',
+                          child: Text('Se déconnecter'),
+                        ),
+                      ],
+                    ),
                   InkWell(
                     onTap: () => context.push('/merchant/more/notifications'),
                     borderRadius: BorderRadius.circular(20),
@@ -337,14 +464,14 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             LucideIcons.bell,
                             size: 18,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         Positioned(
@@ -354,7 +481,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                             width: 7,
                             height: 7,
                             decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
+                              color: AppColors.warning,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -372,7 +499,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F2F6),
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -384,11 +511,11 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: _selectedTab == 0
-                                ? Colors.white
+                                ? AppColors.surface
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             border: _selectedTab == 0
-                                ? Border.all(color: const Color(0xFFE5E7EB))
+                                ? Border.all(color: AppColors.border)
                                 : null,
                             boxShadow: _selectedTab == 0
                                 ? [
@@ -407,8 +534,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                                 LucideIcons.qrCode,
                                 size: 16,
                                 color: _selectedTab == 0
-                                    ? const Color(0xFF1E293B)
-                                    : const Color(0xFF64748B),
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -419,8 +546,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                                       ? FontWeight.w700
                                       : FontWeight.w500,
                                   color: _selectedTab == 0
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFF64748B),
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -435,11 +562,11 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: _selectedTab == 1
-                                ? Colors.white
+                                ? AppColors.surface
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             border: _selectedTab == 1
-                                ? Border.all(color: const Color(0xFFE5E7EB))
+                                ? Border.all(color: AppColors.border)
                                 : null,
                             boxShadow: _selectedTab == 1
                                 ? [
@@ -458,8 +585,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                                 LucideIcons.phone,
                                 size: 16,
                                 color: _selectedTab == 1
-                                    ? const Color(0xFF1E293B)
-                                    : const Color(0xFF64748B),
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -470,8 +597,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                                       ? FontWeight.w700
                                       : FontWeight.w500,
                                   color: _selectedTab == 1
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFF64748B),
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -504,9 +631,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -553,15 +680,15 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                   if (!_isCameraActive)
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        SizedBox(height: 60),
+                      children: [
+                        const SizedBox(height: 60),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
                             'Pointez la caméra vers le QR du client',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF94A3B8),
+                              color: AppColors.textSecondary,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -584,7 +711,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                 setState(() => _isCameraActive = !_isCameraActive);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5B50EC),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -616,9 +743,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -630,39 +757,42 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Recherche manuelle',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Entrez le numéro de téléphone ou le code client pour valider un tampon.',
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FD),
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.border),
             ),
             child: TextField(
               controller: _phoneOrCodeCtrl,
               keyboardType: TextInputType.phone,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Ex : +228 90 12 34 56 ou CODE',
-                hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 13.5),
-                prefixIcon: Icon(LucideIcons.phone, color: Color(0xFF64748B), size: 18),
+                hintStyle:
+                    TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                prefixIcon: Icon(LucideIcons.phone,
+                    color: AppColors.textSecondary, size: 18),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               ),
               onSubmitted: (_) => _searchClientByPhoneOrCode(),
             ),
@@ -674,7 +804,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
             child: ElevatedButton.icon(
               onPressed: _searchClientByPhoneOrCode,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5B50EC),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(

@@ -36,7 +36,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
 
   // Mode Cashback
   late final TextEditingController _cashbackPercentCtrl;
-  late final TextEditingController _cashbackMinRedeemCtrl;
   late final TextEditingController _cashbackExpiryCtrl;
 
   @override
@@ -67,7 +66,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         state.cashbackPercentage % 1 == 0 ? 0 : 1,
       ),
     );
-    _cashbackMinRedeemCtrl = TextEditingController(text: '1000');
     _cashbackExpiryCtrl = TextEditingController(
       text: state.cashbackExpiryDays?.toString() ?? '',
     );
@@ -81,7 +79,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     _pointsGoalCtrl.dispose();
     _pointsRewardCtrl.dispose();
     _cashbackPercentCtrl.dispose();
-    _cashbackMinRedeemCtrl.dispose();
     _cashbackExpiryCtrl.dispose();
     super.dispose();
   }
@@ -554,7 +551,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     final pct = double.tryParse(
             _cashbackPercentCtrl.text.trim().replaceAll(',', '.')) ??
         5;
-    final minRedeem = int.tryParse(_cashbackMinRedeemCtrl.text.trim()) ?? 1000;
     final earnedOn20k = (20000 * pct / 100).round();
 
     return Column(
@@ -630,18 +626,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
               ),
               const SizedBox(height: Sp.sm),
 
-              // Seuil minimal d'utilisation
-              AppInput(
-                label: 'Seuil minimum pour utiliser la cagnotte (FCFA)',
-                hint: 'Ex: 1000',
-                controller: _cashbackMinRedeemCtrl,
-                keyboardType: TextInputType.number,
-                prefixIcon: LucideIcons.walletCards,
-                accentColor: AppColors.merchant,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: Sp.sm),
-
               // Expiration
               AppInput(
                 label: 'Durée de validité du solde (jours, optionnel)',
@@ -661,7 +645,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
           icon: LucideIcons.sparkles,
           title: 'Fonctionnement du cashback',
           description:
-              '• Pour 20 000 FCFA d\'achat, le client gagne $earnedOn20k FCFA ($pct%).\n• Dès $minRedeem FCFA cumulés, il peut déduire son solde.',
+              '• Pour 20 000 FCFA d\'achat, le client gagne $earnedOn20k FCFA ($pct%).\n• Il peut ensuite déduire son solde de ses achats.',
         ),
       ],
     );

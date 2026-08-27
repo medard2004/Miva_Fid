@@ -151,6 +151,25 @@ class MerchantAuthService {
         return response.data as Map<String, dynamic>;
       });
 
+  Future<Map<String, dynamic>> updateEmail(
+    String email,
+    String currentPassword,
+  ) =>
+      _guard(() async {
+        final response =
+            await _apiClient.dio.put('/auth/merchant/email', data: {
+          'email': email,
+          'current_password': currentPassword,
+        });
+        return response.data as Map<String, dynamic>;
+      });
+
+  Future<void> deleteAccount(String currentPassword) => _guard(() async {
+        await _apiClient.dio.delete('/auth/merchant/account', data: {
+          'current_password': currentPassword,
+        });
+      });
+
   Future<Map<String, dynamic>> getMe() => _guard(() async {
         final response = await _apiClient.dio.get('/auth/merchant/me');
         return response.data as Map<String, dynamic>;

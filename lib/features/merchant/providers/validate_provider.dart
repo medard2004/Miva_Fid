@@ -35,6 +35,7 @@ class MerchantReward {
     required this.title,
     required this.status,
     required this.isExpired,
+    this.token,
     this.clientName,
   });
 
@@ -42,6 +43,10 @@ class MerchantReward {
   final String title;
   final String status;
   final bool isExpired;
+
+  /// Jeton QR renvoyé par le lookup — requis par le serveur pour valider
+  /// la récompense (prouve que le QR a été scanné).
+  final String? token;
   final String? clientName;
 
   bool get isRedeemable => status == 'available' && !isExpired;
@@ -53,6 +58,7 @@ class MerchantReward {
       title: json['title'] as String? ?? '',
       status: json['status'] as String? ?? 'available',
       isExpired: json['is_expired'] as bool? ?? false,
+      token: json['token'] as String?,
       clientName: client?['name'] as String?,
     );
   }
@@ -72,10 +78,6 @@ class ValidateNotifier extends _$ValidateNotifier {
     final row = await ref.read(merchantDashboardServiceProvider).lookup(code);
     return row == null ? null : LoyaltyCardModel.fromJson(row);
   }
-
-  /// Conservé pour les appels par identifiant client ; même endpoint.
-  Future<LoyaltyCardModel?> lookupClient(String clientId) =>
-      lookupByCode(clientId);
 
   /// Accorde un tampon (ou des points, en mode "Achat" via [amountFcfa]).
   /// Le déblocage de la récompense (remise à zéro + statut
@@ -111,6 +113,7 @@ class ValidateNotifier extends _$ValidateNotifier {
           redeemAmountFcfa: redeemAmountFcfa,
         );
 
+    ref.invalidate(dashboardStatsProvider);
     ref.invalidate(clientsNotifierProvider);
 
     final card = result['client'] as Map<String, dynamic>?;
@@ -129,8 +132,11 @@ class ValidateNotifier extends _$ValidateNotifier {
     return row == null ? null : MerchantReward.fromJson(row);
   }
 
-  Future<MerchantReward> redeemReward(String rewardId) async {
-    final result = await ref.read(merchantDashboardServiceProvider).redeemReward(rewardId);
+  Future<MerchantReward> redeemReward(String rewardId, {required String token}) async {
+    final result = await ref
+        .read(merchantDashboardServiceProvider)
+        .redeemReward(rewardId, token: token);
+    _invalidateAfterMutation();
     return MerchantReward.fromJson(result['reward'] as Map<String, dynamic>);
   }
 
@@ -138,6 +144,12 @@ class ValidateNotifier extends _$ValidateNotifier {
     final result = await ref
         .read(merchantDashboardServiceProvider)
         .cancelReward(rewardId, reason: reason);
+    _invalidateAfterMutation();
     return MerchantReward.fromJson(result['reward'] as Map<String, dynamic>);
+  }
+
+  void _invalidateAfterMutation() {
+    ref.invalidate(dashboardStatsProvider);
+    ref.invalidate(clientsNotifierProvider);
   }
 }

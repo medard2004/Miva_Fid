@@ -64,6 +64,28 @@ class TeamNotifier extends StateNotifier<AsyncValue<List<TeamMember>>> {
       return false;
     }
   }
+
+  /// Édite un membre (nom, rôle, réinitialisation de mot de passe).
+  Future<bool> updateMember(
+    int id, {
+    String? name,
+    String? role,
+    String? password,
+  }) async {
+    try {
+      await _service.update(id, {
+        if (name != null && name.isNotEmpty) 'name': name,
+        if (role != null) 'role': role,
+        if (password != null && password.isNotEmpty) 'password': password,
+      });
+      lastError = null;
+      await refresh();
+      return true;
+    } catch (e) {
+      lastError = e;
+      return false;
+    }
+  }
 }
 
 // `.autoDispose` : sans lui, l'équipe du premier admin connecté sur cet

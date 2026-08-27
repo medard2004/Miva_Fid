@@ -21,6 +21,7 @@ class TeamScreen extends ConsumerWidget {
     final emailCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     String role = 'operator';
     bool saving = false;
 
@@ -33,20 +34,33 @@ class TeamScreen extends ConsumerWidget {
             left: Sp.md, right: Sp.md, top: Sp.md,
             bottom: MediaQuery.of(sheetContext).viewInsets.bottom + Sp.md,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Inviter un membre', style: AppTextStyles.h3()),
-              const SizedBox(height: Sp.md),
-              AppInput(label: 'Nom', controller: nameCtrl, accentColor: AppColors.merchant),
-              const SizedBox(height: Sp.sm),
-              AppInput(label: 'Email', controller: emailCtrl, keyboardType: TextInputType.emailAddress, accentColor: AppColors.merchant),
-              const SizedBox(height: Sp.sm),
-              AppInput(label: 'Téléphone (optionnel)', controller: phoneCtrl, keyboardType: TextInputType.phone, accentColor: AppColors.merchant),
-              const SizedBox(height: Sp.sm),
-              AppInput(label: 'Mot de passe', controller: passwordCtrl, obscureText: true, accentColor: AppColors.merchant),
-              const SizedBox(height: Sp.sm),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Inviter un membre', style: AppTextStyles.h3()),
+                const SizedBox(height: Sp.md),
+                AppInput(label: 'Nom', controller: nameCtrl, accentColor: AppColors.merchant,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Le nom est requis.' : null),
+                const SizedBox(height: Sp.sm),
+                AppInput(label: 'Email', controller: emailCtrl, keyboardType: TextInputType.emailAddress, accentColor: AppColors.merchant,
+                  validator: (v) {
+                    final value = v?.trim() ?? '';
+                    if (value.isEmpty) return "L'email est requis.";
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                      return "Adresse e-mail invalide.";
+                    }
+                    return null;
+                  }),
+                const SizedBox(height: Sp.sm),
+                AppInput(label: 'Téléphone (optionnel)', controller: phoneCtrl, keyboardType: TextInputType.phone, accentColor: AppColors.merchant),
+                const SizedBox(height: Sp.sm),
+                AppInput(label: 'Mot de passe', controller: passwordCtrl, obscureText: true, accentColor: AppColors.merchant,
+                  validator: (v) =>
+                      (v == null || v.length < 8) ? '8 caractères minimum.' : null),
+                const SizedBox(height: Sp.sm),
               Row(
                 children: [
                   Expanded(
@@ -71,6 +85,7 @@ class TeamScreen extends ConsumerWidget {
                 'Inviter',
                 loading: saving,
                 onPressed: () async {
+                  if (!(formKey.currentState?.validate() ?? false)) return;
                   setSheetState(() => saving = true);
                   final notifier = ref.read(teamNotifierProvider.notifier);
                   final ok = await notifier.invite(
@@ -100,6 +115,106 @@ class TeamScreen extends ConsumerWidget {
                 },
               ),
             ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static void _showEditSheet(
+      BuildContext context, WidgetRef ref, TeamMember member) {
+    final nameCtrl = TextEditingController(text: member.name);
+    final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    String role = member.role;
+    bool saving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: Sp.md, right: Sp.md, top: Sp.md,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + Sp.md,
+          ),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Modifier le membre', style: AppTextStyles.h3()),
+                const SizedBox(height: Sp.sm),
+                Text(member.email,
+                    style: AppTextStyles.caption()
+                        .copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: Sp.md),
+                AppInput(label: 'Nom', controller: nameCtrl, accentColor: AppColors.merchant,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Le nom est requis.' : null),
+                const SizedBox(height: Sp.sm),
+                Text('Rôle', style: AppTextStyles.caption()),
+                const SizedBox(height: Sp.xs),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('Opérateur'),
+                        selected: role == 'operator',
+                        onSelected: (_) => setSheetState(() => role = 'operator'),
+                      ),
+                    ),
+                    const SizedBox(width: Sp.sm),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('Administrateur'),
+                        selected: role == 'admin',
+                        onSelected: (_) => setSheetState(() => role = 'admin'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Sp.md),
+                AppInput(label: 'Nouveau mot de passe (optionnel)', controller: passwordCtrl,
+                  obscureText: true, accentColor: AppColors.merchant,
+                  validator: (v) =>
+                      (v != null && v.isNotEmpty && v.length < 8)
+                          ? '8 caractères minimum.'
+                          : null),
+                const SizedBox(height: Sp.md),
+                AppButton.merchant(
+                  'Enregistrer',
+                  loading: saving,
+                  onPressed: () async {
+                    if (!(formKey.currentState?.validate() ?? false)) return;
+                    setSheetState(() => saving = true);
+                    final notifier = ref.read(teamNotifierProvider.notifier);
+                    final ok = await notifier.updateMember(
+                      member.id,
+                      name: nameCtrl.text.trim(),
+                      role: role,
+                      password:
+                          passwordCtrl.text.isEmpty ? null : passwordCtrl.text,
+                    );
+                    if (!sheetContext.mounted) return;
+                    if (ok) {
+                      Navigator.pop(sheetContext);
+                    } else {
+                      setSheetState(() => saving = false);
+                      final message = ErrorTranslator.translate(
+                        notifier.lastError,
+                        context: ErrorContext.manageTeam,
+                      ).displayMessage ??
+                          'Impossible de modifier ce membre.';
+                      ScaffoldMessenger.of(sheetContext).showSnackBar(
+                        SnackBar(content: Text(message)),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -180,6 +295,13 @@ class _TeamMemberTile extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.pencil, size: 16),
+            color: AppColors.textSecondary,
+            tooltip: 'Modifier',
+            onPressed: () =>
+                TeamScreen._showEditSheet(context, ref, member),
           ),
           Switch(
             value: member.isActive,

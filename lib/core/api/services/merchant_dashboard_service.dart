@@ -55,21 +55,47 @@ class MerchantDashboardService {
         return (response.data as Map).cast<String, dynamic>();
       });
 
-  Future<List<Map<String, dynamic>>> clients({
+  /// Page de résultats de `GET /merchant/clients`.
+  ///
+  /// L'API renvoie `{ data: [...cartes], meta: { current_page, last_page,
+  /// per_page, total } }` — [total] alimente le compteur « X clients » de
+  /// l'écran, [hasMore] pilote le scroll infini.
+  Future<ClientsPage> clients({
     String? search,
-    String? filter,
+    int? inactiveDays,
+    String? levelKey,
+    int? minCycles,
+    String sort = 'activity',
+    int page = 1,
+    int perPage = 25,
   }) =>
       _guard(() async {
         final response = await _apiClient.dio.get(
           '/merchant/clients',
           queryParameters: {
             if (search != null && search.isNotEmpty) 'q': search,
-            if (filter != null && filter.isNotEmpty) 'filter': filter,
+            if (inactiveDays != null && inactiveDays > 0)
+              'inactive_days': inactiveDays,
+            if (levelKey != null && levelKey.isNotEmpty) 'level': levelKey,
+            if (minCycles != null && minCycles > 0) 'min_cycles': minCycles,
+            'sort': sort,
+            'page': page,
+            'per_page': perPage,
           },
         );
-        return ((response.data as Map)['clients'] as List)
+        final body = (response.data as Map).cast<String, dynamic>();
+        final items = ((body['data'] as List?) ?? const [])
             .map((e) => (e as Map).cast<String, dynamic>())
             .toList();
+        final meta =
+            ((body['meta'] as Map?) ?? const {}).cast<String, dynamic>();
+
+        return ClientsPage(
+          items: items,
+          total: (meta['total'] as num?)?.toInt() ?? items.length,
+          currentPage: (meta['current_page'] as num?)?.toInt() ?? page,
+          lastPage: (meta['last_page'] as num?)?.toInt() ?? page,
+        );
       });
 
   /// Fiche d'une carte du commerce (`GET /merchant/clients/{card}`).
@@ -121,6 +147,14 @@ class MerchantDashboardService {
         return (response.data as Map).cast<String, dynamic>();
       });
 
+  /// Annule le dernier tampon accordé sur la carte. Le serveur refuse
+  /// (422) si la récompense qu'il avait débloquée a déjà été utilisée.
+  Future<Map<String, dynamic>> removeStamp(String cardId) => _guard(() async {
+        final response =
+            await _apiClient.dio.delete('/merchant/clients/$cardId/stamps');
+        return (response.data as Map).cast<String, dynamic>();
+      });
+
   /// Mode Cashback : utilise une partie du solde comme réduction sur
   /// l'achat en cours (`amountFcfa`), plafonnée côté serveur.
   Future<Map<String, dynamic>> redeemCashback(
@@ -154,9 +188,17 @@ class MerchantDashboardService {
     }
   }
 
-  Future<Map<String, dynamic>> redeemReward(String rewardId) => _guard(() async {
-        final response =
-            await _apiClient.dio.post('/merchant/rewards/$rewardId/redeem');
+  /// [token] est le jeton QR renvoyé par [lookupReward] — le serveur refuse
+  /// la validation (422) sans preuve que le QR a bien été scanné.
+  Future<Map<String, dynamic>> redeemReward(
+    String rewardId, {
+    required String token,
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.post(
+          '/merchant/rewards/$rewardId/redeem',
+          data: {'token': token},
+        );
         return (response.data as Map).cast<String, dynamic>();
       });
 
@@ -197,4 +239,21 @@ class MerchantDashboardService {
             'scheduled_at': scheduledAt.toIso8601String(),
         });
       });
+}
+
+/// Une page de la liste clients marchande (voir [MerchantDashboardService.clients]).
+class ClientsPage {
+  const ClientsPage({
+    required this.items,
+    required this.total,
+    required this.currentPage,
+    required this.lastPage,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final int total;
+  final int currentPage;
+  final int lastPage;
+
+  bool get hasMore => currentPage < lastPage;
 }

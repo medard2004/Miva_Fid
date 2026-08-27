@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/utils/toast_service.dart';
+import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../../client/providers/settings_provider.dart';
@@ -22,7 +24,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _categoryController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _whatsappController;
   late final TextEditingController _cityController;
@@ -32,17 +33,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _uploadingLogo = false;
   bool _initialized = false;
 
+  static const _maxLogoBytes = 2 * 1024 * 1024;
+  static const _allowedLogoExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
     _categoryController = TextEditingController();
     _descriptionController = TextEditingController();
-    _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _whatsappController = TextEditingController();
     _cityController = TextEditingController();
     _addressController = TextEditingController();
+    _descriptionController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -50,7 +56,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _nameController.dispose();
     _categoryController.dispose();
     _descriptionController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _whatsappController.dispose();
     _cityController.dispose();
@@ -63,6 +68,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final file =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (!mounted || file == null) return;
+
+    final extension = file.name.split('.').last.toLowerCase();
+    if (!_allowedLogoExtensions.contains(extension)) {
+      ToastService.showError('Format non supporté. Utilisez PNG ou JPG.');
+      return;
+    }
+    if (File(file.path).lengthSync() > _maxLogoBytes) {
+      ToastService.showError('Image trop lourde. Maximum 2 Mo.');
+      return;
+    }
 
     setState(() => _uploadingLogo = true);
     final ok = await ref
@@ -77,13 +92,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _uploadingLogo = false);
   }
 
+  Future<void> _removeLogo() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer le logo ?'),
+        content:
+            const Text('Votre commerce réapparaîtra avec ses initiales.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Supprimer',
+                style: TextStyle(color: Color(0xFFDC2626))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _uploadingLogo = true);
+    final ok = await ref.read(merchantAuthProvider.notifier).deleteLogo();
+    if (!mounted) return;
+    if (ok) {
+      ToastService.showSuccess('Logo supprimé');
+    } else {
+      ToastService.showError('Impossible de supprimer le logo.');
+    }
+    setState(() => _uploadingLogo = false);
+  }
+
   Future<void> _saveProfile() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     setState(() => _isSaving = true);
     try {
-      final notifier = ref.read(merchantNotifierProvider.notifier);
-      await notifier.updateProgramme({
+      await ref.read(merchantNotifierProvider.notifier).updateProgramme({
         'name': _nameController.text.trim(),
+        'category': _categoryController.text.trim(),
+        'description': _descriptionController.text.trim(),
         'phone': _phoneController.text.trim(),
+        'whatsapp': _whatsappController.text.trim(),
+        'city': _cityController.text.trim(),
+        'address': _addressController.text.trim(),
       });
       if (mounted) {
         ToastService.showSuccess('Modifications enregistrées !');
@@ -97,29 +151,117 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _changeEmail(String currentEmail) async {
+    final emailCtrl = TextEditingController(text: currentEmail);
+    final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var submitting = false;
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text("Changer l'adresse e-mail"),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Nouvel e-mail'),
+                  validator: (v) {
+                    final value = v?.trim() ?? '';
+                    if (value.isEmpty) return 'E-mail requis.';
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                      return 'Adresse e-mail invalide.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: passwordCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                      labelText: 'Mot de passe actuel'),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Mot de passe requis.' : null,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: submitting
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setDialogState(() => submitting = true);
+                      try {
+                        await ref
+                            .read(merchantAuthProvider.notifier)
+                            .updateEmail(
+                              emailCtrl.text.trim(),
+                              passwordCtrl.text,
+                            );
+                        if (ctx.mounted) {
+                          Navigator.of(ctx).pop({'ok': true});
+                        }
+                      } on ValidationException catch (e) {
+                        setDialogState(() => submitting = false);
+                        if (ctx.mounted) {
+                          ToastService.showError(e.message);
+                        }
+                      } catch (_) {
+                        setDialogState(() => submitting = false);
+                        if (ctx.mounted) {
+                          ToastService.showError(
+                              "Impossible de changer l'adresse e-mail.");
+                        }
+                      }
+                    },
+              child: submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Enregistrer'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result?['ok'] == true && mounted) {
+      ToastService.showSuccess('Adresse e-mail mise à jour.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
-    final merchantAsync = ref.watch(merchantNotifierProvider);
     final merchantState = ref.watch(merchantAuthProvider);
-    final merchant = merchantAsync.value;
+    final RestaurantAccount? account = merchantState.restaurant;
 
-    if (merchant != null && !_initialized) {
-      _nameController.text =
-          merchant.name.isNotEmpty ? merchant.name : 'Restaurant La Saveur';
-      _categoryController.text = 'Restaurant';
-      _descriptionController.text =
-          'Cuisine togolaise maison, plats du jour et jus frais.';
-      _emailController.text = merchantState.restaurant?.email ??
-          'contact@lasaveur.tg';
-      _phoneController.text = merchant.phone ?? '+228 90 12 34 56';
-      _whatsappController.text = merchant.phone ?? '+228 90 12 34 56';
-      _cityController.text = 'Lomé';
-      _addressController.text = merchant.address?.isNotEmpty == true
-          ? merchant.address!
-          : 'Rue des Cocotiers, Tokoin';
+    if (account != null && !_initialized) {
+      _nameController.text = account.name ?? '';
+      _categoryController.text = account.category ?? '';
+      _descriptionController.text = account.description ?? '';
+      _phoneController.text = account.phone ?? '';
+      _whatsappController.text = account.whatsapp ?? '';
+      _cityController.text = account.city ?? '';
+      _addressController.text = account.address ?? '';
       _initialized = true;
     }
+
+    final logoUrl = account?.logoUrl;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -159,36 +301,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   InkWell(
                     onTap: () => context.push('/merchant/more/notifications'),
                     borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: const Icon(
-                            LucideIcons.bell,
-                            size: 18,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Icon(
+                        LucideIcons.bell,
+                        size: 18,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
                   ),
                 ],
@@ -219,17 +344,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 Container(
                                   width: 52,
                                   height: 52,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFEEF2FF),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEEF2FF),
                                     shape: BoxShape.circle,
+                                    image: (logoUrl != null &&
+                                            logoUrl.isNotEmpty)
+                                        ? DecorationImage(
+                                            image: NetworkImage(logoUrl),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null,
                                   ),
-                                  child: const Center(
-                                    child: Icon(
-                                      LucideIcons.camera,
-                                      color: Color(0xFF64748B),
-                                      size: 22,
-                                    ),
-                                  ),
+                                  child: (logoUrl == null || logoUrl.isEmpty)
+                                      ? const Center(
+                                          child: Icon(
+                                            LucideIcons.camera,
+                                            color: Color(0xFF64748B),
+                                            size: 22,
+                                          ),
+                                        )
+                                      : null,
                                 ),
                                 Positioned(
                                   bottom: 0,
@@ -242,12 +376,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
-                                      LucideIcons.camera,
+                                      LucideIcons.pencil,
                                       color: Colors.white,
                                       size: 11,
                                     ),
                                   ),
                                 ),
+                                if (_uploadingLogo)
+                                  const Positioned.fill(
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    ),
+                                  ),
                               ],
                             ),
                             const SizedBox(width: 14),
@@ -272,18 +413,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  GestureDetector(
-                                    onTap: _pickLogo,
-                                    child: Text(
-                                      _uploadingLogo
-                                          ? 'Chargement...'
-                                          : 'Changer',
-                                      style: const TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF5B50EC),
+                                  Row(
+                                    children: [
+                                      GestureDetector(
+                                        onTap:
+                                            _uploadingLogo ? null : _pickLogo,
+                                        child: Text(
+                                          logoUrl != null &&
+                                                  logoUrl.isNotEmpty
+                                              ? 'Changer'
+                                              : 'Ajouter un logo',
+                                          style: const TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF5B50EC),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      if (logoUrl != null &&
+                                          logoUrl.isNotEmpty) ...[
+                                        const SizedBox(width: 12),
+                                        GestureDetector(
+                                          onTap: _uploadingLogo
+                                              ? null
+                                              : _removeLogo,
+                                          child: const Text(
+                                            'Supprimer',
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFFDC2626),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),
@@ -309,24 +473,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             _buildField(
                               label: 'NOM DU COMMERCE',
                               controller: _nameController,
+                              validator: (v) =>
+                                  (v == null || v.trim().isEmpty)
+                                      ? 'Le nom du commerce est obligatoire.'
+                                      : null,
                             ),
                             const SizedBox(height: 12),
                             _buildField(
                               label: 'CATÉGORIE',
                               controller: _categoryController,
+                              validator: (v) =>
+                                  (v == null || v.trim().isEmpty)
+                                      ? 'La catégorie est obligatoire.'
+                                      : null,
                             ),
                             const SizedBox(height: 12),
                             _buildField(
                               label: 'DESCRIPTION',
                               controller: _descriptionController,
                               maxLines: 3,
+                              maxLength: 200,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '${_descriptionController.text.length}/200 caractères',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF94A3B8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '${_descriptionController.text.length}/200 caractères',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: _descriptionController
+                                          .text.length >
+                                      200
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                  color: _descriptionController.text.length > 200
+                                      ? const Color(0xFFDC2626)
+                                      : const Color(0xFF94A3B8),
+                                ),
                               ),
                             ),
                           ],
@@ -349,14 +532,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             const SizedBox(height: 12),
                             _buildField(
                               label: 'EMAIL',
-                              controller: _emailController,
+                              initialText:
+                                  account?.email.isNotEmpty == true
+                                      ? account!.email
+                                      : null,
                               keyboardType: TextInputType.emailAddress,
+                              enabled: false,
+                              onTap: account != null
+                                  ? () => _changeEmail(account.email)
+                                  : null,
+                              hint: 'Toucher pour modifier',
                             ),
                             const SizedBox(height: 12),
                             _buildField(
                               label: 'TÉLÉPHONE',
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
+                              validator: (v) =>
+                                  (v == null || v.trim().isEmpty)
+                                      ? 'Le téléphone est obligatoire.'
+                                      : null,
                             ),
                             const SizedBox(height: 12),
                             _buildField(
@@ -465,9 +660,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildField({
     required String label,
-    required TextEditingController controller,
+    TextEditingController? controller,
+    String? initialText,
+    String? hint,
     int maxLines = 1,
+    int? maxLength,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    bool enabled = true,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,23 +684,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F9FD),
+            color: enabled ? const Color(0xFFF8F9FD) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFEDF0F7)),
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
+            initialValue: initialText,
             maxLines: maxLines,
+            maxLength: maxLength,
             keyboardType: keyboardType,
+            validator: validator,
+            enabled: enabled,
+            onTap: onTap,
+            buildCounter: (_,
+                    {required currentLength,
+                    required isFocused,
+                    maxLength}) =>
+                null,
             style: const TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
               color: Color(0xFF1E293B),
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               isDense: true,
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              hintText: onTap != null ? hint : null,
+              hintStyle: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF94A3B8),
+              ),
+              suffixIcon: onTap != null
+                  ? const Icon(LucideIcons.pencil, size: 14, color: Color(0xFF94A3B8))
+                  : null,
+              suffixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 0),
             ),
           ),
         ),

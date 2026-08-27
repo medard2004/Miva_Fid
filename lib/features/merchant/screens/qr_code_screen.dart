@@ -1,10 +1,16 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -13,21 +19,56 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
+import '../providers/dashboard_stats_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
-class QrCodeScreen extends ConsumerWidget {
+class QrCodeScreen extends ConsumerStatefulWidget {
   const QrCodeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Ces ecrans peignent via les tokens statiques d'AppColors,
-    // invisibles pour le systeme de dependances de Flutter : observer
-    // la luminosite effective est leur seul declencheur de rebuild sur
-    // une bascule clair/sombre.
+  ConsumerState<QrCodeScreen> createState() => _QrCodeScreenState();
+}
+
+class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
+  final _qrCardKey = GlobalKey();
+  bool _exporting = false;
+
+  Future<void> _exportPng() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final boundary = _qrCardKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null) return;
+      final image =
+          await boundary.toImage(pixelRatio: 3.0);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+      final tempDir = await getTemporaryDirectory();
+      final file = File(
+          '${tempDir.path}/mivafid-qr-${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+      await Share.shareXFiles([XFile(file.path)],
+          text: 'Scannez pour rejoindre mon programme de fidélité Miva-Fid !');
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Impossible d'exporter l'image.")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
+    final statsAsync = ref.watch(dashboardStatsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -69,21 +110,23 @@ class QrCodeScreen extends ConsumerWidget {
                 const SizedBox(height: Sp.md),
 
                 // QR Code Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(Sp.lg),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: Rd.card20,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.textPrimary.withValues(alpha: 0.04),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+                RepaintBoundary(
+                  key: _qrCardKey,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(Sp.lg),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: Rd.card20,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.textPrimary.withValues(alpha: 0.04),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
                     children: [
                       Stack(
                         alignment: Alignment.center,
@@ -147,6 +190,7 @@ class QrCodeScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  ),
                 ),
                 const SizedBox(height: Sp.md),
 
@@ -156,11 +200,7 @@ class QrCodeScreen extends ConsumerWidget {
                     _buildActionButton(
                       icon: LucideIcons.fileDown,
                       label: 'PNG',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Image enregistrée dans la galerie !')),
-                        );
-                      },
+                      onTap: _exportPng,
                     ),
                     _buildActionButton(
                       icon: LucideIcons.printer,
@@ -218,17 +258,40 @@ class QrCodeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: Sp.md),
 
-                // Statistiques Section Card
+                // Statistiques Section Card — vraies données du dashboard
+                // (`GET /merchant/stats`), plus de compteurs fictifs.
                 _buildSectionContainer(
                   title: 'Statistiques',
-                  child: Row(
-                    children: [
-                      _buildStatBox(value: '43', label: 'Cette semaine'),
-                      const SizedBox(width: Sp.xs),
-                      _buildStatBox(value: '183', label: 'Ce mois'),
-                      const SizedBox(width: Sp.xs),
-                      _buildStatBox(value: '12', label: 'Nouveaux'),
-                    ],
+                  child: statsAsync.when(
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: Sp.sm),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                    error: (_, __) => Text(
+                      'Statistiques indisponibles.',
+                      style: AppTextStyles.caption()
+                          .copyWith(color: AppColors.textSecondary),
+                    ),
+                    data: (stats) => Row(
+                      children: [
+                        _buildStatBox(
+                            value: '${stats.totalClients}', label: 'Clients'),
+                        const SizedBox(width: Sp.xs),
+                        _buildStatBox(
+                            value: '${stats.stampsToday}',
+                            label: 'Tampons auj.'),
+                        const SizedBox(width: Sp.xs),
+                        _buildStatBox(
+                            value: '${stats.activeRewards}',
+                            label: 'Récompenses'),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: Sp.md),
@@ -410,7 +473,7 @@ class QrCodeScreen extends ConsumerWidget {
   Future<void> _generatePdf(String name, String address, String phone, String qrData) async {
     final doc = pw.Document();
     doc.addPage(pw.Page(
-      pageFormat: PdfPageFormat.a5,
+      pageFormat: PdfPageFormat.a4,
       build: (ctx) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [

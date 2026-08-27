@@ -56,6 +56,9 @@ import '../../features/merchant/screens/sms_conversation_screen.dart';
 import '../../features/merchant/screens/sms_campaign_detail_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
+import '../../features/merchant/screens/opening_hours_screen.dart';
+import '../../features/merchant/screens/socials_screen.dart';
+import '../../features/merchant/screens/cashback_settings_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
 import '../../features/onboarding/screens/merchant_auth_screen.dart';
@@ -221,12 +224,13 @@ GoRouter appRouter(AppRouterRef ref) {
 
         // Opérateur : uniquement l'écran de validation, jamais le dashboard,
         // la clientèle, les campagnes ou la configuration (voir spec équipe).
-        // Le changement de mot de passe reste accessible : sans lui, le menu
-        // compte de l'opérateur sur `/merchant/validate` mènerait à une route
-        // aussitôt renvoyée ici.
+        // Le changement de mot de passe et le profil restent accessibles :
+        // sans eux, le menu compte de l'opérateur sur `/merchant/validate`
+        // mènerait à des routes aussitôt renvoyées ici.
         final isAdmin = ref.read(isAdminProvider);
         final isOperatorReachable = location.startsWith('/merchant/validate') ||
-            location == '/merchant/more/change-password';
+            location == '/merchant/more/change-password' ||
+            location == '/merchant/more/profile';
         if (!isAdmin && !isOperatorReachable) {
           return '/merchant/validate';
         }
@@ -625,6 +629,11 @@ GoRouter appRouter(AppRouterRef ref) {
                       parentNavigatorKey: rootNavigatorKey,
                       pageBuilder: (_, __) => _slide(const ProgrammeDesignScreen()),
                     ),
+                    GoRoute(
+                      path: 'cashback',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const CashbackSettingsScreen()),
+                    ),
                   ],
                 ),
                 // Profil — route directe, plus de sous-imbrication account/profile
@@ -656,12 +665,12 @@ GoRouter appRouter(AppRouterRef ref) {
                 GoRoute(
                   path: 'hours',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                  pageBuilder: (_, __) => _slide(const OpeningHoursScreen()),
                 ),
                 GoRoute(
                   path: 'socials',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                  pageBuilder: (_, __) => _slide(const SocialsScreen()),
                 ),
                 GoRoute(
                   path: 'change-password',
