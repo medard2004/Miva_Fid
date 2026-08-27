@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/models/program_tier.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -60,19 +61,20 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
     });
   }
 
-  String _goalUnit(String loyaltyMode) {
+  String _goalUnit(AppLocalizations t, String loyaltyMode) {
     switch (loyaltyMode) {
       case 'spend':
-        return 'points / FCFA';
+        return t.merchantProgrammeGoalUnitPoints;
       case 'cashback':
-        return 'FCFA de cashback cumulés';
+        return t.merchantProgrammeGoalUnitCashback;
       default:
-        return 'tampons';
+        return t.merchantProgrammeGoalUnitStamps;
     }
   }
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final t = AppLocalizations.of(context)!;
 
     setState(() => _saving = true);
     final tiers = _tierEditorKey.currentState?.currentTiers() ?? _tiers;
@@ -83,11 +85,11 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Paliers mis à jour avec succès')));
+            .showSnackBar(SnackBar(content: Text(t.merchantProgrammeTiersSaveSuccess)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.merchantProgrammeTiersSaveError(e.toString()))));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -97,13 +99,14 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final merchantAsync = ref.watch(merchantNotifierProvider);
     final loyaltyMode = merchantAsync.value?.loyaltyMode ?? 'stamps';
 
     if (!_initialized) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Paliers')),
+        appBar: AppBar(title: Text(t.merchantProgrammeTiersLoadingTitle)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -111,7 +114,7 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Paliers de fidélité'),
+        title: Text(t.merchantProgrammeTiersTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -127,14 +130,14 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Aperçu de la carte', style: AppTextStyles.labelBold()),
+                      Text(t.merchantProgrammeCardPreviewLabel, style: AppTextStyles.labelBold()),
                       const SizedBox(height: Sp.sm),
                       const LoyaltyCardPreview(previewStamps: 6),
                       const SizedBox(height: Sp.xl),
                       TierEditorForm(
                         key: _tierEditorKey,
                         initialTiers: _tiers,
-                        goalUnit: _goalUnit(loyaltyMode),
+                        goalUnit: _goalUnit(t, loyaltyMode),
                         onChanged: (t) => _tiers = t,
                         allowEmpty: loyaltyMode == 'cashback',
                         goalStep: loyaltyMode == 'stamps' ? 5 : 500,
@@ -150,7 +153,7 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
                         ),
                         icon: const Icon(LucideIcons.plus, size: 18),
                         label: Text(
-                          'Ajouter un palier',
+                          t.merchantProgrammeAddTierButton,
                           style: AppTextStyles.bodyMd()
                               .copyWith(color: AppColors.merchant, fontWeight: FontWeight.bold),
                         ),
@@ -162,7 +165,7 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(Sp.md, 0, Sp.md, MediaQuery.of(context).padding.bottom + Sp.md),
-                child: AppButton.primary('Enregistrer',
+                child: AppButton.primary(t.commonSave,
                     icon: LucideIcons.save, onPressed: _save, loading: _saving),
               ),
             ],

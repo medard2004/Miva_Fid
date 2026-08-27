@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/validate_provider.dart';
@@ -29,13 +30,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   final MobileScannerController _scanCtrl = MobileScannerController();
   bool _processing = false;
   bool _isCameraActive = false;
-  int _selectedTab = 0; // 0: Scanner, 1: Téléphone
-  final _phoneOrCodeCtrl = TextEditingController();
+  int _selectedTab = 0; // 0: Scanner, 1: Identifiant
+  final _identifierCtrl = TextEditingController();
 
   @override
   void dispose() {
     _scanCtrl.dispose();
-    _phoneOrCodeCtrl.dispose();
+    _identifierCtrl.dispose();
     super.dispose();
   }
 
@@ -70,7 +71,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     if (_processing) return;
     final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
     if (raw == null || raw.isEmpty) {
-      ToastService.showError('QR code invalide ou illisible.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateQrInvalid);
       return;
     }
     setState(() => _processing = true);
@@ -93,12 +94,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           await ref.read(validateNotifierProvider.notifier).lookupByCode(code);
     } on NetworkException {
       if (mounted) {
-        ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+        ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
       }
       return;
     } catch (_) {
       if (mounted) {
-        ToastService.showError('Une erreur est survenue, réessayez.');
+        ToastService.showError(AppLocalizations.of(context)!.errUnexpected);
       }
       return;
     }
@@ -106,7 +107,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     if (!mounted) return;
     if (card == null) {
       ToastService.showError(
-          'Aucune carte de fidélité trouvée pour ce commerce.');
+          AppLocalizations.of(context)!.merchantValidateNoCardFound);
       return;
     }
     final resolvedCard = card;
@@ -141,12 +142,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           .lookupReward(token);
     } on NetworkException {
       if (mounted) {
-        ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+        ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
       }
       return;
     } catch (_) {
       if (mounted) {
-        ToastService.showError('Une erreur est survenue, réessayez.');
+        ToastService.showError(AppLocalizations.of(context)!.errUnexpected);
       }
       return;
     }
@@ -154,7 +155,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     if (!mounted) return;
     if (reward == null) {
       ToastService.showError(
-          'Aucune récompense de votre commerce ne correspond à ce code.');
+          AppLocalizations.of(context)!.merchantValidateNoRewardFound);
       return;
     }
     final resolvedReward = reward;
@@ -183,7 +184,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       sheetNavigator.pop();
       await AppHaptics.heavy();
       if (mounted) {
-        ToastService.showSuccess('Récompense validée avec succès !');
+        ToastService.showSuccess(AppLocalizations.of(context)!.merchantValidateRewardSuccess);
       }
     } on ValidationException catch (e) {
       if (!mounted) return;
@@ -263,7 +264,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       rootNavigator.push(MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => ValidationSuccessOverlay(
-          clientName: card.client?.name ?? 'Client',
+          clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
           mechanic: _mechanic,
           stampCount: outcome.stampsCurrent,
           goal: _goal,
@@ -280,16 +281,16 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError(
-        e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
+        e.statusCode == 409 ? e.message : AppLocalizations.of(context)!.merchantValidateFailedRetry,
       );
     } on NetworkException {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
     } catch (_) {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Échec de la validation. Réessayez.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateFailedRetry);
     }
   }
 
@@ -320,21 +321,21 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError(
-        e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
+        e.statusCode == 409 ? e.message : AppLocalizations.of(context)!.merchantValidateFailedRetry,
       );
     } on NetworkException {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
     } catch (_) {
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError('Échec de la validation. Réessayez.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantValidateFailedRetry);
     }
   }
 
-  Future<void> _searchClientByPhoneOrCode() async {
-    final query = _phoneOrCodeCtrl.text.trim();
+  Future<void> _searchClientByIdentifier() async {
+    final query = _identifierCtrl.text.trim();
     if (query.isEmpty) return;
     await _lookupAndShowSheet(query);
   }
@@ -360,6 +361,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     // de passe ou de se déconnecter.
     final isAdmin = ref.watch(isAdminProvider);
     final staffName = ref.watch(merchantAuthProvider).restaurant?.staffName;
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -399,7 +401,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Scannez ou saisissez le numéro',
+                          t.merchantValidateSubtitle,
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -539,7 +541,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Scanner',
+                                t.merchantValidateTabScanner,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: _selectedTab == 0
@@ -582,7 +584,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                LucideIcons.phone,
+                                LucideIcons.hash,
                                 size: 16,
                                 color: _selectedTab == 1
                                     ? AppColors.textPrimary
@@ -590,7 +592,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Téléphone',
+                                t.merchantValidateTabPhone,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: _selectedTab == 1
@@ -616,8 +618,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: _selectedTab == 0
-                    ? _buildScannerContent()
-                    : _buildManualPhoneContent(),
+                    ? _buildScannerContent(t)
+                    : _buildManualIdentifierContent(t),
               ),
             ),
           ],
@@ -626,7 +628,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     );
   }
 
-  Widget _buildScannerContent() {
+  Widget _buildScannerContent(AppLocalizations t) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -644,13 +646,17 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       ),
       child: Column(
         children: [
-          // Dark Viewfinder Area
+          // Cadre de scan — panneau sombre façon viseur d'appareil photo en
+          // mode sombre ; en clair, un panneau clair pour que la page reste
+          // cohérente avec le thème plutôt qu'un bloc noir fixe qui rendait
+          // les deux modes indiscernables l'un de l'autre.
           Container(
             width: double.infinity,
             height: 310,
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
+              color: AppColors.isDark ? const Color(0xFF0F172A) : AppColors.background,
               borderRadius: BorderRadius.circular(20),
+              border: AppColors.isDark ? null : Border.all(color: AppColors.border),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -685,7 +691,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
-                            'Pointez la caméra vers le QR du client',
+                            t.merchantValidateScanInstruction,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: AppColors.textSecondary,
@@ -724,7 +730,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                 color: Colors.white,
               ),
               label: Text(
-                _isCameraActive ? 'Désactiver la caméra' : 'Activer la caméra',
+                _isCameraActive ? t.merchantValidateDisableCamera : t.merchantValidateEnableCamera,
                 style: const TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w700,
@@ -738,7 +744,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     );
   }
 
-  Widget _buildManualPhoneContent() {
+  Widget _buildManualIdentifierContent(AppLocalizations t) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -781,8 +787,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
               border: Border.all(color: AppColors.border),
             ),
             child: TextField(
-              controller: _phoneOrCodeCtrl,
-              keyboardType: TextInputType.phone,
+              controller: _identifierCtrl,
+              keyboardType: TextInputType.text,
+              textCapitalization: TextCapitalization.characters,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
                 hintText: 'Ex : +228 90 12 34 56 ou CODE',
@@ -794,7 +801,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               ),
-              onSubmitted: (_) => _searchClientByPhoneOrCode(),
+              onSubmitted: (_) => _searchClientByIdentifier(),
             ),
           ),
           const SizedBox(height: 16),
@@ -802,7 +809,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: _searchClientByPhoneOrCode,
+              onPressed: _searchClientByIdentifier,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -812,9 +819,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                 ),
               ),
               icon: const Icon(LucideIcons.search, size: 16, color: Colors.white),
-              label: const Text(
-                'Rechercher le client',
-                style: TextStyle(
+              label: Text(
+                t.merchantValidateSearchButton,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,

@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Paramètres'**
   String get settingsTitle;
 
+  /// No description provided for @settingsPreferences.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préférences'**
+  String get settingsPreferences;
+
   /// No description provided for @settingsAppearance.
   ///
   /// In fr, this message translates to:
@@ -2047,6 +2053,1950 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Connecté via {provider}'**
   String editProfileConnectedVia(String provider);
+
+  /// No description provided for @merchantNavClients.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clients'**
+  String get merchantNavClients;
+
+  /// No description provided for @merchantNavStats.
+  ///
+  /// In fr, this message translates to:
+  /// **'Stats'**
+  String get merchantNavStats;
+
+  /// No description provided for @merchantNavValidate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Valider'**
+  String get merchantNavValidate;
+
+  /// No description provided for @merchantNavSms.
+  ///
+  /// In fr, this message translates to:
+  /// **'SMS'**
+  String get merchantNavSms;
+
+  /// No description provided for @merchantNavSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages'**
+  String get merchantNavSettings;
+
+  /// No description provided for @merchantMoreBusinessProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil du commerce'**
+  String get merchantMoreBusinessProfile;
+
+  /// No description provided for @merchantMoreCompleteProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compléter mon profil'**
+  String get merchantMoreCompleteProfile;
+
+  /// No description provided for @merchantMoreLogoBusiness.
+  ///
+  /// In fr, this message translates to:
+  /// **'Logo du commerce'**
+  String get merchantMoreLogoBusiness;
+
+  /// No description provided for @merchantMoreSocials.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réseaux sociaux'**
+  String get merchantMoreSocials;
+
+  /// No description provided for @merchantMoreGoogleReviewLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien d\'avis Google'**
+  String get merchantMoreGoogleReviewLink;
+
+  /// No description provided for @merchantMoreSectionAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'COMPTE'**
+  String get merchantMoreSectionAccount;
+
+  /// No description provided for @merchantMoreHours.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horaires d\'ouverture'**
+  String get merchantMoreHours;
+
+  /// No description provided for @merchantMoreToComplete.
+  ///
+  /// In fr, this message translates to:
+  /// **'À compléter'**
+  String get merchantMoreToComplete;
+
+  /// No description provided for @merchantMoreSubscription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abonnement'**
+  String get merchantMoreSubscription;
+
+  /// No description provided for @merchantMoreProTag.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pro'**
+  String get merchantMoreProTag;
+
+  /// No description provided for @merchantMoreLanguageTheme.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue & thème'**
+  String get merchantMoreLanguageTheme;
+
+  /// No description provided for @merchantMoreTeam.
+  ///
+  /// In fr, this message translates to:
+  /// **'Équipe'**
+  String get merchantMoreTeam;
+
+  /// No description provided for @merchantMoreSectionLoyaltyCard.
+  ///
+  /// In fr, this message translates to:
+  /// **'MA CARTE DE FIDÉLITÉ'**
+  String get merchantMoreSectionLoyaltyCard;
+
+  /// No description provided for @merchantMoreCustomizeCard.
+  ///
+  /// In fr, this message translates to:
+  /// **'Personnaliser la carte'**
+  String get merchantMoreCustomizeCard;
+
+  /// No description provided for @merchantMoreGoalReward.
+  ///
+  /// In fr, this message translates to:
+  /// **'Objectif & récompense'**
+  String get merchantMoreGoalReward;
+
+  /// No description provided for @merchantMoreLoyaltyProgram.
+  ///
+  /// In fr, this message translates to:
+  /// **'Programme de fidélité'**
+  String get merchantMoreLoyaltyProgram;
+
+  /// No description provided for @merchantMoreMyQrCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon QR code'**
+  String get merchantMoreMyQrCode;
+
+  /// No description provided for @merchantMoreMyShowcase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma vitrine'**
+  String get merchantMoreMyShowcase;
+
+  /// No description provided for @merchantMoreSectionSupport.
+  ///
+  /// In fr, this message translates to:
+  /// **'ASSISTANCE'**
+  String get merchantMoreSectionSupport;
+
+  /// No description provided for @merchantMoreLegalPrivacy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confidentialité'**
+  String get merchantMoreLegalPrivacy;
+
+  /// No description provided for @merchantMoreLegalTerms.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conditions d\'utilisation'**
+  String get merchantMoreLegalTerms;
+
+  /// No description provided for @merchantMoreWhatsappSupport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Support WhatsApp'**
+  String get merchantMoreWhatsappSupport;
+
+  /// No description provided for @merchantSignOutConfirmTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter ?'**
+  String get merchantSignOutConfirmTitle;
+
+  /// No description provided for @merchantSignOutConfirmMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous devrez vous reconnecter pour accéder à votre espace commerçant.'**
+  String get merchantSignOutConfirmMessage;
+
+  /// No description provided for @merchantSignOutConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter'**
+  String get merchantSignOutConfirm;
+
+  /// No description provided for @changePasswordConfirmLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer le nouveau mot de passe'**
+  String get changePasswordConfirmLabel;
+
+  /// No description provided for @merchantAccountTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte & Profil'**
+  String get merchantAccountTitle;
+
+  /// No description provided for @merchantAccountProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil'**
+  String get merchantAccountProfile;
+
+  /// No description provided for @merchantSubscriptionCategoryTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abonnement & Équipe'**
+  String get merchantSubscriptionCategoryTitle;
+
+  /// No description provided for @merchantSubscriptionMyPlan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon Abonnement'**
+  String get merchantSubscriptionMyPlan;
+
+  /// No description provided for @merchantSubscriptionTeamMembers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Membres de l\'équipe'**
+  String get merchantSubscriptionTeamMembers;
+
+  /// No description provided for @merchantNotifUpdateError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de mettre à jour cette préférence. Réessayez.'**
+  String get merchantNotifUpdateError;
+
+  /// No description provided for @merchantNotifNewClientTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau client'**
+  String get merchantNotifNewClientTitle;
+
+  /// No description provided for @merchantNotifNewClientSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notif. à chaque inscription'**
+  String get merchantNotifNewClientSubtitle;
+
+  /// No description provided for @merchantNotifRewardTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompense gagnée'**
+  String get merchantNotifRewardTitle;
+
+  /// No description provided for @merchantNotifRewardSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quand un palier est atteint'**
+  String get merchantNotifRewardSubtitle;
+
+  /// No description provided for @merchantNotifLowSmsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quota SMS faible'**
+  String get merchantNotifLowSmsTitle;
+
+  /// No description provided for @merchantNotifLowSmsSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sous 20 SMS restants'**
+  String get merchantNotifLowSmsSubtitle;
+
+  /// No description provided for @merchantNotifWeeklyReportTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rapport hebdomadaire'**
+  String get merchantNotifWeeklyReportTitle;
+
+  /// No description provided for @merchantNotifWeeklyReportSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous les lundis matin'**
+  String get merchantNotifWeeklyReportSubtitle;
+
+  /// No description provided for @merchantNotifPromotionsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Promotions Miva-Fid'**
+  String get merchantNotifPromotionsTitle;
+
+  /// No description provided for @merchantNotifPromotionsSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Offres et nouveautés'**
+  String get merchantNotifPromotionsSubtitle;
+
+  /// No description provided for @merchantTeamInviteTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inviter un membre'**
+  String get merchantTeamInviteTitle;
+
+  /// No description provided for @merchantTeamNameLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom'**
+  String get merchantTeamNameLabel;
+
+  /// No description provided for @merchantTeamPhoneOptionalLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléphone (optionnel)'**
+  String get merchantTeamPhoneOptionalLabel;
+
+  /// No description provided for @merchantTeamPasswordLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe'**
+  String get merchantTeamPasswordLabel;
+
+  /// No description provided for @merchantTeamRoleOperator.
+  ///
+  /// In fr, this message translates to:
+  /// **'Opérateur'**
+  String get merchantTeamRoleOperator;
+
+  /// No description provided for @merchantTeamRoleAdmin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Administrateur'**
+  String get merchantTeamRoleAdmin;
+
+  /// No description provided for @merchantTeamInviteButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inviter'**
+  String get merchantTeamInviteButton;
+
+  /// No description provided for @merchantTeamInviteError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'inviter ce membre.'**
+  String get merchantTeamInviteError;
+
+  /// No description provided for @merchantTeamEmptyState.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun membre d\'équipe. Invitez votre premier opérateur.'**
+  String get merchantTeamEmptyState;
+
+  /// No description provided for @merchantTeamToggleStatusError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de modifier le statut de ce membre.'**
+  String get merchantTeamToggleStatusError;
+
+  /// No description provided for @merchantTierSilver.
+  ///
+  /// In fr, this message translates to:
+  /// **'Argent'**
+  String get merchantTierSilver;
+
+  /// No description provided for @merchantTierGold.
+  ///
+  /// In fr, this message translates to:
+  /// **'Or'**
+  String get merchantTierGold;
+
+  /// No description provided for @merchantTierPlatinum.
+  ///
+  /// In fr, this message translates to:
+  /// **'Platine'**
+  String get merchantTierPlatinum;
+
+  /// No description provided for @merchantDashboardTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Statistiques'**
+  String get merchantDashboardTitle;
+
+  /// No description provided for @merchantDashboardSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu de votre activité — juin 2026'**
+  String get merchantDashboardSubtitle;
+
+  /// No description provided for @merchantDashboardStampsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tampons'**
+  String get merchantDashboardStampsLabel;
+
+  /// No description provided for @merchantDashboardThisMonthLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'ce mois'**
+  String get merchantDashboardThisMonthLabel;
+
+  /// No description provided for @merchantDashboardRewardsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récomp.'**
+  String get merchantDashboardRewardsLabel;
+
+  /// No description provided for @merchantDashboardUsedLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'utilisées'**
+  String get merchantDashboardUsedLabel;
+
+  /// No description provided for @merchantDashboardMonthActivityTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activité du mois'**
+  String get merchantDashboardMonthActivityTitle;
+
+  /// No description provided for @merchantDashboardValidationsPerWeekSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Validations par semaine'**
+  String get merchantDashboardValidationsPerWeekSubtitle;
+
+  /// No description provided for @merchantDashboardWeekLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sem {number}'**
+  String merchantDashboardWeekLabel(String number);
+
+  /// No description provided for @merchantDashboardVipDistributionTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Répartition VIP'**
+  String get merchantDashboardVipDistributionTitle;
+
+  /// No description provided for @merchantDashboardClientsByTierSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos clients par niveau'**
+  String get merchantDashboardClientsByTierSubtitle;
+
+  /// No description provided for @merchantClientsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes clients'**
+  String get merchantClientsTitle;
+
+  /// No description provided for @merchantClientsActiveCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} clients actifs'**
+  String merchantClientsActiveCount(String count);
+
+  /// No description provided for @merchantClientsAddSoonToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajout manuel d\'un client bientôt disponible.'**
+  String get merchantClientsAddSoonToast;
+
+  /// No description provided for @merchantClientsExportToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exportation de la liste clients au format CSV lancée !'**
+  String get merchantClientsExportToast;
+
+  /// No description provided for @merchantClientsExportButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter la liste'**
+  String get merchantClientsExportButton;
+
+  /// No description provided for @merchantClientsSearchHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher un client...'**
+  String get merchantClientsSearchHint;
+
+  /// No description provided for @merchantClientsFilterAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous'**
+  String get merchantClientsFilterAll;
+
+  /// No description provided for @merchantClientsFilterInactive30d.
+  ///
+  /// In fr, this message translates to:
+  /// **'+30j'**
+  String get merchantClientsFilterInactive30d;
+
+  /// No description provided for @merchantClientsPaginationInfo.
+  ///
+  /// In fr, this message translates to:
+  /// **'{from}-{to} sur {total}'**
+  String merchantClientsPaginationInfo(String from, String to, String total);
+
+  /// No description provided for @merchantClientsPrevious.
+  ///
+  /// In fr, this message translates to:
+  /// **'< Préc.'**
+  String get merchantClientsPrevious;
+
+  /// No description provided for @merchantClientsNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suiv. >'**
+  String get merchantClientsNext;
+
+  /// No description provided for @merchantClientDetailRemoveTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer du programme ?'**
+  String get merchantClientDetailRemoveTitle;
+
+  /// No description provided for @merchantClientDetailRemoveMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Êtes-vous sûr de vouloir retirer {name} de votre programme de fidélité ? Ses tampons seront réinitialisés.'**
+  String merchantClientDetailRemoveMessage(String name);
+
+  /// No description provided for @merchantClientDetailRemoveConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer'**
+  String get merchantClientDetailRemoveConfirm;
+
+  /// No description provided for @merchantClientDetailRemoveToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Client retiré du programme.'**
+  String get merchantClientDetailRemoveToast;
+
+  /// No description provided for @merchantClientDetailSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fiche client'**
+  String get merchantClientDetailSubtitle;
+
+  /// No description provided for @merchantClientDetailProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'Progression'**
+  String get merchantClientDetailProgress;
+
+  /// No description provided for @merchantClientDetailSendSms.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer un SMS'**
+  String get merchantClientDetailSendSms;
+
+  /// No description provided for @merchantClientDetailCall.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appeler'**
+  String get merchantClientDetailCall;
+
+  /// No description provided for @merchantClientDetailRewardsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompenses'**
+  String get merchantClientDetailRewardsLabel;
+
+  /// No description provided for @merchantClientDetailLastLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière'**
+  String get merchantClientDetailLastLabel;
+
+  /// No description provided for @merchantClientDetailHistoryTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Historique'**
+  String get merchantClientDetailHistoryTitle;
+
+  /// No description provided for @merchantClientDetailHistoryStampValidated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tampon validé'**
+  String get merchantClientDetailHistoryStampValidated;
+
+  /// No description provided for @merchantClientDetailHistoryRewardUsed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompense utilisée'**
+  String get merchantClientDetailHistoryRewardUsed;
+
+  /// No description provided for @merchantClientDetailHistoryEnrolled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inscription au programme'**
+  String get merchantClientDetailHistoryEnrolled;
+
+  /// No description provided for @merchantClientDetailRemoveButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer du programme'**
+  String get merchantClientDetailRemoveButton;
+
+  /// No description provided for @merchantValidateQrInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'QR code invalide ou illisible.'**
+  String get merchantValidateQrInvalid;
+
+  /// No description provided for @merchantValidateNetworkError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion impossible. Vérifiez votre réseau.'**
+  String get merchantValidateNetworkError;
+
+  /// No description provided for @merchantValidateNoCardFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune carte de fidélité trouvée pour ce commerce.'**
+  String get merchantValidateNoCardFound;
+
+  /// No description provided for @merchantValidateNoRewardFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune récompense de votre commerce ne correspond à ce code.'**
+  String get merchantValidateNoRewardFound;
+
+  /// No description provided for @merchantValidateRewardSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompense validée avec succès !'**
+  String get merchantValidateRewardSuccess;
+
+  /// No description provided for @merchantValidateRewardError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur lors de la validation.'**
+  String get merchantValidateRewardError;
+
+  /// No description provided for @merchantValidateFailedRetry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Échec de la validation. Réessayez.'**
+  String get merchantValidateFailedRetry;
+
+  /// No description provided for @merchantValidateDefaultClientName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Client'**
+  String get merchantValidateDefaultClientName;
+
+  /// No description provided for @merchantValidateTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Valider une visite'**
+  String get merchantValidateTitle;
+
+  /// No description provided for @merchantValidateSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez ou saisissez l\'identifiant'**
+  String get merchantValidateSubtitle;
+
+  /// No description provided for @merchantValidateTabScanner.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scanner'**
+  String get merchantValidateTabScanner;
+
+  /// No description provided for @merchantValidateTabPhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Identifiant'**
+  String get merchantValidateTabPhone;
+
+  /// No description provided for @merchantValidateScanInstruction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pointez la caméra vers le QR du client'**
+  String get merchantValidateScanInstruction;
+
+  /// No description provided for @merchantValidateDisableCamera.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactiver la caméra'**
+  String get merchantValidateDisableCamera;
+
+  /// No description provided for @merchantValidateEnableCamera.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer la caméra'**
+  String get merchantValidateEnableCamera;
+
+  /// No description provided for @merchantValidateManualSearchTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche par identifiant'**
+  String get merchantValidateManualSearchTitle;
+
+  /// No description provided for @merchantValidateManualSearchSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez l\'identifiant du client pour valider sa visite.'**
+  String get merchantValidateManualSearchSubtitle;
+
+  /// No description provided for @merchantValidateManualSearchHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Identifiant du client'**
+  String get merchantValidateManualSearchHint;
+
+  /// No description provided for @merchantValidateSearchButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher le client'**
+  String get merchantValidateSearchButton;
+
+  /// No description provided for @merchantSmsCampaignSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Campagnes & messages'**
+  String get merchantSmsCampaignSubtitle;
+
+  /// No description provided for @merchantSmsCampaignSentLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyées'**
+  String get merchantSmsCampaignSentLabel;
+
+  /// No description provided for @merchantSmsCampaignOpenRateLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouverture'**
+  String get merchantSmsCampaignOpenRateLabel;
+
+  /// No description provided for @merchantSmsCampaignReachedLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Atteints'**
+  String get merchantSmsCampaignReachedLabel;
+
+  /// No description provided for @merchantSmsCampaignCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} campagnes'**
+  String merchantSmsCampaignCount(String count);
+
+  /// No description provided for @merchantSmsCampaignDetailSentBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyée'**
+  String get merchantSmsCampaignDetailSentBadge;
+
+  /// No description provided for @merchantSmsCampaignDetailRecipients.
+  ///
+  /// In fr, this message translates to:
+  /// **'Destinataires'**
+  String get merchantSmsCampaignDetailRecipients;
+
+  /// No description provided for @merchantSmsCampaignDetailSent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyés'**
+  String get merchantSmsCampaignDetailSent;
+
+  /// No description provided for @merchantSmsCampaignDetailOpened.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouverts'**
+  String get merchantSmsCampaignDetailOpened;
+
+  /// No description provided for @merchantSmsCampaignDetailOpenRate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Taux d\'ouverture'**
+  String get merchantSmsCampaignDetailOpenRate;
+
+  /// No description provided for @merchantSmsCampaignDetailMessageTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Message envoyé'**
+  String get merchantSmsCampaignDetailMessageTitle;
+
+  /// No description provided for @merchantSmsCampaignDetailDuplicateToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Campagne dupliquée dans un nouveau brouillon !'**
+  String get merchantSmsCampaignDetailDuplicateToast;
+
+  /// No description provided for @merchantSmsCampaignDetailDuplicateButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dupliquer cette campagne'**
+  String get merchantSmsCampaignDetailDuplicateButton;
+
+  /// No description provided for @merchantSmsConversationSentToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'SMS envoyé avec succès !'**
+  String get merchantSmsConversationSentToast;
+
+  /// No description provided for @merchantSmsConversationLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conversation SMS'**
+  String get merchantSmsConversationLabel;
+
+  /// No description provided for @merchantSmsConversationInputHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écrire un message...'**
+  String get merchantSmsConversationInputHint;
+
+  /// No description provided for @merchantProfileLogoSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Logo mis à jour avec succès'**
+  String get merchantProfileLogoSuccess;
+
+  /// No description provided for @merchantProfileLogoError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de mettre à jour le logo.'**
+  String get merchantProfileLogoError;
+
+  /// No description provided for @merchantProfileSaveSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifications enregistrées !'**
+  String get merchantProfileSaveSuccess;
+
+  /// No description provided for @merchantProfileLogoHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'PNG ou JPG, carré, max 2 Mo.'**
+  String get merchantProfileLogoHint;
+
+  /// No description provided for @merchantProfileLoadingEllipsis.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement...'**
+  String get merchantProfileLoadingEllipsis;
+
+  /// No description provided for @merchantProfileChangeLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer'**
+  String get merchantProfileChangeLink;
+
+  /// No description provided for @merchantProfileSectionInfo.
+  ///
+  /// In fr, this message translates to:
+  /// **'INFORMATIONS'**
+  String get merchantProfileSectionInfo;
+
+  /// No description provided for @merchantProfileBusinessNameLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'NOM DU COMMERCE'**
+  String get merchantProfileBusinessNameLabel;
+
+  /// No description provided for @merchantProfileCategoryLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'CATÉGORIE'**
+  String get merchantProfileCategoryLabel;
+
+  /// No description provided for @merchantProfileDescriptionLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'DESCRIPTION'**
+  String get merchantProfileDescriptionLabel;
+
+  /// No description provided for @merchantProfileCharCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count}/200 caractères'**
+  String merchantProfileCharCount(String count);
+
+  /// No description provided for @merchantProfileSectionContact.
+  ///
+  /// In fr, this message translates to:
+  /// **'CONTACT'**
+  String get merchantProfileSectionContact;
+
+  /// No description provided for @merchantProfileEmailLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'EMAIL'**
+  String get merchantProfileEmailLabel;
+
+  /// No description provided for @merchantProfilePhoneLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'TÉLÉPHONE'**
+  String get merchantProfilePhoneLabel;
+
+  /// No description provided for @merchantProfileWhatsappLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'WHATSAPP'**
+  String get merchantProfileWhatsappLabel;
+
+  /// No description provided for @merchantProfileSectionAddress.
+  ///
+  /// In fr, this message translates to:
+  /// **'ADRESSE'**
+  String get merchantProfileSectionAddress;
+
+  /// No description provided for @merchantProfileCityLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'VILLE'**
+  String get merchantProfileCityLabel;
+
+  /// No description provided for @merchantProfileAddressLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'ADRESSE / QUARTIER'**
+  String get merchantProfileAddressLabel;
+
+  /// No description provided for @merchantProfileSaveButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer les modifications'**
+  String get merchantProfileSaveButton;
+
+  /// No description provided for @merchantVitrineLogoUploadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'envoyer le logo. Réessayez.'**
+  String get merchantVitrineLogoUploadError;
+
+  /// No description provided for @merchantVitrineLogoRemoveError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de supprimer le logo. Réessayez.'**
+  String get merchantVitrineLogoRemoveError;
+
+  /// No description provided for @merchantVitrineSaveSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vitrine mise à jour avec succès'**
+  String get merchantVitrineSaveSuccess;
+
+  /// No description provided for @merchantVitrineSaveError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur : {error}'**
+  String merchantVitrineSaveError(String error);
+
+  /// No description provided for @merchantVitrinePreviewTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu public'**
+  String get merchantVitrinePreviewTitle;
+
+  /// No description provided for @merchantVitrineTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma Vitrine'**
+  String get merchantVitrineTitle;
+
+  /// No description provided for @merchantVitrineSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Page publique de votre commerce'**
+  String get merchantVitrineSubtitle;
+
+  /// No description provided for @merchantVitrinePreviewButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu'**
+  String get merchantVitrinePreviewButton;
+
+  /// No description provided for @merchantVitrineCoverPhotoSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photo de couverture'**
+  String get merchantVitrineCoverPhotoSection;
+
+  /// No description provided for @merchantVitrineInfoSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Informations'**
+  String get merchantVitrineInfoSection;
+
+  /// No description provided for @merchantVitrineDescriptionHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Description...'**
+  String get merchantVitrineDescriptionHint;
+
+  /// No description provided for @merchantVitrineContactAddressSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contact & adresse'**
+  String get merchantVitrineContactAddressSection;
+
+  /// No description provided for @merchantVitrineHoursSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horaires'**
+  String get merchantVitrineHoursSection;
+
+  /// No description provided for @merchantVitrineDayMonday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lundi'**
+  String get merchantVitrineDayMonday;
+
+  /// No description provided for @merchantVitrineDayTuesday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mardi'**
+  String get merchantVitrineDayTuesday;
+
+  /// No description provided for @merchantVitrineDayWednesday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mercredi'**
+  String get merchantVitrineDayWednesday;
+
+  /// No description provided for @merchantVitrineDayThursday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jeudi'**
+  String get merchantVitrineDayThursday;
+
+  /// No description provided for @merchantVitrineDayFriday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vendredi'**
+  String get merchantVitrineDayFriday;
+
+  /// No description provided for @merchantVitrineDaySaturday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Samedi'**
+  String get merchantVitrineDaySaturday;
+
+  /// No description provided for @merchantVitrineDaySunday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dimanche'**
+  String get merchantVitrineDaySunday;
+
+  /// No description provided for @merchantVitrineClosedLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermé'**
+  String get merchantVitrineClosedLabel;
+
+  /// No description provided for @merchantVitrinePublishButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Publier les modifications'**
+  String get merchantVitrinePublishButton;
+
+  /// No description provided for @merchantVitrineAddPhotoLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter une photo'**
+  String get merchantVitrineAddPhotoLabel;
+
+  /// No description provided for @merchantSubscriptionPlanStarterName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Démarrage'**
+  String get merchantSubscriptionPlanStarterName;
+
+  /// No description provided for @merchantSubscriptionPlanBusinessName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Business'**
+  String get merchantSubscriptionPlanBusinessName;
+
+  /// No description provided for @merchantSubscriptionNextInvoiceLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prochaine facture'**
+  String get merchantSubscriptionNextInvoiceLabel;
+
+  /// No description provided for @merchantSubscriptionCurrentBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'ACTUEL'**
+  String get merchantSubscriptionCurrentBadge;
+
+  /// No description provided for @merchantSubscriptionChooseButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir'**
+  String get merchantSubscriptionChooseButton;
+
+  /// No description provided for @merchantSubscriptionPlanChangedSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abonnement modifié : plan {plan} sélectionné'**
+  String merchantSubscriptionPlanChangedSuccess(String plan);
+
+  /// No description provided for @merchantSubscriptionPlanChangeError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur lors du changement de plan : {error}'**
+  String merchantSubscriptionPlanChangeError(String error);
+
+  /// No description provided for @merchantQrCodeLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur'**
+  String get merchantQrCodeLoadError;
+
+  /// No description provided for @merchantQrCodeSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Affichez-le pour que les clients scannent'**
+  String get merchantQrCodeSubtitle;
+
+  /// No description provided for @merchantQrCodeScanToEarnLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez pour gagner un tampon'**
+  String get merchantQrCodeScanToEarnLabel;
+
+  /// No description provided for @merchantQrCodePngSavedToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Image enregistrée dans la galerie !'**
+  String get merchantQrCodePngSavedToast;
+
+  /// No description provided for @merchantQrCodeShareButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partager'**
+  String get merchantQrCodeShareButton;
+
+  /// No description provided for @merchantQrCodeUniqueCodeSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'CODE UNIQUE'**
+  String get merchantQrCodeUniqueCodeSection;
+
+  /// No description provided for @merchantQrCodeCodeCopiedToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code copié dans le presse-papiers !'**
+  String get merchantQrCodeCodeCopiedToast;
+
+  /// No description provided for @merchantQrCodeThisWeekLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette semaine'**
+  String get merchantQrCodeThisWeekLabel;
+
+  /// No description provided for @merchantQrCodeThisMonthLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce mois'**
+  String get merchantQrCodeThisMonthLabel;
+
+  /// No description provided for @merchantQrCodeNewLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveaux'**
+  String get merchantQrCodeNewLabel;
+
+  /// No description provided for @merchantQrCodeTipLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Astuce'**
+  String get merchantQrCodeTipLabel;
+
+  /// No description provided for @merchantQrCodeTipMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Placez le QR à la caisse ou sur les tables pour maximiser les scans.'**
+  String get merchantQrCodeTipMessage;
+
+  /// No description provided for @merchantQrCodePdfScanMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez pour cumuler vos points !'**
+  String get merchantQrCodePdfScanMessage;
+
+  /// No description provided for @merchantQrCodePdfPoweredBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Powered by Miva-Fid'**
+  String get merchantQrCodePdfPoweredBy;
+
+  /// No description provided for @merchantQrCodeWhatsappShareMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoignez mon programme de fidélité Miva-Fid chez {name} !'**
+  String merchantQrCodeWhatsappShareMessage(String name);
+
+  /// No description provided for @merchantProgrammeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fidélisation'**
+  String get merchantProgrammeTitle;
+
+  /// No description provided for @merchantProgrammeCardPreviewLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu de la carte'**
+  String get merchantProgrammeCardPreviewLabel;
+
+  /// No description provided for @merchantProgrammeConfigTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Configuration'**
+  String get merchantProgrammeConfigTitle;
+
+  /// No description provided for @merchantProgrammeConfigSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérez les détails de votre programme de fidélité'**
+  String get merchantProgrammeConfigSubtitle;
+
+  /// No description provided for @merchantProgrammeAppearanceTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence de la carte'**
+  String get merchantProgrammeAppearanceTitle;
+
+  /// No description provided for @merchantProgrammeAppearanceSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Personnalisez les couleurs et le style'**
+  String get merchantProgrammeAppearanceSubtitle;
+
+  /// No description provided for @merchantProgrammeTiersTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paliers de fidélité'**
+  String get merchantProgrammeTiersTitle;
+
+  /// No description provided for @merchantProgrammeTiersSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Objectifs, niveaux et récompenses de votre programme'**
+  String get merchantProgrammeTiersSubtitle;
+
+  /// No description provided for @merchantProgrammeRulesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Règles d\'accumulation'**
+  String get merchantProgrammeRulesTitle;
+
+  /// No description provided for @merchantProgrammeRulesSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Configuration du ratio (ex: 1 point = 500 FCFA)'**
+  String get merchantProgrammeRulesSubtitle;
+
+  /// No description provided for @merchantProgrammeLoopTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Programme en boucle'**
+  String get merchantProgrammeLoopTitle;
+
+  /// No description provided for @merchantProgrammeLoopEnabledSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernier palier atteint : nouveau cycle automatique.'**
+  String get merchantProgrammeLoopEnabledSubtitle;
+
+  /// No description provided for @merchantProgrammeLoopDisabledSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernier palier atteint : carte terminée définitivement.'**
+  String get merchantProgrammeLoopDisabledSubtitle;
+
+  /// No description provided for @merchantProgrammeTiersLoadingTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paliers'**
+  String get merchantProgrammeTiersLoadingTitle;
+
+  /// No description provided for @merchantProgrammeGoalUnitPoints.
+  ///
+  /// In fr, this message translates to:
+  /// **'points / FCFA'**
+  String get merchantProgrammeGoalUnitPoints;
+
+  /// No description provided for @merchantProgrammeGoalUnitCashback.
+  ///
+  /// In fr, this message translates to:
+  /// **'FCFA de cashback cumulés'**
+  String get merchantProgrammeGoalUnitCashback;
+
+  /// No description provided for @merchantProgrammeGoalUnitStamps.
+  ///
+  /// In fr, this message translates to:
+  /// **'tampons'**
+  String get merchantProgrammeGoalUnitStamps;
+
+  /// No description provided for @merchantProgrammeTiersSaveSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paliers mis à jour avec succès'**
+  String get merchantProgrammeTiersSaveSuccess;
+
+  /// No description provided for @merchantProgrammeTiersSaveError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur : {error}'**
+  String merchantProgrammeTiersSaveError(String error);
+
+  /// No description provided for @merchantProgrammeAddTierButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un palier'**
+  String get merchantProgrammeAddTierButton;
+
+  /// No description provided for @merchantProgrammeRulesNotApplicable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre programme est configuré en mode \"{mode}\".\n\nAucune règle de conversion FCFA -> Points n\'est requise.'**
+  String merchantProgrammeRulesNotApplicable(String mode);
+
+  /// No description provided for @merchantProgrammeRulesSaveSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Règle de conversion mise à jour avec succès'**
+  String get merchantProgrammeRulesSaveSuccess;
+
+  /// No description provided for @merchantProgrammeRulesSaveError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur : {error}'**
+  String merchantProgrammeRulesSaveError(String error);
+
+  /// No description provided for @merchantProgrammeRulesConversionLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conversion FCFA -> Points'**
+  String get merchantProgrammeRulesConversionLabel;
+
+  /// No description provided for @merchantProgrammeRulesConversionSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Définissez combien le client doit dépenser pour gagner 1 point.'**
+  String get merchantProgrammeRulesConversionSubtitle;
+
+  /// No description provided for @merchantProgrammeRulesInputLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'1 point tous les combien de FCFA ? *'**
+  String get merchantProgrammeRulesInputLabel;
+
+  /// No description provided for @merchantProgrammeRulesInputHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex: 500'**
+  String get merchantProgrammeRulesInputHint;
+
+  /// No description provided for @merchantProgrammeRulesValidatorError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veuillez entrer un nombre supérieur à 0'**
+  String get merchantProgrammeRulesValidatorError;
+
+  /// No description provided for @merchantProgrammeDesignLogoRemovedToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Logo supprimé'**
+  String get merchantProgrammeDesignLogoRemovedToast;
+
+  /// No description provided for @merchantProgrammeDesignSaveSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Design mis à jour avec succès'**
+  String get merchantProgrammeDesignSaveSuccess;
+
+  /// No description provided for @merchantProgrammeDesignSaveError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur : {error}'**
+  String merchantProgrammeDesignSaveError(String error);
+
+  /// No description provided for @merchantProgrammeDesignLoadingTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence'**
+  String get merchantProgrammeDesignLoadingTitle;
+
+  /// No description provided for @merchantProgrammeDesignChooseIconTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une icône'**
+  String get merchantProgrammeDesignChooseIconTitle;
+
+  /// No description provided for @merchantProgrammeDesignChooseEmojiTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir un emoji'**
+  String get merchantProgrammeDesignChooseEmojiTitle;
+
+  /// No description provided for @merchantProgrammeDesignLogoHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce logo apparaîtra sur votre carte de fidélité et sur vos profils.'**
+  String get merchantProgrammeDesignLogoHint;
+
+  /// No description provided for @merchantProgrammeDesignLogoPresent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Logo présent'**
+  String get merchantProgrammeDesignLogoPresent;
+
+  /// No description provided for @merchantProgrammeDesignNoLogo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun logo'**
+  String get merchantProgrammeDesignNoLogo;
+
+  /// No description provided for @merchantProgrammeDesignSquareFormatHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Format carré recommandé'**
+  String get merchantProgrammeDesignSquareFormatHint;
+
+  /// No description provided for @merchantProgrammeDesignAddButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get merchantProgrammeDesignAddButton;
+
+  /// No description provided for @merchantProgrammeDesignRemoveTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer'**
+  String get merchantProgrammeDesignRemoveTooltip;
+
+  /// No description provided for @merchantProgrammeDesignPrimaryColorLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Couleur principale'**
+  String get merchantProgrammeDesignPrimaryColorLabel;
+
+  /// No description provided for @merchantProgrammeDesignColorHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez la couleur dominante de votre carte de fidélité.'**
+  String get merchantProgrammeDesignColorHint;
+
+  /// No description provided for @merchantProgrammeDesignPatternLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Motif de fond'**
+  String get merchantProgrammeDesignPatternLabel;
+
+  /// No description provided for @merchantProgrammeDesignPatternNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun'**
+  String get merchantProgrammeDesignPatternNone;
+
+  /// No description provided for @merchantProgrammeDesignPatternLines.
+  ///
+  /// In fr, this message translates to:
+  /// **'Traits'**
+  String get merchantProgrammeDesignPatternLines;
+
+  /// No description provided for @merchantProgrammeDesignPatternWaves.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vagues'**
+  String get merchantProgrammeDesignPatternWaves;
+
+  /// No description provided for @merchantProgrammeDesignPatternDots.
+  ///
+  /// In fr, this message translates to:
+  /// **'Points'**
+  String get merchantProgrammeDesignPatternDots;
+
+  /// No description provided for @merchantProgrammeDesignStampStyleLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Style des tampons'**
+  String get merchantProgrammeDesignStampStyleLabel;
+
+  /// No description provided for @merchantProgrammeDesignStampTypeIcon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Icône'**
+  String get merchantProgrammeDesignStampTypeIcon;
+
+  /// No description provided for @merchantProgrammeDesignStampTypeEmoji.
+  ///
+  /// In fr, this message translates to:
+  /// **'Emoji'**
+  String get merchantProgrammeDesignStampTypeEmoji;
+
+  /// No description provided for @merchantProgrammeDesignIconSelectedLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Icône sélectionnée'**
+  String get merchantProgrammeDesignIconSelectedLabel;
+
+  /// No description provided for @merchantProgrammeDesignEmojiSelectedLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Emoji sélectionné'**
+  String get merchantProgrammeDesignEmojiSelectedLabel;
+
+  /// No description provided for @merchantProgrammeDesignSaveButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer le design'**
+  String get merchantProgrammeDesignSaveButton;
+
+  /// No description provided for @merchantPlanUpgradeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passez à Pro'**
+  String get merchantPlanUpgradeTitle;
+
+  /// No description provided for @merchantPlanUpgradeSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Campagnes SMS illimitées, analytics avancés et support prioritaire.'**
+  String get merchantPlanUpgradeSubtitle;
+
+  /// No description provided for @merchantPlanUpgradeButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Découvrir Pro'**
+  String get merchantPlanUpgradeButton;
+
+  /// No description provided for @merchantPlanUpgradeToast.
+  ///
+  /// In fr, this message translates to:
+  /// **'Offre Pro bientôt disponible'**
+  String get merchantPlanUpgradeToast;
+
+  /// No description provided for @merchantValidateRewardUnlockedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompense débloquée !'**
+  String get merchantValidateRewardUnlockedTitle;
+
+  /// No description provided for @merchantValidateCashbackCreditedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'{amount} FCFA crédités à {name} !'**
+  String merchantValidateCashbackCreditedTitle(String amount, String name);
+
+  /// No description provided for @merchantValidateStampGrantedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tampon accordé à {name} !'**
+  String merchantValidateStampGrantedTitle(String name);
+
+  /// No description provided for @merchantValidatePointsGrantedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'{points} point(s) accordé(s) à {name} !'**
+  String merchantValidatePointsGrantedTitle(String points, String name);
+
+  /// No description provided for @merchantValidateRewardUnlockedSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le client peut réclamer sa récompense dès maintenant.'**
+  String get merchantValidateRewardUnlockedSubtitle;
+
+  /// No description provided for @merchantValidateCashbackCreditedSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cashback crédité sur le solde du client.'**
+  String get merchantValidateCashbackCreditedSubtitle;
+
+  /// No description provided for @merchantValidateStampProgressSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'{current} sur {goal} tampons'**
+  String merchantValidateStampProgressSubtitle(String current, String goal);
+
+  /// No description provided for @merchantValidatePointsProgressSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'{current} sur {goal} points'**
+  String merchantValidatePointsProgressSubtitle(String current, String goal);
+
+  /// No description provided for @merchantValidateNextStepButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Étape suivante'**
+  String get merchantValidateNextStepButton;
+
+  /// No description provided for @merchantValidateRewardStatusUsed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà utilisée'**
+  String get merchantValidateRewardStatusUsed;
+
+  /// No description provided for @merchantValidateRewardStatusCanceled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annulée'**
+  String get merchantValidateRewardStatusCanceled;
+
+  /// No description provided for @merchantValidateRewardStatusExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Expirée'**
+  String get merchantValidateRewardStatusExpired;
+
+  /// No description provided for @merchantValidateRewardStatusAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Disponible'**
+  String get merchantValidateRewardStatusAvailable;
+
+  /// No description provided for @merchantValidateRewardSheetTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompense'**
+  String get merchantValidateRewardSheetTitle;
+
+  /// No description provided for @merchantValidateRewardClientLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Client : {name}'**
+  String merchantValidateRewardClientLabel(String name);
+
+  /// No description provided for @merchantValidateRewardConfirmButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Valider l\'utilisation'**
+  String get merchantValidateRewardConfirmButton;
+
+  /// No description provided for @merchantValidateRewardCancelButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler cette récompense'**
+  String get merchantValidateRewardCancelButton;
+
+  /// No description provided for @merchantValidateCardInactive.
+  ///
+  /// In fr, this message translates to:
+  /// **'Carte inactive'**
+  String get merchantValidateCardInactive;
+
+  /// No description provided for @merchantValidateConfirmAndCredit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer et créditer'**
+  String get merchantValidateConfirmAndCredit;
+
+  /// No description provided for @merchantValidateCreditCashback.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créditer le cashback'**
+  String get merchantValidateCreditCashback;
+
+  /// No description provided for @merchantValidateValidateStamp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Valider le tampon'**
+  String get merchantValidateValidateStamp;
+
+  /// No description provided for @merchantValidateCreditCashbackButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créditer du cashback'**
+  String get merchantValidateCreditCashbackButton;
+
+  /// No description provided for @merchantValidateRedeemCashbackButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser du cashback'**
+  String get merchantValidateRedeemCashbackButton;
+
+  /// No description provided for @merchantValidateNoCashbackBalance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun solde cashback à utiliser pour ce client.'**
+  String get merchantValidateNoCashbackBalance;
+
+  /// No description provided for @merchantValidatePurchaseAmountLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant de l\'achat'**
+  String get merchantValidatePurchaseAmountLabel;
+
+  /// No description provided for @merchantValidateCashbackCreditedHelper.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent}% crédités en cashback'**
+  String merchantValidateCashbackCreditedHelper(String percent);
+
+  /// No description provided for @merchantValidateEnterAmountCashbackHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez le montant pour voir le cashback crédité.'**
+  String get merchantValidateEnterAmountCashbackHint;
+
+  /// No description provided for @merchantValidateCashbackCreditedResult.
+  ///
+  /// In fr, this message translates to:
+  /// **'= {amount} de cashback crédités'**
+  String merchantValidateCashbackCreditedResult(String amount);
+
+  /// No description provided for @merchantValidateCashbackToUseLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cashback à utiliser'**
+  String get merchantValidateCashbackToUseLabel;
+
+  /// No description provided for @merchantValidateAvailableBalance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Solde disponible : {amount}'**
+  String merchantValidateAvailableBalance(String amount);
+
+  /// No description provided for @merchantValidateAmountToPay.
+  ///
+  /// In fr, this message translates to:
+  /// **'= {amount} à payer'**
+  String merchantValidateAmountToPay(String amount);
+
+  /// No description provided for @merchantValidateExceedsBalance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dépasse le solde disponible.'**
+  String get merchantValidateExceedsBalance;
+
+  /// No description provided for @merchantValidateExceedsPurchase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ne peut pas dépasser le montant de l\'achat.'**
+  String get merchantValidateExceedsPurchase;
+
+  /// No description provided for @merchantValidateViewSummaryButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir le résumé'**
+  String get merchantValidateViewSummaryButton;
+
+  /// No description provided for @merchantValidateSummaryPurchase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Achat'**
+  String get merchantValidateSummaryPurchase;
+
+  /// No description provided for @merchantValidateSummaryCashbackUsed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cashback utilisé'**
+  String get merchantValidateSummaryCashbackUsed;
+
+  /// No description provided for @merchantValidateSummaryToPay.
+  ///
+  /// In fr, this message translates to:
+  /// **'À payer'**
+  String get merchantValidateSummaryToPay;
+
+  /// No description provided for @merchantValidateSummaryCashbackGenerated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cashback généré'**
+  String get merchantValidateSummaryCashbackGenerated;
+
+  /// No description provided for @merchantValidateSummaryNewBalance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau solde'**
+  String get merchantValidateSummaryNewBalance;
+
+  /// No description provided for @merchantValidateConfirmUsageButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer l\'utilisation'**
+  String get merchantValidateConfirmUsageButton;
+
+  /// No description provided for @merchantValidateInactiveBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inactive'**
+  String get merchantValidateInactiveBadge;
+
+  /// No description provided for @merchantValidatePointsRatioHelper.
+  ///
+  /// In fr, this message translates to:
+  /// **'1 point tous les {amount} FCFA d\'achat'**
+  String merchantValidatePointsRatioHelper(String amount);
+
+  /// No description provided for @merchantValidateEnterAmountPointsHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez le montant pour voir les points crédités.'**
+  String get merchantValidateEnterAmountPointsHint;
+
+  /// No description provided for @merchantValidatePointsCreditedResult.
+  ///
+  /// In fr, this message translates to:
+  /// **'= {points} point(s) crédité(s)'**
+  String merchantValidatePointsCreditedResult(String points);
+
+  /// No description provided for @merchantValidateCashbackLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'CASHBACK'**
+  String get merchantValidateCashbackLabel;
+
+  /// No description provided for @merchantValidateAvailableBalanceLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'solde disponible'**
+  String get merchantValidateAvailableBalanceLabel;
+
+  /// No description provided for @merchantValidatePurchasesLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'ACHATS'**
+  String get merchantValidatePurchasesLabel;
+
+  /// No description provided for @merchantValidatePointsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'POINTS'**
+  String get merchantValidatePointsLabel;
+
+  /// No description provided for @merchantValidateSpendGoalLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'sur {goal} pts (achats)'**
+  String merchantValidateSpendGoalLabel(String goal);
+
+  /// No description provided for @merchantValidatePointsGoalLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'sur {goal} points'**
+  String merchantValidatePointsGoalLabel(String goal);
+
+  /// No description provided for @merchantTierEditorTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos paliers'**
+  String get merchantTierEditorTitle;
+
+  /// No description provided for @merchantTierEditorCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} palier} other{{count} paliers}}'**
+  String merchantTierEditorCount(int count);
+
+  /// No description provided for @merchantTierEditorMultiTierHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque palier attribue un niveau nommé par vous et débloque sa propre récompense, sans jamais redescendre une fois atteint.'**
+  String get merchantTierEditorMultiTierHint;
+
+  /// No description provided for @merchantTierEditorEmptyState.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun palier configuré — le cashback fonctionne normalement sans palier.'**
+  String get merchantTierEditorEmptyState;
+
+  /// No description provided for @merchantTierEditorDefaultTierName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Palier {number}'**
+  String merchantTierEditorDefaultTierName(String number);
+
+  /// No description provided for @merchantTierEditorConfigurePrompt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Configurer ce palier'**
+  String get merchantTierEditorConfigurePrompt;
+
+  /// No description provided for @merchantTierEditorDeleteTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer ce palier'**
+  String get merchantTierEditorDeleteTooltip;
+
+  /// No description provided for @merchantTierEditorGoalLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Objectif ({unit}) *'**
+  String merchantTierEditorGoalLabel(String unit);
+
+  /// No description provided for @merchantTierEditorGoalRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'objectif est obligatoire'**
+  String get merchantTierEditorGoalRequired;
+
+  /// No description provided for @merchantTierEditorMustExceedPrevious.
+  ///
+  /// In fr, this message translates to:
+  /// **'Doit être supérieur au palier précédent ({value})'**
+  String merchantTierEditorMustExceedPrevious(String value);
+
+  /// No description provided for @merchantTierEditorLevelNameLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom du niveau *'**
+  String get merchantTierEditorLevelNameLabel;
+
+  /// No description provided for @merchantTierEditorLevelNameHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex : Découverte, Habitué, VIP'**
+  String get merchantTierEditorLevelNameHint;
+
+  /// No description provided for @merchantTierEditorLevelNameRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le nom du niveau est obligatoire'**
+  String get merchantTierEditorLevelNameRequired;
+
+  /// No description provided for @merchantTierEditorRewardLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompense offerte *'**
+  String get merchantTierEditorRewardLabel;
+
+  /// No description provided for @merchantTierEditorRewardHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex : 1 café offert, 10% de réduction'**
+  String get merchantTierEditorRewardHint;
+
+  /// No description provided for @merchantTierEditorRewardRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'La description de la récompense est obligatoire'**
+  String get merchantTierEditorRewardRequired;
+
+  /// No description provided for @merchantTierEditorSurpriseRewardLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompense surprise 🎁'**
+  String get merchantTierEditorSurpriseRewardLabel;
+
+  /// No description provided for @merchantTierEditorSurpriseRewardHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cacher ce palier au client jusqu\'à ce qu\'il le débloque.'**
+  String get merchantTierEditorSurpriseRewardHint;
+
+  /// No description provided for @merchantTierEditorValidityLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Validité (jours, optionnel)'**
+  String get merchantTierEditorValidityLabel;
+
+  /// No description provided for @merchantTierEditorValidityHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex: 30 — vide = pas d\'expiration'**
+  String get merchantTierEditorValidityHint;
+
+  /// No description provided for @merchantTierEditorValidityError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veuillez entrer un nombre de jours supérieur à 0'**
+  String get merchantTierEditorValidityError;
 }
 
 class _AppLocalizationsDelegate

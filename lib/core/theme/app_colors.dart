@@ -28,17 +28,37 @@ class AppColors {
   static const primary = Color(0xFF4F46E5);
   static const primaryDark = Color(0xFF3730A3);
   static const primaryLight = Color(0xFF818CF8);
-  static const primaryTint = Color(0xFFEEF2FF);
   static const merchant = Color(0xFF7C3AED);
   static const merchantDark = Color(0xFF6D28D9);
-  static const merchantTint = Color(0xFFF3E8FF);
   static const success = Color(0xFF10B981);
-  static const successTint = Color(0xFFD1FAE5);
   static const warning = Color(0xFFF59E0B);
-  static const warningTint = Color(0xFFFEF3C7);
   static const warningDark = Color(0xFFD97706);
   static const danger = Color(0xFFEF4444);
-  static const dangerTint = Color(0xFFFEE2E2);
+
+  // --- Fonds teintés (icônes, badges) — pastel en clair, remplacés par un
+  // fond assombri de même teinte en sombre : un pastel clair resterait un
+  // pavé blanc criard sur fond sombre. Même mécanique que le design system
+  // du module client (lib/features/client/core/theme/app_colors.dart).
+
+  static const _primaryTintLight = Color(0xFFEEF2FF);
+  static const _primaryTintDark = Color(0xFF23244A);
+  static Color get primaryTint => isDark ? _primaryTintDark : _primaryTintLight;
+
+  static const _merchantTintLight = Color(0xFFF3E8FF);
+  static const _merchantTintDark = Color(0xFF2B2147);
+  static Color get merchantTint => isDark ? _merchantTintDark : _merchantTintLight;
+
+  static const _successTintLight = Color(0xFFD1FAE5);
+  static const _successTintDark = Color(0xFF15291F);
+  static Color get successTint => isDark ? _successTintDark : _successTintLight;
+
+  static const _warningTintLight = Color(0xFFFEF3C7);
+  static const _warningTintDark = Color(0xFF2E2313);
+  static Color get warningTint => isDark ? _warningTintDark : _warningTintLight;
+
+  static const _dangerTintLight = Color(0xFFFEE2E2);
+  static const _dangerTintDark = Color(0xFF2E1A1A);
+  static Color get dangerTint => isDark ? _dangerTintDark : _dangerTintLight;
   // --- Neutres, sensibles au mode ----------------------------------------
   //
   // Les constantes `...Light` / `...Dark` restent exposées : `app_theme.dart`

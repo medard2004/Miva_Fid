@@ -32,7 +32,12 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
         foregroundColor: AppColors.textPrimary,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: AppColors.textPrimary, size: 20),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

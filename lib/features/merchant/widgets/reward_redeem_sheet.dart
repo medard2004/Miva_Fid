@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../providers/validate_provider.dart';
 
 /// Feuille de confirmation après scan d'un QR de récompense — affiche le
@@ -31,11 +32,11 @@ class RewardRedeemSheet extends StatefulWidget {
 class _RewardRedeemSheetState extends State<RewardRedeemSheet> {
   bool _submitting = false;
 
-  String get _statusLabel {
-    if (widget.reward.status == 'used') return 'Déjà utilisée';
-    if (widget.reward.status == 'canceled') return 'Annulée';
-    if (widget.reward.isExpired) return 'Expirée';
-    return 'Disponible';
+  String _statusLabel(AppLocalizations t) {
+    if (widget.reward.status == 'used') return t.merchantValidateRewardStatusUsed;
+    if (widget.reward.status == 'canceled') return t.merchantValidateRewardStatusCanceled;
+    if (widget.reward.isExpired) return t.merchantValidateRewardStatusExpired;
+    return t.merchantValidateRewardStatusAvailable;
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -49,6 +50,7 @@ class _RewardRedeemSheetState extends State<RewardRedeemSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final reward = widget.reward;
     return SafeArea(
       child: Padding(
@@ -62,7 +64,7 @@ class _RewardRedeemSheetState extends State<RewardRedeemSheet> {
                 Icon(LucideIcons.gift, color: AppColors.merchant),
                 const SizedBox(width: Sp.sm),
                 Expanded(
-                  child: Text('Récompense', style: AppTextStyles.h3()),
+                  child: Text(t.merchantValidateRewardSheetTitle, style: AppTextStyles.h3()),
                 ),
               ],
             ),
@@ -70,15 +72,15 @@ class _RewardRedeemSheetState extends State<RewardRedeemSheet> {
             Text(reward.title, style: AppTextStyles.labelBold()),
             if (reward.clientName != null) ...[
               const SizedBox(height: 4),
-              Text('Client : ${reward.clientName}', style: AppTextStyles.bodyMd()),
+              Text(t.merchantValidateRewardClientLabel(reward.clientName!), style: AppTextStyles.bodyMd()),
             ],
             const SizedBox(height: 4),
-            Text(_statusLabel,
+            Text(_statusLabel(t),
                 style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: Sp.lg),
             if (reward.isRedeemable) ...[
               AppButton.primary(
-                'Valider l\'utilisation',
+                t.merchantValidateRewardConfirmButton,
                 icon: LucideIcons.checkCheck,
                 loading: _submitting,
                 onPressed: () => _run(widget.onRedeem),
@@ -95,10 +97,10 @@ class _RewardRedeemSheetState extends State<RewardRedeemSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(LucideIcons.x, size: 18),
-                label: const Text('Annuler cette récompense'),
+                label: Text(t.merchantValidateRewardCancelButton),
               ),
             ] else
-              AppButton.primary('Fermer', onPressed: () => Navigator.of(context).pop()),
+              AppButton.primary(t.commonClose, onPressed: () => Navigator.of(context).pop()),
           ],
         ),
       ),

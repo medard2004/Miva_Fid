@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
@@ -84,10 +86,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         .read(merchantAuthProvider.notifier)
         .uploadLogo(File(file.path));
     if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
     if (ok) {
-      ToastService.showSuccess('Logo mis à jour avec succès');
+      ToastService.showSuccess(t.merchantProfileLogoSuccess);
     } else {
-      ToastService.showError('Impossible de mettre à jour le logo.');
+      ToastService.showError(t.merchantProfileLogoError);
     }
     setState(() => _uploadingLogo = false);
   }
@@ -140,11 +143,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         'address': _addressController.text.trim(),
       });
       if (mounted) {
-        ToastService.showSuccess('Modifications enregistrées !');
+        ToastService.showSuccess(AppLocalizations.of(context)!.merchantProfileSaveSuccess);
       }
     } catch (_) {
       if (mounted) {
-        ToastService.showError('Impossible d\'enregistrer les modifications.');
+        ToastService.showError(AppLocalizations.of(context)!.errProfileSaveFailed);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -247,6 +250,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final merchantState = ref.watch(merchantAuthProvider);
     final RestaurantAccount? account = merchantState.restaurant;
 
@@ -264,7 +268,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final logoUrl = account?.logoUrl;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -274,9 +278,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       LucideIcons.chevronLeft,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.textPrimary,
                       size: 22,
                     ),
                     onPressed: () {
@@ -288,32 +292,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     },
                   ),
                   const SizedBox(width: 4),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Profil du commerce',
+                      t.merchantMoreBusinessProfile,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
                   InkWell(
                     onTap: () => context.push('/merchant/more/notifications'),
                     borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: const Icon(
-                        LucideIcons.bell,
-                        size: 18,
-                        color: Color(0xFF1E293B),
-                      ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Icon(
+                            LucideIcons.bell,
+                            size: 18,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -333,9 +354,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFEDF0F7)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Row(
                           children: [
@@ -345,7 +366,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   width: 52,
                                   height: 52,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEEF2FF),
+                                    color: AppColors.primaryTint,
                                     shape: BoxShape.circle,
                                     image: (logoUrl != null &&
                                             logoUrl.isNotEmpty)
@@ -356,10 +377,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         : null,
                                   ),
                                   child: (logoUrl == null || logoUrl.isEmpty)
-                                      ? const Center(
+                                      ? Center(
                                           child: Icon(
                                             LucideIcons.camera,
-                                            color: Color(0xFF64748B),
+                                            color: AppColors.textSecondary,
                                             size: 22,
                                           ),
                                         )
@@ -396,20 +417,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Logo du commerce',
+                                  Text(
+                                    t.merchantMoreLogoBusiness,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF1E293B),
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text(
-                                    'PNG ou JPG, carré, max 2 Mo.',
+                                  Text(
+                                    t.merchantProfileLogoHint,
                                     style: TextStyle(
                                       fontSize: 11.5,
-                                      color: Color(0xFF64748B),
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -419,10 +440,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         onTap:
                                             _uploadingLogo ? null : _pickLogo,
                                         child: Text(
-                                          logoUrl != null &&
-                                                  logoUrl.isNotEmpty
-                                              ? 'Changer'
-                                              : 'Ajouter un logo',
+                                          _uploadingLogo
+                                              ? t.merchantProfileLoadingEllipsis
+                                              : (logoUrl != null &&
+                                                      logoUrl.isNotEmpty
+                                                  ? t.merchantProfileChangeLink
+                                                  : 'Ajouter un logo'),
                                           style: const TextStyle(
                                             fontSize: 12.5,
                                             fontWeight: FontWeight.w700,
@@ -461,17 +484,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFEDF0F7)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionHeader('INFORMATIONS'),
+                            _buildSectionHeader(t.merchantProfileSectionInfo),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'NOM DU COMMERCE',
+                              label: t.merchantProfileBusinessNameLabel,
                               controller: _nameController,
                               validator: (v) =>
                                   (v == null || v.trim().isEmpty)
@@ -480,7 +503,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'CATÉGORIE',
+                              label: t.merchantProfileCategoryLabel,
                               controller: _categoryController,
                               validator: (v) =>
                                   (v == null || v.trim().isEmpty)
@@ -489,7 +512,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'DESCRIPTION',
+                              label: t.merchantProfileDescriptionLabel,
                               controller: _descriptionController,
                               maxLines: 3,
                               maxLength: 200,
@@ -498,7 +521,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                '${_descriptionController.text.length}/200 caractères',
+                                t.merchantProfileCharCount(_descriptionController.text.length.toString()),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: _descriptionController
@@ -508,7 +531,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       : FontWeight.w400,
                                   color: _descriptionController.text.length > 200
                                       ? const Color(0xFFDC2626)
-                                      : const Color(0xFF94A3B8),
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ),
@@ -521,17 +544,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFEDF0F7)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionHeader('CONTACT'),
+                            _buildSectionHeader(t.merchantProfileSectionContact),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'EMAIL',
+                              label: t.merchantProfileEmailLabel,
                               initialText:
                                   account?.email.isNotEmpty == true
                                       ? account!.email
@@ -545,7 +568,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'TÉLÉPHONE',
+                              label: t.merchantProfilePhoneLabel,
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
                               validator: (v) =>
@@ -555,7 +578,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'WHATSAPP',
+                              label: t.merchantProfileWhatsappLabel,
                               controller: _whatsappController,
                               keyboardType: TextInputType.phone,
                             ),
@@ -568,32 +591,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFEDF0F7)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   LucideIcons.mapPin,
                                   size: 13,
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textSecondary,
                                 ),
                                 const SizedBox(width: 6),
-                                _buildSectionHeader('ADRESSE'),
+                                _buildSectionHeader(t.merchantProfileSectionAddress),
                               ],
                             ),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'VILLE',
+                              label: t.merchantProfileCityLabel,
                               controller: _cityController,
                             ),
                             const SizedBox(height: 12),
                             _buildField(
-                              label: 'ADRESSE / QUARTIER',
+                              label: t.merchantProfileAddressLabel,
                               controller: _addressController,
                             ),
                           ],
@@ -624,9 +647,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text(
-                                  'Enregistrer les modifications',
-                                  style: TextStyle(
+                              : Text(
+                                  t.merchantProfileSaveButton,
+                                  style: const TextStyle(
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -649,10 +672,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w800,
-        color: Color(0xFF64748B),
+        color: AppColors.textSecondary,
         letterSpacing: 0.5,
       ),
     );
@@ -675,18 +698,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF64748B),
+            color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: enabled ? const Color(0xFFF8F9FD) : Colors.white,
+            color: enabled ? AppColors.background : AppColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFEDF0F7)),
+            border: Border.all(color: AppColors.border),
           ),
           child: TextFormField(
             controller: controller,
@@ -702,10 +725,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     required isFocused,
                     maxLength}) =>
                 null,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
+              color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
               isDense: true,

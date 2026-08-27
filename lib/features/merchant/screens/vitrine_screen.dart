@@ -11,6 +11,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
@@ -66,7 +67,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     final ok = await ref.read(merchantAuthProvider.notifier).uploadLogo(File(file.path));
     if (!mounted) return;
     if (!ok) {
-      ToastService.showError('Impossible d\'envoyer le logo. Réessayez.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantVitrineLogoUploadError);
     }
     setState(() => _uploadingLogo = false);
   }
@@ -76,7 +77,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     final ok = await ref.read(merchantAuthProvider.notifier).deleteLogo();
     if (!mounted) return;
     if (!ok) {
-      ToastService.showError('Impossible de supprimer le logo. Réessayez.');
+      ToastService.showError(AppLocalizations.of(context)!.merchantVitrineLogoRemoveError);
     }
     setState(() => _uploadingLogo = false);
   }
@@ -93,14 +94,14 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vitrine mise à jour avec succès')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.merchantVitrineSaveSuccess)),
         );
         context.go('/merchant');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.merchantVitrineSaveError(e.toString()))),
         );
       }
     } finally {
@@ -109,14 +110,15 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
   }
 
   void _showPreviewSheet(BuildContext context, dynamic merchant) {
+    final t = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(Sp.md),
         child: Column(
@@ -124,7 +126,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
           children: [
             Row(
               children: [
-                Text('Aperçu public', style: AppTextStyles.h3()),
+                Text(t.merchantVitrinePreviewTitle, style: AppTextStyles.h3()),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(LucideIcons.x),
@@ -155,6 +157,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     // la luminosite effective est leur seul declencheur de rebuild sur
     // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final merchantAsync = ref.watch(merchantNotifierProvider);
     final merchant = merchantAsync.value;
     final account = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
@@ -177,14 +180,14 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Ma Vitrine',
+                        t.merchantVitrineTitle,
                         style: AppTextStyles.h1().copyWith(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       Text(
-                        'Page publique de votre commerce',
+                        t.merchantVitrineSubtitle,
                         style: AppTextStyles.caption().copyWith(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -204,7 +207,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     ),
                     icon: Icon(LucideIcons.eye, color: AppColors.textPrimary, size: 16),
                     label: Text(
-                      'Aperçu',
+                      t.merchantVitrinePreviewButton,
                       style: AppTextStyles.caption().copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
@@ -227,7 +230,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -251,44 +254,44 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     const SizedBox(height: Sp.lg),
 
                     // Section Photo de couverture
-                    const _SectionTitle('Photo de couverture').animate().fadeIn(duration: 300.ms, delay: 220.ms),
+                    _SectionTitle(t.merchantVitrineCoverPhotoSection).animate().fadeIn(duration: 300.ms, delay: 220.ms),
                     const SizedBox(height: 6),
-                    _buildLogoPicker(merchant?.logoUrl)
+                    _buildLogoPicker(merchant?.logoUrl, t)
                         .animate()
                         .fadeIn(duration: 400.ms, delay: 260.ms)
                         .slideY(begin: 0.06, end: 0),
                     const SizedBox(height: Sp.lg),
 
                     // Section Informations
-                    const _SectionTitle('Informations').animate().fadeIn(duration: 300.ms, delay: 330.ms),
+                    _SectionTitle(t.merchantVitrineInfoSection).animate().fadeIn(duration: 300.ms, delay: 330.ms),
                     const SizedBox(height: 8),
-                    _buildInputLabel('NOM DU COMMERCE'),
+                    _buildInputLabel(t.merchantProfileBusinessNameLabel),
                     _buildTextField(_nameCtrl, 'Restaurant La Saveur'),
                     const SizedBox(height: 12),
-                    _buildInputLabel('CATÉGORIE'),
+                    _buildInputLabel(t.merchantProfileCategoryLabel),
                     _buildTextField(_catCtrl, 'Restaurant'),
                     const SizedBox(height: 12),
-                    _buildInputLabel('DESCRIPTION'),
-                    _buildTextField(_descCtrl, 'Description...', maxLines: 3),
+                    _buildInputLabel(t.merchantProfileDescriptionLabel),
+                    _buildTextField(_descCtrl, t.merchantVitrineDescriptionHint, maxLines: 3),
                     const SizedBox(height: Sp.lg),
 
                     // Section Contact & adresse
-                    const _SectionTitle('Contact & adresse').animate().fadeIn(duration: 300.ms, delay: 400.ms),
+                    _SectionTitle(t.merchantVitrineContactAddressSection).animate().fadeIn(duration: 300.ms, delay: 400.ms),
                     const SizedBox(height: 8),
-                    _buildIconLabel(LucideIcons.phone, 'TÉLÉPHONE'),
+                    _buildIconLabel(LucideIcons.phone, t.merchantProfilePhoneLabel),
                     _buildTextField(_phoneCtrl, '+228 90 12 34 56', keyboardType: TextInputType.phone),
                     const SizedBox(height: 12),
-                    _buildIconLabel(LucideIcons.mapPin, 'ADRESSE'),
+                    _buildIconLabel(LucideIcons.mapPin, t.merchantProfileSectionAddress),
                     _buildTextField(_addrCtrl, 'Rue des Cocotiers, Lomé'),
                     const SizedBox(height: Sp.lg),
 
                     // Section Horaires
-                    const _SectionTitle('Horaires').animate().fadeIn(duration: 300.ms, delay: 460.ms),
+                    _SectionTitle(t.merchantVitrineHoursSection).animate().fadeIn(duration: 300.ms, delay: 460.ms),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(Sp.md),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -304,7 +307,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: Sp.sm),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border(
                   top: BorderSide(color: AppColors.border, width: 0.5),
                 ),
@@ -330,7 +333,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                         )
                       : const Icon(LucideIcons.upload, color: Colors.white, size: 18),
                   label: Text(
-                    'Publier les modifications',
+                    t.merchantVitrinePublishButton,
                     style: AppTextStyles.labelBold().copyWith(color: Colors.white),
                   ),
                 ),
@@ -387,7 +390,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     );
   }
 
-  Widget _buildLogoPicker(String? logoUrl) {
+  Widget _buildLogoPicker(String? logoUrl, AppLocalizations t) {
     return GestureDetector(
       onTap: _uploadingLogo ? null : _pickLogo,
       child: ClipRRect(
@@ -411,7 +414,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                           color: AppColors.textSecondary.withValues(alpha: 0.6), size: 28),
                       const SizedBox(height: 8),
                       Text(
-                        'Ajouter une photo',
+                        t.merchantVitrineAddPhotoLabel,
                         style: AppTextStyles.caption().copyWith(
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.bold,
@@ -452,7 +455,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                   child: IconButton(
                     icon: const Icon(LucideIcons.trash2, color: Colors.white, size: 16),
                     onPressed: _removeLogo,
-                    tooltip: 'Supprimer la photo',
+                    tooltip: t.editProfilePhotoRemove,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     padding: EdgeInsets.zero,
                   ),
@@ -641,7 +644,7 @@ class _PreviewWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),

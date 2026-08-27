@@ -3,7 +3,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 
 class _Message {
@@ -69,15 +71,16 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
       ));
       _textController.clear();
     });
-    ToastService.showSuccess('SMS envoyé avec succès !');
+    ToastService.showSuccess(AppLocalizations.of(context)!.merchantSmsConversationSentToast);
   }
 
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -87,9 +90,9 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       LucideIcons.chevronLeft,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.textPrimary,
                       size: 22,
                     ),
                     onPressed: () => context.pop(),
@@ -101,18 +104,18 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                       children: [
                         Text(
                           widget.clientName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           widget.clientPhone,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -146,11 +149,11 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Conversation SMS',
+                  Text(
+                    t.merchantSmsConversationLabel,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -218,14 +221,14 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(20),
                             topRight: Radius.circular(20),
                             bottomRight: Radius.circular(20),
                             bottomLeft: Radius.circular(6),
                           ),
-                          border: Border.all(color: const Color(0xFFEDF0F7)),
+                          border: Border.all(color: AppColors.border),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.02),
@@ -239,8 +242,8 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                           children: [
                             Text(
                               msg.text,
-                              style: const TextStyle(
-                                color: Color(0xFF1E293B),
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
                                 fontSize: 13.5,
                                 height: 1.4,
                                 fontWeight: FontWeight.w500,
@@ -249,8 +252,8 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                             const SizedBox(height: 4),
                             Text(
                               msg.time,
-                              style: const TextStyle(
-                                color: Color(0xFF94A3B8),
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
                                 fontSize: 10.5,
                               ),
                             ),
@@ -266,10 +269,10 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
             // ── BOTTOM INPUT BAR ─────────────────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
                 border: Border(
-                  top: BorderSide(color: Color(0xFFEDF0F7), width: 1),
+                  top: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
               child: Row(
@@ -277,9 +280,9 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FD),
+                        color: AppColors.background,
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: TextField(
                         controller: _textController,
@@ -287,15 +290,15 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                           fontSize: 13.5,
                           fontWeight: FontWeight.w500,
                         ),
-                        decoration: const InputDecoration(
-                          hintText: 'Écrire un message...',
+                        decoration: InputDecoration(
+                          hintText: t.merchantSmsConversationInputHint,
                           hintStyle: TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
                           isDense: true,
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
+                          contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
                         ),
                         onSubmitted: (_) => _sendMessage(),

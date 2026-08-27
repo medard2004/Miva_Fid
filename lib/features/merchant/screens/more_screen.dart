@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -23,11 +25,12 @@ class MoreScreen extends ConsumerWidget {
   }
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context)!;
     final confirmed = await AppDialog.confirm(
       context,
-      title: 'Se déconnecter ?',
-      message: 'Vous devrez vous reconnecter pour accéder à votre espace commerçant.',
-      confirmLabel: 'Se déconnecter',
+      title: t.merchantSignOutConfirmTitle,
+      message: t.merchantSignOutConfirmMessage,
+      confirmLabel: t.merchantSignOutConfirm,
       destructive: true,
     );
     if (!confirmed) return;
@@ -119,6 +122,7 @@ class MoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final locale = ref.watch(localeProvider);
     final account = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
     final teamAsync = ref.watch(teamNotifierProvider);
@@ -137,7 +141,7 @@ class MoreScreen extends ConsumerWidget {
     final completion = _profileCompletion(context, account);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -151,7 +155,7 @@ class MoreScreen extends ConsumerWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -161,32 +165,49 @@ class MoreScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Paramètres',
+                      t.settingsTitle,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
                   InkWell(
                     onTap: () => context.push('/merchant/more/notifications'),
                     borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: const Icon(
-                        LucideIcons.bell,
-                        size: 18,
-                        color: Color(0xFF1E293B),
-                      ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Icon(
+                            LucideIcons.bell,
+                            size: 18,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -200,9 +221,9 @@ class MoreScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFEDF0F7)),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     children: [
@@ -210,7 +231,7 @@ class MoreScreen extends ConsumerWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEEF2FF),
+                          color: AppColors.primaryTint,
                           shape: BoxShape.circle,
                           image: (logoUrl != null && logoUrl.isNotEmpty)
                               ? DecorationImage(
@@ -239,28 +260,28 @@ class MoreScreen extends ConsumerWidget {
                           children: [
                             Text(
                               merchantName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
+                                color: AppColors.textPrimary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Text(
                               city.isNotEmpty ? '$category • $city' : category,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         LucideIcons.chevronRight,
                         size: 18,
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.textSecondary,
                       ),
                     ],
                   ),
@@ -272,9 +293,9 @@ class MoreScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFEDF0F7)),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,20 +303,20 @@ class MoreScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Compléter mon profil',
+                        Text(
+                          t.merchantMoreCompleteProfile,
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         Text(
                           '${completion.done}/${completion.total}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -306,7 +327,7 @@ class MoreScreen extends ConsumerWidget {
                       child: Container(
                         height: 5,
                         width: double.infinity,
-                        color: const Color(0xFFEEF2FF),
+                        color: AppColors.border,
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
                           widthFactor: completion.ratio,
@@ -321,7 +342,7 @@ class MoreScreen extends ConsumerWidget {
                       return Column(
                         children: [
                           if (i > 0)
-                            const Divider(height: 16, color: Color(0xFFF1F5F9)),
+                            Divider(height: 16, color: AppColors.border),
                           _buildTaskRow(
                             title: task.label,
                             done: task.done,
@@ -336,48 +357,50 @@ class MoreScreen extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // ── 3. SECTION COMPTE ────────────────────────────────────────
-              _buildSectionLabel('COMPTE'),
+              _buildSectionLabel(t.merchantMoreSectionAccount),
               const SizedBox(height: 8),
               _buildGroupCard([
                 _buildMenuItem(
                   icon: LucideIcons.user,
-                  label: 'Profil du commerce',
+                  label: t.merchantMoreBusinessProfile,
                   onTap: () => context.push('/merchant/more/profile'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.clock,
-                  label: "Horaires d'ouverture",
+                  label: t.merchantMoreHours,
                   tag: completion.hoursDone ? 'Configuré' : null,
                   tagDone: completion.hoursDone,
                   onTap: () => context.push('/merchant/more/hours'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.link,
-                  label: 'Réseaux sociaux',
-                  tag: completion.socialsDone ? 'Configuré' : 'À compléter',
+                  label: t.merchantMoreSocials,
+                  tag: completion.socialsDone ? 'Configuré' : t.merchantMoreToComplete,
                   tagDone: completion.socialsDone,
                   onTap: () => context.push('/merchant/more/socials'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.creditCard,
-                  label: 'Abonnement',
-                  tag: 'Pro',
+                  label: t.merchantMoreSubscription,
+                  tag: t.merchantMoreProTag,
                   onTap: () => context.push('/merchant/more/subscription'),
                 ),
                 _buildMenuItem(
-                  icon: LucideIcons.bell,
-                  label: 'Notifications',
-                  onTap: () => context.push('/merchant/more/notifications'),
+                  icon: LucideIcons.sliders,
+                  label: t.settingsPreferences,
+                  onTap: () => context.push('/merchant/more/preferences'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.globe,
-                  label: 'Langue & thème',
-                  tag: locale.languageCode == 'en' ? 'English' : 'Français',
+                  label: t.merchantMoreLanguageTheme,
+                  tag: locale.languageCode == 'en'
+                      ? t.settingsLanguageEnglish
+                      : t.settingsLanguageFrench,
                   onTap: () => context.push('/merchant/more/language'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.users,
-                  label: 'Équipe',
+                  label: t.merchantMoreTeam,
                   tag: teamAsync.value?.length.toString(),
                   onTap: () => context.push('/merchant/more/team'),
                 ),
@@ -390,54 +413,54 @@ class MoreScreen extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // ── 4. SECTION MA CARTE DE FIDÉLITÉ ──────────────────────────
-              _buildSectionLabel('MA CARTE DE FIDÉLITÉ'),
+              _buildSectionLabel(t.merchantMoreSectionLoyaltyCard),
               const SizedBox(height: 8),
               _buildGroupCard([
                 _buildMenuItem(
                   icon: LucideIcons.creditCard,
-                  label: 'Personnaliser la carte',
+                  label: t.merchantMoreCustomizeCard,
                   onTap: () => context.push('/merchant/more/programme/design'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.gift,
-                  label: 'Objectif & récompense',
+                  label: t.merchantMoreGoalReward,
                   onTap: () => context.push('/merchant/more/programme/tiers'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.sparkles,
-                  label: 'Programme de fidélité',
+                  label: t.merchantMoreLoyaltyProgram,
                   onTap: () => context.push('/merchant/more/programme/rules'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.qrCode,
-                  label: 'Mon QR code',
+                  label: t.merchantMoreMyQrCode,
                   onTap: () => context.push('/merchant/more/account/qrcode'),
                 ),
                 _buildMenuItem(
-                  icon: LucideIcons.store,
-                  label: 'Ma vitrine',
+                  icon: LucideIcons.globe,
+                  label: t.merchantMoreMyShowcase,
                   onTap: () => context.push('/merchant/more/account/vitrine'),
                 ),
               ]),
               const SizedBox(height: 20),
 
               // ── 5. SECTION ASSISTANCE ────────────────────────────────────
-              _buildSectionLabel('ASSISTANCE'),
+              _buildSectionLabel(t.merchantMoreSectionSupport),
               const SizedBox(height: 8),
               _buildGroupCard([
                 _buildMenuItem(
                   icon: LucideIcons.shieldCheck,
-                  label: 'Confidentialité',
+                  label: t.merchantMoreLegalPrivacy,
                   onTap: () => context.push('/client/legal/privacy'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.fileText,
-                  label: "Conditions d'utilisation",
+                  label: t.merchantMoreLegalTerms,
                   onTap: () => context.push('/client/legal/terms'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.messageCircle,
-                  label: 'Support WhatsApp',
+                  label: t.merchantMoreWhatsappSupport,
                   onTap: _launchWhatsApp,
                 ),
               ]),
@@ -464,18 +487,18 @@ class MoreScreen extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFEE2E2)),
+                    border: Border.all(color: AppColors.dangerTint),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(LucideIcons.logOut, size: 18, color: Color(0xFFDC2626)),
-                      SizedBox(width: 8),
+                    children: [
+                      const Icon(LucideIcons.logOut, size: 18, color: Color(0xFFDC2626)),
+                      const SizedBox(width: 8),
                       Text(
-                        'Se déconnecter',
-                        style: TextStyle(
+                        t.settingsSignOut,
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFFDC2626),
@@ -487,13 +510,13 @@ class MoreScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // ── 8. FOOTER ────────────────────────────────────────────────
-              const Center(
+              // ── 7. FOOTER ────────────────────────────────────────────────
+              Center(
                 child: Text(
                   'Miva-Fid v1.0.0',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF94A3B8),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -555,10 +578,10 @@ class MoreScreen extends ConsumerWidget {
       padding: const EdgeInsets.only(left: 4),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF64748B),
+          color: AppColors.textSecondary,
           letterSpacing: 0.6,
         ),
       ),
@@ -568,9 +591,9 @@ class MoreScreen extends ConsumerWidget {
   Widget _buildGroupCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDF0F7)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: children.asMap().entries.map((entry) {
@@ -580,7 +603,7 @@ class MoreScreen extends ConsumerWidget {
             children: [
               item,
               if (idx < children.length - 1)
-                const Divider(height: 1, indent: 48, color: Color(0xFFF1F5F9)),
+                Divider(height: 1, indent: 48, color: AppColors.border),
             ],
           );
         }).toList(),
@@ -606,7 +629,7 @@ class MoreScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF94A3B8),
+                      color: AppColors.textSecondary,
                       width: 1.5,
                       strokeAlign: BorderSide.strokeAlignInside,
                     ),
@@ -618,7 +641,7 @@ class MoreScreen extends ConsumerWidget {
               title,
               style: TextStyle(
                 fontSize: 13,
-                color: done ? const Color(0xFF94A3B8) : const Color(0xFF334155),
+                color: done ? AppColors.textSecondary : AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
                 decoration: done ? TextDecoration.lineThrough : null,
               ),
@@ -627,7 +650,7 @@ class MoreScreen extends ConsumerWidget {
           Icon(
             done ? LucideIcons.check : LucideIcons.chevronRight,
             size: 16,
-            color: done ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+            color: done ? const Color(0xFF10B981) : AppColors.textSecondary,
           ),
         ],
       ),
@@ -642,7 +665,7 @@ class MoreScreen extends ConsumerWidget {
     bool danger = false,
     required VoidCallback onTap,
   }) {
-    final labelColor = danger ? const Color(0xFFDC2626) : const Color(0xFF1E293B);
+    final labelColor = danger ? const Color(0xFFDC2626) : AppColors.textPrimary;
 
     return InkWell(
       onTap: onTap,
@@ -651,7 +674,7 @@ class MoreScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: danger ? const Color(0xFFDC2626) : const Color(0xFF475569)),
+            Icon(icon, size: 18, color: danger ? const Color(0xFFDC2626) : AppColors.textSecondary),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
@@ -668,16 +691,16 @@ class MoreScreen extends ConsumerWidget {
                 tag,
                 style: TextStyle(
                   fontSize: 12.5,
-                  color: tagDone ? const Color(0xFF10B981) : const Color(0xFF64748B),
+                  color: tagDone ? const Color(0xFF10B981) : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(width: 6),
             ],
-            const Icon(
+            Icon(
               LucideIcons.chevronRight,
               size: 16,
-              color: Color(0xFF94A3B8),
+              color: AppColors.textSecondary,
             ),
           ],
         ),

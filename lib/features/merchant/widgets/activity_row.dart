@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../providers/dashboard_stats_provider.dart';
 
 class ActivityRow extends StatelessWidget {
@@ -12,22 +13,23 @@ class ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final int hash = item.clientName.hashCode;
-    
+
     // Determine tier & colors
     final String tier;
     final Color badgeBg;
     final Color badgeFg;
     if (hash % 3 == 0) {
-      tier = 'Or';
+      tier = t.merchantTierGold;
       badgeBg = AppColors.warningTint;
       badgeFg = AppColors.warningDark;
     } else if (hash % 3 == 1) {
-      tier = 'Argent';
-      badgeBg = AppColors.gray100;
-      badgeFg = AppColors.gray600;
+      tier = t.merchantTierSilver;
+      badgeBg = AppColors.border;
+      badgeFg = AppColors.textSecondary;
     } else {
-      tier = 'Platine';
+      tier = t.merchantTierPlatinum;
       badgeBg = AppColors.merchantTint;
       badgeFg = AppColors.merchant;
     }
@@ -36,12 +38,13 @@ class ActivityRow extends StatelessWidget {
     final bool isReward = item.action.toLowerCase().contains('récompense') || (hash % 5 == 0);
     final String valueText = isReward ? '10/10' : '${(hash % 7) + 2}/10';
 
-    // Avatar color
+    // Avatar color — fonds pastel en clair, remplacés par un fond assombri
+    // de même teinte en sombre (cf. AppColors.primaryTint et consorts).
     final avatarColors = [
-      (const Color(0xFFEEF2FF), const Color(0xFF4F46E5)),
-      (const Color(0xFFECFDF5), const Color(0xFF059669)),
-      (const Color(0xFFFDF2F8), const Color(0xFFDB2777)),
-      (const Color(0xFFFFF7ED), const Color(0xFFEA580C)),
+      (AppColors.primaryTint, const Color(0xFF4F46E5)),
+      (AppColors.isDark ? const Color(0xFF122A22) : const Color(0xFFECFDF5), const Color(0xFF059669)),
+      (AppColors.isDark ? const Color(0xFF2E1626) : const Color(0xFFFDF2F8), const Color(0xFFDB2777)),
+      (AppColors.isDark ? const Color(0xFF2E2013) : const Color(0xFFFFF7ED), const Color(0xFFEA580C)),
     ];
     final avatarColorPair = avatarColors[hash % avatarColors.length];
 
@@ -89,7 +92,9 @@ class ActivityRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isReward ? 'Récompense utilisée • ${item.time}' : 'Tampon validé • ${item.time}',
+                  isReward
+                      ? '${t.merchantClientDetailHistoryRewardUsed} • ${item.time}'
+                      : '${t.merchantClientDetailHistoryStampValidated} • ${item.time}',
                   style: AppTextStyles.caption().copyWith(
                     color: AppColors.textSecondary,
                   ),

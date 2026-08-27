@@ -12,6 +12,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/tier_level_icon.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../../client/providers/settings_provider.dart';
@@ -68,12 +69,12 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   }
 
   Future<void> _removeClient(String clientName) async {
+    final t = AppLocalizations.of(context)!;
     final confirmed = await AppDialog.confirm(
       context,
-      title: 'Retirer du programme ?',
-      message:
-          'Êtes-vous sûr de vouloir retirer $clientName de votre programme de fidélité ? Ses tampons seront réinitialisés.',
-      confirmLabel: 'Retirer',
+      title: t.merchantClientDetailRemoveTitle,
+      message: t.merchantClientDetailRemoveMessage(clientName),
+      confirmLabel: t.merchantClientDetailRemoveConfirm,
       destructive: true,
     );
     if (!confirmed) return;
@@ -88,6 +89,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
     // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -160,7 +162,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                             ),
                             const SizedBox(height: 1),
                             Text(
-                              'Fiche client',
+                              t.merchantClientDetailSubtitle,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -368,7 +370,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                             onPressed: () => _removeStamp(data),
                             style: OutlinedButton.styleFrom(
                               backgroundColor: AppColors.surface,
-                              side: const BorderSide(color: AppColors.dangerTint),
+                              side: BorderSide(color: AppColors.dangerTint),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -517,7 +519,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
@@ -600,8 +602,8 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
           Container(
             width: 32,
             height: 32,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEEF2FF),
+            decoration: BoxDecoration(
+              color: AppColors.primaryTint,
               shape: BoxShape.circle,
             ),
             child: Icon(_historyTypeIcon(type), size: 15, color: const Color(0xFF6366F1)),

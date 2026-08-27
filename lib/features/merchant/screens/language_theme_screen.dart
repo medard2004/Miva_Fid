@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 
 /// Réglage de l'apparence et de la langue côté marchand — pilote les mêmes
@@ -17,26 +18,27 @@ class LanguageThemeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Langue & thème'),
+        title: Text(t.merchantMoreLanguageTheme),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.all(Sp.md),
         children: [
-          const _SectionLabel('APPARENCE'),
+          _SectionLabel(t.settingsAppearance.toUpperCase()),
           const SizedBox(height: 8),
           _GroupCard(
             children: [
               _OptionRow(
                 icon: LucideIcons.sun,
-                label: 'Clair',
+                label: t.settingsThemeLight,
                 selected: themeMode == ThemeMode.light,
                 onTap: () => ref
                     .read(themeModeProvider.notifier)
@@ -44,7 +46,7 @@ class LanguageThemeScreen extends ConsumerWidget {
               ),
               _OptionRow(
                 icon: LucideIcons.moon,
-                label: 'Sombre',
+                label: t.settingsThemeDark,
                 selected: themeMode == ThemeMode.dark,
                 onTap: () => ref
                     .read(themeModeProvider.notifier)
@@ -52,7 +54,7 @@ class LanguageThemeScreen extends ConsumerWidget {
               ),
               _OptionRow(
                 icon: LucideIcons.monitor,
-                label: 'Système',
+                label: t.settingsThemeSystem,
                 selected: themeMode == ThemeMode.system,
                 onTap: () => ref
                     .read(themeModeProvider.notifier)
@@ -61,13 +63,13 @@ class LanguageThemeScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const _SectionLabel('LANGUE'),
+          _SectionLabel(t.settingsLanguage.toUpperCase()),
           const SizedBox(height: 8),
           _GroupCard(
             children: [
               _OptionRow(
                 icon: LucideIcons.languages,
-                label: 'Français',
+                label: t.settingsLanguageFrench,
                 selected: locale.languageCode == 'fr',
                 onTap: () => ref
                     .read(localeProvider.notifier)
@@ -75,7 +77,7 @@ class LanguageThemeScreen extends ConsumerWidget {
               ),
               _OptionRow(
                 icon: LucideIcons.languages,
-                label: 'English',
+                label: t.settingsLanguageEnglish,
                 selected: locale.languageCode == 'en',
                 onTap: () => ref
                     .read(localeProvider.notifier)

@@ -8,6 +8,7 @@ import '../../../core/domain/loyalty_level.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/clients_provider.dart';
@@ -130,6 +131,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     final currentFilter = notifier.currentFilter;
     final merchantAsync = ref.watch(merchantNotifierProvider);
     final stampsRequired = merchantAsync.value?.stampsRequired ?? 10;
+    final t = AppLocalizations.of(context)!;
 
     final subtitle = clientsAsync.maybeWhen(
       data: (state) =>
@@ -166,7 +168,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Mes clients',
+                          t.merchantClientsTitle,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -186,7 +188,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   ),
                   InkWell(
                     onTap: () => ToastService.showInfo(
-                        'Ajout manuel d\'un client bientôt disponible.'),
+                        t.merchantClientsAddSoonToast),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 36,
@@ -242,6 +244,45 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               ),
             ),
 
+            // ── EXPORT BUTTON ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: InkWell(
+                onTap: () => ToastService.showInfo(
+                    'Export de la liste clients bientôt disponible.'),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        LucideIcons.download,
+                        size: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        t.merchantClientsExportButton,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
             // ── SEARCH + FILTERS ROW ────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -263,7 +304,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                             fontSize: 13.5, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
                           isDense: true,
-                          hintText: 'Rechercher un client...',
+                          hintText: t.merchantClientsSearchHint,
                           hintStyle: TextStyle(
                               color: AppColors.textSecondary, fontSize: 13),
                           prefixIcon: Icon(
@@ -1093,7 +1134,7 @@ class _ClientCard extends StatelessWidget {
                             ? phone
                             : '$phone • $lastActivity',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -1164,7 +1205,7 @@ class _ClientCard extends StatelessWidget {
                 Text(
                   '${client.stampsCount}/$stampsRequired',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),

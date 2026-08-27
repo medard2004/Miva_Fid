@@ -45,11 +45,11 @@ import '../../features/merchant/screens/programme_rules_screen.dart';
 import '../../features/merchant/screens/programme_design_screen.dart';
 import '../../features/merchant/screens/qr_code_screen.dart';
 import '../../features/merchant/screens/account_category_screen.dart';
-import '../../features/merchant/screens/subscription_category_screen.dart';
 import '../../features/merchant/screens/profile_screen.dart' as merchant_profile;
 import '../../features/merchant/screens/subscription_screen.dart';
 import '../../features/merchant/screens/team_screen.dart';
 import '../../features/merchant/screens/notifications_screen.dart' as merchant_notifs;
+import '../../features/merchant/screens/preferences_screen.dart';
 import '../../features/merchant/screens/language_theme_screen.dart';
 import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/sms_conversation_screen.dart';
@@ -650,7 +650,7 @@ GoRouter appRouter(AppRouterRef ref) {
                 GoRoute(
                   path: 'preferences',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const merchant_notifs.NotificationsScreen()),
+                  pageBuilder: (_, __) => _slide(const PreferencesScreen()),
                 ),
                 GoRoute(
                   path: 'team',

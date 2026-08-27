@@ -6,12 +6,14 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 class PlanUpgradeCard extends StatelessWidget {
   const PlanUpgradeCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(Sp.md),
       decoration: const BoxDecoration(
@@ -29,18 +31,18 @@ class PlanUpgradeCard extends StatelessWidget {
             children: [
               const Icon(LucideIcons.award, color: AppColors.warning, size: 20),
               const SizedBox(width: Sp.xs),
-              Text('Passez à Pro', style: AppTextStyles.labelBold().copyWith(color: Colors.white)),
+              Text(t.merchantPlanUpgradeTitle, style: AppTextStyles.labelBold().copyWith(color: Colors.white)),
             ],
           ),
           const SizedBox(height: Sp.xs),
-          Text('Campagnes SMS illimitées, analytics avancés et support prioritaire.',
+          Text(t.merchantPlanUpgradeSubtitle,
               style: AppTextStyles.caption().copyWith(color: Colors.white70)),
           const SizedBox(height: Sp.md),
-          AppButton.custom('Découvrir Pro',
+          AppButton.custom(t.merchantPlanUpgradeButton,
               backgroundColor: Colors.white,
               textColor: AppColors.merchant,
               icon: LucideIcons.arrowRight,
-              onPressed: () => AppToast.info(context, 'Offre Pro bientôt disponible')),
+              onPressed: () => AppToast.info(context, t.merchantPlanUpgradeToast)),
         ],
       ),
     );

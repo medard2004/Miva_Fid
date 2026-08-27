@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
@@ -40,6 +41,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final t = AppLocalizations.of(context)!;
 
     setState(() => _saving = true);
     final ok = await ref
@@ -49,8 +51,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mot de passe modifié avec succès'),
+        SnackBar(
+          content: Text(t.errPasswordChangeSuccess),
           backgroundColor: AppColors.success,
         ),
       );
@@ -63,7 +65,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       error,
       context: ErrorContext.changePassword,
     ).displayMessage ??
-        'Le mot de passe actuel est incorrect.';
+        t.errPasswordCurrentIncorrect;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -76,11 +78,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Changer le mot de passe'),
+        title: Text(t.changePasswordTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -89,7 +92,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         child: Container(
           padding: const EdgeInsets.all(Sp.md),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: Rd.card,
             border: Border.all(color: AppColors.border),
           ),
@@ -99,41 +102,41 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Choisissez un nouveau mot de passe d\'au moins 8 caractères.',
+                  t.changePasswordNewSubtitle,
                   style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: Sp.lg),
                 AppInput(
-                  label: 'Mot de passe actuel',
+                  label: t.changePasswordCurrentLabel,
                   controller: _currentCtrl,
                   obscureText: true,
                   accentColor: AppColors.merchant,
-                  validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? t.errFieldRequired : null,
                 ),
                 const SizedBox(height: Sp.md),
                 AppInput(
-                  label: 'Nouveau mot de passe',
+                  label: t.changePasswordNewLabel,
                   controller: _newCtrl,
                   obscureText: true,
                   accentColor: AppColors.merchant,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Requis';
-                    if (v.length < 8) return 'Minimum 8 caractères';
+                    if (v == null || v.isEmpty) return t.errFieldRequired;
+                    if (v.length < 8) return t.errPasswordTooShort;
                     return null;
                   },
                 ),
                 const SizedBox(height: Sp.md),
                 AppInput(
-                  label: 'Confirmer le nouveau mot de passe',
+                  label: t.changePasswordConfirmLabel,
                   controller: _confirmCtrl,
                   obscureText: true,
                   accentColor: AppColors.merchant,
                   validator: (v) =>
-                      v != _newCtrl.text ? 'Les mots de passe ne correspondent pas' : null,
+                      v != _newCtrl.text ? t.errPasswordMismatch : null,
                 ),
                 const SizedBox(height: Sp.lg),
                 AppButton.merchant(
-                  'Changer le mot de passe',
+                  t.changePasswordSubmit,
                   loading: _saving,
                   onPressed: _submit,
                 ),

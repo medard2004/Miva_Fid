@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +9,7 @@ import 'package:miva_fid/core/api/services/merchant_auth_service.dart';
 import 'package:miva_fid/core/api/storage/merchant_token_storage.dart';
 import 'package:miva_fid/core/theme/app_theme.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
+import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/models/merchant_model.dart';
 import 'package:miva_fid/features/merchant/providers/merchant_auth_provider.dart';
 import 'package:miva_fid/features/merchant/providers/merchant_provider.dart';
@@ -51,7 +53,18 @@ void main() {
             ),
           ),
         ],
-        child: MaterialApp(theme: AppTheme.light(), home: const ProfileScreen()),
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('fr'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ProfileScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miva_fid/features/merchant/widgets/tier_editor_form.dart';
 import 'package:miva_fid/features/onboarding/models/program_tier.dart';
+import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
 void main() {
   Future<void> pump(WidgetTester tester, List<ProgramTier> tiers) async {
@@ -14,6 +16,14 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
+      locale: const Locale('fr'),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: TierEditorForm(
           initialTiers: tiers,

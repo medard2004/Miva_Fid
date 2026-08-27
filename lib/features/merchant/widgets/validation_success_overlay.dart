@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// Écran plein écran affiché après une validation réussie (tampon, points ou
 /// montant d'achat) — reste 9 secondes, ou jusqu'à ce que le marchand tape
@@ -58,30 +59,32 @@ class _ValidationSuccessOverlayState extends State<ValidationSuccessOverlay> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  String get _title {
-    if (widget.rewardUnlocked) return 'Récompense débloquée !';
+  String _title(AppLocalizations t) {
+    if (widget.rewardUnlocked) return t.merchantValidateRewardUnlockedTitle;
     if (widget.mechanic == 'cashback') {
-      return '${(widget.cashbackEarned ?? 0).round()} FCFA crédités à ${widget.clientName} !';
+      return t.merchantValidateCashbackCreditedTitle(
+          (widget.cashbackEarned ?? 0).round().toString(), widget.clientName);
     }
-    if (widget.mechanic == 'stamps') return 'Tampon accordé à ${widget.clientName} !';
-    return '${widget.pointsEarned} point(s) accordé(s) à ${widget.clientName} !';
+    if (widget.mechanic == 'stamps') return t.merchantValidateStampGrantedTitle(widget.clientName);
+    return t.merchantValidatePointsGrantedTitle(widget.pointsEarned.toString(), widget.clientName);
   }
 
-  String get _subtitle {
+  String _subtitle(AppLocalizations t) {
     if (widget.rewardUnlocked) {
-      return 'Le client peut réclamer sa récompense dès maintenant.';
+      return t.merchantValidateRewardUnlockedSubtitle;
     }
     if (widget.mechanic == 'cashback') {
-      return 'Cashback crédité sur le solde du client.';
+      return t.merchantValidateCashbackCreditedSubtitle;
     }
     if (widget.mechanic == 'stamps') {
-      return '${widget.stampCount} sur ${widget.goal} tampons';
+      return t.merchantValidateStampProgressSubtitle(widget.stampCount.toString(), widget.goal.toString());
     }
-    return '${widget.stampCount} sur ${widget.goal} points';
+    return t.merchantValidatePointsProgressSubtitle(widget.stampCount.toString(), widget.goal.toString());
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -123,13 +126,13 @@ class _ValidationSuccessOverlayState extends State<ValidationSuccessOverlay> {
                             .scale(end: const Offset(1.0, 1.0), duration: 150.ms),
                         const SizedBox(height: Sp.lg),
                         Text(
-                          _title,
+                          _title(t),
                           style: AppTextStyles.h2().copyWith(color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: Sp.xs),
                         Text(
-                          _subtitle,
+                          _subtitle(t),
                           style: AppTextStyles.bodyMd().copyWith(color: Colors.white.withValues(alpha: 0.85)),
                           textAlign: TextAlign.center,
                         ),
@@ -138,7 +141,7 @@ class _ValidationSuccessOverlayState extends State<ValidationSuccessOverlay> {
                   ),
                 ),
                 AppButton.custom(
-                  'Étape suivante',
+                  t.merchantValidateNextStepButton,
                   onPressed: _close,
                   backgroundColor: Colors.white,
                   textColor: AppColors.merchant,

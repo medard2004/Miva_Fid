@@ -8,6 +8,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/tier_level_icon.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import 'stamp_grid_widget.dart';
 
@@ -98,15 +99,15 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
         amount <= purchase;
   }
 
-  String get _actionLabel {
-    if (!_isActive) return 'Carte inactive';
+  String _actionLabel(AppLocalizations t) {
+    if (!_isActive) return t.merchantValidateCardInactive;
     switch (widget.mechanic) {
       case 'spend':
-        return 'Confirmer et créditer';
+        return t.merchantValidateConfirmAndCredit;
       case 'cashback':
-        return 'Créditer le cashback';
+        return t.merchantValidateCreditCashback;
       default:
-        return 'Valider le tampon';
+        return t.merchantValidateValidateStamp;
     }
   }
 
@@ -134,22 +135,22 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
   /// Parcours cashback en 3 étapes — choix irréversible avant toute saisie
   /// (jamais crédit+utilisation dans la même opération, voir section 5 du
   /// cahier des charges), puis résumé obligatoire avant confirmation finale.
-  List<Widget> _buildCashbackFlow() {
+  List<Widget> _buildCashbackFlow(AppLocalizations t) {
     switch (_cbStep) {
       case _CashbackStep.choice:
-        return _buildCashbackChoiceStep();
+        return _buildCashbackChoiceStep(t);
       case _CashbackStep.form:
-        return _buildCashbackFormStep();
+        return _buildCashbackFormStep(t);
       case _CashbackStep.summary:
-        return _buildCashbackSummaryStep();
+        return _buildCashbackSummaryStep(t);
     }
   }
 
-  List<Widget> _buildCashbackChoiceStep() {
+  List<Widget> _buildCashbackChoiceStep(AppLocalizations t) {
     final hasBalance = widget.card.cashbackBalanceFcfa > 0;
     return [
       AppButton.primary(
-        'Créditer du cashback',
+        t.merchantValidateCreditCashbackButton,
         onPressed: _isActive
             ? () => setState(() {
                   _cbIsRedeem = false;
@@ -159,7 +160,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
       ),
       const SizedBox(height: Sp.sm),
       AppButton.outlined(
-        'Utiliser du cashback',
+        t.merchantValidateRedeemCashbackButton,
         onPressed: _isActive && hasBalance
             ? () => setState(() {
                   _cbIsRedeem = true;
@@ -169,26 +170,27 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
       ),
       if (_isActive && !hasBalance) ...[
         const SizedBox(height: Sp.xs),
-        Text('Aucun solde cashback à utiliser pour ce client.',
+        Text(t.merchantValidateNoCashbackBalance,
             style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
       ],
       const SizedBox(height: Sp.sm),
-      AppButton.ghost('Annuler', onPressed: () => Navigator.pop(context)),
+      AppButton.ghost(t.commonCancel, onPressed: () => Navigator.pop(context)),
     ];
   }
 
-  List<Widget> _buildCashbackFormStep() {
+  List<Widget> _buildCashbackFormStep(AppLocalizations t) {
     return [
       TextField(
         controller: _amountCtrl,
         enabled: _isActive,
         keyboardType: const TextInputType.numberWithOptions(decimal: false),
         decoration: InputDecoration(
-          labelText: 'Montant de l\'achat',
+          labelText: t.merchantValidatePurchaseAmountLabel,
           suffixText: 'FCFA',
           border: const OutlineInputBorder(borderRadius: Rd.input),
           helperText: !_cbIsRedeem
-              ? '${widget.cashbackPercentage.toStringAsFixed(widget.cashbackPercentage % 1 == 0 ? 0 : 1)}% crédités en cashback'
+              ? t.merchantValidateCashbackCreditedHelper(widget.cashbackPercentage
+                  .toStringAsFixed(widget.cashbackPercentage % 1 == 0 ? 0 : 1))
               : null,
         ),
         onChanged: (v) => setState(() => _amount = double.tryParse(v.trim())),
@@ -197,8 +199,8 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
         const SizedBox(height: Sp.sm),
         Text(
           _amount == null
-              ? 'Saisissez le montant pour voir le cashback crédité.'
-              : '= ${_fcfa(_cashbackPreview)} de cashback crédités',
+              ? t.merchantValidateEnterAmountCashbackHint
+              : t.merchantValidateCashbackCreditedResult(_fcfa(_cashbackPreview)),
           style: AppTextStyles.bodyMd().copyWith(
             color: _cashbackPreview > 0 ? AppColors.merchant : AppColors.textSecondary,
             fontWeight: FontWeight.w700,
@@ -211,16 +213,16 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
           enabled: _isActive,
           keyboardType: const TextInputType.numberWithOptions(decimal: false),
           decoration: InputDecoration(
-            labelText: 'Cashback à utiliser',
+            labelText: t.merchantValidateCashbackToUseLabel,
             suffixText: 'FCFA',
             border: const OutlineInputBorder(borderRadius: Rd.input),
-            helperText: 'Solde disponible : ${_fcfa(widget.card.cashbackBalanceFcfa)}',
+            helperText: t.merchantValidateAvailableBalance(_fcfa(widget.card.cashbackBalanceFcfa)),
           ),
           onChanged: (v) => setState(() => _redeemAmount = double.tryParse(v.trim())),
         ),
         const SizedBox(height: Sp.sm),
         Text(
-          '= ${_fcfa(_amountToPay)} à payer',
+          t.merchantValidateAmountToPay(_fcfa(_amountToPay)),
           style: AppTextStyles.bodyMd().copyWith(
             color: AppColors.merchant,
             fontWeight: FontWeight.w700,
@@ -228,27 +230,27 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
         ),
         if ((_redeemAmount ?? 0) > (widget.card.cashbackBalanceFcfa)) ...[
           const SizedBox(height: Sp.xs),
-          Text('Dépasse le solde disponible.',
+          Text(t.merchantValidateExceedsBalance,
               style: AppTextStyles.caption().copyWith(color: AppColors.danger)),
         ] else if ((_redeemAmount ?? 0) > (_amount ?? 0) && (_amount ?? 0) > 0) ...[
           const SizedBox(height: Sp.xs),
-          Text('Ne peut pas dépasser le montant de l\'achat.',
+          Text(t.merchantValidateExceedsPurchase,
               style: AppTextStyles.caption().copyWith(color: AppColors.danger)),
         ],
       ],
       const SizedBox(height: Sp.lg),
       AppButton.primary(
-        'Voir le résumé',
+        t.merchantValidateViewSummaryButton,
         onPressed: (_cbIsRedeem ? _canRedeem : _canSubmit)
             ? () => setState(() => _cbStep = _CashbackStep.summary)
             : null,
       ),
       const SizedBox(height: Sp.sm),
-      AppButton.ghost('Retour', onPressed: () => setState(() => _cbStep = _CashbackStep.choice)),
+      AppButton.ghost(t.commonBack, onPressed: () => setState(() => _cbStep = _CashbackStep.choice)),
     ];
   }
 
-  List<Widget> _buildCashbackSummaryStep() {
+  List<Widget> _buildCashbackSummaryStep(AppLocalizations t) {
     final newBalance = _cbIsRedeem
         ? widget.card.cashbackBalanceFcfa - (_redeemAmount ?? 0)
         : widget.card.cashbackBalanceFcfa + _cashbackPreview;
@@ -263,22 +265,22 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _summaryRow('Achat', _fcfa(_amount ?? 0)),
+            _summaryRow(t.merchantValidateSummaryPurchase, _fcfa(_amount ?? 0)),
             if (_cbIsRedeem) ...[
-              _summaryRow('Cashback utilisé', '- ${_fcfa(_redeemAmount ?? 0)}'),
+              _summaryRow(t.merchantValidateSummaryCashbackUsed, '- ${_fcfa(_redeemAmount ?? 0)}'),
               const Divider(height: Sp.md),
-              _summaryRow('À payer', _fcfa(_amountToPay), emphasize: true),
+              _summaryRow(t.merchantValidateSummaryToPay, _fcfa(_amountToPay), emphasize: true),
             ] else ...[
-              _summaryRow('Cashback généré', '+ ${_fcfa(_cashbackPreview)}'),
+              _summaryRow(t.merchantValidateSummaryCashbackGenerated, '+ ${_fcfa(_cashbackPreview)}'),
             ],
             const SizedBox(height: 4),
-            _summaryRow('Nouveau solde', _fcfa(newBalance)),
+            _summaryRow(t.merchantValidateSummaryNewBalance, _fcfa(newBalance)),
           ],
         ),
       ),
       const SizedBox(height: Sp.lg),
       AppButton.primary(
-        _cbIsRedeem ? 'Confirmer l\'utilisation' : 'Créditer le cashback',
+        _cbIsRedeem ? t.merchantValidateConfirmUsageButton : t.merchantValidateCreditCashback,
         onPressed: (_cbIsRedeem ? _canRedeem : _canSubmit)
             ? (_cbIsRedeem ? _submitRedeem : _submit)
             : null,
@@ -286,7 +288,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
       ),
       const SizedBox(height: Sp.sm),
       AppButton.ghost(
-        'Modifier',
+        t.commonEdit,
         onPressed: _submitting ? null : () => setState(() => _cbStep = _CashbackStep.form),
       ),
     ];
@@ -313,6 +315,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final card = widget.card;
     final name = card.client?.name ?? 'Client';
     final phone = card.client?.phone ?? '';
@@ -321,9 +324,9 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     final progress = card.progressRatio(widget.goal);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -388,17 +391,17 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                               color: AppColors.dangerTint,
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            child: Text('Inactive',
+                            child: Text(t.merchantValidateInactiveBadge,
                                 style: AppTextStyles.caption().copyWith(
                                     color: AppColors.danger, fontWeight: FontWeight.w700)),
                           ),
                       ],
                     ),
                     const Divider(height: Sp.lg),
-                    ..._buildProgress(progress),
+                    ..._buildProgress(t, progress),
                     if (_isCashback) ...[
                       const SizedBox(height: Sp.md),
-                      ..._buildCashbackFlow(),
+                      ..._buildCashbackFlow(t),
                     ] else ...[
                       if (_isSpend) ...[
                         const SizedBox(height: Sp.md),
@@ -407,18 +410,18 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                           enabled: _isActive,
                           keyboardType: const TextInputType.numberWithOptions(decimal: false),
                           decoration: InputDecoration(
-                            labelText: 'Montant de l\'achat',
+                            labelText: t.merchantValidatePurchaseAmountLabel,
                             suffixText: 'FCFA',
                             border: const OutlineInputBorder(borderRadius: Rd.input),
-                            helperText: '1 point tous les ${widget.fcfaPerPoint} FCFA d\'achat',
+                            helperText: t.merchantValidatePointsRatioHelper(widget.fcfaPerPoint.toString()),
                           ),
                           onChanged: (v) => setState(() => _amount = double.tryParse(v.trim())),
                         ),
                         const SizedBox(height: Sp.sm),
                         Text(
                           _amount == null
-                              ? 'Saisissez le montant pour voir les points crédités.'
-                              : '= $_pointsPreview point(s) crédité(s)',
+                              ? t.merchantValidateEnterAmountPointsHint
+                              : t.merchantValidatePointsCreditedResult(_pointsPreview.toString()),
                           style: AppTextStyles.bodyMd().copyWith(
                             color: _pointsPreview >= 1 ? AppColors.merchant : AppColors.textSecondary,
                             fontWeight: FontWeight.w700,
@@ -426,9 +429,9 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                         ),
                       ],
                       const SizedBox(height: Sp.lg),
-                      AppButton.primary(_actionLabel, onPressed: _canSubmit ? _submit : null, loading: _submitting),
+                      AppButton.primary(_actionLabel(t), onPressed: _canSubmit ? _submit : null, loading: _submitting),
                       const SizedBox(height: Sp.sm),
-                      AppButton.ghost('Annuler', onPressed: () => Navigator.pop(context)),
+                      AppButton.ghost(t.commonCancel, onPressed: () => Navigator.pop(context)),
                     ],
                     SizedBox(height: MediaQuery.of(context).padding.bottom + Sp.sm),
                   ],
@@ -441,14 +444,14 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     );
   }
 
-  List<Widget> _buildProgress(double progress) {
+  List<Widget> _buildProgress(AppLocalizations t, double progress) {
     if (widget.mechanic == 'cashback') {
       return [
         Row(
           children: [
             const Icon(LucideIcons.wallet, size: 14, color: AppColors.merchant),
             const SizedBox(width: 6),
-            Text('CASHBACK',
+            Text(t.merchantValidateCashbackLabel,
                 style: AppTextStyles.caption().copyWith(
                     color: AppColors.merchant, fontWeight: FontWeight.w700, letterSpacing: 1)),
           ],
@@ -456,7 +459,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
         const SizedBox(height: Sp.xs),
         Text('${widget.card.cashbackBalanceFcfa.round()} FCFA',
             style: AppTextStyles.h1().copyWith(fontWeight: FontWeight.w900, color: AppColors.merchant)),
-        Text('solde disponible',
+        Text(t.merchantValidateAvailableBalanceLabel,
             style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
       ];
     }
@@ -469,7 +472,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
           primaryColor: AppColors.primary,
         ),
         const SizedBox(height: Sp.sm),
-        Text('${widget.card.stampsCount} sur ${widget.goal} tampons',
+        Text(t.merchantValidateStampProgressSubtitle(widget.card.stampsCount.toString(), widget.goal.toString()),
             style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
         const SizedBox(height: Sp.xs),
         _progressBar(progress),
@@ -484,7 +487,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
           Icon(isSpend ? LucideIcons.shoppingBag : LucideIcons.coins,
               size: 14, color: AppColors.merchant),
           const SizedBox(width: 6),
-          Text(isSpend ? 'ACHATS' : 'POINTS',
+          Text(isSpend ? t.merchantValidatePurchasesLabel : t.merchantValidatePointsLabel,
               style: AppTextStyles.caption()
                   .copyWith(color: AppColors.merchant, fontWeight: FontWeight.w700, letterSpacing: 1)),
         ],
@@ -492,7 +495,10 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
       const SizedBox(height: Sp.xs),
       Text('${widget.card.stampsCount}',
           style: AppTextStyles.h1().copyWith(fontWeight: FontWeight.w900, color: AppColors.merchant)),
-      Text('sur ${widget.goal} ${isSpend ? "pts (achats)" : "points"}',
+      Text(
+          isSpend
+              ? t.merchantValidateSpendGoalLabel(widget.goal.toString())
+              : t.merchantValidatePointsGoalLabel(widget.goal.toString()),
           style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
       const SizedBox(height: Sp.sm),
       _progressBar(progress),
