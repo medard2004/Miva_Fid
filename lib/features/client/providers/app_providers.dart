@@ -22,16 +22,24 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
     // liste est ce qui garde l'écran "Mes récompenses" fiable sans
     // pull-to-refresh, comme le wallet le fait déjà pour la progression.
     _realtimeSub = RealtimeService.instance.onRewardUpdated.listen((_) {
-      loadMine().catchError((_) {});
+      _loadMineWithRetry();
+    });
+    // Rattrapage : si le socket a été coupé (app en arrière-plan) pendant
+    // qu'un déblocage se produisait côté marchand, l'événement Reverb est
+    // perdu pour de bon (pas de replay serveur) — une reconnexion réussie
+    // est le seul signal disponible pour se remettre à jour.
+    _reconnectSub = RealtimeService.instance.onReconnected.listen((_) {
+      _loadMineWithRetry();
     });
   }
 
   final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  StreamSubscription<void>? _reconnectSub;
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
-      loadMine().catchError((_) {});
+      _loadMineWithRetry();
     } else if (previous?.isAuthenticated == true && !next.isAuthenticated) {
       state = const [];
     }
@@ -48,9 +56,28 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
     state = await _ref.read(loyaltyRewardRepositoryProvider).listMine();
   }
 
+  /// Comme [loadMine], mais retente plusieurs fois avant d'abandonner —
+  /// utilisé pour les rechargements déclenchés par le temps réel, où avaler
+  /// silencieusement un simple aléa réseau (timeout, coupure passagère)
+  /// laissait auparavant une récompense fraîchement débloquée affichée
+  /// comme "verrouillée" jusqu'au prochain pull-to-refresh manuel.
+  Future<void> _loadMineWithRetry() async {
+    const delays = [Duration(seconds: 1), Duration(seconds: 2), Duration(seconds: 5)];
+    for (var attempt = 0; ; attempt++) {
+      try {
+        await loadMine();
+        return;
+      } catch (_) {
+        if (attempt >= delays.length) return;
+        await Future.delayed(delays[attempt]);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _realtimeSub?.cancel();
+    _reconnectSub?.cancel();
     super.dispose();
   }
 }

@@ -66,6 +66,7 @@ class RealtimeService {
 
   final _cardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
   final _rewardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _reconnectedController = StreamController<void>.broadcast();
 
   /// Payload `LoyaltyCardUpdated::broadcastWith()` — id/progress/status/etc.
   Stream<Map<String, dynamic>> get onCardUpdated => _cardUpdatedController.stream;
@@ -73,6 +74,13 @@ class RealtimeService {
   /// Payload `LoyaltyRewardUpdated::broadcastWith()` — `{id, status}`, à
   /// chaque déblocage/validation/annulation d'une récompense.
   Stream<Map<String, dynamic>> get onRewardUpdated => _rewardUpdatedController.stream;
+
+  /// Émis à chaque (ré)abonnement réussi au canal privé — y compris le tout
+  /// premier après [connect]. Un événement diffusé pendant que le socket
+  /// était coupé (app en arrière-plan) n'est jamais rejoué par le serveur :
+  /// une reconnexion réussie est le seul signal qu'un consommateur peut
+  /// utiliser pour se remettre à jour par un rechargement complet.
+  Stream<void> get onReconnected => _reconnectedController.stream;
 
   /// Ouvre la connexion et s'abonne au canal privé du client authentifié.
   /// Idempotent : un appel alors qu'une connexion est déjà active la
@@ -99,6 +107,7 @@ class RealtimeService {
     disconnect();
     _cardUpdatedController.close();
     _rewardUpdatedController.close();
+    _reconnectedController.close();
   }
 
   void _open() {
@@ -206,6 +215,7 @@ class RealtimeService {
         'event': 'pusher:subscribe',
         'data': {'channel': channelName, 'auth': auth},
       });
+      _reconnectedController.add(null);
     } catch (e) {
       if (kDebugMode) debugPrint('RealtimeService: auth du canal échouée ($e)');
     }
