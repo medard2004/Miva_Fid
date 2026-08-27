@@ -417,6 +417,11 @@ class MoreScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               _buildGroupCard([
                 _buildMenuItem(
+                  icon: LucideIcons.award,
+                  label: 'Options du programme',
+                  onTap: () => context.push('/merchant/more/programme'),
+                ),
+                _buildMenuItem(
                   icon: LucideIcons.creditCard,
                   label: t.merchantMoreCustomizeCard,
                   onTap: () => context.push('/merchant/more/programme/design'),
