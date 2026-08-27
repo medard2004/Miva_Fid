@@ -349,10 +349,27 @@ class DashboardScreen extends ConsumerWidget {
       ];
     }
 
-    final counts = <LoyaltyLevel, int>{};
+    // Groupé par nom réel du palier (`levelName`), pas par la clé canonique
+    // à 5 valeurs (`LoyaltyLevel.fromKey`) : au-delà du 5ème palier, cette
+    // clé retombe systématiquement sur `custom`, ce qui confondait tous les
+    // paliers personnalisés (et le vrai palier "Fidèle") dans un seul bloc.
+    final counts = <String, int>{};
+    final colorByName = <String, Color>{};
     for (final card in cards) {
-      final level = LoyaltyLevel.fromKey(card.levelKey);
-      counts[level] = (counts[level] ?? 0) + 1;
+      final name = card.levelName;
+      if (name == null) continue;
+      counts[name] = (counts[name] ?? 0) + 1;
+      colorByName[name] ??=
+          LoyaltyLevel.forPosition(card.levelPosition ?? 0)?.color ??
+              AppColors.textSecondary;
+    }
+    if (counts.isEmpty) {
+      return [
+        Text(
+          'Aucun niveau atteint pour le moment',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+      ];
     }
     final entries = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -365,11 +382,11 @@ class DashboardScreen extends ConsumerWidget {
       return Padding(
         padding: EdgeInsets.only(bottom: i == topTiers.length - 1 ? 0 : 14),
         child: _buildTierProgress(
-          tierName: entry.key.label,
+          tierName: entry.key,
           count: entry.value.toString(),
           percentage: '${(ratio * 100).round()}%',
           factor: ratio,
-          barColor: entry.key.color,
+          barColor: colorByName[entry.key]!,
           delay: 200 + i * 150,
         ),
       );

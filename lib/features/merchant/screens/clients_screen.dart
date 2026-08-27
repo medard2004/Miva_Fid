@@ -8,6 +8,7 @@ import '../../../core/domain/loyalty_level.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/tier_level_icon.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../../client/providers/settings_provider.dart';
@@ -1027,8 +1028,6 @@ class _ClientCard extends StatelessWidget {
         ? null
         : DateFormatter.relative(client.lastActivityAt!);
 
-    final level = LoyaltyLevel.fromKey(client.levelKey);
-
     final progressFactor =
         (client.stampsCount / stampsRequired).clamp(0.0, 1.0);
 
@@ -1093,8 +1092,14 @@ class _ClientCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          _LevelBadge(level: level),
+                          if (client.levelName != null) ...[
+                            const SizedBox(width: 6),
+                            _LevelBadge(
+                              name: client.levelName!,
+                              position: client.levelPosition,
+                              iconKey: client.levelIconKey,
+                            ),
+                          ],
                           if (client.cyclesCompleted > 0) ...[
                             const SizedBox(width: 4),
                             Tooltip(
@@ -1219,33 +1224,40 @@ class _ClientCard extends StatelessWidget {
   }
 }
 
-/// Badge de niveau : icône + libellé sur fond teinté de la couleur du
-/// niveau — même identité visuelle que l'app client (symboles), mais
-/// lisible pour le marchand grâce au libellé FR.
+/// Badge de niveau : icône + nom réel du palier sur fond teinté — le nom et
+/// l'icône viennent directement de la carte du client (`levelName`/
+/// `levelPosition`/`levelIconKey`), pas d'un enum à 5 valeurs fixes : un
+/// palier personnalisé au-delà du 5ème garde son vrai nom et sa vraie icône
+/// ici, au lieu d'être confondu avec "Fidèle" (même clé `custom` côté API).
 class _LevelBadge extends StatelessWidget {
-  const _LevelBadge({required this.level});
+  const _LevelBadge({required this.name, this.position, this.iconKey});
 
-  final LoyaltyLevel level;
+  final String name;
+  final int? position;
+  final String? iconKey;
 
   @override
   Widget build(BuildContext context) {
+    final fixedLevel = position == null ? null : LoyaltyLevel.forPosition(position!);
+    final color = fixedLevel?.color ?? AppColors.textSecondary;
+    final background = fixedLevel?.background ?? AppColors.background;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: level.background,
+        color: background,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(level.icon, size: 10, color: level.color),
+          TierLevelIcon(position: position, iconKey: iconKey, size: 10, color: color),
           const SizedBox(width: 2),
           Text(
-            level.label,
+            name,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: level.color,
+              color: color,
             ),
           ),
         ],
