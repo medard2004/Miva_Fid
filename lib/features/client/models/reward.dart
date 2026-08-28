@@ -18,6 +18,11 @@ class Reward {
   final DateTime? expiresAt;
   final DateTime? usedAt;
 
+  /// `true` pour une récompense offerte automatiquement le jour de
+  /// l'anniversaire du client (voir `SendBirthdayNotifications` côté API),
+  /// `false` pour une récompense de palier classique.
+  final bool isBirthday;
+
   const Reward({
     required this.id,
     this.cardId,
@@ -29,6 +34,7 @@ class Reward {
     this.unlockedAt,
     this.expiresAt,
     this.usedAt,
+    this.isBirthday = false,
   });
 
   /// Utilisable maintenant : disponible et non expirée.
@@ -68,6 +74,7 @@ class Reward {
       unlockedAt: parseDate(json['unlocked_at']),
       expiresAt: parseDate(json['expires_at']),
       usedAt: parseDate(json['used_at']),
+      isBirthday: json['source'] == 'birthday',
     );
   }
 

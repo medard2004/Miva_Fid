@@ -113,6 +113,21 @@ class MerchantNotifier extends _$MerchantNotifier {
         'card_gradient_type': config['card_gradient_type'],
         'logo_url': config['logo_url'],
         'loops': config['loops'] ?? true,
+        // Récompense anniversaire — indépendante du mode, toujours incluse
+        // pour ne pas la perdre quand on sauvegarde un réglage sans rapport
+        // (paliers, cashback...). Le patch (`birthday_reward_*`, clé plate)
+        // prime ; sinon on relit la valeur nichée renvoyée par le serveur
+        // (`config['birthday_reward']`).
+        'birthday_reward_enabled': config['birthday_reward_enabled'] ??
+            config['birthday_reward']?['enabled'] ??
+            false,
+        'birthday_reward_title': config['birthday_reward_title'] ??
+            config['birthday_reward']?['title'],
+        'birthday_reward_description': config['birthday_reward_description'] ??
+            config['birthday_reward']?['description'],
+        'birthday_reward_validity_days':
+            config['birthday_reward_validity_days'] ??
+                config['birthday_reward']?['validity_days'],
         if (restaurant.loyaltyType == 'spend')
           'fcfa_per_point': config['fcfa_per_point'] ?? 100,
         if (restaurant.loyaltyType == 'cashback') ...{
@@ -170,6 +185,10 @@ const _configKeys = {
   'cashback_tier_basis',
   'tiers',
   'loops',
+  'birthday_reward_enabled',
+  'birthday_reward_title',
+  'birthday_reward_description',
+  'birthday_reward_validity_days',
 };
 
 /// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,
