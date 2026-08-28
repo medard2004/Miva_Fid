@@ -54,6 +54,8 @@ import '../../features/merchant/screens/language_theme_screen.dart';
 import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/sms_conversation_screen.dart';
 import '../../features/merchant/screens/sms_campaign_detail_screen.dart';
+import '../../features/merchant/screens/sms_campaign_recipients_screen.dart';
+import '../../features/merchant/screens/sms_campaign_compose_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/merchant/screens/opening_hours_screen.dart';
@@ -603,6 +605,18 @@ GoRouter appRouter(AppRouterRef ref) {
                   pageBuilder: (_, state) => _slide(SmsCampaignDetailScreen(
                     campaignId: state.pathParameters['id'] ?? '',
                   )),
+                ),
+                GoRoute(
+                  path: 'new',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const SmsCampaignRecipientsScreen()),
+                  routes: [
+                    GoRoute(
+                      path: 'message',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (_, __) => _slide(const SmsCampaignComposeScreen()),
+                    ),
+                  ],
                 ),
               ],
             ),

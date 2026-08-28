@@ -290,6 +290,7 @@ class MoreScreen extends ConsumerWidget {
               const SizedBox(height: 12),
 
               // ── 2. COMPLÉTER MON PROFIL CARD ────────────────────────────
+              if (completion.done < completion.total) ...[
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -355,6 +356,7 @@ class MoreScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              ],
 
               // ── 3. SECTION COMPTE ────────────────────────────────────────
               _buildSectionLabel(t.merchantMoreSectionAccount),

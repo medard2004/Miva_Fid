@@ -15,6 +15,7 @@ class ApiConstants {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://distract-buffalo-mockup.ngrok-free.dev/api',
+    // defaultValue: 'https://distract-buffalo-mockup.ngrok-free.dev/api',
   );
 
   static const int connectTimeout = 30000; // 30 secondes

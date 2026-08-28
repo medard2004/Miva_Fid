@@ -6,6 +6,8 @@ class SmsCampaignModel {
     this.recipientType,
     this.recipientIds,
     this.recipientsCount = 0,
+    this.deliveredCount = 0,
+    this.failedCount = 0,
     this.status = 'draft',
     this.scheduledAt,
     this.sentAt,
@@ -18,6 +20,14 @@ class SmsCampaignModel {
   final String? recipientType; // 'all'|'near_reward'|'inactive'|'manual'
   final List<String>? recipientIds;
   final int recipientsCount;
+
+  /// Nombre de destinataires réellement notifiés avec succès (push FCM
+  /// délivré) — vient de `notification_logs`, distinct de [recipientsCount]
+  /// (la cible calculée à la création, avant tout envoi).
+  final int deliveredCount;
+
+  /// Nombre d'échecs (pas de token enregistré, envoi FCM rejeté...).
+  final int failedCount;
   final String status; // 'draft'|'sent'|'scheduled'
   final DateTime? scheduledAt;
   final DateTime? sentAt;
@@ -40,6 +50,8 @@ class SmsCampaignModel {
       message: json['message'] as String? ?? '',
       recipientType: json['recipient_type'] as String?,
       recipientsCount: json['recipients_count'] as int? ?? 0,
+      deliveredCount: json['delivered_count'] as int? ?? 0,
+      failedCount: json['failed_count'] as int? ?? 0,
       status: json['status'] as String? ?? 'draft',
       scheduledAt: date('scheduled_at'),
       sentAt: date('sent_at'),
