@@ -257,7 +257,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   child: Text(
                     _useEmail
                         ? 'Vérifiez votre dossier spam si vous ne recevez pas l\'email dans les prochaines minutes.'
-                        : 'Le SMS peut prendre quelques minutes à arriver.',
+                        : 'Le code peut prendre quelques minutes à arriver (WhatsApp ou SMS).',
                     style: AppTextStyles.caption().copyWith(
                       color: AppColors.merchant,
                       height: 1.5,
@@ -351,8 +351,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             children: [
               _buildStep(
                 icon: _useEmail ? LucideIcons.mail : LucideIcons.messageSquare,
-                title: _useEmail ? 'Ouvrez votre boîte mail' : 'Consultez vos SMS',
-                subtitle: _useEmail ? 'Cherchez un email de Miva-Fid' : 'Le code arrive par SMS',
+                title: _useEmail ? 'Ouvrez votre boîte mail' : 'Consultez vos messages',
+                subtitle: _useEmail ? 'Cherchez un email de Miva-Fid' : 'Par WhatsApp, ou par SMS si indisponible',
               ),
               const Divider(height: Sp.lg),
               _buildStep(
