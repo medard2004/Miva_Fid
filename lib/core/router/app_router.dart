@@ -58,6 +58,7 @@ import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/merchant/screens/opening_hours_screen.dart';
 import '../../features/merchant/screens/socials_screen.dart';
+import '../../features/merchant/screens/birthday_reward_screen.dart';
 import '../../features/merchant/screens/cashback_settings_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
@@ -600,7 +601,7 @@ GoRouter appRouter(AppRouterRef ref) {
                   path: 'campaign/:id',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, state) => _slide(SmsCampaignDetailScreen(
-                    campaignId: state.pathParameters['id'] ?? '1',
+                    campaignId: state.pathParameters['id'] ?? '',
                   )),
                 ),
               ],
@@ -678,6 +679,11 @@ GoRouter appRouter(AppRouterRef ref) {
                   path: 'change-password',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
+                ),
+                GoRoute(
+                  path: 'birthday-reward',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const BirthdayRewardScreen()),
                 ),
                 GoRoute(
                   path: 'account',

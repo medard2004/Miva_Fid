@@ -136,8 +136,18 @@ class _ActiveRewardCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(reward.title,
-              style: AppTextStyles.titleMedium().copyWith(fontSize: 17)),
+          Row(
+            children: [
+              if (reward.isBirthday) ...[
+                const Text('🎂', style: TextStyle(fontSize: 17)),
+                const SizedBox(width: 6),
+              ],
+              Expanded(
+                child: Text(reward.title,
+                    style: AppTextStyles.titleMedium().copyWith(fontSize: 17)),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
           AppButton(label: t.rewardsUseButton, onTap: onUse, height: 46),
         ],

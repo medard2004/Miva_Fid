@@ -33,6 +33,28 @@ void main() {
       expect(reward.isRedeemable, true);
       expect(reward.usedAt, isNull);
       expect(reward.expiresAt, isNotNull);
+      expect(reward.isBirthday, false);
+    });
+
+    test('marks a birthday reward via source', () {
+      final json = {
+        'id': 2,
+        'loyalty_card_id': 1,
+        'restaurant_id': 1,
+        'source': 'birthday',
+        'title': 'Joyeux anniversaire 🎂',
+        'status': 'available',
+        'redeem_token': 'a1b2c3',
+        'unlocked_at': '2026-08-28T08:00:00.000000Z',
+        'expires_at': null,
+        'used_at': null,
+        'is_expired': false,
+        'restaurant': {'id': 1, 'name': 'QA Test Resto'},
+      };
+
+      final reward = Reward.fromApi(json);
+
+      expect(reward.isBirthday, true);
     });
 
     test('parses a reward after merchant validation (used)', () {
