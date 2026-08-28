@@ -139,7 +139,8 @@ class _ActiveRewardCard extends StatelessWidget {
           Row(
             children: [
               if (reward.isBirthday) ...[
-                const Text('🎂', style: TextStyle(fontSize: 17)),
+                Text(reward.isSurprise ? '🎁' : '🎂',
+                    style: const TextStyle(fontSize: 17)),
                 const SizedBox(width: 6),
               ],
               Expanded(

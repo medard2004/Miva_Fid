@@ -128,6 +128,9 @@ class MerchantNotifier extends _$MerchantNotifier {
         'birthday_reward_validity_days':
             config['birthday_reward_validity_days'] ??
                 config['birthday_reward']?['validity_days'],
+        'birthday_reward_surprise': config['birthday_reward_surprise'] ??
+            config['birthday_reward']?['surprise'] ??
+            false,
         if (restaurant.loyaltyType == 'spend')
           'fcfa_per_point': config['fcfa_per_point'] ?? 100,
         if (restaurant.loyaltyType == 'cashback') ...{
@@ -189,6 +192,7 @@ const _configKeys = {
   'birthday_reward_title',
   'birthday_reward_description',
   'birthday_reward_validity_days',
+  'birthday_reward_surprise',
 };
 
 /// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,

@@ -23,6 +23,12 @@ class Reward {
   /// `false` pour une récompense de palier classique.
   final bool isBirthday;
 
+  /// `true` = le titre est déjà masqué côté serveur (générique) tant que la
+  /// récompense n'a pas été utilisée — voir `LoyaltyRewardController::index`.
+  /// Sert uniquement à afficher une icône adaptée, `title` porte déjà le
+  /// texte à montrer (réel ou générique selon le cas).
+  final bool isSurprise;
+
   const Reward({
     required this.id,
     this.cardId,
@@ -35,6 +41,7 @@ class Reward {
     this.expiresAt,
     this.usedAt,
     this.isBirthday = false,
+    this.isSurprise = false,
   });
 
   /// Utilisable maintenant : disponible et non expirée.
@@ -75,6 +82,7 @@ class Reward {
       expiresAt: parseDate(json['expires_at']),
       usedAt: parseDate(json['used_at']),
       isBirthday: json['source'] == 'birthday',
+      isSurprise: json['is_surprise'] as bool? ?? false,
     );
   }
 
