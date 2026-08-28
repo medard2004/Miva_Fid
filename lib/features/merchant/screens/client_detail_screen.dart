@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/services/realtime_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -32,14 +35,38 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   late Future<Map<String, dynamic>?> _clientFuture;
   Future<List<Map<String, dynamic>>>? _historyFuture;
   String? _historyCardId;
+  StreamSubscription<Map<String, dynamic>>? _cardRealtimeSub;
+  StreamSubscription<Map<String, dynamic>>? _rewardRealtimeSub;
 
   @override
   void initState() {
     super.initState();
     _clientFuture = ref.read(merchantDashboardServiceProvider).client(widget.clientId);
+    // Synchronisation temps réel (voir `MerchantRealtimeConnection`) : une
+    // transaction confirmée par le backend sur CETTE carte (tampon, cashback
+    // crédité/utilisé, récompense) recharge fiche + historique sans refresh
+    // manuel. Filtré sur `widget.clientId` pour les cartes (payload porte
+    // `id`) ; les récompenses n'ont pas de filtre fiable (`loyalty_card_id`
+    // absent pour une carte supprimée) donc rechargent systématiquement —
+    // volume faible, écran mono-client.
+    _cardRealtimeSub = RealtimeService.instance.onCardUpdated.listen((payload) {
+      if (payload['id']?.toString() == widget.clientId) _reload();
+    });
+    _rewardRealtimeSub = RealtimeService.instance.onRewardUpdated.listen((payload) {
+      final cardId = payload['loyalty_card_id']?.toString();
+      if (cardId == null || cardId == widget.clientId) _reload();
+    });
+  }
+
+  @override
+  void dispose() {
+    _cardRealtimeSub?.cancel();
+    _rewardRealtimeSub?.cancel();
+    super.dispose();
   }
 
   void _reload() {
+    if (!mounted) return;
     setState(() {
       _clientFuture = ref.read(merchantDashboardServiceProvider).client(widget.clientId);
       _historyFuture = null;

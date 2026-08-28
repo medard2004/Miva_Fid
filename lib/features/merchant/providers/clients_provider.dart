@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/services/realtime_service.dart';
 import '../../../models/loyalty_card_model.dart';
 import 'dashboard_stats_provider.dart' show dashboardStatsProvider;
 import 'merchant_auth_provider.dart';
@@ -142,6 +143,23 @@ class ClientsNotifier extends _$ClientsNotifier {
       return const ClientsListState(
           clients: [], total: 0, currentPage: 1, lastPage: 1);
     }
+
+    // Synchronisation temps réel (voir `MerchantRealtimeConnection`) : toute
+    // transaction confirmée par le backend (tampon, cashback crédité/utilisé,
+    // récompense) diffusée sur le canal `merchant.{id}` redéclenche un
+    // rechargement de cette page — le canal étant déjà scopé au commerce,
+    // aucun filtre supplémentaire n'est nécessaire ici.
+    final cardSub = RealtimeService.instance.onCardUpdated.listen((_) {
+      ref.invalidate(dashboardStatsProvider);
+      _invalidate();
+    });
+    final rewardSub = RealtimeService.instance.onRewardUpdated.listen((_) {
+      _invalidate();
+    });
+    ref.onDispose(() {
+      cardSub.cancel();
+      rewardSub.cancel();
+    });
 
     final page = await ref.read(merchantDashboardServiceProvider).clients(
           search: _filter.search.isEmpty ? null : _filter.search,

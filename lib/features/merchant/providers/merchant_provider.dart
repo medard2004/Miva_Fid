@@ -4,6 +4,7 @@ import '../../../core/api/providers/api_providers.dart';
 import '../../../models/merchant_model.dart';
 import '../models/restaurant_account.dart';
 import 'merchant_auth_provider.dart';
+import 'merchant_realtime_provider.dart';
 
 part 'merchant_provider.g.dart';
 
@@ -22,6 +23,11 @@ part 'merchant_provider.g.dart';
 class MerchantNotifier extends _$MerchantNotifier {
   @override
   Future<MerchantModel?> build() async {
+    // Ouvre/ferme la connexion Reverb marchande en même temps que ce
+    // provider (déjà `keepAlive` et déjà surveillé par la quasi totalité
+    // des écrans marchand) — voir `MerchantRealtimeConnection`.
+    ref.watch(merchantRealtimeConnectionProvider);
+
     final restaurant = ref.watch(
       merchantAuthProvider.select((s) => s.restaurant),
     );
@@ -115,6 +121,7 @@ class MerchantNotifier extends _$MerchantNotifier {
             'cashback_redeem_threshold_fcfa': config['cashback_redeem_threshold_fcfa'],
           if (config['cashback_expiry_days'] != null)
             'cashback_expiry_days': config['cashback_expiry_days'],
+          'cashback_tier_basis': config['cashback_tier_basis'] ?? 'cumulative',
         },
       });
     }
@@ -160,6 +167,7 @@ const _configKeys = {
   'cashback_percentage',
   'cashback_redeem_threshold_fcfa',
   'cashback_expiry_days',
+  'cashback_tier_basis',
   'tiers',
   'loops',
 };

@@ -46,11 +46,15 @@ class ReverbConfig {
 /// self-hosted), donc implémentation directe plutôt qu'une dépendance qui ne
 /// couvrirait pas Reverb.
 ///
-/// Périmètre volontairement réduit à ce dont l'app a besoin : un canal privé
-/// par client, un seul type d'événement écouté (mise à jour de carte de
-/// fidélité). Pas de canaux publics/présence, pas de reconnexion agressive —
-/// une carte qui n'a pas pu être patchée en direct reste simplement à jour
-/// au prochain chargement normal du wallet.
+/// Périmètre volontairement réduit à ce dont l'app a besoin : un seul canal
+/// privé à la fois (client OU marchand, jamais les deux en même temps — un
+/// appareil n'est connecté que dans un seul rôle), un seul jeu d'événements
+/// écoutés (mise à jour de carte / récompense de fidélité, diffusées par le
+/// backend à la fois sur `loyalty.{clientId}` et `merchant.{restaurantId}`,
+/// voir `LoyaltyCardUpdated`/`LoyaltyRewardUpdated` côté backend). Pas de
+/// canaux publics/présence, pas de reconnexion agressive — une carte qui n'a
+/// pas pu être patchée en direct reste simplement à jour au prochain
+/// chargement normal de l'écran.
 class RealtimeService {
   RealtimeService._();
   static final RealtimeService instance = RealtimeService._();
@@ -60,7 +64,7 @@ class RealtimeService {
   Timer? _pingTimer;
   Timer? _reconnectTimer;
   String? _socketId;
-  String? _clientId;
+  String? _channelName;
   ApiClient? _apiClient;
   bool _disposed = true;
 
@@ -82,13 +86,15 @@ class RealtimeService {
   /// utiliser pour se remettre à jour par un rechargement complet.
   Stream<void> get onReconnected => _reconnectedController.stream;
 
-  /// Ouvre la connexion et s'abonne au canal privé du client authentifié.
-  /// Idempotent : un appel alors qu'une connexion est déjà active la
-  /// remplace proprement (ex. changement de compte).
-  void connect({required String clientId, required ApiClient apiClient}) {
+  /// Ouvre la connexion et s'abonne au canal privé donné — `channelName` est
+  /// le nom SANS le préfixe `private-` (ex. `loyalty.42` côté client,
+  /// `merchant.7` côté marchand ; voir `routes/channels.php`). Idempotent :
+  /// un appel alors qu'une connexion est déjà active la remplace proprement
+  /// (ex. changement de compte).
+  void connect({required String channelName, required ApiClient apiClient}) {
     disconnect();
     _disposed = false;
-    _clientId = clientId;
+    _channelName = channelName;
     _apiClient = apiClient;
     _open();
   }
@@ -198,11 +204,11 @@ class RealtimeService {
 
   Future<void> _subscribePrivateChannel() async {
     final socketId = _socketId;
-    final clientId = _clientId;
+    final channelSuffix = _channelName;
     final apiClient = _apiClient;
-    if (socketId == null || clientId == null || apiClient == null) return;
+    if (socketId == null || channelSuffix == null || apiClient == null) return;
 
-    final channelName = 'private-loyalty.$clientId';
+    final channelName = 'private-$channelSuffix';
     try {
       final response = await apiClient.dio.post(
         '/broadcasting/auth',

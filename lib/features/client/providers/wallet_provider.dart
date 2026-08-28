@@ -15,16 +15,23 @@ class WalletNotifier extends StateNotifier<List<LoyaltyCard>> {
     // le cas d'une session déjà active au moment où ce notifier est créé.
     _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
     _realtimeSub = RealtimeService.instance.onCardUpdated.listen(applyRealtimeUpdate);
+    // Rattrapage après coupure socket (app en arrière-plan) : un événement
+    // manqué pendant la coupure n'est jamais rejoué par le serveur — recharge
+    // tout le wallet (même principe que `RewardsNotifier`).
+    _reconnectSub = RealtimeService.instance.onReconnected.listen((_) {
+      loadMine().catchError((_) {});
+    });
   }
 
   final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  StreamSubscription<void>? _reconnectSub;
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     final backendId = next.user?.backendId;
     if (next.isAuthenticated && backendId != null) {
       RealtimeService.instance.connect(
-        clientId: backendId.toString(),
+        channelName: 'loyalty.$backendId',
         apiClient: _ref.read(apiClientProvider),
       );
       // Fetch cards automatically when authenticated (e.g. after login or
@@ -47,6 +54,7 @@ class WalletNotifier extends StateNotifier<List<LoyaltyCard>> {
   @override
   void dispose() {
     _realtimeSub?.cancel();
+    _reconnectSub?.cancel();
     RealtimeService.instance.disconnect();
     super.dispose();
   }
@@ -110,6 +118,12 @@ class WalletNotifier extends StateNotifier<List<LoyaltyCard>> {
   /// — met à jour la progression sans recharger tout le wallet. Ignoré si la
   /// carte ne fait pas (encore) partie de l'état local (ex. reçu avant le
   /// premier `loadMine()`).
+  ///
+  /// Invalide aussi `cardHistoryProvider` de cette carte : le payload ne
+  /// porte que l'état agrégé (solde/progression/niveau), jamais les lignes
+  /// d'historique elles-mêmes — sans cette invalidation, l'onglet historique
+  /// restait figé sur son premier chargement malgré une transaction confirmée
+  /// par le serveur (bug corrigé ici).
   void applyRealtimeUpdate(Map<String, dynamic> payload) {
     final id = payload['id']?.toString();
     if (id == null) return;
@@ -117,6 +131,7 @@ class WalletNotifier extends StateNotifier<List<LoyaltyCard>> {
       for (final c in state)
         if (c.id == id) c.applyRealtimeUpdate(payload) else c,
     ];
+    _ref.invalidate(cardHistoryProvider(id));
   }
 }
 
