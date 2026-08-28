@@ -62,4 +62,45 @@ void main() {
     expect(find.text('Nom du niveau *'), findsOneWidget);
     expect(find.text('Choisir une icône'), findsOneWidget);
   });
+
+  testWidgets('reward field is required by default, optional when rewardOptional is true',
+      (tester) async {
+    final formKey = GlobalKey<FormState>();
+
+    Future<void> pumpForm({required bool rewardOptional}) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        locale: const Locale('fr'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: Form(
+            key: formKey,
+            child: TierEditorForm(
+              initialTiers: const [ProgramTier(goal: 1000, rewardDescription: '')],
+              goalUnit: 'FCFA',
+              onChanged: (_) {},
+              allowEmpty: true,
+              rewardOptional: rewardOptional,
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('Palier 1').first);
+      await tester.pumpAndSettle();
+    }
+
+    await pumpForm(rewardOptional: false);
+    expect(formKey.currentState!.validate(), isFalse);
+
+    await pumpForm(rewardOptional: true);
+    expect(formKey.currentState!.validate(), isTrue);
+  });
 }

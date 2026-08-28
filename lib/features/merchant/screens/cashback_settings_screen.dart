@@ -20,6 +20,7 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
   late final TextEditingController _percentageCtrl;
   late final TextEditingController _thresholdCtrl;
   late final TextEditingController _expiryCtrl;
+  String _tierBasis = 'cumulative';
 
   bool _isSaving = false;
   bool _initialized = false;
@@ -63,6 +64,7 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
         'cashback_redeem_threshold_fcfa': threshold,
         if (_expiryCtrl.text.trim().isNotEmpty)
           'cashback_expiry_days': int.tryParse(_expiryCtrl.text.trim()),
+        'cashback_tier_basis': _tierBasis,
       });
       if (mounted) ToastService.showSuccess('Paramètres cashback enregistrés !');
     } catch (_) {
@@ -87,6 +89,7 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
           : asText(config['cashback_percentage']);
       _thresholdCtrl.text = asText(config['cashback_redeem_threshold_fcfa']);
       _expiryCtrl.text = asText(config['cashback_expiry_days']);
+      _tierBasis = config['cashback_tier_basis'] as String? ?? 'cumulative';
       _initialized = true;
     }
 
@@ -277,6 +280,42 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
                         ],
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFEDF0F7)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel('BASE DE PROGRESSION DES PALIERS'),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Détermine à partir de quel montant un palier (niveau) est considéré atteint.',
+                            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                          ),
+                          const SizedBox(height: 10),
+                          _TierBasisOption(
+                            title: 'Cashback cumulé (recommandé)',
+                            subtitle:
+                                'Total généré depuis l\'inscription. Utiliser son cashback ne fait jamais perdre un niveau.',
+                            selected: _tierBasis == 'cumulative',
+                            onTap: () => setState(() => _tierBasis = 'cumulative'),
+                          ),
+                          const SizedBox(height: 8),
+                          _TierBasisOption(
+                            title: 'Solde disponible',
+                            subtitle:
+                                'Solde actuel du client. Le niveau peut redescendre si le solde diminue.',
+                            selected: _tierBasis == 'balance',
+                            onTap: () => setState(() => _tierBasis = 'balance'),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
@@ -329,6 +368,69 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
         fontWeight: FontWeight.w700,
         color: Color(0xFF64748B),
         letterSpacing: 0.4,
+      ),
+    );
+  }
+}
+
+class _TierBasisOption extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TierBasisOption({
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFEEF0FF) : const Color(0xFFF8F9FD),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? const Color(0xFF5B50EC) : const Color(0xFFEDF0F7),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              size: 20,
+              color: selected ? const Color(0xFF5B50EC) : const Color(0xFF94A3B8),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

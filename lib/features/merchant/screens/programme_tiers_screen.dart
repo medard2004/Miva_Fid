@@ -140,6 +140,7 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
                         goalUnit: _goalUnit(t, loyaltyMode),
                         onChanged: (t) => _tiers = t,
                         allowEmpty: loyaltyMode == 'cashback',
+                        rewardOptional: loyaltyMode == 'cashback',
                         goalStep: loyaltyMode == 'stamps' ? 5 : 500,
                       ),
                       const SizedBox(height: Sp.md),

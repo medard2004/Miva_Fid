@@ -27,6 +27,10 @@ class TierEditorForm extends StatefulWidget {
   final bool allowEmpty;
   final int goalStep;
 
+  /// Cashback uniquement : un palier peut n'attribuer qu'un niveau, sans
+  /// récompense associée (voir spec paliers cashback).
+  final bool rewardOptional;
+
   const TierEditorForm({
     super.key,
     required this.initialTiers,
@@ -34,6 +38,7 @@ class TierEditorForm extends StatefulWidget {
     required this.onChanged,
     this.allowEmpty = false,
     this.goalStep = 500,
+    this.rewardOptional = false,
   });
 
   @override
@@ -364,8 +369,12 @@ class TierEditorFormState extends State<TierEditorForm> {
                             ],
                             const SizedBox(height: Sp.sm),
                             AppInput(
-                              label: t.merchantTierEditorRewardLabel,
-                              hint: t.merchantTierEditorRewardHint,
+                              label: widget.rewardOptional
+                                  ? '${t.merchantTierEditorRewardLabel} (optionnel)'
+                                  : t.merchantTierEditorRewardLabel,
+                              hint: widget.rewardOptional
+                                  ? 'Laisser vide pour n\'attribuer qu\'un niveau, sans récompense'
+                                  : t.merchantTierEditorRewardHint,
                               controller: _descCtrls[index],
                               prefixIcon: LucideIcons.gift,
                               accentColor: AppColors.merchant,
@@ -374,7 +383,7 @@ class TierEditorFormState extends State<TierEditorForm> {
                                 setState(() {});
                                 _emitChange();
                               },
-                              validator: (v) => (v?.trim() ?? '').isEmpty
+                              validator: (v) => (!widget.rewardOptional && (v?.trim() ?? '').isEmpty)
                                   ? t.merchantTierEditorRewardRequired
                                   : null,
                             ),
