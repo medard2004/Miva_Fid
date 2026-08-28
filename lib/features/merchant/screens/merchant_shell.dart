@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,6 +15,7 @@ class MerchantShell extends ConsumerWidget {
   Widget _buildNavItem({
     required int index,
     required IconData icon,
+    required IconData activeIcon,
     required String label,
     required int currentIndex,
   }) {
@@ -39,7 +39,7 @@ class MerchantShell extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                icon,
+                isActive ? activeIcon : icon,
                 color: isActive ? activeColor : inactiveColor,
                 size: 22,
               ),
@@ -85,43 +85,45 @@ class MerchantShell extends ConsumerWidget {
               ),
               child: SafeArea(
                 top: false,
-                child: SizedBox(
-                  height: 58,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildNavItem(
-                        index: 0,
-                        icon: LucideIcons.users,
-                        label: t.merchantNavClients,
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 1,
-                        icon: LucideIcons.chartColumnBig,
-                        label: t.merchantNavStats,
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 2,
-                        icon: LucideIcons.qrCode,
-                        label: t.merchantNavValidate,
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 3,
-                        icon: LucideIcons.messageSquare,
-                        label: t.merchantNavSms,
-                        currentIndex: currentIndex,
-                      ),
-                      _buildNavItem(
-                        index: 4,
-                        icon: LucideIcons.settings,
-                        label: t.merchantNavSettings,
-                        currentIndex: currentIndex,
-                      ),
-                    ],
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(
+                      index: 0,
+                      icon: Icons.groups_outlined,
+                      activeIcon: Icons.groups_rounded,
+                      label: t.merchantNavClients,
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 1,
+                      icon: Icons.bar_chart_outlined,
+                      activeIcon: Icons.bar_chart_rounded,
+                      label: t.merchantNavStats,
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 2,
+                      icon: Icons.qr_code_outlined,
+                      activeIcon: Icons.qr_code_rounded,
+                      label: t.merchantNavValidate,
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 3,
+                      icon: Icons.chat_bubble_outline,
+                      activeIcon: Icons.chat_bubble_rounded,
+                      label: t.merchantNavSms,
+                      currentIndex: currentIndex,
+                    ),
+                    _buildNavItem(
+                      index: 4,
+                      icon: Icons.settings_outlined,
+                      activeIcon: Icons.settings_rounded,
+                      label: t.merchantNavSettings,
+                      currentIndex: currentIndex,
+                    ),
+                  ],
                 ),
               ),
             ),

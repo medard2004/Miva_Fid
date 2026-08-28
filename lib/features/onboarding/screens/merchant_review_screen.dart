@@ -68,6 +68,19 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
     }
   }
 
+  static const Map<String, String> _stampIconLabels = {
+    'check_rounded': 'Coche',
+    'star_rounded': 'Étoile',
+    'favorite_rounded': 'Cœur',
+    'local_cafe_rounded': 'Café',
+    'card_giftcard_rounded': 'Cadeau',
+    'auto_awesome_rounded': 'Étincelles',
+    'emoji_emotions_rounded': 'Sourire',
+    'diamond_rounded': 'Diamant',
+  };
+
+  String _stampIconLabel(String key) => _stampIconLabels[key] ?? 'Coche';
+
   @override
   Widget build(BuildContext context) {
     // Ces ecrans peignent via les tokens statiques d'AppColors,
@@ -270,15 +283,17 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                         _ReviewRow(
                           icon: LucideIcons.palette,
                           label: 'Couleur principale',
-                          value: state.colorPrimaryHex,
+                          value: 'Personnalisée',
+                          swatchColor: state.colorPrimary,
                         ),
-                        _ReviewRow(
-                          icon: LucideIcons.sparkles,
-                          label: 'Style des tampons',
-                          value: state.stampDesignType == 'emoji'
-                              ? 'Emoji (${state.stampEmoji})'
-                              : 'Icône (${state.stampIcon})',
-                        ),
+                        if (state.loyaltyMode == 'stamps')
+                          _ReviewRow(
+                            icon: LucideIcons.sparkles,
+                            label: 'Style des tampons',
+                            value: state.stampDesignType == 'emoji'
+                                ? 'Emoji ${state.stampEmoji}'
+                                : _stampIconLabel(state.stampIcon),
+                          ),
                       ],
                     ).animate(delay: 180.ms).fadeIn(duration: 350.ms),
                     const SizedBox(height: Sp.xl),
@@ -401,11 +416,13 @@ class _ReviewRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.swatchColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Color? swatchColor;
 
   @override
   Widget build(BuildContext context) {
@@ -427,12 +444,30 @@ class _ReviewRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: AppTextStyles.bodyMd().copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Row(
+              children: [
+                if (swatchColor != null) ...[
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: swatchColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border),
+                    ),
+                  ),
+                  const SizedBox(width: Sp.xs),
+                ],
+                Flexible(
+                  child: Text(
+                    value,
+                    style: AppTextStyles.bodyMd().copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
