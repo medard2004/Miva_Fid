@@ -142,20 +142,20 @@ class MerchantAuthRepository {
     return token != null;
   }
 
-  Future<String> forgotPassword(String email) async {
-    final response = await _authService.forgotPassword(email);
+  Future<String> forgotPassword(String identifier) async {
+    final response = await _authService.forgotPassword(identifier);
     return response['message'] ?? 'Code envoyé';
   }
 
-  Future<String> verifyResetOtp(String email, String otp) async {
-    final response = await _authService.verifyResetOtp(email, otp);
+  Future<String> verifyResetOtp(String identifier, String otp) async {
+    final response = await _authService.verifyResetOtp(identifier, otp);
     return response['reset_token'] as String;
   }
 
   Future<String> resetPassword(
-      String email, String resetToken, String password) async {
+      String identifier, String resetToken, String password) async {
     final response =
-        await _authService.resetPassword(email, resetToken, password);
+        await _authService.resetPassword(identifier, resetToken, password);
     return response['message'] ?? 'Mot de passe réinitialisé';
   }
 }

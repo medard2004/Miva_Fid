@@ -113,6 +113,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   accentColor: AppColors.merchant,
                   validator: (v) => (v == null || v.isEmpty) ? t.errFieldRequired : null,
                 ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.push('/auth/forgot-password'),
+                    child: Text(
+                      t.authForgotPasswordLink,
+                      style: AppTextStyles.caption()
+                          .copyWith(color: AppColors.merchant, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: Sp.md),
                 AppInput(
                   label: t.changePasswordNewLabel,

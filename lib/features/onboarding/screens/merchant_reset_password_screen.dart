@@ -19,11 +19,12 @@ import '../../merchant/providers/merchant_auth_provider.dart';
 class MerchantResetPasswordScreen extends ConsumerStatefulWidget {
   const MerchantResetPasswordScreen({
     super.key,
-    required this.email,
+    required this.identifier,
     required this.resetToken,
   });
 
-  final String email;
+  /// Email ou numéro de téléphone ayant reçu le code OTP.
+  final String identifier;
   final String resetToken;
 
   @override
@@ -50,7 +51,7 @@ class _MerchantResetPasswordScreenState
     setState(() => _loading = true);
 
     final ok = await ref.read(merchantAuthProvider.notifier).resetPassword(
-          widget.email,
+          widget.identifier,
           widget.resetToken,
           _passwordCtrl.text,
         );
@@ -98,7 +99,7 @@ class _MerchantResetPasswordScreenState
                 ),
                 const SizedBox(height: Sp.xs),
                 Text(
-                  'Choisissez un mot de passe pour ${widget.email}.',
+                  'Choisissez un mot de passe pour ${widget.identifier}.',
                   style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary, height: 1.45),
                 ),
                 const SizedBox(height: Sp.md),

@@ -18,9 +18,10 @@ import '../../merchant/providers/merchant_auth_provider.dart';
 
 /// Étape 2 de la réinitialisation marchand : saisie du code OTP reçu.
 class MerchantVerifyOtpScreen extends ConsumerStatefulWidget {
-  const MerchantVerifyOtpScreen({super.key, required this.email});
+  const MerchantVerifyOtpScreen({super.key, required this.identifier});
 
-  final String email;
+  /// Email ou numéro de téléphone renseigné à l'étape précédente.
+  final String identifier;
 
   @override
   ConsumerState<MerchantVerifyOtpScreen> createState() =>
@@ -45,7 +46,7 @@ class _MerchantVerifyOtpScreenState
 
     final resetToken = await ref
         .read(merchantAuthProvider.notifier)
-        .verifyResetOtp(widget.email, _otpCtrl.text.trim());
+        .verifyResetOtp(widget.identifier, _otpCtrl.text.trim());
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -53,7 +54,7 @@ class _MerchantVerifyOtpScreenState
     if (resetToken != null) {
       context.push(
         '/auth/merchant/reset-password',
-        extra: {'email': widget.email, 'reset_token': resetToken},
+        extra: {'identifier': widget.identifier, 'reset_token': resetToken},
       );
     } else {
       final error = ref.read(merchantAuthProvider).lastError;
@@ -105,7 +106,7 @@ class _MerchantVerifyOtpScreenState
                 ),
                 const SizedBox(height: Sp.xs),
                 Text(
-                  'Un code à 6 chiffres a été envoyé à ${widget.email}.',
+                  'Un code à 6 chiffres a été envoyé à ${widget.identifier}.',
                   style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary, height: 1.45),
                 ),
                 const SizedBox(height: Sp.md),

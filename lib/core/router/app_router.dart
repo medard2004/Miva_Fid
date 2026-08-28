@@ -313,7 +313,9 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/auth/merchant/verify-otp',
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          return _slide(MerchantVerifyOtpScreen(email: extra?['email'] as String? ?? ''));
+          return _slide(MerchantVerifyOtpScreen(
+            identifier: extra?['identifier'] as String? ?? '',
+          ));
         },
       ),
       GoRoute(
@@ -321,7 +323,7 @@ GoRouter appRouter(AppRouterRef ref) {
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return _slide(MerchantResetPasswordScreen(
-            email: extra?['email'] as String? ?? '',
+            identifier: extra?['identifier'] as String? ?? '',
             resetToken: extra?['reset_token'] as String? ?? '',
           ));
         },

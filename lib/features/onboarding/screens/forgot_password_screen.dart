@@ -15,6 +15,7 @@ import '../../../core/errors/error_messages.dart';
 import '../../../core/errors/error_translator.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../client/providers/settings_provider.dart';
+import '../../client/widgets/shared/phone_input_with_country_picker.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -27,14 +28,29 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _phoneInputKey = GlobalKey<PhoneInputWithCountryPickerState>();
+  final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   bool _loading = false;
   bool _sent = false;
 
+  /// Identifiant utilisé (email OU téléphone), même choix que côté client
+  /// (`forgot_password_screen.dart` client) — le backend accepte les deux.
+  bool _useEmail = false;
+
   @override
   void dispose() {
+    _phoneCtrl.dispose();
     _emailCtrl.dispose();
     super.dispose();
+  }
+
+  String get _identifier => _useEmail
+      ? _emailCtrl.text.trim()
+      : (_phoneInputKey.currentState?.fullPhoneNumber ?? _phoneCtrl.text.trim());
+
+  void _toggleMode() {
+    setState(() => _useEmail = !_useEmail);
   }
 
   Future<void> _sendResetLink() async {
@@ -42,7 +58,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     setState(() => _loading = true);
     final ok = await ref
         .read(merchantAuthProvider.notifier)
-        .forgotPassword(_emailCtrl.text.trim());
+        .forgotPassword(_identifier);
 
     if (!mounted) return;
 
@@ -158,25 +174,52 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
           const SizedBox(height: Sp.md),
 
-          // Email field
-          AppInput(
-            label: 'ADRESSE EMAIL',
-            hint: 'vous@exemple.com',
-            controller: _emailCtrl,
-            prefixIcon: LucideIcons.mail,
-            accentColor: AppColors.merchant,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) {
-                return 'Veuillez entrer votre adresse email';
-              }
-              if (!v.contains('@') || !v.contains('.')) {
-                return 'Adresse email invalide';
-              }
-              return null;
-            },
-          ).animate(delay: 100.ms).fadeIn(duration: 350.ms),
+          // Email OU téléphone, selon le mode choisi.
+          if (_useEmail) ...[
+            AppInput(
+              label: 'ADRESSE EMAIL',
+              hint: 'vous@exemple.com',
+              controller: _emailCtrl,
+              prefixIcon: LucideIcons.mail,
+              accentColor: AppColors.merchant,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return 'Veuillez entrer votre adresse email';
+                }
+                if (!v.contains('@') || !v.contains('.')) {
+                  return 'Adresse email invalide';
+                }
+                return null;
+              },
+            ).animate(delay: 100.ms).fadeIn(duration: 350.ms),
+          ] else ...[
+            Text('NUMÉRO DE TÉLÉPHONE',
+                style: AppTextStyles.labelBold().copyWith(color: AppColors.textSecondary)),
+            const SizedBox(height: Sp.sm),
+            PhoneInputWithCountryPicker(
+              key: _phoneInputKey,
+              controller: _phoneCtrl,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Veuillez entrer votre numéro de téléphone'
+                  : null,
+            ).animate(delay: 100.ms).fadeIn(duration: 350.ms),
+          ],
+
+          const SizedBox(height: Sp.sm),
+          Center(
+            child: TextButton(
+              onPressed: _toggleMode,
+              child: Text(
+                _useEmail ? 'Utiliser mon numéro de téléphone' : 'Utiliser mon adresse email',
+                style: AppTextStyles.bodyMd().copyWith(
+                  color: AppColors.merchant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ).animate(delay: 120.ms).fadeIn(duration: 350.ms),
 
           const SizedBox(height: Sp.md),
 
@@ -212,7 +255,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 const SizedBox(width: Sp.sm),
                 Expanded(
                   child: Text(
-                    'Vérifiez votre dossier spam si vous ne recevez pas l\'email dans les prochaines minutes.',
+                    _useEmail
+                        ? 'Vérifiez votre dossier spam si vous ne recevez pas l\'email dans les prochaines minutes.'
+                        : 'Le SMS peut prendre quelques minutes à arriver.',
                     style: AppTextStyles.caption().copyWith(
                       color: AppColors.merchant,
                       height: 1.5,
@@ -277,7 +322,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         const SizedBox(height: Sp.xs),
 
         Text(
-          _emailCtrl.text.trim(),
+          _identifier,
           style: AppTextStyles.bodyMd().copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
@@ -305,9 +350,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           child: Column(
             children: [
               _buildStep(
-                icon: LucideIcons.mail,
-                title: 'Ouvrez votre boîte mail',
-                subtitle: 'Cherchez un email de Miva-Fid',
+                icon: _useEmail ? LucideIcons.mail : LucideIcons.messageSquare,
+                title: _useEmail ? 'Ouvrez votre boîte mail' : 'Consultez vos SMS',
+                subtitle: _useEmail ? 'Cherchez un email de Miva-Fid' : 'Le code arrive par SMS',
               ),
               const Divider(height: Sp.lg),
               _buildStep(
@@ -332,7 +377,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           icon: LucideIcons.arrowRight,
           onPressed: () => context.push(
             '/auth/merchant/verify-otp',
-            extra: {'email': _emailCtrl.text.trim()},
+            extra: {'identifier': _identifier},
           ),
         ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
 
