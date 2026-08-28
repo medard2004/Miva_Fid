@@ -236,7 +236,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   height: 46,
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 245, 244, 255),
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                         color: AppColors.border.withValues(alpha: 0.5)),
@@ -254,7 +254,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color:
-                                  !_isLogin ? Colors.white : Colors.transparent,
+                                  !_isLogin ? AppColors.surface : Colors.transparent,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: !_isLogin
                                   ? [
@@ -295,7 +295,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color:
-                                  _isLogin ? Colors.white : Colors.transparent,
+                                  _isLogin ? AppColors.surface : Colors.transparent,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: _isLogin
                                   ? [
@@ -555,7 +555,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 const SizedBox(height: Sp.sm),
                 _SocialAuthButton(
                   label: 'Continuer avec Apple',
-                  leading: const Icon(SimpleIcons.apple, size: 18, color: Colors.black),
+                  leading: Icon(SimpleIcons.apple, size: 18, color: AppColors.textPrimary),
                   onTap: () {
                     if (!_loading) _continueWithSocial('apple');
                   },
@@ -630,7 +630,7 @@ class _SocialAuthButton extends StatelessWidget {
       width: double.infinity,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.5),
         boxShadow: [

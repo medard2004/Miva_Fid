@@ -33,6 +33,11 @@ class QrCodeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(t.merchantMoreMyQrCode),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: merchantAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => Center(child: Text(t.merchantQrCodeLoadError)),
@@ -52,15 +57,6 @@ class QrCodeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title and Subtitle
-                Text(
-                  t.merchantMoreMyQrCode,
-                  style: AppTextStyles.h1().copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 Text(
                   t.merchantQrCodeSubtitle,
                   style: AppTextStyles.caption().copyWith(

@@ -44,10 +44,10 @@ class OnboardingProgressBar extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+          bottom: BorderSide(color: AppColors.border, width: 1),
         ),
       ),
       child: Column(
@@ -71,9 +71,9 @@ class OnboardingProgressBar extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: AppColors.background,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Icon(
                       LucideIcons.chevronLeft,
@@ -158,7 +158,7 @@ class OnboardingProgressBar extends StatelessWidget {
                   height: 4,
                   margin: EdgeInsets.only(right: index < total - 1 ? 6 : 0),
                   decoration: BoxDecoration(
-                    color: isFilled ? AppColors.merchant : const Color(0xFFE5E7EB),
+                    color: isFilled ? AppColors.merchant : AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

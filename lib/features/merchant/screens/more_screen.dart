@@ -47,19 +47,18 @@ class MoreScreen extends ConsumerWidget {
     final city = merchant?.address?.isNotEmpty == true
         ? 'Lomé'
         : 'Lomé';
-    final category = 'Restaurant';
+    const category = 'Restaurant';
     final initials = merchant?.initials ?? 'RL';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── TOP HEADER ──────────────────────────────────────────────
-              Row(
+        child: Column(
+          children: [
+            // ── TOP HEADER (STATIC) ───────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              child: Row(
                 children: [
                   Container(
                     width: 38,
@@ -79,8 +78,8 @@ class MoreScreen extends ConsumerWidget {
                     child: Text(
                       t.settingsTitle,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -122,9 +121,16 @@ class MoreScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+            ),
 
-              // ── 1. PROFIL DU COMMERCE CARD ──────────────────────────────
+            // ── SCROLLABLE BODY ───────────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── 1. PROFIL DU COMMERCE CARD ────────────────────────
               InkWell(
                 onTap: () => context.push('/merchant/more/profile'),
                 borderRadius: BorderRadius.circular(16),
@@ -267,11 +273,6 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/profile'),
                 ),
                 _buildMenuItem(
-                  icon: LucideIcons.clock,
-                  label: t.merchantMoreHours,
-                  onTap: () => context.push('/merchant/more/hours'),
-                ),
-                _buildMenuItem(
                   icon: LucideIcons.link,
                   label: t.merchantMoreSocials,
                   tag: t.merchantMoreToComplete,
@@ -329,11 +330,6 @@ class MoreScreen extends ConsumerWidget {
                   icon: LucideIcons.qrCode,
                   label: t.merchantMoreMyQrCode,
                   onTap: () => context.push('/merchant/more/account/qrcode'),
-                ),
-                _buildMenuItem(
-                  icon: LucideIcons.globe,
-                  label: t.merchantMoreMyShowcase,
-                  onTap: () => context.push('/merchant/more/account/vitrine'),
                 ),
               ]),
               const SizedBox(height: 20),
@@ -406,8 +402,11 @@ class MoreScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+),
+);
+}
 
   Widget _buildSectionLabel(String label) {
     return Padding(

@@ -161,7 +161,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F2F6),
+                          color: AppColors.border,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
@@ -263,7 +263,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
+            color: isSelected ? AppColors.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
                 ? [
@@ -323,7 +323,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
@@ -345,7 +345,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$count'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: const Color(0xFFF3F4F6),
+                      backgroundColor: AppColors.border,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -434,7 +434,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
@@ -461,7 +461,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$val F'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: const Color(0xFFF3F4F6),
+                      backgroundColor: AppColors.border,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -568,7 +568,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
@@ -590,7 +590,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$count%'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: const Color(0xFFF3F4F6),
+                      backgroundColor: AppColors.border,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -727,7 +727,7 @@ class _ExplanationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFC7D2FE)),
       ),

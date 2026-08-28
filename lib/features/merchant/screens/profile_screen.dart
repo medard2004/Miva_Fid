@@ -154,8 +154,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Text(
                       t.merchantMoreBusinessProfile,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),

@@ -166,57 +166,21 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(t.merchantVitrineTitle),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.eye),
+            tooltip: t.merchantVitrinePreviewButton,
+            onPressed: () => _showPreviewSheet(context, merchant),
+          ),
+        ],
+      ),
       body: Column(
         children: [
-          const SizedBox(height: Sp.sm),
-
-            // 2. Title and "Aperçu" Button Row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Sp.md),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t.merchantVitrineTitle,
-                        style: AppTextStyles.h1().copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        t.merchantVitrineSubtitle,
-                        style: AppTextStyles.caption().copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: () => _showPreviewSheet(context, merchant),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.border),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    icon: Icon(LucideIcons.eye, color: AppColors.textPrimary, size: 16),
-                    label: Text(
-                      t.merchantVitrinePreviewButton,
-                      style: AppTextStyles.caption().copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 350.ms, delay: 80.ms).slideY(begin: 0.06, end: 0),
-            const SizedBox(height: Sp.md),
+          const SizedBox(height: Sp.xs),
 
             // 3. Scrollable Editor Form
             Expanded(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -8,6 +9,7 @@ import '../../../core/services/location_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../client/providers/settings_provider.dart';
 
 /// Repli si la position GPS est indisponible/refusée au moment d'ouvrir la
 /// carte — centre-ville de Lomé, marché principal du produit.
@@ -18,16 +20,16 @@ const _fallbackCenter = LatLng(6.1319, 1.2228);
 ///
 /// Tuiles OpenStreetMap (gratuit, sans clé API) via `flutter_map` — pas de
 /// compte Google Cloud ni de facturation requise.
-class MerchantLocationMapScreen extends StatefulWidget {
+class MerchantLocationMapScreen extends ConsumerStatefulWidget {
   const MerchantLocationMapScreen({super.key});
 
   @override
-  State<MerchantLocationMapScreen> createState() =>
+  ConsumerState<MerchantLocationMapScreen> createState() =>
       _MerchantLocationMapScreenState();
 }
 
 class _MerchantLocationMapScreenState
-    extends State<MerchantLocationMapScreen> {
+    extends ConsumerState<MerchantLocationMapScreen> {
   LatLng _target = _fallbackCenter;
   final _controller = MapController();
 
@@ -59,6 +61,11 @@ class _MerchantLocationMapScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Cet écran peint via les tokens statiques d'AppColors, invisibles pour
+    // le système de dépendances de Flutter : observer la luminosité
+    // effective est son seul déclencheur de rebuild sur une bascule
+    // clair/sombre.
+    ref.watch(appBrightnessProvider);
     return Scaffold(
       body: Stack(
         children: [
@@ -129,7 +136,7 @@ class _RoundIconButton extends StatelessWidget {
       child: Container(
         width: 40,
         height: 40,
-        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
         child: Icon(icon, size: 20, color: AppColors.textPrimary),
       ),
     );

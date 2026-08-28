@@ -105,8 +105,8 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                         Text(
                           widget.clientName,
                           style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
                         ),

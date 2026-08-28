@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,15 +8,19 @@ import '../providers/clients_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
+final merchantTabIndexProvider = StateProvider<int>((ref) => 0);
+
 class MerchantShell extends ConsumerWidget {
   const MerchantShell({super.key, required this.navigationShell});
   final StatefulNavigationShell navigationShell;
 
   Widget _buildNavItem({
     required int index,
-    required IconData icon,
+    required IconData outlinedIcon,
+    required IconData filledIcon,
     required String label,
     required int currentIndex,
+    required WidgetRef ref,
   }) {
     final bool isActive = currentIndex == index;
     const activeColor = Color(0xFF5B50EC);
@@ -26,6 +29,7 @@ class MerchantShell extends ConsumerWidget {
     return Expanded(
       child: InkWell(
         onTap: () {
+          ref.read(merchantTabIndexProvider.notifier).state = index;
           navigationShell.goBranch(
             index,
             initialLocation: index == currentIndex,
@@ -38,7 +42,7 @@ class MerchantShell extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                icon,
+                isActive ? filledIcon : outlinedIcon,
                 color: isActive ? activeColor : inactiveColor,
                 size: 22,
               ),
@@ -87,33 +91,43 @@ class MerchantShell extends ConsumerWidget {
                     children: [
                       _buildNavItem(
                         index: 0,
-                        icon: LucideIcons.users,
+                        outlinedIcon: Icons.people_outline_rounded,
+                        filledIcon: Icons.people_rounded,
                         label: t.merchantNavClients,
                         currentIndex: currentIndex,
+                        ref: ref,
                       ),
                       _buildNavItem(
                         index: 1,
-                        icon: LucideIcons.chartColumnBig,
+                        outlinedIcon: Icons.bar_chart_rounded,
+                        filledIcon: Icons.insert_chart_rounded,
                         label: t.merchantNavStats,
                         currentIndex: currentIndex,
+                        ref: ref,
                       ),
                       _buildNavItem(
                         index: 2,
-                        icon: LucideIcons.qrCode,
+                        outlinedIcon: Icons.qr_code_scanner_rounded,
+                        filledIcon: Icons.qr_code_2_rounded,
                         label: t.merchantNavValidate,
                         currentIndex: currentIndex,
+                        ref: ref,
                       ),
                       _buildNavItem(
                         index: 3,
-                        icon: LucideIcons.messageSquare,
+                        outlinedIcon: Icons.chat_bubble_outline_rounded,
+                        filledIcon: Icons.chat_bubble_rounded,
                         label: t.merchantNavSms,
                         currentIndex: currentIndex,
+                        ref: ref,
                       ),
                       _buildNavItem(
                         index: 4,
-                        icon: LucideIcons.settings,
+                        outlinedIcon: Icons.settings_outlined,
+                        filledIcon: Icons.settings_rounded,
                         label: t.merchantNavSettings,
                         currentIndex: currentIndex,
+                        ref: ref,
                       ),
                     ],
                   ),

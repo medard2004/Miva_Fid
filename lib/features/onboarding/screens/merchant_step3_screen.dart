@@ -349,7 +349,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.merchant : Colors.white,
+          color: isSelected ? AppColors.merchant : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.merchant : AppColors.border,
@@ -392,7 +392,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -445,7 +445,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

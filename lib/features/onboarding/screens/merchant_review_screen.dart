@@ -326,7 +326,7 @@ class _ReviewSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(Sp.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: Rd.card,
         border: Border.all(color: AppColors.border),
         boxShadow: [

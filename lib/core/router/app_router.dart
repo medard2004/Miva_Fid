@@ -57,6 +57,7 @@ import '../../features/merchant/screens/sms_conversation_screen.dart';
 import '../../features/merchant/screens/sms_campaign_detail_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
 import '../../features/merchant/screens/vitrine_screen.dart';
+import '../../features/merchant/screens/socials_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
 import '../../features/onboarding/screens/merchant_auth_screen.dart';
@@ -662,7 +663,7 @@ GoRouter appRouter(AppRouterRef ref) {
                 GoRoute(
                   path: 'socials',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
+                  pageBuilder: (_, __) => _slide(const SocialsScreen()),
                 ),
                 GoRoute(
                   path: 'change-password',

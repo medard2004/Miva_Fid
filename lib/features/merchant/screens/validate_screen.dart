@@ -314,8 +314,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                         Text(
                           t.merchantValidateTitle,
                           style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
                         ),
