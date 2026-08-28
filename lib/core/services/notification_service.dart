@@ -57,6 +57,8 @@ class NotificationService {
 
   Future<String?> getToken() => _messaging.getToken();
 
+  Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
+
   Future<void> showLocalNotification({
     required String title,
     required String body,

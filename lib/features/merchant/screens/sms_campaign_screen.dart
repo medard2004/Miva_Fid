@@ -5,12 +5,29 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../core/utils/toast_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/sms_campaign_model.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_provider.dart';
+
+/// Libellé affiché pour un `recipient_type` de campagne — partagé entre la
+/// liste ([SmsCampaignScreen]) et le détail (`SmsCampaignDetailScreen`) pour
+/// ne pas diverger.
+String targetLabel(String? recipientType) {
+  switch (recipientType) {
+    case 'all':
+      return 'Tous les clients';
+    case 'inactive':
+      return 'Clients inactifs';
+    case 'near_reward':
+      return 'Proches récompense';
+    case 'manual':
+      return 'Sélection manuelle';
+    default:
+      return 'Tous les clients';
+  }
+}
 
 class SmsCampaignScreen extends ConsumerStatefulWidget {
   const SmsCampaignScreen({super.key});
@@ -20,15 +37,6 @@ class SmsCampaignScreen extends ConsumerStatefulWidget {
 }
 
 class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
-  void _openNewCampaignSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _NewCampaignSheet(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final merchant = ref.watch(merchantNotifierProvider).value;
@@ -85,7 +93,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     ),
                   ),
                   InkWell(
-                    onTap: () => _openNewCampaignSheet(context),
+                    onTap: () => context.push('/merchant/sms/new'),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 36,
@@ -376,20 +384,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
     );
   }
 
-  String _targetLabel(String? recipientType) {
-    switch (recipientType) {
-      case 'all':
-        return 'Tous les clients';
-      case 'inactive':
-        return 'Clients inactifs';
-      case 'near_reward':
-        return 'Proches récompense';
-      case 'manual':
-        return 'Sélection manuelle';
-      default:
-        return 'Tous les clients';
-    }
-  }
+  String _targetLabel(String? recipientType) => targetLabel(recipientType);
 
   Widget _buildKpiBox({required String value, required String label}) {
     return Container(
@@ -424,237 +419,3 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
   }
 }
 
-class _NewCampaignSheet extends ConsumerStatefulWidget {
-  const _NewCampaignSheet();
-
-  @override
-  ConsumerState<_NewCampaignSheet> createState() => _NewCampaignSheetState();
-}
-
-class _NewCampaignSheetState extends ConsumerState<_NewCampaignSheet> {
-  static const _targets = [
-    ('all', 'Tous les clients actifs'),
-    ('inactive', 'Clients inactifs'),
-    ('near_reward', 'Proches d\'une récompense'),
-  ];
-
-  final _msgCtrl = TextEditingController();
-  String _target = 'all';
-  bool _loading = false;
-  final Map<String, int?> _counts = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCounts();
-  }
-
-  @override
-  void dispose() {
-    _msgCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadCounts() async {
-    for (final (type, _) in _targets) {
-      try {
-        final count = await ref
-            .read(smsNotifierProvider.notifier)
-            .countRecipients(type);
-        if (mounted) setState(() => _counts[type] = count);
-      } catch (_) {
-        if (mounted) setState(() => _counts[type] = null);
-      }
-    }
-  }
-
-  Future<void> _send() async {
-    final msg = _msgCtrl.text.trim();
-    if (msg.isEmpty) {
-      ToastService.showError('Veuillez saisir un message');
-      return;
-    }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Envoyer la campagne SMS ?',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          'Ce message sera envoyé à vos clients.',
-          style: TextStyle(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Envoyer',
-              style: TextStyle(
-                color: Color(0xFF5B50EC),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
-    setState(() => _loading = true);
-    try {
-      await ref.read(smsNotifierProvider.notifier).sendCampaign(
-            message: msg,
-            recipientType: _target,
-          );
-      if (mounted) {
-        Navigator.pop(context);
-        ToastService.showSuccess('Campagne SMS envoyée avec succès !');
-      }
-    } catch (e) {
-      if (mounted) ToastService.showError('Erreur: $e');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        top: 20,
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Nouvelle Campagne SMS',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(LucideIcons.x, size: 20),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Destinataires',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            initialValue: _target,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-            ),
-            items: _targets.map((t) {
-              final count = _counts[t.$1];
-              final suffix = count == null ? '' : ' ($count)';
-              return DropdownMenuItem(
-                value: t.$1,
-                child: Text('${t.$2}$suffix', overflow: TextOverflow.ellipsis),
-              );
-            }).toList(),
-            onChanged: (v) => setState(() => _target = v ?? 'all'),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Message SMS',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _msgCtrl,
-            maxLines: 4,
-            maxLength: 160,
-            decoration: InputDecoration(
-              hintText:
-                  'Ex: Promotion spéciale ce week-end ! -15% sur toute l\'addition.',
-              hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _loading ? null : _send,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5B50EC),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-              icon: _loading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(LucideIcons.send, size: 17),
-              label: const Text(
-                'Envoyer la campagne',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

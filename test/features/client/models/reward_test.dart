@@ -55,6 +55,30 @@ void main() {
       final reward = Reward.fromApi(json);
 
       expect(reward.isBirthday, true);
+      expect(reward.isSurprise, false);
+    });
+
+    test('marks a surprise reward via is_surprise, title already masked by the server', () {
+      final json = {
+        'id': 3,
+        'loyalty_card_id': 1,
+        'restaurant_id': 1,
+        'source': 'birthday',
+        'is_surprise': true,
+        'title': '🎁 Récompense surprise',
+        'status': 'available',
+        'redeem_token': 'd4e5f6',
+        'unlocked_at': '2026-08-28T08:00:00.000000Z',
+        'expires_at': null,
+        'used_at': null,
+        'is_expired': false,
+        'restaurant': {'id': 1, 'name': 'QA Test Resto'},
+      };
+
+      final reward = Reward.fromApi(json);
+
+      expect(reward.isSurprise, true);
+      expect(reward.title, '🎁 Récompense surprise');
     });
 
     test('parses a reward after merchant validation (used)', () {

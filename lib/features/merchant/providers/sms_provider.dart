@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../models/campaign_recipient_model.dart';
 import '../../../models/sms_campaign_model.dart';
 import 'merchant_auth_provider.dart';
 import 'merchant_provider.dart';
@@ -29,14 +30,30 @@ class SmsNotifier extends _$SmsNotifier {
         .recipientCount(recipientType);
   }
 
+  /// Liste hydratée des destinataires d'un segment, pour la page
+  /// "Destinataires" du wizard (recherche + tri + cases à cocher).
+  Future<List<CampaignRecipientModel>> fetchRecipients({
+    required String recipientType,
+    String? q,
+    String sort = 'activity',
+  }) {
+    return ref.read(merchantDashboardServiceProvider).recipientsList(
+          recipientType: recipientType,
+          q: q,
+          sort: sort,
+        );
+  }
+
   Future<void> sendCampaign({
     required String message,
     required String recipientType,
+    required List<int> clientIds,
     DateTime? scheduledAt,
   }) async {
     await ref.read(merchantDashboardServiceProvider).sendCampaign(
           message: message,
           recipientType: recipientType,
+          clientIds: clientIds,
           scheduledAt: scheduledAt,
         );
     // L'envoi débite le crédit SMS : recharger la session met le compteur

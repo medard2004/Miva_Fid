@@ -3,6 +3,7 @@ import '../core/api_client.dart';
 import '../storage/token_storage.dart';
 import '../storage/merchant_token_storage.dart';
 import '../services/auth_service.dart';
+import '../services/device_token_service.dart';
 import '../services/merchant_auth_service.dart';
 import '../services/loyalty_program_service.dart';
 import '../services/loyalty_card_service.dart';
@@ -60,6 +61,11 @@ final merchantApiClientProvider = Provider<ApiClient>((ref) {
 final authServiceProvider = Provider<AuthService>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return AuthService(apiClient);
+});
+
+final deviceTokenServiceProvider = Provider<DeviceTokenService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return DeviceTokenService(apiClient);
 });
 
 final merchantAuthServiceProvider = Provider<MerchantAuthService>((ref) {

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../core/api_client.dart';
 import '../core/api_exceptions.dart';
+import '../../../models/campaign_recipient_model.dart';
 
 /// Appels HTTP du dashboard marchand (`/merchant/*`) : clientèle, validation
 /// de tampons, statistiques et campagnes SMS.
@@ -226,15 +227,39 @@ class MerchantDashboardService {
         return (response.data as Map)['recipients_count'] as int? ?? 0;
       });
 
+  /// Liste hydratée (nom/téléphone) des destinataires d'un segment, pour la
+  /// page "Destinataires" du wizard de campagne (cases à cocher).
+  Future<List<CampaignRecipientModel>> recipientsList({
+    required String recipientType,
+    String? q,
+    String sort = 'activity',
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.get(
+          '/merchant/campaigns/recipients-list',
+          queryParameters: {
+            'recipient_type': recipientType,
+            if (q != null && q.isNotEmpty) 'q': q,
+            'sort': sort,
+          },
+        );
+        return ((response.data as Map)['recipients'] as List)
+            .map((e) =>
+                CampaignRecipientModel.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+      });
+
   Future<void> sendCampaign({
     required String message,
     required String recipientType,
+    required List<int> clientIds,
     DateTime? scheduledAt,
   }) =>
       _guard(() async {
         await _apiClient.dio.post('/merchant/campaigns', data: {
           'message': message,
           'recipient_type': recipientType,
+          'client_ids': clientIds,
           if (scheduledAt != null)
             'scheduled_at': scheduledAt.toIso8601String(),
         });

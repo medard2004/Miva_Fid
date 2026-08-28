@@ -31,7 +31,7 @@ class MerchantRealtimeConnection {
     if (next.isAuthenticated && restaurantId != null) {
       RealtimeService.instance.connect(
         channelName: 'merchant.$restaurantId',
-        apiClient: _ref.read(apiClientProvider),
+        apiClient: _ref.read(merchantApiClientProvider),
       );
     } else if (previous?.isAuthenticated == true && !next.isAuthenticated) {
       RealtimeService.instance.disconnect();

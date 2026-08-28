@@ -24,6 +24,7 @@ class _BirthdayRewardScreenState extends ConsumerState<BirthdayRewardScreen> {
   late final TextEditingController _descriptionCtrl;
   late final TextEditingController _validityCtrl;
   bool _enabled = false;
+  bool _surprise = false;
 
   bool _isSaving = false;
   bool _initialized = false;
@@ -61,6 +62,7 @@ class _BirthdayRewardScreenState extends ConsumerState<BirthdayRewardScreen> {
             : _descriptionCtrl.text.trim(),
         if (_validityCtrl.text.trim().isNotEmpty)
           'birthday_reward_validity_days': int.tryParse(_validityCtrl.text.trim()),
+        'birthday_reward_surprise': _surprise,
       });
       if (mounted) ToastService.showSuccess('Récompense anniversaire enregistrée !');
     } catch (_) {
@@ -87,6 +89,7 @@ class _BirthdayRewardScreenState extends ConsumerState<BirthdayRewardScreen> {
       _titleCtrl.text = asText(birthday['title']);
       _descriptionCtrl.text = asText(birthday['description']);
       _validityCtrl.text = asText(birthday['validity_days']);
+      _surprise = birthday['surprise'] == true;
       _initialized = true;
     }
 
@@ -156,10 +159,11 @@ class _BirthdayRewardScreenState extends ConsumerState<BirthdayRewardScreen> {
                           const SizedBox(width: 12),
                           const Expanded(
                             child: Text(
-                              "Le jour de l'anniversaire d'un client, la "
-                              "récompense ci-dessous lui est offerte "
-                              "automatiquement — sur chaque carte qu'il a "
-                              "chez vous, quel que soit son niveau.",
+                              "Dans les 30 jours avant son anniversaire, la "
+                              "récompense ci-dessous apparaît automatiquement "
+                              "dans les récompenses du client — sur chaque "
+                              "carte qu'il a chez vous, quel que soit son "
+                              "niveau.",
                               style: TextStyle(
                                 fontSize: 13,
                                 height: 1.5,
@@ -225,6 +229,44 @@ class _BirthdayRewardScreenState extends ConsumerState<BirthdayRewardScreen> {
                               icon: LucideIcons.calendarClock,
                               hint: 'Ex : 7 (vide = pas d\'expiration)',
                               keyboardType: TextInputType.number,
+                            ),
+                            const SizedBox(height: 18),
+                            const Divider(height: 1, color: Color(0xFFEDF0F7)),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Récompense surprise 🎁',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                      SizedBox(height: 3),
+                                      Text(
+                                        'Le titre reste caché au client jusqu\'à ce '
+                                        'qu\'il utilise la récompense — vous, vous '
+                                        'le voyez toujours.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          height: 1.4,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Switch(
+                                  value: _surprise,
+                                  onChanged: (v) => setState(() => _surprise = v),
+                                  activeThumbColor: const Color(0xFF5B50EC),
+                                ),
+                              ],
                             ),
                           ],
                         ],

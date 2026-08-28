@@ -5,6 +5,7 @@ import '../../../core/api/providers/api_providers.dart';
 import '../../../core/api/storage/local_preferences.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 import 'app_providers.dart';
+import 'device_token_provider.dart';
 import 'wallet_provider.dart';
 
 /// Résultat de l'amorçage, lu par l'écran de démarrage pour choisir sa
@@ -34,6 +35,10 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   final hasSeenOnboarding = await prefs.hasSeenOnboarding();
   ref.read(hasSeenOnboardingProvider.notifier).state = hasSeenOnboarding;
   final lastRole = await prefs.getLastRole();
+
+  // Attache le listener avant toute restauration de session, pour capter
+  // aussi bien un login frais qu'une session déjà valide au démarrage.
+  ref.read(deviceTokenProvider);
 
   final authRepository = ref.read(authRepositoryProvider);
 
