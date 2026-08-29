@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/api/repositories/auth_repository.dart';
 import 'package:miva_fid/core/services/realtime_service.dart';
-import 'package:miva_fid/features/client/data/mock_data.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/models/app_notification.dart';
 import 'package:miva_fid/features/client/models/user.dart';
@@ -90,67 +89,46 @@ final rewardsProvider = StateNotifierProvider<RewardsNotifier, List<Reward>>(
 // Notifications
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Le reste du flux notifications est mock (stamp/points/cashback/vip/
-/// referral/system) — aucune infra serveur n'existe encore pour eux. Seule
-/// la partie récompenses est réelle, dérivée de [rewardsProvider] : pas de
-/// nouvelle table de notifications côté backend, on synthétise ces entrées
-/// depuis la liste de récompenses déjà chargée.
+/// Chargé depuis `GET /notifications` — les récompenses débloquées arrivent
+/// maintenant par ce même flux serveur (voir `NotificationDispatcher::send`
+/// côté backend, appelé au vrai déblocage), plus besoin de les synthétiser
+/// depuis [rewardsProvider].
 class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
-  NotificationsNotifier(this._ref) : super(MockData.notifications) {
-    _ref.listen<List<Reward>>(
-      rewardsProvider,
-      (previous, next) => _syncRewardNotifications(next),
-      fireImmediately: true,
-    );
+  NotificationsNotifier(this._ref) : super(const []) {
+    _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
   }
 
   final Ref _ref;
 
-  void _syncRewardNotifications(List<Reward> rewards) {
-    final derived = <AppNotification>[];
-    for (final reward in rewards) {
-      if (reward.status == RewardStatus.available && !reward.isExpired) {
-        derived.add(AppNotification(
-          id: 'reward-unlocked-${reward.id}',
-          restaurantName: reward.restaurantName,
-          kind: NotificationKind.reward,
-          message: 'Récompense débloquée : ${reward.title}',
-          timestamp: reward.unlockedAt ?? DateTime.now(),
-        ));
-      } else if (reward.status == RewardStatus.used) {
-        derived.add(AppNotification(
-          id: 'reward-used-${reward.id}',
-          restaurantName: reward.restaurantName,
-          kind: NotificationKind.reward,
-          message: 'Récompense utilisée : ${reward.title}',
-          timestamp: reward.usedAt ?? reward.unlockedAt ?? DateTime.now(),
-        ));
-      }
+  void _onAuthChanged(AuthState? previous, AuthState next) {
+    if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
+      load();
+    } else if (previous?.isAuthenticated == true && !next.isAuthenticated) {
+      state = const [];
     }
+  }
 
-    // Préserve l'état lu des entrées déjà connues (dérivées ou mock).
-    final readById = {for (final n in state) n.id: n.isRead};
-    final others = state.where((n) => !n.id.startsWith('reward-')).toList();
-    state = [
-      ...others,
-      ...derived.map((n) => n.copyWith(isRead: readById[n.id] ?? false)),
-    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  Future<void> load() async {
+    state = await _ref.read(notificationRepositoryProvider).list();
   }
 
   int get unreadCount => state.where((n) => !n.isRead).length;
 
-  void markAllRead() {
+  Future<void> markAllRead() async {
+    await _ref.read(notificationRepositoryProvider).markAllRead();
     state = [for (final n in state) n.copyWith(isRead: true)];
   }
 
-  void markRead(String id) {
+  Future<void> markRead(String id) async {
+    await _ref.read(notificationRepositoryProvider).markRead(id);
     state = [
       for (final n in state)
         if (n.id == id) n.copyWith(isRead: true) else n,
     ];
   }
 
-  void remove(String id) {
+  Future<void> remove(String id) async {
+    await _ref.read(notificationRepositoryProvider).delete(id);
     state = state.where((n) => n.id != id).toList();
   }
 }

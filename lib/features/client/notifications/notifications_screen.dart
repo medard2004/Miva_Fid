@@ -4,7 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
-import 'package:miva_fid/features/client/models/app_notification.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
@@ -13,21 +12,19 @@ import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
-  IconData _iconFor(NotificationKind k) {
-    switch (k) {
-      case NotificationKind.reward:
+  IconData _iconFor(String type) {
+    switch (type) {
+      case 'reward_unlocked':
         return LucideIcons.gift;
-      case NotificationKind.stamp:
-        return LucideIcons.circle;
-      case NotificationKind.points:
-        return LucideIcons.star;
-      case NotificationKind.cashback:
-        return LucideIcons.piggyBank;
-      case NotificationKind.vip:
-        return LucideIcons.gem;
-      case NotificationKind.referral:
+      case 'referral_pending':
+      case 'referral_validated':
         return LucideIcons.users;
-      case NotificationKind.system:
+      case 'birthday':
+        return LucideIcons.gift;
+      case 'campaign':
+      case 'admin_broadcast':
+        return LucideIcons.megaphone;
+      default:
         return LucideIcons.info;
     }
   }
@@ -90,10 +87,10 @@ class NotificationsScreen extends ConsumerWidget {
                           color: AppColors.surfaceMuted,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(_iconFor(n.kind),
+                        child: Icon(_iconFor(n.type),
                             color: AppColors.primary, size: 18),
                       ),
-                      title: Text(n.restaurantName,
+                      title: Text(n.title,
                           style: AppTextStyles.bodySmall(
                               color: AppColors.inkMuted(opacity: 0.5))),
                       subtitle: Text(

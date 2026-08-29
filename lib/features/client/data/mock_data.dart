@@ -1,6 +1,5 @@
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
-import 'package:miva_fid/features/client/models/app_notification.dart';
 import 'package:miva_fid/features/client/models/user.dart';
 
 class MockData {
@@ -93,29 +92,4 @@ class MockData {
     return null;
   }
 
-  static List<AppNotification> get notifications => [
-        AppNotification(
-          id: 'n1',
-          restaurantName: 'Bistrot de Quartier',
-          kind: NotificationKind.stamp,
-          message: 'Nouveau sceau ajouté à votre carte',
-          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        ),
-        AppNotification(
-          id: 'n3',
-          restaurantName: 'Mac Bouffe',
-          kind: NotificationKind.vip,
-          message: 'Plus que 3 visites avant le statut Platinum',
-          timestamp: DateTime.now().subtract(const Duration(days: 1)),
-          isRead: true,
-        ),
-        AppNotification(
-          id: 'n4',
-          restaurantName: 'Digital Vision',
-          kind: NotificationKind.referral,
-          message: 'Un ami a rejoint grâce à votre code',
-          timestamp: DateTime.now().subtract(const Duration(days: 3)),
-          isRead: true,
-        ),
-      ];
 }
