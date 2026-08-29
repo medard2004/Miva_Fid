@@ -60,35 +60,24 @@
   "editProfileSaveSuccess": "Profile updated successfully!",
 
   "referralTitle": "Referral",
-  "referralSubtitle": "Recommend your favorite restaurants and earn points.",
+  "referralSubtitle": "Share your QR: your reward arrives as soon as your referral's first visit.",
   "referralEmptyTitle": "No card to refer",
-  "referralEmptyMessage": "Join at least one establishment to recommend it to your friends.",
-  "referralPointsLabel": "Referral points",
-  "referralPointsEarned": "{count} points earned",
-  "@referralPointsEarned": {
-    "placeholders": { "count": { "type": "int" } }
+  "referralEmptyMessage": "Join at least one establishment to get your referral QR.",
+  "referralSelectEstablishment": "Establishment",
+  "referralYourCode": "Your code",
+  "referralShareButton": "Share my referral",
+  "referralShareMessage": "Join {restaurant} with my referral code {code} on MivaFid!",
+  "@referralShareMessage": {
+    "placeholders": { "restaurant": { "type": "String" }, "code": { "type": "String" } }
   },
-  "referralSharesToNext": "{count} shares to go",
-  "@referralSharesToNext": {
-    "placeholders": { "count": { "type": "int" } }
+  "referralPendingTitle": "Pending",
+  "referralPendingEmpty": "No pending referrals.",
+  "referralValidatedTitle": "Validated",
+  "referralValidatedEmpty": "No validated referrals yet.",
+  "referralRewardObtained": "Reward earned: {title}",
+  "@referralRewardObtained": {
+    "placeholders": { "title": { "type": "String" } }
   },
-  "referralChoosePartner": "Choose partner",
-  "referralRecipientHint": "Phone or name",
-  "referralSendButton": "Send invitation",
-  "referralSendButtonWithCount": "Send invitation ({count})",
-  "@referralSendButtonWithCount": {
-    "placeholders": { "count": { "type": "int" } }
-  },
-  "referralDuplicateRecipient": "This recipient is already in your list.",
-  "referralNoRecipient": "Please add at least one recipient before sending.",
-  "referralSentSuccess": "{count} invitation(s) sent!",
-  "@referralSentSuccess": {
-    "placeholders": { "count": { "type": "int" } }
-  },
-  "referralHistoryTitle": "Share history",
-  "referralHistoryEmpty": "No shares yet.",
-  "referralMessageLabel": "Your message",
-  "referralRecipientsLabel": "Recipients",
 
   "notificationsTitle": "Notifications",
   "notificationsMarkAllRead": "Mark all read",
@@ -394,7 +383,6 @@
   "errNameInvalid": "This name isn't valid.",
   "errBirthdateInvalid": "This date of birth isn't valid.",
   "errBirthdateRequired": "Please enter your date of birth.",
-  "errReferralCodeInvalid": "This referral code doesn't exist.",
   "errOtpFieldInvalid": "This code isn't valid.",
   "errFieldInvalid": "This information isn't valid.",
 

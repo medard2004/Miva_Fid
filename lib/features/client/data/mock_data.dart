@@ -13,7 +13,6 @@ class MockData {
         birthDate: DateTime(1996, 4, 18),
         joinDate: DateTime(2024, 3, 1),
         email: 'amina@example.com',
-        referralCode: 'AMINA-2839',
         friendsInvited: 3,
         friendsJoined: 1,
         city: 'Lomé',

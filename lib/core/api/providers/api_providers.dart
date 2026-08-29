@@ -9,10 +9,12 @@ import '../services/loyalty_program_service.dart';
 import '../services/loyalty_card_service.dart';
 import '../services/loyalty_reward_service.dart';
 import '../services/merchant_dashboard_service.dart';
+import '../services/referral_service.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/merchant_auth_repository.dart';
 import '../repositories/loyalty_card_repository.dart';
 import '../repositories/loyalty_reward_repository.dart';
+import '../repositories/referral_repository.dart';
 
 /// Compteur incrémenté chaque fois que le serveur rejette le token (401).
 ///
@@ -115,4 +117,14 @@ final loyaltyRewardServiceProvider = Provider<LoyaltyRewardService>((ref) {
 final loyaltyRewardRepositoryProvider = Provider<LoyaltyRewardRepository>((ref) {
   final service = ref.watch(loyaltyRewardServiceProvider);
   return LoyaltyRewardRepository(service);
+});
+
+final referralServiceProvider = Provider<ReferralService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ReferralService(apiClient);
+});
+
+final referralRepositoryProvider = Provider<ReferralRepository>((ref) {
+  final service = ref.watch(referralServiceProvider);
+  return ReferralRepository(service);
 });

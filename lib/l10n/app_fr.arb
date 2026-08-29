@@ -60,35 +60,24 @@
   "editProfileSaveSuccess": "Profil mis à jour avec succès !",
 
   "referralTitle": "Parrainage",
-  "referralSubtitle": "Recommandez vos restaurants favoris et cumulez des points.",
+  "referralSubtitle": "Partagez votre QR : votre récompense arrive dès la première visite de votre filleul.",
   "referralEmptyTitle": "Aucune carte à parrainer",
-  "referralEmptyMessage": "Rejoignez au moins un établissement pour pouvoir le recommander à vos proches.",
-  "referralPointsLabel": "Points de parrainage",
-  "referralPointsEarned": "{count} points cumulés",
-  "@referralPointsEarned": {
-    "placeholders": { "count": { "type": "int" } }
+  "referralEmptyMessage": "Rejoignez au moins un établissement pour obtenir votre QR de parrainage.",
+  "referralSelectEstablishment": "Établissement",
+  "referralYourCode": "Votre identifiant",
+  "referralShareButton": "Partager mon parrainage",
+  "referralShareMessage": "Rejoins {restaurant} avec mon code de parrainage {code} sur MivaFid !",
+  "@referralShareMessage": {
+    "placeholders": { "restaurant": { "type": "String" }, "code": { "type": "String" } }
   },
-  "referralSharesToNext": "Encore {count} partages",
-  "@referralSharesToNext": {
-    "placeholders": { "count": { "type": "int" } }
+  "referralPendingTitle": "En attente",
+  "referralPendingEmpty": "Aucun parrainage en attente.",
+  "referralValidatedTitle": "Validés",
+  "referralValidatedEmpty": "Aucun parrainage validé pour le moment.",
+  "referralRewardObtained": "Récompense obtenue : {title}",
+  "@referralRewardObtained": {
+    "placeholders": { "title": { "type": "String" } }
   },
-  "referralChoosePartner": "Choisir le partenaire",
-  "referralRecipientHint": "Téléphone ou nom",
-  "referralSendButton": "Envoyer l'invitation",
-  "referralSendButtonWithCount": "Envoyer l'invitation ({count})",
-  "@referralSendButtonWithCount": {
-    "placeholders": { "count": { "type": "int" } }
-  },
-  "referralDuplicateRecipient": "Ce destinataire est déjà dans votre liste d'envoi.",
-  "referralNoRecipient": "Veuillez ajouter au moins un destinataire avant d'envoyer.",
-  "referralSentSuccess": "{count} invitation(s) envoyée(s) !",
-  "@referralSentSuccess": {
-    "placeholders": { "count": { "type": "int" } }
-  },
-  "referralHistoryTitle": "Historique des partages",
-  "referralHistoryEmpty": "Aucun partage effectué pour le moment.",
-  "referralMessageLabel": "Votre message",
-  "referralRecipientsLabel": "Destinataires",
 
   "notificationsTitle": "Notifications",
   "notificationsMarkAllRead": "Tout marquer lu",
@@ -394,7 +383,6 @@
   "errNameInvalid": "Ce nom n'est pas valide.",
   "errBirthdateInvalid": "Cette date de naissance n'est pas valide.",
   "errBirthdateRequired": "Veuillez indiquer votre date de naissance.",
-  "errReferralCodeInvalid": "Ce code de parrainage n'existe pas.",
   "errOtpFieldInvalid": "Ce code n'est pas valide.",
   "errFieldInvalid": "Cette information n'est pas valide.",
 

@@ -170,66 +170,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get referralSubtitle =>
-      'Recommandez vos restaurants favoris et cumulez des points.';
+      'Partagez votre QR : votre récompense arrive dès la première visite de votre filleul.';
 
   @override
   String get referralEmptyTitle => 'Aucune carte à parrainer';
 
   @override
   String get referralEmptyMessage =>
-      'Rejoignez au moins un établissement pour pouvoir le recommander à vos proches.';
+      'Rejoignez au moins un établissement pour obtenir votre QR de parrainage.';
 
   @override
-  String get referralPointsLabel => 'Points de parrainage';
+  String get referralSelectEstablishment => 'Établissement';
 
   @override
-  String referralPointsEarned(int count) {
-    return '$count points cumulés';
+  String get referralYourCode => 'Votre identifiant';
+
+  @override
+  String get referralShareButton => 'Partager mon parrainage';
+
+  @override
+  String referralShareMessage(String restaurant, String code) {
+    return 'Rejoins $restaurant avec mon code de parrainage $code sur MivaFid !';
   }
 
   @override
-  String referralSharesToNext(int count) {
-    return 'Encore $count partages';
+  String get referralPendingTitle => 'En attente';
+
+  @override
+  String get referralPendingEmpty => 'Aucun parrainage en attente.';
+
+  @override
+  String get referralValidatedTitle => 'Validés';
+
+  @override
+  String get referralValidatedEmpty =>
+      'Aucun parrainage validé pour le moment.';
+
+  @override
+  String referralRewardObtained(String title) {
+    return 'Récompense obtenue : $title';
   }
-
-  @override
-  String get referralChoosePartner => 'Choisir le partenaire';
-
-  @override
-  String get referralRecipientHint => 'Téléphone ou nom';
-
-  @override
-  String get referralSendButton => 'Envoyer l\'invitation';
-
-  @override
-  String referralSendButtonWithCount(int count) {
-    return 'Envoyer l\'invitation ($count)';
-  }
-
-  @override
-  String get referralDuplicateRecipient =>
-      'Ce destinataire est déjà dans votre liste d\'envoi.';
-
-  @override
-  String get referralNoRecipient =>
-      'Veuillez ajouter au moins un destinataire avant d\'envoyer.';
-
-  @override
-  String referralSentSuccess(int count) {
-    return '$count invitation(s) envoyée(s) !';
-  }
-
-  @override
-  String get referralHistoryTitle => 'Historique des partages';
-
-  @override
-  String get referralHistoryEmpty => 'Aucun partage effectué pour le moment.';
-
-  @override
-  String get referralMessageLabel => 'Votre message';
-
-  @override
-  String get referralRecipientsLabel => 'Destinataires';
 
   @override
   String get notificationsTitle => 'Notifications';
@@ -1041,9 +1021,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errBirthdateRequired =>
       'Veuillez indiquer votre date de naissance.';
-
-  @override
-  String get errReferralCodeInvalid => 'Ce code de parrainage n\'existe pas.';
 
   @override
   String get errOtpFieldInvalid => 'Ce code n\'est pas valide.';

@@ -157,8 +157,6 @@ class ErrorMessages {
 
   static String get birthdateRequired => _t?.errBirthdateRequired ?? 'Veuillez indiquer votre date de naissance.';
 
-  static String get referralCodeInvalid => _t?.errReferralCodeInvalid ?? 'Ce code de parrainage n\'existe pas.';
-
   static String get otpFieldInvalid => _t?.errOtpFieldInvalid ?? 'Ce code n\'est pas valide.';
 
   static String get fieldInvalid => _t?.errFieldInvalid ?? 'Cette information n\'est pas valide.';

@@ -167,66 +167,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get referralSubtitle =>
-      'Recommend your favorite restaurants and earn points.';
+      'Share your QR: your reward arrives as soon as your referral\'s first visit.';
 
   @override
   String get referralEmptyTitle => 'No card to refer';
 
   @override
   String get referralEmptyMessage =>
-      'Join at least one establishment to recommend it to your friends.';
+      'Join at least one establishment to get your referral QR.';
 
   @override
-  String get referralPointsLabel => 'Referral points';
+  String get referralSelectEstablishment => 'Establishment';
 
   @override
-  String referralPointsEarned(int count) {
-    return '$count points earned';
+  String get referralYourCode => 'Your code';
+
+  @override
+  String get referralShareButton => 'Share my referral';
+
+  @override
+  String referralShareMessage(String restaurant, String code) {
+    return 'Join $restaurant with my referral code $code on MivaFid!';
   }
 
   @override
-  String referralSharesToNext(int count) {
-    return '$count shares to go';
+  String get referralPendingTitle => 'Pending';
+
+  @override
+  String get referralPendingEmpty => 'No pending referrals.';
+
+  @override
+  String get referralValidatedTitle => 'Validated';
+
+  @override
+  String get referralValidatedEmpty => 'No validated referrals yet.';
+
+  @override
+  String referralRewardObtained(String title) {
+    return 'Reward earned: $title';
   }
-
-  @override
-  String get referralChoosePartner => 'Choose partner';
-
-  @override
-  String get referralRecipientHint => 'Phone or name';
-
-  @override
-  String get referralSendButton => 'Send invitation';
-
-  @override
-  String referralSendButtonWithCount(int count) {
-    return 'Send invitation ($count)';
-  }
-
-  @override
-  String get referralDuplicateRecipient =>
-      'This recipient is already in your list.';
-
-  @override
-  String get referralNoRecipient =>
-      'Please add at least one recipient before sending.';
-
-  @override
-  String referralSentSuccess(int count) {
-    return '$count invitation(s) sent!';
-  }
-
-  @override
-  String get referralHistoryTitle => 'Share history';
-
-  @override
-  String get referralHistoryEmpty => 'No shares yet.';
-
-  @override
-  String get referralMessageLabel => 'Your message';
-
-  @override
-  String get referralRecipientsLabel => 'Recipients';
 
   @override
   String get notificationsTitle => 'Notifications';
@@ -1013,9 +992,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errBirthdateRequired => 'Please enter your date of birth.';
-
-  @override
-  String get errReferralCodeInvalid => 'This referral code doesn\'t exist.';
 
   @override
   String get errOtpFieldInvalid => 'This code isn\'t valid.';

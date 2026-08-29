@@ -36,7 +36,6 @@ AppUser _sampleUser() => AppUser(
       fullName: 'Ada Lovelace',
       phoneNumber: '+22890000000',
       joinDate: DateTime(2024, 1, 1),
-      referralCode: 'AURA-1',
     );
 
 void main() {

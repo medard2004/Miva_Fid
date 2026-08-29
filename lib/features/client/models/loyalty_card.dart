@@ -127,6 +127,15 @@ class LoyaltyCard {
   final String fallbackId; // ex. "SUN-28392"
   final String welcomeOffer;
 
+  /// Identifiant de parrainage court, partageable, propre à cette carte
+  /// (donc à cet établissement) — voir `referral_screen.dart`.
+  final String? referralCode;
+
+  /// Jeton UUID encodé dans le QR de parrainage (préfixe
+  /// [referralQrPrefix]) — distinct de `qr_token` (scanné par le marchand
+  /// pour créditer tampons/points, jamais pour parrainer).
+  final String? referralQrToken;
+
   /// Date d'adhésion à la carte — sert de repère à l'entrée "inscription"
   /// de l'historique (`_HistoryAccordionBar`). `null` seulement si la carte
   /// vient d'un flux qui n'a pas encore cette donnée.
@@ -160,6 +169,8 @@ class LoyaltyCard {
     required this.fallbackId,
     this.welcomeOffer = '',
     this.createdAt,
+    this.referralCode,
+    this.referralQrToken,
   });
 
   /// Construit une carte réelle depuis `POST/GET /loyalty-cards/*`
@@ -210,6 +221,8 @@ class LoyaltyCard {
           : null,
       fallbackId: json['card_code'] as String? ?? '',
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      referralCode: json['referral_code'] as String?,
+      referralQrToken: json['referral_qr_token'] as String?,
     );
   }
 
@@ -253,6 +266,8 @@ class LoyaltyCard {
       fallbackId: fallbackId,
       welcomeOffer: welcomeOffer,
       createdAt: createdAt,
+      referralCode: referralCode,
+      referralQrToken: referralQrToken,
     );
   }
 
