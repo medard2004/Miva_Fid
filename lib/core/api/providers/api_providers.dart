@@ -10,11 +10,13 @@ import '../services/loyalty_card_service.dart';
 import '../services/loyalty_reward_service.dart';
 import '../services/merchant_dashboard_service.dart';
 import '../services/referral_service.dart';
+import '../services/notification_service.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/merchant_auth_repository.dart';
 import '../repositories/loyalty_card_repository.dart';
 import '../repositories/loyalty_reward_repository.dart';
 import '../repositories/referral_repository.dart';
+import '../repositories/notification_repository.dart';
 
 /// Compteur incrémenté chaque fois que le serveur rejette le token (401).
 ///
@@ -127,4 +129,25 @@ final referralServiceProvider = Provider<ReferralService>((ref) {
 final referralRepositoryProvider = Provider<ReferralRepository>((ref) {
   final service = ref.watch(referralServiceProvider);
   return ReferralRepository(service);
+});
+
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return NotificationService(apiClient);
+});
+
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  final service = ref.watch(notificationServiceProvider);
+  return NotificationRepository(service);
+});
+
+final merchantNotificationServiceProvider = Provider<NotificationService>((ref) {
+  final apiClient = ref.watch(merchantApiClientProvider);
+  return NotificationService(apiClient, basePath: '/merchant/notifications');
+});
+
+final merchantNotificationRepositoryProvider =
+    Provider<NotificationRepository>((ref) {
+  final service = ref.watch(merchantNotificationServiceProvider);
+  return NotificationRepository(service);
 });
