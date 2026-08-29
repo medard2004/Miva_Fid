@@ -32,14 +32,27 @@ class MivaFidApp extends ConsumerWidget {
     // Un 401 remonté par l'intercepteur signale ici que le token stocké n'est
     // plus accepté. On vide la session : la garde du routeur, abonnée à
     // `authProvider`, renvoie alors vers l'écran de connexion.
+    //
+    // Plusieurs appels réseau peuvent être en vol au moment où la session
+    // expire (écrans qui chargent chacun leurs propres données) : chacun
+    // reçoit son propre 401 et incrémente ce compteur séparément. Sans le
+    // garde `isAuthenticated` ci-dessous, chaque incrément rejouait
+    // `clearSession()` + un toast — plusieurs "session expirée" pour un seul
+    // événement réel. Une fois la session vidée par le premier 401,
+    // `isAuthenticated` passe à `false` et les 401 suivants du même sursaut
+    // sont ignorés silencieusement.
     ref.listen<int>(sessionExpiredProvider, (previous, next) {
-      if (previous != null && next > previous) {
+      if (previous != null &&
+          next > previous &&
+          ref.read(authProvider).isAuthenticated) {
         ref.read(authProvider.notifier).clearSession();
         ToastService.showError(ErrorMessages.sessionExpired);
       }
     });
     ref.listen<int>(merchantSessionExpiredProvider, (previous, next) {
-      if (previous != null && next > previous) {
+      if (previous != null &&
+          next > previous &&
+          ref.read(merchantAuthProvider).isAuthenticated) {
         ref.read(merchantAuthProvider.notifier).clearSession();
         ToastService.showError(ErrorMessages.sessionExpired);
       }
