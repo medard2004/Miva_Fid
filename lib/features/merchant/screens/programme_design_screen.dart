@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/toast_service.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
 import '../../onboarding/widgets/color_palette_picker.dart';
@@ -29,35 +29,48 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
   bool _saving = false;
   bool _uploadingLogo = false;
   bool _initialized = false;
-  bool _showPreview = true;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initFromMerchant();
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initFromMerchant();
   }
 
   void _initFromMerchant() {
+    if (_initialized) return;
+
     final m = ref.read(merchantNotifierProvider).value;
-    if (m != null) {
-      String hex = m.colorPrimary.replaceAll('#', '');
-      if (hex.length == 6) hex = 'FF$hex';
-      final color = Color(int.parse(hex, radix: 16));
-      
-      final notifier = ref.read(onboardingNotifierProvider.notifier);
-      notifier.setColorPrimary(color);
-      notifier.setCardDecorationPattern(m.cardDecorationPattern);
-      notifier.setStampDesignType(m.stampDesignType);
-      notifier.setStampIcon(m.stampIcon);
-      notifier.setStampEmoji(m.stampEmoji);
-      notifier.setLogoUrl(m.logoUrl ?? '');
-      
-      setState(() {
-        _initialized = true;
-      });
+    final restaurant = ref.read(merchantAuthProvider).restaurant;
+    final ob = ref.read(onboardingNotifierProvider);
+
+    final cfg = restaurant?.loyaltyConfig ?? {};
+
+    final colorHex = m?.colorPrimary ?? (cfg['color_primary'] as String?) ?? '#5B50EC';
+    String hex = colorHex.replaceAll('#', '');
+    if (hex.length == 6) hex = 'FF$hex';
+    final color = Color(int.tryParse(hex, radix: 16) ?? 0xFF5B50EC);
+
+    final notifier = ref.read(onboardingNotifierProvider.notifier);
+    final commerceName = m?.name ?? restaurant?.name ?? (ob.commerceName.isNotEmpty ? ob.commerceName : 'Votre Commerce');
+    final commerceType = m?.category ?? restaurant?.category ?? (ob.commerceType.isNotEmpty ? ob.commerceType : 'Restaurant');
+
+    notifier.setCommerceName(commerceName);
+    notifier.setCommerceType(commerceType);
+    notifier.setColorPrimary(color);
+    notifier.setCardDecorationPattern(m?.cardDecorationPattern ?? (cfg['card_decoration_pattern'] as String?) ?? ob.cardDecorationPattern);
+    notifier.setStampDesignType(m?.stampDesignType ?? (cfg['stamp_design_type'] as String?) ?? ob.stampDesignType);
+    notifier.setStampIcon(m?.stampIcon ?? (cfg['stamp_icon'] as String?) ?? ob.stampIcon);
+    notifier.setStampEmoji(m?.stampEmoji ?? (cfg['stamp_emoji'] as String?) ?? ob.stampEmoji);
+    notifier.setLogoUrl(m?.logoUrl ?? restaurant?.logoUrl ?? ob.logoUrl ?? '');
+    notifier.setLoyaltyMode(m?.loyaltyMode ?? restaurant?.loyaltyType ?? ob.loyaltyMode);
+    notifier.setStampsRequired(m?.stampsRequired ?? (cfg['goal'] as int?) ?? ob.stampsRequired);
+
+    final reward = m?.rewardDescription ?? (cfg['reward_description'] as String?) ?? ob.rewardDescription;
+    if (reward.isNotEmpty) {
+      notifier.setRewardDescription(reward);
     }
+
+    _initialized = true;
   }
 
   Future<void> _pickLogo() async {
@@ -111,14 +124,11 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
         'logo_url': state.logoUrl,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.merchantProgrammeDesignSaveSuccess)));
+        ToastService.showSuccess(t.merchantProgrammeDesignSaveSuccess);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.merchantProgrammeDesignSaveError(e.toString()))),
-        );
+        ToastService.showError(t.merchantProgrammeDesignSaveError(e.toString()));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -134,21 +144,21 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.merchant : AppColors.surface,
+          color: isSelected ? const Color(0xFF5B50EC) : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.merchant : AppColors.border,
+            color: isSelected ? const Color(0xFF5B50EC) : AppColors.border,
             width: 1.5,
           ),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
-          style: AppTextStyles.bodyMd().copyWith(
+          style: TextStyle(
             color: isSelected ? Colors.white : AppColors.textPrimary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 13,
           ),
         ),
@@ -207,12 +217,12 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.merchant : AppColors.merchantTint,
+                      color: isSelected ? const Color(0xFF5B50EC) : AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       icon,
-                      color: isSelected ? Colors.white : AppColors.merchant,
+                      color: isSelected ? Colors.white : const Color(0xFF5B50EC),
                       size: 24,
                     ),
                   ),
@@ -261,9 +271,9 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                     height: 52,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.merchantTint : Colors.transparent,
+                      color: isSelected ? const Color(0xFF5B50EC).withValues(alpha: 0.15) : Colors.transparent,
                       border: Border.all(
-                        color: isSelected ? AppColors.merchant : AppColors.border,
+                        color: isSelected ? const Color(0xFF5B50EC) : AppColors.border,
                         width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(14),
@@ -287,157 +297,196 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     final state = ref.watch(onboardingNotifierProvider);
     final notifier = ref.read(onboardingNotifierProvider.notifier);
     final merchant = ref.watch(merchantNotifierProvider).value;
+    final restaurant = ref.watch(merchantAuthProvider).restaurant;
 
-    if (!_initialized || merchant == null) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(title: Text(t.merchantProgrammeDesignLoadingTitle)),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
+    final name = merchant?.name ?? restaurant?.name ?? 'VC';
+    final String displayInitials = merchant?.initials ??
+        (name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'VC');
+    final String currentLogoUrl = state.logoUrl?.isNotEmpty == true
+        ? state.logoUrl!
+        : (merchant?.logoUrl ?? restaurant?.logoUrl ?? '');
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(t.merchantProgrammeAppearanceTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        toolbarHeight: 48,
+        leading: IconButton(
+          icon: Icon(LucideIcons.chevronLeft, color: AppColors.textPrimary, size: 22),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          t.merchantMoreCustomizeCard,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(LucideIcons.bell, size: 18, color: AppColors.textPrimary),
+                Positioned(
+                  top: -1,
+                  right: -1,
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF59E0B),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onPressed: () => context.push('/merchant/more/notifications'),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(Sp.md),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(t.merchantVitrinePreviewButton, style: AppTextStyles.labelBold()),
-                        Switch(
-                          value: _showPreview,
-                          onChanged: (val) => setState(() => _showPreview = val),
-                          activeThumbColor: AppColors.merchant,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: Sp.xs),
-                    if (_showPreview) ...[
-                      const LoyaltyCardPreview(previewStamps: 6),
-                      const SizedBox(height: Sp.xl),
-                    ],
+                    // ── 1. CARTE DE FIDÉLITÉ EN DIRECT ────────────────────
+                    const LoyaltyCardPreview(previewStamps: 4),
+                    const SizedBox(height: 20),
 
-                    // Logo Section
-                    Text(t.merchantMoreLogoBusiness, style: AppTextStyles.labelBold()),
-                    const SizedBox(height: Sp.xs),
+                    // ── 2. LOGO DU COMMERCE ──────────────────────────────
+                    Text(
+                      t.merchantMoreLogoBusiness,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Text(
                       t.merchantProgrammeDesignLogoHint,
-                      style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
-                    const SizedBox(height: Sp.md),
-                    Builder(
-                      builder: (context) {
-                        final bool hasLogo = (state.logoUrl != null && state.logoUrl!.isNotEmpty) ||
-                            (merchant.logoUrl != null && merchant.logoUrl!.isNotEmpty);
-                        final String displayUrl = (state.logoUrl != null && state.logoUrl!.isNotEmpty)
-                            ? state.logoUrl!
-                            : (merchant.logoUrl ?? '');
-
-                        return Container(
-                          padding: const EdgeInsets.all(Sp.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
                             children: [
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  MerchantAvatar(
-                                    logoUrl: displayUrl,
-                                    initials: merchant.initials,
-                                    radius: 26,
-                                  ),
-                                  if (_uploadingLogo)
-                                    Positioned.fill(
-                                      child: Container(
-                                        decoration: const BoxDecoration(
-                                          color: Colors.black38,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Center(
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
+                              MerchantAvatar(
+                                logoUrl: currentLogoUrl,
+                                initials: displayInitials,
+                                radius: 26,
+                              ),
+                              if (_uploadingLogo)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black38,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
                                       ),
                                     ),
-                                ],
-                              ),
-                              const SizedBox(width: Sp.md),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      hasLogo ? t.merchantProgrammeDesignLogoPresent : t.merchantProgrammeDesignNoLogo,
-                                      style: AppTextStyles.labelBold().copyWith(fontSize: 14),
-                                    ),
-                                    Text(
-                                      t.merchantProgrammeDesignSquareFormatHint,
-                                      style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary, fontSize: 11),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: _uploadingLogo ? null : _pickLogo,
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: AppColors.border),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                                icon: const Icon(LucideIcons.camera, size: 14, color: AppColors.merchant),
-                                label: Text(
-                                  hasLogo ? t.commonEdit : t.merchantProgrammeDesignAddButton,
-                                  style: AppTextStyles.caption().copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              if (hasLogo) ...[
-                                const SizedBox(width: 4),
-                                IconButton(
-                                  onPressed: _uploadingLogo ? null : _removeLogo,
-                                  tooltip: t.merchantProgrammeDesignRemoveTooltip,
-                                  icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
-                                ),
-                              ],
                             ],
                           ),
-                        );
-                      },
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  currentLogoUrl.isNotEmpty
+                                      ? t.merchantProgrammeDesignLogoPresent
+                                      : t.merchantProgrammeDesignNoLogo,
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  t.merchantProgrammeDesignSquareFormatHint,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _uploadingLogo ? null : _pickLogo,
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: AppColors.border),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(LucideIcons.camera, size: 14, color: Color(0xFF5B50EC)),
+                            label: Text(
+                              currentLogoUrl.isNotEmpty ? t.commonEdit : t.merchantProgrammeDesignAddButton,
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          if (currentLogoUrl.isNotEmpty) ...[
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: _uploadingLogo ? null : _removeLogo,
+                              tooltip: t.merchantProgrammeDesignRemoveTooltip,
+                              icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: Sp.xl),
+                    const SizedBox(height: 20),
 
-                    Text(t.merchantProgrammeDesignPrimaryColorLabel, style: AppTextStyles.labelBold()),
-                    const SizedBox(height: Sp.xs),
+                    // ── 3. COULEUR PRINCIPALE ─────────────────────────────
+                    Text(
+                      t.merchantProgrammeDesignPrimaryColorLabel,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Text(
                       t.merchantProgrammeDesignColorHint,
-                      style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
-                    const SizedBox(height: Sp.md),
+                    const SizedBox(height: 10),
 
                     Container(
-                      padding: const EdgeInsets.all(Sp.md),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
@@ -448,13 +497,21 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                         onColorSelected: notifier.setColorPrimary,
                       ),
                     ),
-                    const SizedBox(height: Sp.xl),
+                    const SizedBox(height: 20),
 
-                    Text(t.merchantProgrammeDesignPatternLabel, style: AppTextStyles.labelBold()),
-                    const SizedBox(height: Sp.sm),
+                    // ── 4. MOTIF DE FOND ──────────────────────────────────
+                    Text(
+                      t.merchantProgrammeDesignPatternLabel,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Wrap(
-                      spacing: Sp.xs,
-                      runSpacing: Sp.xs,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _buildSegmentButton(
                           label: t.merchantProgrammeDesignPatternNone,
@@ -478,11 +535,19 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: Sp.xl),
+                    const SizedBox(height: 20),
 
-                    if (merchant.loyaltyMode == 'stamps') ...[
-                      Text(t.merchantProgrammeDesignStampStyleLabel, style: AppTextStyles.labelBold()),
-                      const SizedBox(height: Sp.sm),
+                    // ── 5. STYLE DES TAMPONS ──────────────────────────────
+                    if ((merchant?.loyaltyMode ?? restaurant?.loyaltyType ?? state.loyaltyMode) == 'stamps') ...[
+                      Text(
+                        t.merchantProgrammeDesignStampStyleLabel,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
@@ -495,7 +560,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(width: Sp.xs),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: _buildSegmentButton(
                               label: t.merchantProgrammeDesignStampTypeEmoji,
@@ -510,18 +575,18 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                       ),
                       if (state.stampDesignType == 'icon' ||
                           state.stampDesignType == 'emoji') ...[
-                        const SizedBox(height: Sp.sm),
+                        const SizedBox(height: 10),
                         GestureDetector(
                           onTap: () => state.stampDesignType == 'icon'
                               ? _showIconPicker(context, notifier, state.stampIcon)
                               : _showEmojiPicker(context, notifier, state.stampEmoji),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: Sp.md,
-                              vertical: Sp.sm,
+                              horizontal: 14,
+                              vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.merchantTint,
+                              color: AppColors.primaryTint,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -534,28 +599,30 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                                           orElse: () => _stampIconChoices.first,
                                         )
                                         .$2,
-                                    color: AppColors.merchant,
+                                    color: const Color(0xFF5B50EC),
                                     size: 18,
                                   )
                                 else
                                   Text(state.stampEmoji, style: const TextStyle(fontSize: 18)),
-                                const SizedBox(width: Sp.sm),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
                                     state.stampDesignType == 'icon'
                                         ? t.merchantProgrammeDesignIconSelectedLabel
                                         : t.merchantProgrammeDesignEmojiSelectedLabel,
-                                    style: AppTextStyles.caption().copyWith(
+                                    style: TextStyle(
                                       color: AppColors.textPrimary,
                                       fontWeight: FontWeight.w600,
+                                      fontSize: 12.5,
                                     ),
                                   ),
                                 ),
                                 Text(
                                   t.commonEdit,
-                                  style: AppTextStyles.caption().copyWith(
-                                    color: AppColors.merchant,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5B50EC),
                                     fontWeight: FontWeight.w700,
+                                    fontSize: 12.5,
                                   ),
                                 ),
                               ],
@@ -563,19 +630,46 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: Sp.xl),
+                      const SizedBox(height: 20),
                     ],
                   ],
                 ),
               ),
             ),
+
+            // ── BOUTON ENREGISTRER ─────────────────────────────────────────
             Padding(
-              padding: EdgeInsets.fromLTRB(Sp.md, 0, Sp.md, MediaQuery.of(context).padding.bottom + Sp.md),
-              child: AppButton.primary(
-                t.merchantProgrammeDesignSaveButton,
-                icon: LucideIcons.save,
-                onPressed: _save,
-                loading: _saving,
+              padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5B50EC),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          t.merchantProgrammeDesignSaveButton,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                ),
               ),
             ),
           ],

@@ -31,7 +31,7 @@ class MerchantAuthScreen extends ConsumerStatefulWidget {
 class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = false; // false = Inscription, true = Connexion
-  bool _loginAsStaff = false; // uniquement pertinent quand _isLogin == true
+  final bool _loginAsStaff = false;
   bool _loading = false;
   bool _acceptedTerms = false;
   bool _showTermsError = false;
@@ -328,38 +328,6 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     ],
                   ),
                 ).animate().fadeIn(duration: 400.ms),
-
-                if (_isLogin) ...[
-                  const SizedBox(height: Sp.sm),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => setState(() => _loginAsStaff = false),
-                          style: TextButton.styleFrom(
-                            foregroundColor: !_loginAsStaff ? AppColors.merchant : AppColors.textSecondary,
-                          ),
-                          child: Text(
-                            'Administrateur',
-                            style: TextStyle(fontWeight: !_loginAsStaff ? FontWeight.bold : FontWeight.normal),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => setState(() => _loginAsStaff = true),
-                          style: TextButton.styleFrom(
-                            foregroundColor: _loginAsStaff ? AppColors.merchant : AppColors.textSecondary,
-                          ),
-                          child: Text(
-                            'Opérateur',
-                            style: TextStyle(fontWeight: _loginAsStaff ? FontWeight.bold : FontWeight.normal),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
 
                 const SizedBox(height: Sp.xl),
 
