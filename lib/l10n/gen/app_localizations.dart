@@ -1304,6 +1304,12 @@ abstract class AppLocalizations {
   /// **'Carte créée !'**
   String get joinCardCreatedTitle;
 
+  /// No description provided for @joinReferredByMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parrainé(e) par {name}'**
+  String joinReferredByMessage(String name);
+
   /// No description provided for @joinCardAlreadyMemberTitle.
   ///
   /// In fr, this message translates to:

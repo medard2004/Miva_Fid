@@ -687,6 +687,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get joinCardCreatedTitle => 'Carte créée !';
 
   @override
+  String joinReferredByMessage(String name) {
+    return 'Parrainé(e) par $name';
+  }
+
+  @override
   String get joinCardAlreadyMemberTitle => 'Déjà membre !';
 
   @override

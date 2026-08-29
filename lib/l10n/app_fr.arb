@@ -278,6 +278,10 @@
   "joinWelcomeOfferEyebrow": "Offre de bienvenue",
   "joinButton": "Rejoindre le programme",
   "joinCardCreatedTitle": "Carte créée !",
+  "joinReferredByMessage": "Parrainé(e) par {name}",
+  "@joinReferredByMessage": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "joinCardAlreadyMemberTitle": "Déjà membre !",
   "joinCardAlreadyMemberMessage": "Vous êtes déjà membre de ce programme de fidélité.",
 

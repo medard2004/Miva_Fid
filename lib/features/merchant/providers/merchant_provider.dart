@@ -131,6 +131,14 @@ class MerchantNotifier extends _$MerchantNotifier {
         'birthday_reward_surprise': config['birthday_reward_surprise'] ??
             config['birthday_reward']?['surprise'] ??
             false,
+        // Récompense de parrainage — même principe que la récompense
+        // anniversaire : toujours incluse pour ne pas la perdre lors d'un
+        // enregistrement sans rapport (paliers, cashback...).
+        'referral_reward_enabled': config['referral_reward_enabled'] ??
+            config['referral_reward']?['enabled'] ??
+            true,
+        'referral_reward_label': config['referral_reward_label'] ??
+            config['referral_reward']?['label'],
         if (restaurant.loyaltyType == 'spend')
           'fcfa_per_point': config['fcfa_per_point'] ?? 100,
         if (restaurant.loyaltyType == 'cashback') ...{
@@ -193,6 +201,8 @@ const _configKeys = {
   'birthday_reward_description',
   'birthday_reward_validity_days',
   'birthday_reward_surprise',
+  'referral_reward_enabled',
+  'referral_reward_label',
 };
 
 /// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,

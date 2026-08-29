@@ -444,6 +444,16 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/birthday-reward'),
                 ),
                 _buildMenuItem(
+                  icon: LucideIcons.userPlus,
+                  label: 'Récompense de parrainage',
+                  onTap: () => context.push('/merchant/more/referral-reward'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.users,
+                  label: 'Parrainages',
+                  onTap: () => context.push('/merchant/more/referrals'),
+                ),
+                _buildMenuItem(
                   icon: LucideIcons.qrCode,
                   label: t.merchantMoreMyQrCode,
                   onTap: () => context.push('/merchant/more/account/qrcode'),

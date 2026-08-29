@@ -278,6 +278,10 @@
   "joinWelcomeOfferEyebrow": "Welcome offer",
   "joinButton": "Join the program",
   "joinCardCreatedTitle": "Card created!",
+  "joinReferredByMessage": "Referred by {name}",
+  "@joinReferredByMessage": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "joinCardAlreadyMemberTitle": "Already a member!",
   "joinCardAlreadyMemberMessage": "You're already a member of this loyalty program.",
 

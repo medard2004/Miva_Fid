@@ -61,6 +61,8 @@ import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/merchant/screens/opening_hours_screen.dart';
 import '../../features/merchant/screens/socials_screen.dart';
 import '../../features/merchant/screens/birthday_reward_screen.dart';
+import '../../features/merchant/screens/referral_reward_screen.dart';
+import '../../features/merchant/screens/referrals_screen.dart';
 import '../../features/merchant/screens/cashback_settings_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
@@ -698,6 +700,16 @@ GoRouter appRouter(AppRouterRef ref) {
                   path: 'birthday-reward',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, __) => _slide(const BirthdayRewardScreen()),
+                ),
+                GoRoute(
+                  path: 'referral-reward',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const ReferralRewardScreen()),
+                ),
+                GoRoute(
+                  path: 'referrals',
+                  parentNavigatorKey: rootNavigatorKey,
+                  pageBuilder: (_, __) => _slide(const ReferralsScreen()),
                 ),
                 GoRoute(
                   path: 'account',

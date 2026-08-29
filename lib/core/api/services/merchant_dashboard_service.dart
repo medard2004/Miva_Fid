@@ -212,6 +212,15 @@ class MerchantDashboardService {
         return (response.data as Map).cast<String, dynamic>();
       });
 
+  /// Parrainages de l'établissement (`GET /merchant/referrals`) — parrain,
+  /// filleul, statut, récompense attribuée.
+  Future<List<Map<String, dynamic>>> referrals() => _guard(() async {
+        final response = await _apiClient.dio.get('/merchant/referrals');
+        return ((response.data as Map)['referrals'] as List)
+            .map((e) => (e as Map).cast<String, dynamic>())
+            .toList();
+      });
+
   Future<List<Map<String, dynamic>>> campaigns() => _guard(() async {
         final response = await _apiClient.dio.get('/merchant/campaigns');
         return ((response.data as Map)['campaigns'] as List)

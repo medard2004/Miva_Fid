@@ -8,7 +8,11 @@ class JoinCardResult {
   final LoyaltyCard card;
   final bool isNew;
 
-  const JoinCardResult({required this.card, required this.isNew});
+  /// Prénom du parrain si l'adhésion vient d'un scan de QR de parrainage,
+  /// `null` sinon (join normal via le QR de l'établissement).
+  final String? referredBy;
+
+  const JoinCardResult({required this.card, required this.isNew, this.referredBy});
 }
 
 class LoyaltyCardRepository {
@@ -35,6 +39,7 @@ class LoyaltyCardRepository {
     return JoinCardResult(
       card: LoyaltyCard.fromApi(response['card'] as Map<String, dynamic>),
       isNew: response['was_recently_created'] as bool? ?? true,
+      referredBy: response['referred_by'] as String?,
     );
   }
 

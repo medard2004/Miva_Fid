@@ -30,6 +30,7 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
   LoyaltyCard? _realCard;
   bool _isNewCard = true;
   String? _realError;
+  String? _referredBy;
 
   @override
   void initState() {
@@ -70,6 +71,7 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
         _revealing = true;
         _realCard = result.card;
         _isNewCard = result.isNew;
+        _referredBy = result.referredBy;
       });
       // Même respiration que l'ancienne animation de révélation avant de
       // partir sur la fiche carte.
@@ -116,7 +118,11 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
           child: child,
         ),
         child: _revealing && _realCard != null
-            ? _CardRevealScreen(key: const ValueKey('reveal'), card: _realCard!)
+            ? _CardRevealScreen(
+                key: const ValueKey('reveal'),
+                card: _realCard!,
+                referredBy: _referredBy,
+              )
             : const Center(
                 key: ValueKey('loading'),
                 child: CircularProgressIndicator(),
@@ -177,7 +183,8 @@ class _UnrecognizedCodeScreen extends StatelessWidget {
 
 class _CardRevealScreen extends StatefulWidget {
   final LoyaltyCard card;
-  const _CardRevealScreen({super.key, required this.card});
+  final String? referredBy;
+  const _CardRevealScreen({super.key, required this.card, this.referredBy});
 
   @override
   State<_CardRevealScreen> createState() => _CardRevealScreenState();
@@ -259,6 +266,14 @@ class _CardRevealScreenState extends State<_CardRevealScreen>
                                 style: AppTextStyles.bodyMedium(
                                     color: subtextColor),
                               ),
+                              if (widget.referredBy != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  t.joinReferredByMessage(widget.referredBy!),
+                                  style: AppTextStyles.bodySmall(
+                                      color: subtextColor),
+                                ),
+                              ],
                             ],
                           ),
                         ),
