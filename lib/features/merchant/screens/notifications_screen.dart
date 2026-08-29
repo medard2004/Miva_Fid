@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../client/models/app_notification.dart';
 import '../../client/providers/settings_provider.dart';
+import '../providers/notifications_provider.dart';
 
 class NotificationItem {
   final String id;
@@ -39,118 +41,52 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   String _selectedFilter = 'all'; // 'all' | 'unread'
 
-  late List<NotificationItem> _notifications;
-
-  @override
-  void initState() {
-    super.initState();
-    _notifications = [
-      const NotificationItem(
-        id: '1',
-        title: 'Nouveau client',
-        subtitle: 'Ama Doe vient de rejoindre votre programme fidélité.',
-        time: 'il y a 5 min',
-        section: "AUJOURD'HUI",
-        icon: LucideIcons.userPlus,
-        iconBg: Color(0xFFEEF2FF),
-        iconColor: Color(0xFF6366F1),
-        isUnread: true,
-      ),
-      const NotificationItem(
-        id: '2',
-        title: 'Récompense débloquée',
-        subtitle: 'Kofi M. a atteint 10 tampons — offrez son cadeau 🎁',
-        time: 'il y a 32 min',
-        section: "AUJOURD'HUI",
-        icon: LucideIcons.gift,
-        iconBg: Color(0xFFFEF3C7),
-        iconColor: Color(0xFFD97706),
-        isUnread: true,
-      ),
-      const NotificationItem(
-        id: '3',
-        title: 'Campagne envoyée',
-        subtitle: '« Weekend -20% » livrée à 128 clients (98% de succès).',
-        time: 'il y a 2 h',
-        section: "AUJOURD'HUI",
-        icon: LucideIcons.messageSquare,
-        iconBg: Color(0xFFE0F2FE),
-        iconColor: Color(0xFF0284C7),
-        isUnread: true,
-      ),
-      const NotificationItem(
-        id: '4',
-        title: 'Quota SMS faible',
-        subtitle: 'Il vous reste 13 SMS ce mois-ci. Rechargez pour continuer.',
-        time: 'hier',
-        section: 'CETTE SEMAINE',
-        icon: LucideIcons.triangleAlert,
-        iconBg: Color(0xFFFEE2E2),
-        iconColor: Color(0xFFDC2626),
-        isUnread: false,
-      ),
-      const NotificationItem(
-        id: '5',
-        title: 'Rapport hebdomadaire',
-        subtitle: '+42 nouveaux clients cette semaine — un record !',
-        time: 'lun.',
-        section: 'CETTE SEMAINE',
-        icon: LucideIcons.trendingUp,
-        iconBg: Color(0xFFDCFCE7),
-        iconColor: Color(0xFF16A34A),
-        isUnread: false,
-      ),
-      const NotificationItem(
-        id: '6',
-        title: '5 nouveaux clients',
-        subtitle: 'Vos QR codes en boutique ont bien fonctionné hier.',
-        time: 'il y a 8 j',
-        section: 'PLUS ANCIEN',
-        icon: LucideIcons.users,
-        iconBg: Color(0xFFF3E8FF),
-        iconColor: Color(0xFF9333EA),
-        isUnread: false,
-      ),
-    ];
+  ({IconData icon, Color bg, Color color}) _visualFor(String type) {
+    switch (type) {
+      case 'merchant_new_client':
+        return (icon: LucideIcons.userPlus, bg: const Color(0xFFEEF2FF), color: const Color(0xFF6366F1));
+      case 'reward_unlocked':
+        return (icon: LucideIcons.gift, bg: const Color(0xFFFEF3C7), color: const Color(0xFFD97706));
+      case 'campaign':
+        return (icon: LucideIcons.messageSquare, bg: const Color(0xFFE0F2FE), color: const Color(0xFF0284C7));
+      case 'merchant_low_sms':
+        return (icon: LucideIcons.triangleAlert, bg: const Color(0xFFFEE2E2), color: const Color(0xFFDC2626));
+      case 'merchant_weekly_report':
+        return (icon: LucideIcons.trendingUp, bg: const Color(0xFFDCFCE7), color: const Color(0xFF16A34A));
+      default:
+        return (icon: LucideIcons.bell, bg: const Color(0xFFF3E8FF), color: const Color(0xFF9333EA));
+    }
   }
 
-  void _markAllRead() {
-    setState(() {
-      _notifications = _notifications.map((n) {
-        return NotificationItem(
-          id: n.id,
-          title: n.title,
-          subtitle: n.subtitle,
-          time: n.time,
-          section: n.section,
-          icon: n.icon,
-          iconBg: n.iconBg,
-          iconColor: n.iconColor,
-          isUnread: false,
-        );
-      }).toList();
-    });
+  String _sectionFor(DateTime timestamp) {
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+    if (diff.inDays == 0 && now.day == timestamp.day) return "AUJOURD'HUI";
+    if (diff.inDays < 7) return 'CETTE SEMAINE';
+    return 'PLUS ANCIEN';
   }
 
-  void _clearAll() {
-    setState(() {
-      _notifications.clear();
-    });
+  List<NotificationItem> _toItems(List<AppNotification> notifications) {
+    return notifications.map((n) {
+      final visual = _visualFor(n.type);
+      return NotificationItem(
+        id: n.id,
+        title: n.title,
+        subtitle: n.message,
+        time: n.relativeTime,
+        section: _sectionFor(n.timestamp),
+        icon: visual.icon,
+        iconBg: visual.bg,
+        iconColor: visual.color,
+        isUnread: !n.isRead,
+      );
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
-    final unreadCount = _notifications.where((n) => n.isUnread).length;
-
-    final filtered = _selectedFilter == 'unread'
-        ? _notifications.where((n) => n.isUnread).toList()
-        : _notifications;
-
-    final sections = <String, List<NotificationItem>>{};
-    for (final item in filtered) {
-      sections.putIfAbsent(item.section, () => []).add(item);
-    }
+    final notificationsAsync = ref.watch(merchantNotificationsNotifierProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -161,26 +97,39 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF111827), size: 22),
           onPressed: () => context.pop(),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Notifications',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
-              ),
-            ),
-            Text(
-              '$unreadCount non lues',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-          ],
+        title: notificationsAsync.when(
+          data: (notifications) {
+            final unreadCount = notifications.where((n) => !n.isRead).length;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                Text(
+                  '$unreadCount non lues',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            );
+          },
+          loading: () => const Text(
+            'Notifications',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF111827)),
+          ),
+          error: (_, __) => const Text(
+            'Notifications',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF111827)),
+          ),
         ),
         actions: [
           IconButton(
@@ -189,106 +138,135 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // ── FILTER TABS ROW ──
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                _buildFilterChip(
-                  label: 'Toutes',
-                  isSelected: _selectedFilter == 'all',
-                  onTap: () => setState(() => _selectedFilter = 'all'),
-                ),
-                const SizedBox(width: 8),
-                _buildFilterChip(
-                  label: 'Non lues',
-                  count: unreadCount,
-                  isSelected: _selectedFilter == 'unread',
-                  onTap: () => setState(() => _selectedFilter = 'unread'),
-                ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: unreadCount > 0 ? _markAllRead : null,
-                  icon: const Icon(LucideIcons.check, size: 16, color: Color(0xFF6366F1)),
-                  label: const Text(
-                    'Tout lire',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF6366F1),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      body: notificationsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Text(
+            'Impossible de charger les notifications.',
+            style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
           ),
+        ),
+        data: (notifications) {
+          final items = _toItems(notifications);
+          final unreadCount = items.where((n) => n.isUnread).length;
 
-          // ── LIST OF NOTIFICATIONS BY SECTION ──
-          Expanded(
-            child: _notifications.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Aucune notification',
-                      style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+          final filtered = _selectedFilter == 'unread'
+              ? items.where((n) => n.isUnread).toList()
+              : items;
+
+          final sections = <String, List<NotificationItem>>{};
+          for (final item in filtered) {
+            sections.putIfAbsent(item.section, () => []).add(item);
+          }
+
+          return Column(
+            children: [
+              // ── FILTER TABS ROW ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    _buildFilterChip(
+                      label: 'Toutes',
+                      isSelected: _selectedFilter == 'all',
+                      onTap: () => setState(() => _selectedFilter = 'all'),
                     ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    children: [
-                      for (final section in sections.keys) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4, top: 12, bottom: 8),
-                          child: Text(
-                            section,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF6B7280),
-                              letterSpacing: 0.6,
-                            ),
-                          ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label: 'Non lues',
+                      count: unreadCount,
+                      isSelected: _selectedFilter == 'unread',
+                      onTap: () => setState(() => _selectedFilter = 'unread'),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: unreadCount > 0
+                          ? () => ref
+                              .read(merchantNotificationsNotifierProvider.notifier)
+                              .markAllRead()
+                          : null,
+                      icon: const Icon(LucideIcons.check, size: 16, color: Color(0xFF6366F1)),
+                      label: const Text(
+                        'Tout lire',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF6366F1),
                         ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                          ),
-                          child: Column(
-                            children: [
-                              for (var i = 0; i < sections[section]!.length; i++) ...[
-                                _buildNotificationTile(sections[section]![i]),
-                                if (i < sections[section]!.length - 1)
-                                  const Divider(height: 1, indent: 64, color: Color(0xFFF3F4F6)),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                      const SizedBox(height: 24),
-                      if (_notifications.isNotEmpty)
-                        Center(
-                          child: TextButton.icon(
-                            onPressed: _clearAll,
-                            icon: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFF6B7280)),
-                            label: const Text(
-                              'Effacer toutes les notifications',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+              // ── LIST OF NOTIFICATIONS BY SECTION ──
+              Expanded(
+                child: items.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Aucune notification',
+                          style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                        ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        children: [
+                          for (final section in sections.keys) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4, top: 12, bottom: 8),
+                              child: Text(
+                                section,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF6B7280),
+                                  letterSpacing: 0.6,
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-          ),
-        ],
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                              ),
+                              child: Column(
+                                children: [
+                                  for (var i = 0; i < sections[section]!.length; i++) ...[
+                                    _buildNotificationTile(sections[section]![i]),
+                                    if (i < sections[section]!.length - 1)
+                                      const Divider(height: 1, indent: 64, color: Color(0xFFF3F4F6)),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 24),
+                          if (items.isNotEmpty)
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: () => ref
+                                    .read(merchantNotificationsNotifierProvider.notifier)
+                                    .deleteAll(),
+                                icon: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFF6B7280)),
+                                label: const Text(
+                                  'Effacer toutes les notifications',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
