@@ -96,9 +96,17 @@ final rewardsProvider = StateNotifierProvider<RewardsNotifier, List<Reward>>(
 class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
   NotificationsNotifier(this._ref) : super(const []) {
     _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
+    // Le centre de notifications n'a pas de payload assez riche à patcher en
+    // place (pas d'id local stable côté `AppNotification` avant la 1re
+    // synchro) — recharger la liste est ce qui rend la cloche/l'inbox
+    // instantanées au lieu d'attendre le prochain chargement manuel.
+    _realtimeSub = RealtimeService.instance.onNotificationCreated.listen((_) {
+      load();
+    });
   }
 
   final Ref _ref;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
@@ -130,6 +138,12 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
   Future<void> remove(String id) async {
     await _ref.read(notificationRepositoryProvider).delete(id);
     state = state.where((n) => n.id != id).toList();
+  }
+
+  @override
+  void dispose() {
+    _realtimeSub?.cancel();
+    super.dispose();
   }
 }
 

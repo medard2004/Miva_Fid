@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/notifications/content_unavailable_view.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
@@ -45,7 +47,15 @@ class CardDetailScreen extends ConsumerWidget {
         : ref.watch(rewardsProvider).where((r) => r.cardId == card.id).toList();
 
     if (card == null) {
-      return Scaffold(body: Center(child: Text(t.cardDetailNotFound)));
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppDetailBar(title: t.cardDetailTitle),
+        body: ContentUnavailableView(
+          message: t.cardDetailNotFound,
+          actionLabel: 'Voir mon wallet',
+          onAction: () => context.go('/client/wallet'),
+        ),
+      );
     }
 
     return Scaffold(

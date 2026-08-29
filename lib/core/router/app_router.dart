@@ -22,6 +22,8 @@ import '../../features/client/wallet/wallet_dashboard_screen.dart';
 import '../../features/client/wallet/wallet_search_screen.dart';
 import '../../features/client/card_detail/card_detail_screen.dart';
 import '../../features/client/rewards/rewards_screen.dart';
+import '../../features/client/campaign/campaign_detail_screen.dart';
+import '../../models/sms_campaign_model.dart';
 import '../../features/client/referral/referral_screen.dart';
 import '../../features/client/profile/profile_screen.dart';
 import '../../features/client/profile/edit_profile_screen.dart';
@@ -441,7 +443,10 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/client/rewards',
-            pageBuilder: (_, state) => _clientTabFadePage(state, const RewardsScreen()),
+            pageBuilder: (_, state) => _clientTabFadePage(
+              state,
+              RewardsScreen(openRewardId: state.uri.queryParameters['openReward']),
+            ),
           ),
           GoRoute(
             path: '/client/referral',
@@ -480,6 +485,20 @@ GoRouter appRouter(AppRouterRef ref) {
               );
             },
           );
+        },
+      ),
+
+      // Contenu de campagne marchand — même famille que `/client/card/:id`
+      // (route de plein écran hors shell, pas un onglet).
+      GoRoute(
+        path: '/client/campaign/:id',
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map?;
+          return _slide(CampaignDetailScreen(
+            campaignId: state.pathParameters['id'] ?? '',
+            title: extra?['title'] as String? ?? 'Offre',
+            body: extra?['body'] as String? ?? '',
+          ));
         },
       ),
 
@@ -611,12 +630,16 @@ GoRouter appRouter(AppRouterRef ref) {
                 GoRoute(
                   path: 'new',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const SmsCampaignRecipientsScreen()),
+                  pageBuilder: (_, state) => _slide(SmsCampaignRecipientsScreen(
+                    editingCampaign: state.extra as SmsCampaignModel?,
+                  )),
                   routes: [
                     GoRoute(
                       path: 'message',
                       parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const SmsCampaignComposeScreen()),
+                      pageBuilder: (_, state) => _slide(SmsCampaignComposeScreen(
+                        editingCampaign: state.extra as SmsCampaignModel?,
+                      )),
                     ),
                   ],
                 ),

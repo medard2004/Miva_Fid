@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/campaign_recipient_model.dart';
+import '../../../models/sms_campaign_model.dart';
 import 'sms_provider.dart';
 
 /// Brouillon de campagne SMS partagé entre les 2 pages du wizard
@@ -25,8 +26,9 @@ class SmsCampaignDraft {
   final Set<int> selectedClientIds;
 
   /// Vrai dès que la sélection s'écarte d'un segment propre unique (coche
-  /// individuelle décochée, ou cumul de plusieurs segments) — le
-  /// `recipient_type` envoyé au serveur devient alors `'manual'`.
+  /// individuelle décochée, ou cumul de plusieurs segments — ou édition
+  /// d'une campagne existante) — le `recipient_type` envoyé au serveur
+  /// devient alors `'manual'`.
   final bool manuallyEdited;
   final String search;
   final String sort;
@@ -71,11 +73,32 @@ class SmsCampaignDraft {
 }
 
 class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
-  SmsCampaignDraftNotifier(this._ref) : super(const SmsCampaignDraft()) {
+  /// [editingCampaign] non nul : édite cette campagne (encore programmée)
+  /// au lieu d'en créer une nouvelle — préremplit message/date/destinataires
+  /// et appelle `updateCampaign` plutôt que `sendCampaign` à la soumission.
+  SmsCampaignDraftNotifier(this._ref, this.editingCampaign)
+      : super(
+          editingCampaign == null
+              ? const SmsCampaignDraft()
+              : SmsCampaignDraft(
+                  message: editingCampaign.message,
+                  scheduledAt: editingCampaign.scheduledAt,
+                  manuallyEdited: true,
+                ),
+        ) {
+    // La toute première liste chargée sert juste à rendre la base cliente
+    // parcourable (recherche/segments) — en édition, la présélection ne
+    // doit PAS venir du segment "Tous" mais de la sélection déjà en base.
+    _pendingInitialSelection = editingCampaign?.recipientIds
+        ?.map((id) => int.tryParse(id))
+        .whereType<int>()
+        .toSet();
     setSegment('all');
   }
 
   final Ref _ref;
+  final SmsCampaignModel? editingCampaign;
+  Set<int>? _pendingInitialSelection;
 
   Future<void> setSegment(String type) async {
     final hadOtherSelection =
@@ -105,9 +128,13 @@ class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
             q: state.search,
             sort: state.sort,
           );
+      final pending = _pendingInitialSelection;
       // Un changement de segment présélectionne (coche) tout son résultat,
-      // sans jamais décocher ce qui a déjà été choisi ailleurs.
-      final selected = {...state.selectedClientIds, ...list.map((r) => r.clientId)};
+      // sans jamais décocher ce qui a déjà été choisi ailleurs — sauf le
+      // tout premier chargement en mode édition, où la sélection initiale
+      // vient de la campagne existante, pas du segment "Tous".
+      final selected = pending ?? {...state.selectedClientIds, ...list.map((r) => r.clientId)};
+      _pendingInitialSelection = null;
       state = state.copyWith(
         visibleRecipients: list,
         selectedClientIds: selected,
@@ -148,19 +175,34 @@ class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
   Future<void> submit() async {
     state = state.copyWith(sending: true);
     try {
-      await _ref.read(smsNotifierProvider.notifier).sendCampaign(
-            message: state.message.trim(),
-            recipientType: state.effectiveRecipientType,
-            clientIds: state.selectedClientIds.toList(),
-            scheduledAt: state.scheduledAt,
-          );
+      final campaign = editingCampaign;
+      if (campaign != null) {
+        final scheduledAt = state.scheduledAt;
+        if (scheduledAt == null) {
+          throw Exception('Une date de programmation est requise pour modifier cette campagne.');
+        }
+        await _ref.read(smsNotifierProvider.notifier).updateCampaign(
+              campaignId: campaign.id,
+              message: state.message.trim(),
+              recipientType: state.effectiveRecipientType,
+              clientIds: state.selectedClientIds.toList(),
+              scheduledAt: scheduledAt,
+            );
+      } else {
+        await _ref.read(smsNotifierProvider.notifier).sendCampaign(
+              message: state.message.trim(),
+              recipientType: state.effectiveRecipientType,
+              clientIds: state.selectedClientIds.toList(),
+              scheduledAt: state.scheduledAt,
+            );
+      }
     } finally {
       if (mounted) state = state.copyWith(sending: false);
     }
   }
 }
 
-final smsCampaignDraftProvider =
-    StateNotifierProvider.autoDispose<SmsCampaignDraftNotifier, SmsCampaignDraft>(
-  (ref) => SmsCampaignDraftNotifier(ref),
+final smsCampaignDraftProvider = StateNotifierProvider.autoDispose
+    .family<SmsCampaignDraftNotifier, SmsCampaignDraft, SmsCampaignModel?>(
+  (ref, editingCampaign) => SmsCampaignDraftNotifier(ref, editingCampaign),
 );

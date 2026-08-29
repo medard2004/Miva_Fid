@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import '../services/merchant_auth_service.dart';
-import '../storage/merchant_token_storage.dart';
+import '../storage/token_storage.dart' show TokenStorageBase;
 import '../../../features/merchant/models/restaurant_account.dart';
 
 /// Normalise la charge `restaurant` de la réponse `staffLogin`.
@@ -26,7 +27,7 @@ Map<String, dynamic> mergeStaffLoginActor(Map<String, dynamic> response) {
 
 class MerchantAuthRepository {
   final MerchantAuthService _authService;
-  final MerchantTokenStorage _tokenStorage;
+  final TokenStorageBase _tokenStorage;
 
   MerchantAuthRepository(this._authService, this._tokenStorage);
 
@@ -133,7 +134,13 @@ class MerchantAuthRepository {
       }
     } finally {
       await _tokenStorage.deleteToken();
-      _authService.suppressUnauthorized = false;
+      // Voir AuthRepository.logout (mirror client) : délai avant de
+      // réactiver le garde-fou, le temps qu'une requête déjà en vol au
+      // moment de la déconnexion reçoive son 401 sans déclencher à tort le
+      // toast "session expirée".
+      unawaited(Future.delayed(const Duration(seconds: 2), () {
+        _authService.suppressUnauthorized = false;
+      }));
     }
   }
 

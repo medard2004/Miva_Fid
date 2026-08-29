@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://127.0.0.1:8000/api/notifications)",
+      "Bash(awk '{print $7; exit}')",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://127.0.0.1:8080/apps)",
+      "Bash(curl -s -o /dev/null -D - --http1.1 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' 'http://127.0.0.1:8000/app/lmr8oqvyjygvcbcujywu?protocol=7&client=test&version=1.0')",
+      "Bash(curl -s -o /dev/null -D - --http1.1 -H 'User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0 Safari/537.36' -H 'ngrok-skip-browser-warning: true' -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' 'https://distract-buffalo-mockup.ngrok-free.dev/app/lmr8oqvyjygvcbcujywu?protocol=7&client=test&version=1.0')",
+      "Bash(grep -n 'private readonly NotificationDispatcher\\\\|protected $notifications\\\\|__construct' app/Http/Controllers/Api/MerchantDashboardController.php)",
+      "Bash(kill 12907 13307)",
+      "Bash(ps -o pid,lstart,cmd -p 38999,39015,39016)",
+      "Bash(kill 38999)"
+    ]
+  }
+}

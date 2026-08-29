@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/services/realtime_service.dart';
 import '../../client/models/app_notification.dart';
 import 'merchant_auth_provider.dart';
 
@@ -15,6 +18,14 @@ class MerchantNotificationsNotifier extends _$MerchantNotificationsNotifier {
       merchantAuthProvider.select((s) => s.restaurant),
     );
     if (restaurant == null) return [];
+
+    // Recharge la liste dès qu'une notification est créée côté serveur
+    // (`NotificationCreated`, canal `merchant.{id}`) — la cloche/l'inbox
+    // marchande n'attendent plus le prochain chargement manuel de l'écran.
+    final sub = RealtimeService.instance.onNotificationCreated.listen((_) {
+      ref.invalidateSelf();
+    });
+    ref.onDispose(sub.cancel);
 
     return ref.read(merchantNotificationRepositoryProvider).list();
   }

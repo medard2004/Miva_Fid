@@ -61,4 +61,39 @@ class SmsNotifier extends _$SmsNotifier {
     await ref.read(merchantNotifierProvider.notifier).refresh();
     ref.invalidateSelf();
   }
+
+  /// Édite une campagne encore programmée (message/destinataires/date).
+  Future<void> updateCampaign({
+    required String campaignId,
+    required String message,
+    required String recipientType,
+    required List<int> clientIds,
+    required DateTime scheduledAt,
+  }) async {
+    await ref.read(merchantDashboardServiceProvider).updateCampaign(
+          campaignId: campaignId,
+          message: message,
+          recipientType: recipientType,
+          clientIds: clientIds,
+          scheduledAt: scheduledAt,
+        );
+    ref.invalidateSelf();
+  }
+
+  /// Masque une campagne de l'historique (réversible côté serveur) —
+  /// optimiste : retirée de la liste locale avant confirmation serveur,
+  /// remise si l'appel échoue.
+  Future<void> archive(String campaignId) async {
+    final previous = state;
+    state = AsyncData([
+      for (final c in state.value ?? const [])
+        if (c.id != campaignId) c,
+    ]);
+    try {
+      await ref.read(merchantDashboardServiceProvider).archiveCampaign(campaignId);
+    } catch (e) {
+      state = previous;
+      rethrow;
+    }
+  }
 }

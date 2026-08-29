@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/notifications/content_unavailable_view.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -13,11 +14,53 @@ import 'package:miva_fid/features/client/widgets/shared/notification_bell_button
 import 'package:miva_fid/features/client/widgets/shared/reward_detail_sheet.dart';
 
 /// Écran des Récompenses et Privilèges.
-class RewardsScreen extends ConsumerWidget {
-  const RewardsScreen({super.key});
+///
+/// [openRewardId] : ouverture directe de la fiche d'une récompense au clic
+/// sur une notification (`reward_unlocked`/`birthday`, voir
+/// `resolveNotificationDestination`) — affichée une seule fois par montage
+/// de l'écran, jamais rejouée à chaque rebuild.
+class RewardsScreen extends ConsumerStatefulWidget {
+  const RewardsScreen({super.key, this.openRewardId});
+
+  final String? openRewardId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RewardsScreen> createState() => _RewardsScreenState();
+}
+
+class _RewardsScreenState extends ConsumerState<RewardsScreen> {
+  bool _handledOpenReward = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _maybeOpenReward();
+  }
+
+  void _maybeOpenReward() {
+    final rewardId = widget.openRewardId;
+    if (rewardId == null || _handledOpenReward) return;
+    _handledOpenReward = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final reward =
+          ref.read(rewardsProvider).where((r) => r.id == rewardId).firstOrNull;
+      if (reward == null) {
+        showContentUnavailableDialog(
+          context,
+          message: 'Cette récompense n\'est plus disponible.',
+          actionLabel: 'OK',
+          onAction: () {},
+        );
+        return;
+      }
+      showRewardDetailSheet(context, ref, reward);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final rewards = ref.watch(rewardsProvider);

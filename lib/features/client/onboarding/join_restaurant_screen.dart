@@ -62,7 +62,9 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
         // redirige immédiatement vers la fiche carte plutôt que de rejouer
         // l'animation de création, avec un message clair sur pourquoi.
         final t = AppLocalizations.of(context)!;
-        ToastService.showInfo(t.joinCardAlreadyMemberMessage);
+        ToastService.showInfo(result.viaReferral
+            ? t.joinCardAlreadyMemberViaReferralMessage
+            : t.joinCardAlreadyMemberMessage);
         context.pushReplacement('/client/card/${result.card.id}');
         return;
       }

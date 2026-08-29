@@ -12,7 +12,16 @@ class JoinCardResult {
   /// `null` sinon (join normal via le QR de l'établissement).
   final String? referredBy;
 
-  const JoinCardResult({required this.card, required this.isNew, this.referredBy});
+  /// `true` si le code scanné était un QR/code de parrainage, même quand le
+  /// client était déjà membre du commerce (donc `referredBy` reste `null`).
+  final bool viaReferral;
+
+  const JoinCardResult({
+    required this.card,
+    required this.isNew,
+    this.referredBy,
+    this.viaReferral = false,
+  });
 }
 
 class LoyaltyCardRepository {
@@ -40,6 +49,7 @@ class LoyaltyCardRepository {
       card: LoyaltyCard.fromApi(response['card'] as Map<String, dynamic>),
       isNew: response['was_recently_created'] as bool? ?? true,
       referredBy: response['referred_by'] as String?,
+      viaReferral: response['via_referral'] as bool? ?? false,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/notifications/notification_destination.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -75,9 +76,16 @@ class NotificationsScreen extends ConsumerWidget {
                           const Icon(LucideIcons.trash2, color: Colors.white),
                     ),
                     child: ListTile(
-                      onTap: () => ref
-                          .read(notificationsProvider.notifier)
-                          .markRead(n.id),
+                      onTap: () {
+                        ref.read(notificationsProvider.notifier).markRead(n.id);
+                        final destination = resolveNotificationDestination(
+                          type: n.type,
+                          data: n.data,
+                          title: n.title,
+                          body: n.message,
+                        );
+                        navigateToNotificationDestination(context, destination);
+                      },
                       contentPadding: EdgeInsets.zero,
                       leading: Container(
                         width: 38,

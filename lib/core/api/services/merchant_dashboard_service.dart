@@ -228,6 +228,12 @@ class MerchantDashboardService {
             .toList();
       });
 
+  /// Masque une campagne de l'historique (réversible côté serveur, pas de
+  /// suppression) — `POST /merchant/campaigns/{id}/archive`.
+  Future<void> archiveCampaign(String campaignId) => _guard(() async {
+        await _apiClient.dio.post('/merchant/campaigns/$campaignId/archive');
+      });
+
   Future<int> recipientCount(String recipientType) => _guard(() async {
         final response = await _apiClient.dio.get(
           '/merchant/campaigns/recipients',
@@ -271,6 +277,23 @@ class MerchantDashboardService {
           'client_ids': clientIds,
           if (scheduledAt != null)
             'scheduled_at': scheduledAt.toIso8601String(),
+        });
+      });
+
+  /// Édite une campagne encore programmée — `PUT /merchant/campaigns/{id}`.
+  Future<void> updateCampaign({
+    required String campaignId,
+    required String message,
+    required String recipientType,
+    required List<int> clientIds,
+    required DateTime scheduledAt,
+  }) =>
+      _guard(() async {
+        await _apiClient.dio.put('/merchant/campaigns/$campaignId', data: {
+          'message': message,
+          'recipient_type': recipientType,
+          'client_ids': clientIds,
+          'scheduled_at': scheduledAt.toIso8601String(),
         });
       });
 }

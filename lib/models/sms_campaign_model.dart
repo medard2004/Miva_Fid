@@ -49,6 +49,9 @@ class SmsCampaignModel {
       merchantId: json['merchant_id']?.toString() ?? '',
       message: json['message'] as String? ?? '',
       recipientType: json['recipient_type'] as String?,
+      recipientIds: json['recipient_ids'] is List
+          ? (json['recipient_ids'] as List).map((e) => e.toString()).toList()
+          : null,
       recipientsCount: json['recipients_count'] as int? ?? 0,
       deliveredCount: json['delivered_count'] as int? ?? 0,
       failedCount: json['failed_count'] as int? ?? 0,

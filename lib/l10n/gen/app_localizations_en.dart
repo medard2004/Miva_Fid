@@ -684,6 +684,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'You\'re already a member of this loyalty program.';
 
   @override
+  String get joinCardAlreadyMemberViaReferralMessage =>
+      'You\'re already a member of this merchant, redirecting to your card.';
+
+  @override
   String get phonePickerTitle => 'Select a dial code';
 
   @override

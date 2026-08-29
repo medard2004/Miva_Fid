@@ -699,6 +699,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous êtes déjà membre de ce programme de fidélité.';
 
   @override
+  String get joinCardAlreadyMemberViaReferralMessage =>
+      'Vous êtes déjà membre de ce commerce, redirection vers votre carte.';
+
+  @override
   String get phonePickerTitle => 'Sélectionnez un indicatif';
 
   @override

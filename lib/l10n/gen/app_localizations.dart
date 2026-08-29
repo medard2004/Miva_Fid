@@ -1322,6 +1322,12 @@ abstract class AppLocalizations {
   /// **'Vous êtes déjà membre de ce programme de fidélité.'**
   String get joinCardAlreadyMemberMessage;
 
+  /// No description provided for @joinCardAlreadyMemberViaReferralMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes déjà membre de ce commerce, redirection vers votre carte.'**
+  String get joinCardAlreadyMemberViaReferralMessage;
+
   /// No description provided for @phonePickerTitle.
   ///
   /// In fr, this message translates to:

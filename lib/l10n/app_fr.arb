@@ -284,6 +284,7 @@
   },
   "joinCardAlreadyMemberTitle": "Déjà membre !",
   "joinCardAlreadyMemberMessage": "Vous êtes déjà membre de ce programme de fidélité.",
+  "joinCardAlreadyMemberViaReferralMessage": "Vous êtes déjà membre de ce commerce, redirection vers votre carte.",
 
   "phonePickerTitle": "Sélectionnez un indicatif",
   "phonePickerSearchHint": "Rechercher un pays ou un indicatif...",

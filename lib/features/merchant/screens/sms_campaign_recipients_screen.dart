@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../models/sms_campaign_model.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_campaign_draft_provider.dart';
 
@@ -24,7 +25,11 @@ const _sorts = [
 /// Étape 1 du wizard de campagne SMS : choisir un segment (précoche ses
 /// résultats), affiner à la main via recherche + cases à cocher.
 class SmsCampaignRecipientsScreen extends ConsumerStatefulWidget {
-  const SmsCampaignRecipientsScreen({super.key});
+  const SmsCampaignRecipientsScreen({super.key, this.editingCampaign});
+
+  /// Non nul : édite les destinataires de cette campagne existante au lieu
+  /// d'en préparer une nouvelle.
+  final SmsCampaignModel? editingCampaign;
 
   @override
   ConsumerState<SmsCampaignRecipientsScreen> createState() =>
@@ -43,8 +48,8 @@ class _SmsCampaignRecipientsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final draft = ref.watch(smsCampaignDraftProvider);
-    final notifier = ref.read(smsCampaignDraftProvider.notifier);
+    final draft = ref.watch(smsCampaignDraftProvider(widget.editingCampaign));
+    final notifier = ref.read(smsCampaignDraftProvider(widget.editingCampaign).notifier);
     final smsRemaining = ref.watch(merchantNotifierProvider).value?.smsRemaining ?? 0;
     final selectedCount = draft.selectedClientIds.length;
     final remainingAfter = smsRemaining - selectedCount;
@@ -240,7 +245,10 @@ class _SmsCampaignRecipientsScreenState
             ElevatedButton(
               onPressed: selectedCount == 0
                   ? null
-                  : () => context.push('/merchant/sms/new/message'),
+                  : () => context.push(
+                        '/merchant/sms/new/message',
+                        extra: widget.editingCampaign,
+                      ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF5B50EC),
                 foregroundColor: Colors.white,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
@@ -5,7 +6,7 @@ import '../../../features/client/models/user.dart';
 
 class AuthRepository {
   final AuthService _authService;
-  final TokenStorage _tokenStorage;
+  final TokenStorageBase _tokenStorage;
 
   AuthRepository(this._authService, this._tokenStorage);
 
@@ -65,7 +66,17 @@ class AuthRepository {
       }
     } finally {
       await _tokenStorage.deleteToken();
-      _authService.suppressUnauthorized = false;
+      // Ne pas réactiver tout de suite : une requête déjà en vol au moment
+      // de la déconnexion (rafraîchissement wallet, heartbeat realtime...)
+      // peut recevoir son 401 quelques centaines de ms après que ce
+      // `logout()` a lui-même abouti — sans ce délai, `suppressUnauthorized`
+      // redevient `false` juste avant l'arrivée de ce 401 tardif, qui
+      // déclenche alors à tort le toast "session expirée" en pleine
+      // déconnexion volontaire. `unawaited` : ne fait pas attendre l'appelant
+      // (navigation vers l'écran de connexion immédiate).
+      unawaited(Future.delayed(const Duration(seconds: 2), () {
+        _authService.suppressUnauthorized = false;
+      }));
     }
   }
 

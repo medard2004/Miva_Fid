@@ -6,6 +6,10 @@ class AppNotification {
   final DateTime timestamp;
   final bool isRead;
 
+  /// Payload de deep-link (`card_id`, `reward_id`, `campaign_id`...) — voir
+  /// `resolveNotificationDestination`. `null`/vide pour un type sans donnée.
+  final Map<String, dynamic> data;
+
   const AppNotification({
     required this.id,
     required this.type,
@@ -13,6 +17,7 @@ class AppNotification {
     required this.message,
     required this.timestamp,
     this.isRead = false,
+    this.data = const {},
   });
 
   factory AppNotification.fromApi(Map<String, dynamic> json) => AppNotification(
@@ -22,6 +27,9 @@ class AppNotification {
         message: json['body'] as String,
         timestamp: DateTime.parse(json['created_at'] as String),
         isRead: json['read_at'] != null,
+        data: json['data'] is Map
+            ? (json['data'] as Map).cast<String, dynamic>()
+            : const {},
       );
 
   /// Horodatage relatif, ex. "il y a 2h".
@@ -40,5 +48,6 @@ class AppNotification {
         message: message,
         timestamp: timestamp,
         isRead: isRead ?? this.isRead,
+        data: data,
       );
 }

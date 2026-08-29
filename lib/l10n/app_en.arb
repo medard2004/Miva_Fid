@@ -284,6 +284,7 @@
   },
   "joinCardAlreadyMemberTitle": "Already a member!",
   "joinCardAlreadyMemberMessage": "You're already a member of this loyalty program.",
+  "joinCardAlreadyMemberViaReferralMessage": "You're already a member of this merchant, redirecting to your card.",
 
   "phonePickerTitle": "Select a dial code",
   "phonePickerSearchHint": "Search a country or dial code...",

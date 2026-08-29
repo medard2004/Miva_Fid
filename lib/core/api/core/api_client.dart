@@ -17,6 +17,12 @@ class ApiClient {
       connectTimeout: const Duration(milliseconds: ApiConstants.connectTimeout),
       receiveTimeout: const Duration(milliseconds: ApiConstants.receiveTimeout),
       responseType: ResponseType.json,
+      // Le backend de dev par défaut est un tunnel ngrok gratuit : sans ce
+      // header, ngrok sert sa page d'avertissement HTML à toute requête
+      // portant un User-Agent de navigateur — systématiquement le cas sur
+      // Flutter Web — au lieu de la relayer à Laravel. Inoffensif sur tout
+      // autre backend (header simplement ignoré).
+      headers: const {'ngrok-skip-browser-warning': 'true'},
     ));
 
     _authInterceptor = AuthInterceptor(tokenStorage, onUnauthorized: onUnauthorized);
@@ -44,4 +50,5 @@ class ApiClient {
   /// Coupe le signal "session expirée" le temps d'une déconnexion volontaire
   /// — voir [AuthInterceptor.suppressUnauthorized].
   set suppressUnauthorized(bool value) => _authInterceptor.suppressUnauthorized = value;
+  bool get suppressUnauthorized => _authInterceptor.suppressUnauthorized;
 }

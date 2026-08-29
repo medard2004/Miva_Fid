@@ -5,12 +5,15 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../models/sms_campaign_model.dart';
 import '../providers/sms_campaign_draft_provider.dart';
 
 /// Étape 2 du wizard de campagne SMS : composer le message, programmer en
-/// option, puis envoyer.
+/// option, puis envoyer (ou enregistrer, en édition).
 class SmsCampaignComposeScreen extends ConsumerStatefulWidget {
-  const SmsCampaignComposeScreen({super.key});
+  const SmsCampaignComposeScreen({super.key, this.editingCampaign});
+
+  final SmsCampaignModel? editingCampaign;
 
   @override
   ConsumerState<SmsCampaignComposeScreen> createState() =>
@@ -24,7 +27,7 @@ class _SmsCampaignComposeScreenState
   @override
   void initState() {
     super.initState();
-    _msgCtrl.text = ref.read(smsCampaignDraftProvider).message;
+    _msgCtrl.text = ref.read(smsCampaignDraftProvider(widget.editingCampaign)).message;
   }
 
   @override
@@ -34,7 +37,7 @@ class _SmsCampaignComposeScreenState
   }
 
   Future<void> _pickScheduledDate() async {
-    final notifier = ref.read(smsCampaignDraftProvider.notifier);
+    final notifier = ref.read(smsCampaignDraftProvider(widget.editingCampaign).notifier);
     final now = DateTime.now();
     final date = await showDatePicker(
       context: context,
@@ -51,9 +54,14 @@ class _SmsCampaignComposeScreenState
   }
 
   Future<void> _send() async {
-    final draft = ref.read(smsCampaignDraftProvider);
+    final draft = ref.read(smsCampaignDraftProvider(widget.editingCampaign));
+    final isEditing = widget.editingCampaign != null;
     if (draft.message.trim().isEmpty) {
       ToastService.showError('Veuillez saisir un message');
+      return;
+    }
+    if (isEditing && draft.scheduledAt == null) {
+      ToastService.showError('Une date de programmation est requise.');
       return;
     }
 
@@ -62,7 +70,11 @@ class _SmsCampaignComposeScreenState
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          draft.scheduledAt != null ? 'Programmer la campagne ?' : 'Envoyer la campagne ?',
+          isEditing
+              ? 'Enregistrer les modifications ?'
+              : draft.scheduledAt != null
+                  ? 'Programmer la campagne ?'
+                  : 'Envoyer la campagne ?',
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
         ),
         content: Text(
@@ -74,7 +86,7 @@ class _SmsCampaignComposeScreenState
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              draft.scheduledAt != null ? 'Programmer' : 'Envoyer',
+              isEditing ? 'Enregistrer' : (draft.scheduledAt != null ? 'Programmer' : 'Envoyer'),
               style: const TextStyle(color: Color(0xFF5B50EC), fontWeight: FontWeight.w700),
             ),
           ),
@@ -84,11 +96,13 @@ class _SmsCampaignComposeScreenState
     if (confirmed != true || !mounted) return;
 
     try {
-      await ref.read(smsCampaignDraftProvider.notifier).submit();
+      await ref.read(smsCampaignDraftProvider(widget.editingCampaign).notifier).submit();
       if (mounted) {
         context.go('/merchant/sms');
         ToastService.showSuccess(
-          draft.scheduledAt != null ? 'Campagne programmée !' : 'Campagne envoyée avec succès !',
+          isEditing
+              ? 'Campagne modifiée !'
+              : (draft.scheduledAt != null ? 'Campagne programmée !' : 'Campagne envoyée avec succès !'),
         );
       }
     } catch (e) {
@@ -98,15 +112,18 @@ class _SmsCampaignComposeScreenState
 
   @override
   Widget build(BuildContext context) {
-    final draft = ref.watch(smsCampaignDraftProvider);
-    final notifier = ref.read(smsCampaignDraftProvider.notifier);
+    final draft = ref.watch(smsCampaignDraftProvider(widget.editingCampaign));
+    final notifier = ref.read(smsCampaignDraftProvider(widget.editingCampaign).notifier);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Message', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        title: Text(
+          widget.editingCampaign != null ? 'Modifier la campagne' : 'Message',
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -214,7 +231,9 @@ class _SmsCampaignComposeScreenState
                         )
                       : const Icon(LucideIcons.send, size: 17),
                   label: Text(
-                    draft.scheduledAt != null ? 'Programmer la campagne' : 'Envoyer la campagne',
+                    widget.editingCampaign != null
+                        ? 'Enregistrer les modifications'
+                        : (draft.scheduledAt != null ? 'Programmer la campagne' : 'Envoyer la campagne'),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
