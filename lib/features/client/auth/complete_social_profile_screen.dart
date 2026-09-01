@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
@@ -87,72 +88,82 @@ class _CompleteSocialProfileScreenState
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(minHeight: constraints.maxHeight - 32),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.completeSocialProfileTitle,
-                          style: AppTextStyles.displayXL()),
-                      const SizedBox(height: 20),
-                      Text(t.editProfileFullName, style: AppTextStyles.label()),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _fullNameController,
-                        keyboardType: TextInputType.name,
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? t.editProfileFullNameError
-                            : null,
-                        style: AppTextStyles.bodyMedium(),
-                        decoration: InputDecoration(
-                          hintText: t.editProfileFullNameHint,
-                          hintStyle: AppTextStyles.bodyMedium(
-                              color: AppColors.inkMuted(opacity: 0.4)),
-                          filled: true,
-                          fillColor: AppColors.surfaceMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(t.commonPhoneLabel, style: AppTextStyles.label()),
-                      const SizedBox(height: 6),
-                      PhoneInputWithCountryPicker(
-                        key: _phoneInputKey,
-                        controller: _phoneController,
-                        validator: fieldValidator(
-                          'phone',
-                          requiredMessage: t.authPhoneRequiredError,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(t.editProfileBirthDate,
-                          style: AppTextStyles.label()),
-                      const SizedBox(height: 6),
-                      AppDatePickerField(
-                        value: _birthDate,
-                        onChanged: (date) => setState(() => _birthDate = date),
-                        validator: (_) => _birthDate == null
-                            ? t.authBirthDateError
-                            : fieldError('birthdate'),
-                      ),
-                      const SizedBox(height: 28),
-                      AppButton(
-                        label: t.completeProfileSubmit,
-                        onTap: isBusy ? null : _submit,
-                      ),
-                    ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  icon: Icon(
+                    LucideIcons.arrowLeft,
+                    size: 20,
+                    color: AppColors.ink,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/client/auth');
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  t.completeSocialProfileTitle,
+                  style: AppTextStyles.authTitle(),
+                ),
+                const SizedBox(height: 20),
+                Text(t.editProfileFullName, style: AppTextStyles.label()),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _fullNameController,
+                  keyboardType: TextInputType.name,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? t.editProfileFullNameError
+                      : null,
+                  style: AppTextStyles.bodyMedium(),
+                  decoration: InputDecoration(
+                    hintText: t.editProfileFullNameHint,
+                    hintStyle: AppTextStyles.bodyMedium(
+                        color: AppColors.inkMuted(opacity: 0.4)),
+                    filled: true,
+                    fillColor: AppColors.surfaceMuted,
                   ),
                 ),
-              ),
-            );
-          },
+                const SizedBox(height: 16),
+                Text(t.commonPhoneLabel, style: AppTextStyles.label()),
+                const SizedBox(height: 6),
+                PhoneInputWithCountryPicker(
+                  key: _phoneInputKey,
+                  controller: _phoneController,
+                  validator: fieldValidator(
+                    'phone',
+                    requiredMessage: t.authPhoneRequiredError,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(t.editProfileBirthDate,
+                    style: AppTextStyles.label()),
+                const SizedBox(height: 6),
+                AppDatePickerField(
+                  value: _birthDate,
+                  onChanged: (date) => setState(() => _birthDate = date),
+                  validator: (_) => _birthDate == null
+                      ? t.authBirthDateError
+                      : fieldError('birthdate'),
+                ),
+                const SizedBox(height: 28),
+                AppButton(
+                  label: t.completeProfileSubmit,
+                  onTap: isBusy ? null : _submit,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

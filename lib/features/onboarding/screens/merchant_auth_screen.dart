@@ -12,6 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/password_rules_checklist.dart';
 import '../../../core/services/social_auth_service.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/errors/error_messages.dart';
@@ -44,7 +45,18 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
     ..onTap = () => context.push('/client/legal/privacy');
 
   @override
+  void initState() {
+    super.initState();
+    _passwordCtrl.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    if (!_isLogin && mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _passwordCtrl.removeListener(_onPasswordChanged);
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _termsTap.dispose();
@@ -381,6 +393,10 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 )
                     .animate(key: ValueKey('pass_$_isLogin'))
                     .fadeIn(duration: 300.ms),
+
+                // Checklist dynamique des exigences de mot de passe (inscription)
+                if (!_isLogin)
+                  PasswordRulesChecklist(password: _passwordCtrl.text),
 
                 // "Mot de passe oublié" for login — le flux `/auth/forgot-password`
                 // réinitialise le mot de passe du compte Restaurant, pas celui

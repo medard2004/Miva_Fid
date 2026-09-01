@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
@@ -124,21 +125,35 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(minHeight: constraints.maxHeight - 32),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.authLoginTitle, style: AppTextStyles.displayHero()),
-                      const SizedBox(height: 24),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  icon: Icon(
+                    LucideIcons.arrowLeft,
+                    size: 20,
+                    color: AppColors.ink,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/role-select');
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  t.authLoginTitle,
+                  style: AppTextStyles.authTitle(),
+                ),
+                const SizedBox(height: 24),
                       Text(t.commonPhoneLabel, style: AppTextStyles.label()),
                       const SizedBox(height: 8),
                       PhoneInputWithCountryPicker(
@@ -229,27 +244,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Center(
-                        child: AppTapScale(
-                          onTap: () => context.go('/role-select'),
-                          scaleDown: 0.95,
-                          child: Text(
-                            'Pas client ? Changer de profil',
-                            style: AppTextStyles.bodySmall(
-                                    color: const Color(0xFF7C3AED))
-                                .copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      ),
-    );
+            ),
+          );
   }
 }

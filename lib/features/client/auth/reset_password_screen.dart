@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
@@ -9,8 +10,8 @@ import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
-import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/password_input.dart';
+import 'package:miva_fid/features/client/widgets/shared/password_rules_checklist.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
 /// Dernière étape de la réinitialisation : choix du nouveau mot de passe.
@@ -87,23 +88,42 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppDetailBar(title: t.resetPasswordTitle),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.resetPasswordTitle, style: AppTextStyles.displayHero()),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  icon: Icon(
+                    LucideIcons.arrowLeft,
+                    size: 20,
+                    color: AppColors.ink,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/client/auth');
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  t.resetPasswordTitle,
+                  style: AppTextStyles.authTitle(),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   t.resetPasswordSubtitle,
                   style: AppTextStyles.bodyMedium(
                       color: AppColors.inkMuted(opacity: 0.65)),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 Text(t.authPasswordLabel, style: AppTextStyles.label()),
                 const SizedBox(height: 8),
                 PasswordInput(
@@ -111,16 +131,29 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
                   obscure: _obscurePassword,
                   onToggle: () =>
                       setState(() => _obscurePassword = !_obscurePassword),
-                  onChanged: (_) => clearFieldError('password'),
+                  onChanged: (_) {
+                    clearFieldError('password');
+                    setState(() {});
+                  },
                   validator: fieldValidator(
                     'password',
                     requiredMessage: ErrorMessages.fieldRequired,
-                    extra: (value) => value.length < 8
-                        ? ErrorMessages.passwordTooShort
-                        : null,
+                    extra: (value) {
+                      if (value.length < 8) {
+                        return ErrorMessages.passwordTooShort;
+                      }
+                      if (!value.contains(RegExp(r'[A-Z]'))) {
+                        return ErrorMessages.passwordNeedsUppercase;
+                      }
+                      if (!value.contains(RegExp(r'[0-9]'))) {
+                        return ErrorMessages.passwordNeedsDigit;
+                      }
+                      return null;
+                    },
                   ),
                 ),
-                const SizedBox(height: 20),
+                ClientPasswordRulesChecklist(password: _passwordController.text),
+                const SizedBox(height: 16),
                 Text(t.createPasswordConfirmLabel,
                     style: AppTextStyles.label()),
                 const SizedBox(height: 8),

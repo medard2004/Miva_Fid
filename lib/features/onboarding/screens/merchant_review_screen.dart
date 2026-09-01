@@ -38,7 +38,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
       if (mounted) {
         ToastService.showSuccess(
             'Votre programme a été enregistré avec succès !');
-        context.go('/merchant/qrcode');
+        context.go('/auth/merchant/success');
       }
     } catch (e) {
       debugPrint('Save loyalty program error: $e');
@@ -57,27 +57,30 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
     }
   }
 
-  String get _modeLabel {
-    final mode = ref.read(onboardingNotifierProvider).loyaltyMode;
+  String _modeLabel(String mode) {
     switch (mode) {
       case 'spend':
         return 'Montant dépensé';
       case 'cashback':
         return 'Cashback';
       default:
-        return 'Point au passage';
+        return 'Passages / Tampons';
     }
   }
 
-  String get _goalLabel {
-    final state = ref.read(onboardingNotifierProvider);
+  String _goalLabel(OnboardingState state) {
     switch (state.loyaltyMode) {
       case 'spend':
         return '${state.stampsRequired} points';
       case 'cashback':
-        return '${state.cashbackPercentage}%';
+        final formattedPercentage = state.cashbackPercentage
+                    .truncateToDouble() ==
+                state.cashbackPercentage
+            ? state.cashbackPercentage.toInt().toString()
+            : state.cashbackPercentage.toStringAsFixed(1);
+        return '$formattedPercentage%';
       default:
-        return '${state.stampsRequired} visites';
+        return '${state.stampsRequired} passages';
     }
   }
 
@@ -91,19 +94,44 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Scrollable Content starting directly with title
+            // Top Bar with back button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                    icon: Icon(
+                      LucideIcons.arrowLeft,
+                      size: 20,
+                      color: AppColors.textPrimary,
+                    ),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/auth/merchant/step3');
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Scrollable Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Title and Subtitle
                     Text(
                       'Récapitulatif',
-                      style: AppTextStyles.h1().copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 24,
+                      style: AppTextStyles.h2().copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
                         color: AppColors.textPrimary,
                       ),
                     ).animate().fadeIn(duration: 250.ms),
@@ -115,7 +143,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                         fontSize: 13.5,
                       ),
                     ).animate(delay: 50.ms).fadeIn(duration: 250.ms),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
                     // Loyalty Card Preview
                     LoyaltyCardPreview(
@@ -123,7 +151,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                     ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
                     const SizedBox(height: 20),
 
-                    // Clean Summary Card matching mockup
+                    // Clean Summary Card
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -172,7 +200,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                           const Divider(height: 1),
                           _buildSummaryRow(
                             label: 'Objectif',
-                            value: _goalLabel,
+                            value: _goalLabel(state),
                           ),
                           const Divider(height: 1),
                           _buildSummaryRow(
@@ -184,12 +212,15 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                           const Divider(height: 1),
                           _buildSummaryRow(
                             label: 'Mécanique',
-                            value: _modeLabel,
+                            value: _modeLabel(state.loyaltyMode),
                           ),
                           const Divider(height: 1),
                           _buildSummaryRow(
                             label: 'Avis Google',
-                            value: 'Désactivé',
+                            value: state.showReviewButton &&
+                                    state.googleReviewUrl.isNotEmpty
+                                ? 'Activé'
+                                : 'Désactivé',
                           ),
                         ],
                       ),
@@ -265,7 +296,13 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                     width: double.infinity,
                     height: 48,
                     child: OutlinedButton(
-                      onPressed: () => context.go('/auth/merchant/step3'),
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/auth/merchant/step3');
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: AppColors.surface,
                         foregroundColor: AppColors.textPrimary,

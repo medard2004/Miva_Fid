@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/password_rules_checklist.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
@@ -30,7 +31,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _newCtrl.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _newCtrl.removeListener(_onPasswordChanged);
     _currentCtrl.dispose();
     _newCtrl.dispose();
     _confirmCtrl.dispose();
@@ -115,9 +127,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   validator: (v) {
                     if (v == null || v.isEmpty) return t.errFieldRequired;
                     if (v.length < 8) return t.errPasswordTooShort;
+                    if (!v.contains(RegExp(r'[A-Z]'))) {
+                      return 'Le mot de passe doit contenir une majuscule';
+                    }
+                    if (!v.contains(RegExp(r'[0-9]'))) {
+                      return 'Le mot de passe doit contenir un chiffre';
+                    }
                     return null;
                   },
                 ),
+                PasswordRulesChecklist(password: _newCtrl.text),
+                const SizedBox(height: Sp.sm),
                 const SizedBox(height: Sp.md),
                 AppInput(
                   label: t.changePasswordConfirmLabel,

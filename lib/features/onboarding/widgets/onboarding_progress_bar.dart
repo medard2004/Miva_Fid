@@ -64,6 +64,7 @@ class OnboardingProgressBar extends ConsumerWidget {
                     if (context.canPop()) {
                       context.pop();
                     } else {
+                      if (current == 1) context.go('/auth/merchant/auth');
                       if (current == 2) context.go('/auth/merchant/step1');
                       if (current == 3) context.go('/auth/merchant/location');
                       if (current == 4) context.go('/auth/merchant/step2');

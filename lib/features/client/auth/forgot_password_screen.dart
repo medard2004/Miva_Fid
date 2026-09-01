@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
@@ -9,7 +10,6 @@ import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
-import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/phone_input_with_country_picker.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
@@ -93,18 +93,36 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppDetailBar(title: t.forgotPasswordTitle),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.forgotPasswordTitle,
-                    style: AppTextStyles.displayHero()),
-                const SizedBox(height: 10),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  icon: Icon(
+                    LucideIcons.arrowLeft,
+                    size: 20,
+                    color: AppColors.ink,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/client/auth');
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  t.forgotPasswordTitle,
+                  style: AppTextStyles.authTitle(),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   _useEmail
                       ? t.forgotPasswordSubtitleEmail
@@ -112,7 +130,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
                   style: AppTextStyles.bodyMedium(
                       color: AppColors.inkMuted(opacity: 0.65)),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 if (_useEmail) ...[
                   Text(t.forgotPasswordEmailLabel,
                       style: AppTextStyles.label()),

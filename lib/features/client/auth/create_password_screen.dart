@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
@@ -83,98 +84,108 @@ class _CreatePasswordScreenState extends ConsumerState<CreatePasswordScreen>
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(minHeight: constraints.maxHeight - 32),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.createPasswordTitle,
-                          style: AppTextStyles.displayHero()),
-                      const SizedBox(height: 8),
-                      Text(
-                        t.createPasswordSubtitle,
-                        style: AppTextStyles.bodyMedium(
-                            color: AppColors.inkMuted(opacity: 0.6)),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(t.authPasswordLabel, style: AppTextStyles.label()),
-                      const SizedBox(height: 8),
-                      PasswordInput(
-                        controller: _passwordController,
-                        obscure: _obscurePassword,
-                        onToggle: () => setState(
-                            () => _obscurePassword = !_obscurePassword),
-                        onChanged: (_) {
-                          clearFieldError('password');
-                          setState(() {});
-                        },
-                        validator: fieldValidator(
-                          'password',
-                          requiredMessage: ErrorMessages.fieldRequired,
-                          extra: (value) {
-                            if (value.length < 8) {
-                              return ErrorMessages.passwordTooShort;
-                            }
-                            if (!value.contains(RegExp(r'[A-Z]'))) {
-                              return ErrorMessages.passwordNeedsUppercase;
-                            }
-                            if (!value.contains(RegExp(r'[0-9]'))) {
-                              return ErrorMessages.passwordNeedsDigit;
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _RuleRow(
-                          label: t.createPasswordRuleMinLength,
-                          satisfied: _hasMinLength),
-                      _RuleRow(
-                          label: t.createPasswordRuleUppercase,
-                          satisfied: _hasUppercase),
-                      _RuleRow(
-                          label: t.createPasswordRuleDigit,
-                          satisfied: _hasDigit),
-                      const SizedBox(height: 20),
-                      Text(t.createPasswordConfirmLabel,
-                          style: AppTextStyles.label()),
-                      const SizedBox(height: 8),
-                      PasswordInput(
-                        controller: _confirmController,
-                        obscure: _obscureConfirm,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => isBusy ? null : _submit(),
-                        onToggle: () =>
-                            setState(() => _obscureConfirm = !_obscureConfirm),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return ErrorMessages.fieldRequired;
-                          }
-                          if (value != _password) {
-                            return ErrorMessages.passwordMismatch;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 28),
-                      AppButton(
-                        label: t.createPasswordButton,
-                        onTap: isBusy ? null : _submit,
-                      ),
-                    ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  icon: Icon(
+                    LucideIcons.arrowLeft,
+                    size: 20,
+                    color: AppColors.ink,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/client/signup');
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  t.createPasswordTitle,
+                  style: AppTextStyles.authTitle(),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  t.createPasswordSubtitle,
+                  style: AppTextStyles.bodyMedium(
+                      color: AppColors.inkMuted(opacity: 0.6)),
+                ),
+                const SizedBox(height: 24),
+                Text(t.authPasswordLabel, style: AppTextStyles.label()),
+                const SizedBox(height: 8),
+                PasswordInput(
+                  controller: _passwordController,
+                  obscure: _obscurePassword,
+                  onToggle: () => setState(
+                      () => _obscurePassword = !_obscurePassword),
+                  onChanged: (_) {
+                    clearFieldError('password');
+                    setState(() {});
+                  },
+                  validator: fieldValidator(
+                    'password',
+                    requiredMessage: ErrorMessages.fieldRequired,
+                    extra: (value) {
+                      if (value.length < 8) {
+                        return ErrorMessages.passwordTooShort;
+                      }
+                      if (!value.contains(RegExp(r'[A-Z]'))) {
+                        return ErrorMessages.passwordNeedsUppercase;
+                      }
+                      if (!value.contains(RegExp(r'[0-9]'))) {
+                        return ErrorMessages.passwordNeedsDigit;
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
-            );
-          },
+                const SizedBox(height: 12),
+                _RuleRow(
+                    label: t.createPasswordRuleMinLength,
+                    satisfied: _hasMinLength),
+                _RuleRow(
+                    label: t.createPasswordRuleUppercase,
+                    satisfied: _hasUppercase),
+                _RuleRow(
+                    label: t.createPasswordRuleDigit,
+                    satisfied: _hasDigit),
+                const SizedBox(height: 20),
+                Text(t.createPasswordConfirmLabel,
+                    style: AppTextStyles.label()),
+                const SizedBox(height: 8),
+                PasswordInput(
+                  controller: _confirmController,
+                  obscure: _obscureConfirm,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => isBusy ? null : _submit(),
+                  onToggle: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return ErrorMessages.fieldRequired;
+                    }
+                    if (value != _passwordController.text) {
+                      return ErrorMessages.passwordMismatch;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 28),
+                AppButton(
+                  label: t.createPasswordButton,
+                  onTap: isBusy ? null : _submit,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
