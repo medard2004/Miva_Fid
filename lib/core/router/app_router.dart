@@ -44,8 +44,6 @@ import '../../features/merchant/screens/programme_tiers_screen.dart';
 import '../../features/merchant/screens/programme_rules_screen.dart';
 import '../../features/merchant/screens/programme_design_screen.dart';
 import '../../features/merchant/screens/qr_code_screen.dart';
-import '../../features/merchant/screens/account_category_screen.dart';
-import '../../features/merchant/screens/subscription_category_screen.dart';
 import '../../features/merchant/screens/profile_screen.dart' as merchant_profile;
 import '../../features/merchant/screens/subscription_screen.dart';
 import '../../features/merchant/screens/team_screen.dart';
@@ -56,7 +54,6 @@ import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/sms_conversation_screen.dart';
 import '../../features/merchant/screens/sms_campaign_detail_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
-import '../../features/merchant/screens/vitrine_screen.dart';
 import '../../features/merchant/screens/socials_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
@@ -656,11 +653,6 @@ GoRouter appRouter(AppRouterRef ref) {
                   pageBuilder: (_, __) => _slide(const LanguageThemeScreen()),
                 ),
                 GoRoute(
-                  path: 'hours',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const VitrineScreen()),
-                ),
-                GoRoute(
                   path: 'socials',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, __) => _slide(const SocialsScreen()),
@@ -671,40 +663,20 @@ GoRouter appRouter(AppRouterRef ref) {
                   pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
                 ),
                 GoRoute(
-                  path: 'account',
+                  path: 'qrcode',
                   parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const AccountCategoryScreen()),
-                  routes: [
-                    GoRoute(
-                      path: 'vitrine',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const VitrineScreen()),
-                    ),
-                    GoRoute(
-                      path: 'qrcode',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const QrCodeScreen()),
-                    ),
-                  ],
+                  pageBuilder: (_, __) => _slide(const QrCodeScreen()),
                 ),
                 GoRoute(
                   path: 'subscription',
                   parentNavigatorKey: rootNavigatorKey,
                   pageBuilder: (_, __) => _slide(const SubscriptionScreen()),
-                  routes: [
-                    GoRoute(
-                      path: 'plan',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const SubscriptionScreen()),
-                    ),
-                    GoRoute(
-                      path: 'team',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const TeamScreen()),
-                    ),
-                  ],
                 ),
               ],
+            ),
+            GoRoute(
+              path: '/merchant/qrcode',
+              pageBuilder: (_, __) => _fade(const QrCodeScreen()),
             ),
           ]),
         ],

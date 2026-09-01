@@ -34,7 +34,20 @@ class QrCodeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(t.merchantMoreMyQrCode),
+        title: Text(
+          t.merchantMoreMyQrCode,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(LucideIcons.chevronLeft, color: AppColors.textPrimary, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),

@@ -173,6 +173,7 @@ void _showExportModal(BuildContext context, LoyaltyCard card,
     GlobalKey exportKey, AppLocalizations t) {
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     builder: (context) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
@@ -183,15 +184,19 @@ void _showExportModal(BuildContext context, LoyaltyCard card,
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SectionEyebrow(t.cardDetailExportSheetTitle),
-                    const SizedBox(height: 4),
-                    Text(card.restaurantName,
-                        style: AppTextStyles.displayMedium()
-                            .copyWith(fontSize: 20)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionEyebrow(t.cardDetailExportSheetTitle),
+                      const SizedBox(height: 4),
+                      Text(card.restaurantName,
+                          style: AppTextStyles.displayMedium()
+                              .copyWith(fontSize: 20),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),

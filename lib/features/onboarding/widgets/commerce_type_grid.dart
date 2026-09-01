@@ -89,6 +89,8 @@ class _CommerceTypeGridState extends State<CommerceTypeGrid> {
                     const SizedBox(height: 4),
                     Text(
                       type.$1,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.caption().copyWith(
                         fontSize: 11,
                         color: isSelected

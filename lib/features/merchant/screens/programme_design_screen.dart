@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../models/merchant_model.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
 import '../../onboarding/widgets/color_palette_picker.dart';
@@ -36,8 +37,8 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     _initFromMerchant();
   }
 
-  void _initFromMerchant() {
-    if (_initialized) return;
+  void _initFromMerchant([bool force = false]) {
+    if (_initialized && !force) return;
 
     final m = ref.read(merchantNotifierProvider).value;
     final restaurant = ref.read(merchantAuthProvider).restaurant;
@@ -63,7 +64,9 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     notifier.setStampEmoji(m?.stampEmoji ?? (cfg['stamp_emoji'] as String?) ?? ob.stampEmoji);
     notifier.setLogoUrl(m?.logoUrl ?? restaurant?.logoUrl ?? ob.logoUrl ?? '');
     notifier.setLoyaltyMode(m?.loyaltyMode ?? restaurant?.loyaltyType ?? ob.loyaltyMode);
-    notifier.setStampsRequired(m?.stampsRequired ?? (cfg['goal'] as int?) ?? ob.stampsRequired);
+    
+    final goal = m?.stampsRequired ?? (cfg['goal'] as int?) ?? ob.stampsRequired;
+    notifier.setStampsRequired(goal > 0 ? goal : 10);
 
     final reward = m?.rewardDescription ?? (cfg['reward_description'] as String?) ?? ob.rewardDescription;
     if (reward.isNotEmpty) {
@@ -190,47 +193,50 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     final t = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Sp.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(t.merchantProgrammeDesignChooseIconTitle, style: AppTextStyles.h3()),
-            const SizedBox(height: Sp.md),
-            Wrap(
-              spacing: Sp.sm,
-              runSpacing: Sp.sm,
-              children: _stampIconChoices.map((choice) {
-                final (name, icon) = choice;
-                final isSelected = name == currentIcon;
-                return GestureDetector(
-                  onTap: () {
-                    notifier.setStampIcon(name);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF5B50EC) : AppColors.primaryTint,
-                      borderRadius: BorderRadius.circular(14),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.merchantProgrammeDesignChooseIconTitle, style: AppTextStyles.h3()),
+              const SizedBox(height: Sp.md),
+              Wrap(
+                spacing: Sp.sm,
+                runSpacing: Sp.sm,
+                children: _stampIconChoices.map((choice) {
+                  final (name, icon) = choice;
+                  final isSelected = name == currentIcon;
+                  return GestureDetector(
+                    onTap: () {
+                      notifier.setStampIcon(name);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF5B50EC) : AppColors.primaryTint,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: isSelected ? Colors.white : const Color(0xFF5B50EC),
+                        size: 24,
+                      ),
                     ),
-                    child: Icon(
-                      icon,
-                      color: isSelected ? Colors.white : const Color(0xFF5B50EC),
-                      size: 24,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
-          ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
+            ],
+          ),
         ),
       ),
     );
@@ -244,47 +250,50 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     final t = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Sp.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(t.merchantProgrammeDesignChooseEmojiTitle, style: AppTextStyles.h3()),
-            const SizedBox(height: Sp.md),
-            Wrap(
-              spacing: Sp.sm,
-              runSpacing: Sp.sm,
-              children: _stampEmojiChoices.map((emoji) {
-                final isSelected = emoji == currentEmoji;
-                return GestureDetector(
-                  onTap: () {
-                    notifier.setStampEmoji(emoji);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF5B50EC).withValues(alpha: 0.15) : Colors.transparent,
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF5B50EC) : AppColors.border,
-                        width: 1.5,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.merchantProgrammeDesignChooseEmojiTitle, style: AppTextStyles.h3()),
+              const SizedBox(height: Sp.md),
+              Wrap(
+                spacing: Sp.sm,
+                runSpacing: Sp.sm,
+                children: _stampEmojiChoices.map((emoji) {
+                  final isSelected = emoji == currentEmoji;
+                  return GestureDetector(
+                    onTap: () {
+                      notifier.setStampEmoji(emoji);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF5B50EC).withValues(alpha: 0.15) : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF5B50EC) : AppColors.border,
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      borderRadius: BorderRadius.circular(14),
+                      child: Text(emoji, style: const TextStyle(fontSize: 24)),
                     ),
-                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
-                  ),
-                );
-              }).toList(),
-            ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
-          ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
+            ],
+          ),
         ),
       ),
     );
@@ -296,8 +305,16 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     final t = AppLocalizations.of(context)!;
     final state = ref.watch(onboardingNotifierProvider);
     final notifier = ref.read(onboardingNotifierProvider.notifier);
-    final merchant = ref.watch(merchantNotifierProvider).value;
+    final merchantAsync = ref.watch(merchantNotifierProvider);
+    final merchant = merchantAsync.value;
     final restaurant = ref.watch(merchantAuthProvider).restaurant;
+
+    // React to merchant data loading if initialized early
+    ref.listen<AsyncValue<MerchantModel?>>(merchantNotifierProvider, (_, next) {
+      if (next.value != null && !_initialized) {
+        _initFromMerchant(true);
+      }
+    });
 
     final name = merchant?.name ?? restaurant?.name ?? 'VC';
     final String displayInitials = merchant?.initials ??
@@ -319,7 +336,7 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
         title: Text(
           t.merchantMoreCustomizeCard,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),

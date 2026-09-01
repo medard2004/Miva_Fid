@@ -35,8 +35,8 @@ class MerchantShell extends ConsumerWidget {
             initialLocation: index == currentIndex,
           );
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -46,13 +46,17 @@ class MerchantShell extends ConsumerWidget {
                 color: isActive ? activeColor : inactiveColor,
                 size: 22,
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive ? activeColor : inactiveColor,
+              const SizedBox(height: 3),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                    color: isActive ? activeColor : inactiveColor,
+                  ),
                 ),
               ),
             ],
@@ -82,56 +86,54 @@ class MerchantShell extends ConsumerWidget {
                   top: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 58,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildNavItem(
-                        index: 0,
-                        outlinedIcon: Icons.people_outline_rounded,
-                        filledIcon: Icons.people_rounded,
-                        label: t.merchantNavClients,
-                        currentIndex: currentIndex,
-                        ref: ref,
-                      ),
-                      _buildNavItem(
-                        index: 1,
-                        outlinedIcon: Icons.bar_chart_rounded,
-                        filledIcon: Icons.insert_chart_rounded,
-                        label: t.merchantNavStats,
-                        currentIndex: currentIndex,
-                        ref: ref,
-                      ),
-                      _buildNavItem(
-                        index: 2,
-                        outlinedIcon: Icons.qr_code_scanner_rounded,
-                        filledIcon: Icons.qr_code_2_rounded,
-                        label: t.merchantNavValidate,
-                        currentIndex: currentIndex,
-                        ref: ref,
-                      ),
-                      _buildNavItem(
-                        index: 3,
-                        outlinedIcon: Icons.chat_bubble_outline_rounded,
-                        filledIcon: Icons.chat_bubble_rounded,
-                        label: t.merchantNavSms,
-                        currentIndex: currentIndex,
-                        ref: ref,
-                      ),
-                      _buildNavItem(
-                        index: 4,
-                        outlinedIcon: Icons.settings_outlined,
-                        filledIcon: Icons.settings_rounded,
-                        label: t.merchantNavSettings,
-                        currentIndex: currentIndex,
-                        ref: ref,
-                      ),
-                    ],
+              padding: EdgeInsets.only(
+                top: 6,
+                bottom: MediaQuery.of(context).padding.bottom + 6,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    index: 0,
+                    outlinedIcon: Icons.people_outline_rounded,
+                    filledIcon: Icons.people_rounded,
+                    label: t.merchantNavClients,
+                    currentIndex: currentIndex,
+                    ref: ref,
                   ),
-                ),
+                  _buildNavItem(
+                    index: 1,
+                    outlinedIcon: Icons.bar_chart_rounded,
+                    filledIcon: Icons.insert_chart_rounded,
+                    label: t.merchantNavStats,
+                    currentIndex: currentIndex,
+                    ref: ref,
+                  ),
+                  _buildNavItem(
+                    index: 2,
+                    outlinedIcon: Icons.qr_code_scanner_rounded,
+                    filledIcon: Icons.qr_code_2_rounded,
+                    label: t.merchantNavValidate,
+                    currentIndex: currentIndex,
+                    ref: ref,
+                  ),
+                  _buildNavItem(
+                    index: 3,
+                    outlinedIcon: Icons.chat_bubble_outline_rounded,
+                    filledIcon: Icons.chat_bubble_rounded,
+                    label: t.merchantNavSms,
+                    currentIndex: currentIndex,
+                    ref: ref,
+                  ),
+                  _buildNavItem(
+                    index: 4,
+                    outlinedIcon: Icons.settings_outlined,
+                    filledIcon: Icons.settings_rounded,
+                    label: t.merchantNavSettings,
+                    currentIndex: currentIndex,
+                    ref: ref,
+                  ),
+                ],
               ),
             ),
     );

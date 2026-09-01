@@ -345,7 +345,12 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$count'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: AppColors.border,
+                      backgroundColor: AppColors.isDark ? AppColors.background : AppColors.border,
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.merchant
+                            : AppColors.border,
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -461,7 +466,12 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$val F'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: AppColors.border,
+                      backgroundColor: AppColors.isDark ? AppColors.background : AppColors.border,
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.merchant
+                            : AppColors.border,
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -590,7 +600,12 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$count%'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: AppColors.border,
+                      backgroundColor: AppColors.isDark ? AppColors.background : AppColors.border,
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.merchant
+                            : AppColors.border,
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -729,7 +744,11 @@ class _ExplanationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFC7D2FE)),
+        border: Border.all(
+          color: AppColors.isDark
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : const Color(0xFFC7D2FE),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -749,8 +768,10 @@ class _ExplanationCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFF312E81),
+                  style: TextStyle(
+                    color: AppColors.isDark
+                        ? AppColors.textPrimary
+                        : const Color(0xFF312E81),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -758,8 +779,10 @@ class _ExplanationCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Color(0xFF4338CA),
+                  style: TextStyle(
+                    color: AppColors.isDark
+                        ? AppColors.primaryLight
+                        : const Color(0xFF4338CA),
                     fontSize: 11.5,
                     height: 1.4,
                   ),

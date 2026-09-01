@@ -71,7 +71,14 @@ class ActivityRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(item.clientName, style: AppTextStyles.labelBold()),
+                    Flexible(
+                      child: Text(
+                        item.clientName,
+                        style: AppTextStyles.labelBold(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     const SizedBox(width: Sp.xs),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

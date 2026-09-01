@@ -250,7 +250,11 @@ class _MerchantLocationScreenState
                         decoration: BoxDecoration(
                           color: AppColors.successTint,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                          border: Border.all(
+                            color: AppColors.isDark
+                                ? AppColors.success.withValues(alpha: 0.3)
+                                : const Color(0xFFBBF7D0),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -265,8 +269,10 @@ class _MerchantLocationScreenState
                                 _autoDetected
                                     ? 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)} (Auto-détecté)'
                                     : 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}',
-                                style: const TextStyle(
-                                  color: Color(0xFF15803D),
+                                style: TextStyle(
+                                  color: AppColors.isDark
+                                      ? const Color(0xFF86EFAC)
+                                      : const Color(0xFF15803D),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),

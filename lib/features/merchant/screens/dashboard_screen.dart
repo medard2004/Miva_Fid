@@ -58,26 +58,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          t.merchantDashboardTitle,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          t.merchantDashboardSubtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      t.merchantDashboardTitle,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   InkWell(
@@ -419,42 +406,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              if (sublabel != null) ...[
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
+                if (sublabel != null) ...[
+                  const SizedBox(width: 4),
+                  Text(
                     sublabel,
                     style: TextStyle(
                       fontSize: 10.5,
                       color: AppColors.textSecondary,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-              if (badge != null) ...[
-                const SizedBox(width: 4),
-                Text(
-                  badge,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: badgeColor ?? const Color(0xFF16A34A),
+                ],
+                if (badge != null) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: badgeColor ?? const Color(0xFF16A34A),
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ],
       ),

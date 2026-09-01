@@ -85,6 +85,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     final t = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),

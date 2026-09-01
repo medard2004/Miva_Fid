@@ -627,27 +627,13 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.merchantClientsTitle,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                t.merchantClientsActiveCount(
-                                    _clients.length.toString()),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            t.merchantClientsTitle,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                         // Search Button in TopBar
@@ -888,17 +874,21 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            t.merchantClientsPaginationInfo(
-                                '1',
-                                clients.length.toString(),
-                                clients.length.toString()),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
+                          Flexible(
+                            child: Text(
+                              t.merchantClientsPaginationInfo(
+                                  '1',
+                                  clients.length.toString(),
+                                  clients.length.toString()),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Row(
                             children: [
                               Text(

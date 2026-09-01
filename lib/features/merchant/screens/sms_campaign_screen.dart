@@ -419,26 +419,13 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          t.merchantNavSms,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          t.merchantSmsCampaignSubtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      t.merchantNavSms,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   InkWell(
@@ -574,12 +561,16 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Text(
-                                      camp.title,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                                    Flexible(
+                                      child: Text(
+                                        camp.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -645,22 +636,30 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                                 const SizedBox(height: 8),
                                 Row(
                                   children: [
-                                    Text(
-                                      camp.sentStats,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                                    Flexible(
+                                      child: Text(
+                                        camp.sentStats,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ),
                                     if (camp.openStats != null) ...[
                                       const SizedBox(width: 8),
-                                      Text(
-                                        camp.openStats!,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF16A34A),
+                                      Flexible(
+                                        child: Text(
+                                          camp.openStats!,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF16A34A),
+                                          ),
                                         ),
                                       ),
                                     ],

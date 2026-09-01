@@ -114,11 +114,13 @@ Future<void> _showRewardQr(BuildContext context, WidgetRef ref, Reward reward) a
   final t = AppLocalizations.of(context)!;
   await showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (sheetContext) => Padding(
+    builder: (sheetContext) => SingleChildScrollView(
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -214,6 +216,7 @@ Future<void> _showRewardQr(BuildContext context, WidgetRef ref, Reward reward) a
           ),
         ],
       ),
+      ),
     ),
   );
   await ref.read(rewardsProvider.notifier).loadMine();
@@ -237,17 +240,23 @@ class _ActiveRewardCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                reward.restaurantName.toUpperCase(),
-                style: AppTextStyles.eyebrow(color: AppColors.primary),
+              Expanded(
+                child: Text(
+                  reward.restaurantName.toUpperCase(),
+                  style: AppTextStyles.eyebrow(color: AppColors.primary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              if (reward.expiresAt != null)
+              if (reward.expiresAt != null) ...[
+                const SizedBox(width: 8),
                 StatusBadge(
                   label: reward.daysRemainingText(t.commonCountdownPrefix),
                   tone: reward.isExpiringSoon
                       ? StatusTone.warning
                       : StatusTone.neutral,
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -279,19 +288,25 @@ class _HistoryRewardRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          reward.status == RewardStatus.used
-              ? reward.formattedUsedDate(dateFormatLocale)
-              : statusLabel,
-          style:
-              AppTextStyles.monoSmall(color: AppColors.inkMuted(opacity: 0.8)),
+        Flexible(
+          child: Text(
+            reward.status == RewardStatus.used
+                ? reward.formattedUsedDate(dateFormatLocale)
+                : statusLabel,
+            style: AppTextStyles.monoSmall(
+                color: AppColors.inkMuted(opacity: 0.8)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             '${reward.restaurantName}  ·  ${reward.title}',
             style: AppTextStyles.bodyMedium(
                 color: AppColors.inkMuted(opacity: 0.8)),
             textAlign: TextAlign.end,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),

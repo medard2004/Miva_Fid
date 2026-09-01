@@ -76,9 +76,9 @@ class MoreScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      t.settingsTitle,
+                      t.merchantNavSettings,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
@@ -322,14 +322,9 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/programme/tiers'),
                 ),
                 _buildMenuItem(
-                  icon: LucideIcons.sparkles,
-                  label: t.merchantMoreLoyaltyProgram,
-                  onTap: () => context.push('/merchant/more/programme/rules'),
-                ),
-                _buildMenuItem(
                   icon: LucideIcons.qrCode,
                   label: t.merchantMoreMyQrCode,
-                  onTap: () => context.push('/merchant/more/account/qrcode'),
+                  onTap: () => context.push('/merchant/more/qrcode'),
                 ),
               ]),
               const SizedBox(height: 20),
