@@ -81,7 +81,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 120, // Hauteur encore réduite
+      height: 100,
       child: PageView.builder(
         controller: _pageController,
         onPageChanged: (index) {

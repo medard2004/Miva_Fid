@@ -50,8 +50,8 @@ class WalletDashboardScreen extends ConsumerWidget {
                   child: AppTapScale(
                     onTap: () => context.push('/client/wallet/search'),
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 38,
+                      height: 38,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: AppColors.surfaceCard,
@@ -59,7 +59,7 @@ class WalletDashboardScreen extends ConsumerWidget {
                         boxShadow: AppShadows.resting,
                       ),
                       child: Icon(LucideIcons.search,
-                          size: 20, color: AppColors.ink),
+                          size: 18, color: AppColors.ink),
                     ),
                   ),
                 ),
@@ -81,12 +81,12 @@ class WalletDashboardScreen extends ConsumerWidget {
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics()),
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const PromoCarousel(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       cards.isEmpty
                           ? _EmptyWallet(
                               t: t, onScan: () => context.push('/client/onboarding/scan'))
@@ -99,15 +99,14 @@ class WalletDashboardScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 8, right: 4),
         child: Container(
-          width: 58,
-          height: 58,
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
             color: AppColors.primary,
             shape: BoxShape.circle,
@@ -115,7 +114,7 @@ class WalletDashboardScreen extends ConsumerWidget {
           ),
           child: IconButton(
             icon:
-                const Icon(LucideIcons.scanLine, color: Colors.white, size: 26),
+                const Icon(LucideIcons.scanLine, color: Colors.white, size: 24),
             onPressed: () => context.push('/client/onboarding/scan'),
           ),
         ),

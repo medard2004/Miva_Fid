@@ -34,25 +34,61 @@ class AppTextStyles {
       );
 
   static TextStyle displayLarge({Color? color}) => GoogleFonts.cormorant(
-        fontSize: 26,
+        fontSize: 28,
         fontWeight: FontWeight.w700,
         color: color ?? AppColors.ink,
-        height: 1.2,
+        height: 1.15,
         letterSpacing: -0.1,
       );
 
+  /// Titre de page d'authentification : uniforme pour connexion,
+  /// inscription, récupération de mot de passe et autres écrans liés à
+  /// l'identification du client.
+  static TextStyle authTitle({Color? color}) => GoogleFonts.cormorant(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.ink,
+        height: 1.1,
+        letterSpacing: -0.2,
+      );
+
   static TextStyle displayMedium({Color? color}) => GoogleFonts.cormorant(
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: FontWeight.w600,
         color: color ?? AppColors.ink,
         height: 1.25,
       );
 
   static TextStyle titleMedium({Color? color}) => GoogleFonts.cormorant(
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: FontWeight.w600,
         color: color ?? AppColors.ink,
         height: 1.3,
+      );
+
+  // --- Titres client standard (Cormorant) ---
+  static TextStyle h1({Color? color}) => GoogleFonts.cormorant(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.ink,
+      );
+
+  static TextStyle h2({Color? color}) => GoogleFonts.cormorant(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.ink,
+      );
+
+  static TextStyle h3({Color? color}) => GoogleFonts.cormorant(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        color: color ?? AppColors.ink,
+      );
+
+  static TextStyle labelBold({Color? color}) => GoogleFonts.plusJakartaSans(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.ink,
       );
 
   // --- Corps / UI — Inter, poids réguliers ---
@@ -69,6 +105,20 @@ class AppTextStyles {
         fontWeight: FontWeight.w400,
         color: color ?? AppColors.ink,
         height: 1.45,
+      );
+
+  static TextStyle bodyMd({Color? color}) => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: color ?? AppColors.ink,
+        height: 1.45,
+      );
+
+  static TextStyle caption({Color? color}) => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: (color ?? AppColors.ink).withValues(alpha: 0.68),
+        height: 1.35,
       );
 
   static TextStyle bodySmall({Color? color}) => GoogleFonts.inter(

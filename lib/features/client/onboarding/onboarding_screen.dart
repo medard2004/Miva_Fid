@@ -85,14 +85,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '0${_currentPage + 1} / 0${slides.length}',
-                    style: AppTextStyles.monoMedium(
-                        color: AppColors.inkMuted(opacity: 0.5)),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                    icon: Icon(
+                      LucideIcons.arrowLeft,
+                      size: 20,
+                      color: AppColors.ink,
+                    ),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/role-select');
+                      }
+                    },
                   ),
                   TextButton(
                     onPressed: _completeOnboarding,

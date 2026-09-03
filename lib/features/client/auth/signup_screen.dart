@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
@@ -153,184 +154,194 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(minHeight: constraints.maxHeight - 32),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.authSignupTitle, style: AppTextStyles.displayHero()),
-                      const SizedBox(height: 20),
-                      Text(t.editProfileFullName, style: AppTextStyles.label()),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _fullNameController,
-                        keyboardType: TextInputType.name,
-                        validator: fieldValidator(
-                          'first_name',
-                          requiredMessage: t.editProfileFullNameError,
-                        ),
-                        onChanged: (_) => clearFieldError('first_name'),
-                        style: AppTextStyles.bodyMedium(),
-                        decoration: InputDecoration(
-                          hintText: t.editProfileFullNameHint,
-                          hintStyle: AppTextStyles.bodyMedium(
-                              color: AppColors.inkMuted(opacity: 0.4)),
-                          filled: true,
-                          fillColor: AppColors.surfaceMuted,
-                        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  icon: Icon(
+                    LucideIcons.arrowLeft,
+                    size: 20,
+                    color: AppColors.ink,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/client/auth');
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  t.authSignupTitle,
+                  style: AppTextStyles.authTitle(),
+                ),
+                const SizedBox(height: 20),
+                Text(t.editProfileFullName, style: AppTextStyles.label()),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _fullNameController,
+                  keyboardType: TextInputType.name,
+                  validator: fieldValidator(
+                    'first_name',
+                    requiredMessage: t.editProfileFullNameError,
+                  ),
+                  onChanged: (_) => clearFieldError('first_name'),
+                  style: AppTextStyles.bodyMedium(),
+                  decoration: InputDecoration(
+                    hintText: t.editProfileFullNameHint,
+                    hintStyle: AppTextStyles.bodyMedium(
+                        color: AppColors.inkMuted(opacity: 0.4)),
+                    filled: true,
+                    fillColor: AppColors.surfaceMuted,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(t.editProfileBirthDate,
+                    style: AppTextStyles.label()),
+                const SizedBox(height: 6),
+                AppDatePickerField(
+                  value: _birthDate,
+                  onChanged: (date) => setState(() => _birthDate = date),
+                  validator: (_) => _birthDate == null
+                      ? t.authBirthDateError
+                      : fieldError('birthdate'),
+                ),
+                const SizedBox(height: 14),
+                Text(t.commonPhoneLabel, style: AppTextStyles.label()),
+                const SizedBox(height: 6),
+                PhoneInputWithCountryPicker(
+                  key: _phoneInputKey,
+                  controller: _phoneController,
+                  validator: fieldValidator(
+                    'phone',
+                    requiredMessage: t.authPhoneRequiredError,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _acceptedTerms,
+                        onChanged: (value) => setState(() {
+                          _acceptedTerms = value ?? false;
+                          if (_acceptedTerms) _showTermsError = false;
+                        }),
                       ),
-                      const SizedBox(height: 14),
-                      Text(t.editProfileBirthDate,
-                          style: AppTextStyles.label()),
-                      const SizedBox(height: 6),
-                      AppDatePickerField(
-                        value: _birthDate,
-                        onChanged: (date) => setState(() => _birthDate = date),
-                        validator: (_) => _birthDate == null
-                            ? t.authBirthDateError
-                            : fieldError('birthdate'),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(t.commonPhoneLabel, style: AppTextStyles.label()),
-                      const SizedBox(height: 6),
-                      PhoneInputWithCountryPicker(
-                        key: _phoneInputKey,
-                        controller: _phoneController,
-                        validator: fieldValidator(
-                          'phone',
-                          requiredMessage: t.authPhoneRequiredError,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: Checkbox(
-                              value: _acceptedTerms,
-                              onChanged: (value) => setState(() {
-                                _acceptedTerms = value ?? false;
-                                if (_acceptedTerms) _showTermsError = false;
-                              }),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => setState(() {
-                                _acceptedTerms = !_acceptedTerms;
-                                if (_acceptedTerms) _showTermsError = false;
-                              }),
-                              child: RichText(
-                                text: TextSpan(
-                                  style: AppTextStyles.bodySmall(
-                                      color: AppColors.inkMuted(opacity: 0.55)),
-                                  children: [
-                                    TextSpan(text: t.authAcceptPrefix),
-                                    TextSpan(
-                                      text: t.authTermsLink,
-                                      style: AppTextStyles.bodySmall(
-                                              color: AppColors.ink)
-                                          .copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              decoration:
-                                                  TextDecoration.underline),
-                                      recognizer: _termsTap,
-                                    ),
-                                    TextSpan(text: t.authAcceptAnd),
-                                    TextSpan(
-                                      text: t.authPrivacyLink,
-                                      style: AppTextStyles.bodySmall(
-                                              color: AppColors.ink)
-                                          .copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              decoration:
-                                                  TextDecoration.underline),
-                                      recognizer: _privacyTap,
-                                    ),
-                                    const TextSpan(text: '.'),
-                                  ],
-                                ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => setState(() {
+                          _acceptedTerms = !_acceptedTerms;
+                          if (_acceptedTerms) _showTermsError = false;
+                        }),
+                        child: RichText(
+                          text: TextSpan(
+                            style: AppTextStyles.bodySmall(
+                                color: AppColors.inkMuted(opacity: 0.55)),
+                            children: [
+                              TextSpan(text: t.authAcceptPrefix),
+                              TextSpan(
+                                text: t.authTermsLink,
+                                style: AppTextStyles.bodySmall(
+                                        color: AppColors.ink)
+                                    .copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        decoration:
+                                            TextDecoration.underline),
+                                recognizer: _termsTap,
                               ),
-                            ),
+                              TextSpan(text: t.authAcceptAnd),
+                              TextSpan(
+                                text: t.authPrivacyLink,
+                                style: AppTextStyles.bodySmall(
+                                        color: AppColors.ink)
+                                    .copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        decoration:
+                                            TextDecoration.underline),
+                                recognizer: _privacyTap,
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_showTermsError) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    t.authTermsRequiredError,
+                    style: AppTextStyles.bodySmall(color: AppColors.error),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                AppButton(
+                  label: t.authSignupButton,
+                  onTap: isBusy ? null : _submit,
+                ),
+                const SizedBox(height: 18),
+                const OrDivider(),
+                const SizedBox(height: 18),
+                AppButton(
+                  label: t.authSignupGoogle,
+                  variant: AppButtonVariant.outline,
+                  leading: SvgPicture.asset(
+                      'assets/icons/google_logo.svg',
+                      width: 18,
+                      height: 18),
+                  onTap: isBusy
+                      ? null
+                      : () => _continueWithSocial(AuthProvider.google),
+                ),
+                const SizedBox(height: 10),
+                AppButton(
+                  label: t.authSignupApple,
+                  variant: AppButtonVariant.outline,
+                  icon: SimpleIcons.apple,
+                  onTap: isBusy
+                      ? null
+                      : () => _continueWithSocial(AuthProvider.apple),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: AppTapScale(
+                    onTap: _goToLogin,
+                    scaleDown: 0.95,
+                    child: Text.rich(
+                      TextSpan(
+                        text: t.authHasAccountPrefix,
+                        style: AppTextStyles.bodyMedium(
+                            color: AppColors.inkMuted(opacity: 0.55)),
+                        children: [
+                          TextSpan(
+                            text: t.profileSignIn,
+                            style: AppTextStyles.bodyMedium(
+                                    color: AppColors.primary)
+                                .copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
-                      if (_showTermsError) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          t.authTermsRequiredError,
-                          style: AppTextStyles.bodySmall(color: AppColors.error),
-                        ),
-                      ],
-                      const SizedBox(height: 14),
-                      AppButton(
-                        label: t.authSignupButton,
-                        onTap: isBusy ? null : _submit,
-                      ),
-                      const SizedBox(height: 18),
-                      const OrDivider(),
-                      const SizedBox(height: 18),
-                      AppButton(
-                        label: t.authSignupGoogle,
-                        variant: AppButtonVariant.outline,
-                        leading: SvgPicture.asset(
-                            'assets/icons/google_logo.svg',
-                            width: 18,
-                            height: 18),
-                        onTap: isBusy
-                            ? null
-                            : () => _continueWithSocial(AuthProvider.google),
-                      ),
-                      const SizedBox(height: 10),
-                      AppButton(
-                        label: t.authSignupApple,
-                        variant: AppButtonVariant.outline,
-                        icon: SimpleIcons.apple,
-                        onTap: isBusy
-                            ? null
-                            : () => _continueWithSocial(AuthProvider.apple),
-                      ),
-                      const SizedBox(height: 20),
-                      const SizedBox(height: 16),
-                      Center(
-                        child: AppTapScale(
-                          onTap: _goToLogin,
-                          scaleDown: 0.95,
-                          child: Text.rich(
-                            TextSpan(
-                              text: t.authHasAccountPrefix,
-                              style: AppTextStyles.bodyMedium(
-                                  color: AppColors.inkMuted(opacity: 0.55)),
-                              children: [
-                                TextSpan(
-                                  text: t.profileSignIn,
-                                  style: AppTextStyles.bodyMedium(
-                                          color: AppColors.primary)
-                                      .copyWith(fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+          ),
         ),
       ),
     );

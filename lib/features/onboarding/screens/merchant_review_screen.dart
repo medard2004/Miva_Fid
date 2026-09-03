@@ -8,10 +8,8 @@ import '../../../core/errors/app_error.dart';
 import '../../../core/errors/error_messages.dart';
 import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/haptics.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/utils/toast_service.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/loyalty_card_preview.dart';
@@ -21,7 +19,8 @@ class MerchantReviewScreen extends ConsumerStatefulWidget {
   const MerchantReviewScreen({super.key});
 
   @override
-  ConsumerState<MerchantReviewScreen> createState() => _MerchantReviewScreenState();
+  ConsumerState<MerchantReviewScreen> createState() =>
+      _MerchantReviewScreenState();
 }
 
 class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
@@ -31,11 +30,16 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
     setState(() => _loading = true);
 
     try {
-      final ok =
-          await ref.read(onboardingNotifierProvider.notifier).submitLoyaltyProgram();
+      final ok = await ref
+          .read(onboardingNotifierProvider.notifier)
+          .submitLoyaltyProgram();
       if (!ok) throw Exception('refreshFromApi failed');
       await AppHaptics.heavy();
-      if (mounted) context.go('/auth/merchant/success');
+      if (mounted) {
+        ToastService.showSuccess(
+            'Votre programme a été enregistré avec succès !');
+        context.go('/merchant/qrcode');
+      }
     } catch (e) {
       debugPrint('Save loyalty program error: $e');
       if (mounted) {
@@ -43,9 +47,6 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
           e,
           context: ErrorContext.createLoyaltyProgram,
         );
-        // Un 422 peut porter plusieurs champs invalides à la fois (step2 et
-        // step3 sont soumis ensemble ici) — les lister tous plutôt que
-        // n'afficher que le premier évite un aller-retour par champ.
         final message = error.hasFieldErrors
             ? error.fieldErrors.values.join('\n')
             : error.displayMessage ?? ErrorMessages.profileSaveFailed;
@@ -56,263 +57,271 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
     }
   }
 
-  String get _modeLabel {
-    final mode = ref.read(onboardingNotifierProvider).loyaltyMode;
+  String _modeLabel(String mode) {
     switch (mode) {
       case 'spend':
-        return 'Achats';
+        return 'Montant dépensé';
       case 'cashback':
         return 'Cashback';
       default:
-        return 'Tampons';
+        return 'Passages / Tampons';
     }
   }
 
-  static const Map<String, String> _stampIconLabels = {
-    'check_rounded': 'Coche',
-    'star_rounded': 'Étoile',
-    'favorite_rounded': 'Cœur',
-    'local_cafe_rounded': 'Café',
-    'card_giftcard_rounded': 'Cadeau',
-    'auto_awesome_rounded': 'Étincelles',
-    'emoji_emotions_rounded': 'Sourire',
-    'diamond_rounded': 'Diamant',
-  };
-
-  String _stampIconLabel(String key) => _stampIconLabels[key] ?? 'Coche';
+  String _goalLabel(OnboardingState state) {
+    switch (state.loyaltyMode) {
+      case 'spend':
+        return '${state.stampsRequired} points';
+      case 'cashback':
+        final formattedPercentage = state.cashbackPercentage
+                    .truncateToDouble() ==
+                state.cashbackPercentage
+            ? state.cashbackPercentage.toInt().toString()
+            : state.cashbackPercentage.toStringAsFixed(1);
+        return '$formattedPercentage%';
+      default:
+        return '${state.stampsRequired} passages';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Ces ecrans peignent via les tokens statiques d'AppColors,
-    // invisibles pour le systeme de dependances de Flutter : observer
-    // la luminosite effective est leur seul declencheur de rebuild sur
-    // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
     final state = ref.watch(onboardingNotifierProvider);
-    final cityCountry =
-        [state.city, state.country].where((v) => v.isNotEmpty).join(', ');
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
+            // Top Bar with back button
             Padding(
-              padding: const EdgeInsets.fromLTRB(Sp.md, Sp.md, Sp.md, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => context.go('/auth/merchant/step3'),
-                    icon: Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                    icon: Icon(
+                      LucideIcons.arrowLeft,
+                      size: 20,
+                      color: AppColors.textPrimary,
+                    ),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/auth/merchant/step3');
+                      }
+                    },
                   ),
                 ],
               ),
             ),
+
+            // Scrollable Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(Sp.md, 0, Sp.md, Sp.md),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: AppColors.merchantTint,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(LucideIcons.sparkles, size: 12, color: AppColors.merchant),
-                          const SizedBox(width: 4),
-                          Text(
-                            'PRESQUE PRÊT',
-                            style: AppTextStyles.caption().copyWith(
-                              color: AppColors.merchant,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                              fontSize: 10.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fadeIn(duration: 300.ms),
-                    const SizedBox(height: Sp.sm),
+                    // Title and Subtitle
                     Text(
-                      'Votre carte est prête',
-                      style: AppTextStyles.h1().copyWith(fontWeight: FontWeight.w900),
-                    )
-                        .animate(delay: 50.ms)
-                        .fadeIn(duration: 300.ms),
-                    const SizedBox(height: Sp.xs),
+                      'Récapitulatif',
+                      style: AppTextStyles.h2().copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        color: AppColors.textPrimary,
+                      ),
+                    ).animate().fadeIn(duration: 250.ms),
+                    const SizedBox(height: 4),
                     Text(
-                      'Vérifiez les informations avant de l\'activer.',
-                      style: AppTextStyles.bodyMd().copyWith(color: AppColors.textSecondary),
-                    ).animate(delay: 80.ms).fadeIn(duration: 300.ms),
-                    const SizedBox(height: Sp.lg),
+                      'Vérifiez avant de générer votre QR code.',
+                      style: AppTextStyles.bodyMd().copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 13.5,
+                      ),
+                    ).animate(delay: 50.ms).fadeIn(duration: 250.ms),
+                    const SizedBox(height: 18),
 
+                    // Loyalty Card Preview
                     LoyaltyCardPreview(
                       previewStamps: (state.stampsRequired * 0.7).round(),
-                    ).animate(delay: 100.ms).fadeIn(duration: 350.ms).slideY(
-                          begin: 0.06,
-                          end: 0,
-                          duration: 350.ms,
-                          curve: Curves.easeOut,
-                        ),
-                    const SizedBox(height: Sp.lg),
+                    ).animate(delay: 100.ms).fadeIn(duration: 300.ms),
+                    const SizedBox(height: 20),
 
-                    _ReviewSection(
-                      stepBadge: 'Étape 1',
-                      title: 'Commerce & Contacts',
-                      onEdit: () => context.go('/auth/merchant/step1'),
-                      rows: [
-                        _ReviewRow(
-                          icon: LucideIcons.store,
-                          label: 'Nom',
-                          value: state.commerceName.isEmpty ? '—' : state.commerceName,
-                        ),
-                        _ReviewRow(
-                          icon: LucideIcons.tag,
-                          label: 'Catégorie',
-                          value: state.commerceType.isEmpty ? '—' : state.commerceType,
-                        ),
-                        _ReviewRow(
-                          icon: LucideIcons.phone,
-                          label: 'Téléphone',
-                          value: state.phone.isEmpty ? '—' : state.phone,
-                        ),
-                        if (state.whatsapp.isNotEmpty)
-                          _ReviewRow(
-                            icon: LucideIcons.messageCircle,
-                            label: 'WhatsApp',
-                            value: state.whatsapp,
+                    // Clean Summary Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                      ],
-                    ).animate(delay: 120.ms).fadeIn(duration: 350.ms),
-                    const SizedBox(height: Sp.md),
-
-                    _ReviewSection(
-                      stepBadge: 'Étape 2',
-                      title: 'Localisation du commerce',
-                      onEdit: () => context.go('/auth/merchant/location'),
-                      rows: [
-                        _ReviewRow(
-                          icon: LucideIcons.globe,
-                          label: 'Pays & Ville',
-                          value: cityCountry.isEmpty ? 'Non renseignés' : cityCountry,
-                        ),
-                        _ReviewRow(
-                          icon: LucideIcons.mapPin,
-                          label: 'Adresse / Repère',
-                          value: state.address.isEmpty ? 'Non renseignée' : state.address,
-                        ),
-                        _ReviewRow(
-                          icon: LucideIcons.locateFixed,
-                          label: 'Position GPS',
-                          value: state.latitude != null && state.longitude != null
-                              ? '${state.latitude!.toStringAsFixed(4)}, ${state.longitude!.toStringAsFixed(4)}'
-                              : 'Non définie',
-                        ),
-                      ],
-                    ).animate(delay: 140.ms).fadeIn(duration: 350.ms),
-                    const SizedBox(height: Sp.md),
-
-                    _ReviewSection(
-                      stepBadge: 'Étape 3',
-                      title: 'Programme de fidélité',
-                      onEdit: () => context.go('/auth/merchant/step2'),
-                      rows: [
-                        _ReviewRow(
-                          icon: LucideIcons.layoutGrid,
-                          label: 'Mode de fidélité',
-                          value: _modeLabel,
-                        ),
-                        if (state.loyaltyMode == 'stamps') ...[
-                          _ReviewRow(
-                            icon: LucideIcons.stamp,
-                            label: 'Objectif',
-                            value: '${state.stampsRequired} tampons',
-                          ),
-                          _ReviewRow(
-                            icon: LucideIcons.gift,
-                            label: 'Récompense offerte',
-                            value: state.rewardDescription.isEmpty
-                                ? 'Non renseignée'
-                                : state.rewardDescription,
-                          ),
-                        ] else if (state.loyaltyMode == 'spend') ...[
-                          _ReviewRow(
-                            icon: LucideIcons.coins,
-                            label: 'Taux de conversion',
-                            value: '1 point = ${state.fcfaPerPoint} FCFA',
-                          ),
-                          _ReviewRow(
-                            icon: LucideIcons.target,
-                            label: 'Objectif',
-                            value: '${state.stampsRequired} points (${state.fcfaPerPoint * state.stampsRequired} FCFA)',
-                          ),
-                          _ReviewRow(
-                            icon: LucideIcons.gift,
-                            label: 'Récompense offerte',
-                            value: state.rewardDescription.isEmpty
-                                ? 'Non renseignée'
-                                : state.rewardDescription,
-                          ),
-                        ] else if (state.loyaltyMode == 'cashback') ...[
-                          _ReviewRow(
-                            icon: LucideIcons.percent,
-                            label: 'Pourcentage reversé',
-                            value: '${state.cashbackPercentage}% de chaque achat',
-                          ),
-                          if (state.cashbackExpiryDays != null)
-                            _ReviewRow(
-                              icon: LucideIcons.calendarClock,
-                              label: 'Validité du solde',
-                              value: '${state.cashbackExpiryDays} jours',
-                            ),
                         ],
-                      ],
-                    ).animate(delay: 160.ms).fadeIn(duration: 350.ms),
-                    const SizedBox(height: Sp.md),
-
-                    _ReviewSection(
-                      stepBadge: 'Étape 4',
-                      title: 'Design de la carte',
-                      onEdit: () => context.go('/auth/merchant/step3'),
-                      rows: [
-                        _ReviewRow(
-                          icon: LucideIcons.palette,
-                          label: 'Couleur principale',
-                          value: 'Personnalisée',
-                          swatchColor: state.colorPrimary,
-                        ),
-                        if (state.loyaltyMode == 'stamps')
-                          _ReviewRow(
-                            icon: LucideIcons.sparkles,
-                            label: 'Style des tampons',
-                            value: state.stampDesignType == 'emoji'
-                                ? 'Emoji ${state.stampEmoji}'
-                                : _stampIconLabel(state.stampIcon),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildSummaryRow(
+                            label: 'Commerce',
+                            value: state.commerceName.isNotEmpty
+                                ? state.commerceName
+                                : '—',
                           ),
-                      ],
-                    ).animate(delay: 180.ms).fadeIn(duration: 350.ms),
-                    const SizedBox(height: Sp.xl),
+                          const Divider(height: 1),
+                          _buildSummaryRow(
+                            label: 'Catégorie',
+                            value: state.commerceType.isNotEmpty
+                                ? state.commerceType
+                                : '—',
+                          ),
+                          const Divider(height: 1),
+                          _buildSummaryRow(
+                            label: 'Ville',
+                            value: state.city.isNotEmpty
+                                ? state.city
+                                : (state.country.isNotEmpty
+                                    ? state.country
+                                    : '—'),
+                          ),
+                          const Divider(height: 1),
+                          _buildSummaryRow(
+                            label: 'Téléphone',
+                            value: state.phone.isNotEmpty ? state.phone : '—',
+                          ),
+                          const Divider(height: 1),
+                          _buildSummaryRow(
+                            label: 'Objectif',
+                            value: _goalLabel(state),
+                          ),
+                          const Divider(height: 1),
+                          _buildSummaryRow(
+                            label: 'Récompense',
+                            value: state.rewardDescription.isNotEmpty
+                                ? state.rewardDescription
+                                : '—',
+                          ),
+                          const Divider(height: 1),
+                          _buildSummaryRow(
+                            label: 'Mécanique',
+                            value: _modeLabel(state.loyaltyMode),
+                          ),
+                          const Divider(height: 1),
+                          _buildSummaryRow(
+                            label: 'Avis Google',
+                            value: state.showReviewButton &&
+                                    state.googleReviewUrl.isNotEmpty
+                                ? 'Activé'
+                                : 'Désactivé',
+                          ),
+                        ],
+                      ),
+                    ).animate(delay: 150.ms).fadeIn(duration: 300.ms),
+
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
+
+            // Bottom Buttons (Primary Purple + Secondary Return)
             Padding(
               padding: EdgeInsets.fromLTRB(
-                Sp.md,
-                0,
-                Sp.md,
-                MediaQuery.of(context).padding.bottom + Sp.md,
+                20,
+                8,
+                20,
+                MediaQuery.of(context).padding.bottom + 12,
               ),
-              child: AppButton.merchant(
-                'Activer mon programme',
-                icon: LucideIcons.rocket,
-                loading: _loading,
-                onPressed: _createMerchant,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Button 1: Enregistrer et générer mon QR code
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _loading ? null : _createMerchant,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5B50EC),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        disabledBackgroundColor:
+                            const Color(0xFF5B50EC).withValues(alpha: 0.6),
+                      ),
+                      child: _loading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(LucideIcons.qrCode,
+                                      size: 18, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Enregistrer et générer mon QR code',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Button 2: Retour
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/auth/merchant/step3');
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: AppColors.surface,
+                        foregroundColor: AppColors.textPrimary,
+                        side: BorderSide(color: AppColors.border, width: 1.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        'Retour',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -320,154 +329,36 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
       ),
     );
   }
-}
 
-class _ReviewSection extends StatelessWidget {
-  const _ReviewSection({
-    required this.stepBadge,
-    required this.title,
-    required this.rows,
-    required this.onEdit,
-  });
-
-  final String stepBadge;
-  final String title;
-  final List<_ReviewRow> rows;
-  final VoidCallback onEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(Sp.md),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: Rd.card,
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.merchantTint,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  stepBadge,
-                  style: AppTextStyles.caption().copyWith(
-                    color: AppColors.merchant,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-              const SizedBox(width: Sp.xs),
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTextStyles.labelBold().copyWith(fontSize: 14),
-                ),
-              ),
-              InkWell(
-                onTap: onEdit,
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.pencil, size: 12, color: AppColors.merchant),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Modifier',
-                        style: AppTextStyles.caption().copyWith(
-                          color: AppColors.merchant,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Sp.xs),
-          Divider(height: 16, color: AppColors.border),
-          ...rows,
-        ],
-      ),
-    );
-  }
-}
-
-class _ReviewRow extends StatelessWidget {
-  const _ReviewRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.swatchColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color? swatchColor;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSummaryRow({
+    required String label,
+    required String value,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, size: 15, color: AppColors.textSecondary),
-          const SizedBox(width: Sp.sm),
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: AppTextStyles.caption().copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
             ),
           ),
-          Expanded(
-            child: Row(
-              children: [
-                if (swatchColor != null) ...[
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: swatchColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.border),
-                    ),
-                  ),
-                  const SizedBox(width: Sp.xs),
-                ],
-                Flexible(
-                  child: Text(
-                    value,
-                    style: AppTextStyles.bodyMd().copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

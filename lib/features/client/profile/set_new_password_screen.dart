@@ -11,6 +11,7 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/password_input.dart';
+import 'package:miva_fid/features/client/widgets/shared/password_rules_checklist.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
 /// Seconde étape du changement de mot de passe.
@@ -111,7 +112,10 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen>
                   autofillHints: const [AutofillHints.newPassword],
                   onToggle: () =>
                       setState(() => _obscurePassword = !_obscurePassword),
-                  onChanged: (_) => clearFieldError('password'),
+                  onChanged: (_) {
+                    clearFieldError('password');
+                    setState(() {});
+                  },
                   validator: fieldValidator(
                     'password',
                     requiredMessage: ErrorMessages.fieldRequired,
@@ -132,7 +136,8 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen>
                     },
                   ),
                 ),
-                const SizedBox(height: 20),
+                ClientPasswordRulesChecklist(password: _passwordController.text),
+                const SizedBox(height: 16),
                 Text(t.createPasswordConfirmLabel,
                     style: AppTextStyles.label()),
                 const SizedBox(height: 8),

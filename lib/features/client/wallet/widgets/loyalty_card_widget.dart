@@ -40,9 +40,25 @@ class LoyaltyCardWidget extends StatelessWidget {
       decorationPattern: card.decorationPattern,
       height: height,
       padding:
-          EdgeInsets.symmetric(horizontal: 20, vertical: isCompact ? 10 : 14),
-      child:
-          CardFaceContent(card: card, textColor: textColor, compact: isCompact),
+          EdgeInsets.symmetric(horizontal: 16, vertical: isCompact ? 8 : 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final content = CardFaceContent(
+            card: card,
+            textColor: textColor,
+            compact: isCompact,
+          );
+
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: content,
+            ),
+          );
+        },
+      ),
     );
   }
 }

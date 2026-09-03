@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/errors/app_error.dart';
-import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/password_rules_checklist.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
@@ -32,7 +31,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _newCtrl.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _newCtrl.removeListener(_onPasswordChanged);
     _currentCtrl.dispose();
     _newCtrl.dispose();
     _confirmCtrl.dispose();
@@ -61,14 +71,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     }
 
     final error = ref.read(merchantAuthProvider).lastError;
-    final message = ErrorTranslator.translate(
-      error,
-      context: ErrorContext.changePassword,
-    ).displayMessage ??
-        t.errPasswordCurrentIncorrect;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(error?.toString() ?? t.errPasswordCurrentIncorrect),
         backgroundColor: AppColors.danger,
       ),
     );
@@ -113,17 +118,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   accentColor: AppColors.merchant,
                   validator: (v) => (v == null || v.isEmpty) ? t.errFieldRequired : null,
                 ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => context.push('/auth/forgot-password'),
-                    child: Text(
-                      t.authForgotPasswordLink,
-                      style: AppTextStyles.caption()
-                          .copyWith(color: AppColors.merchant, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: Sp.md),
                 AppInput(
                   label: t.changePasswordNewLabel,
@@ -133,9 +127,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   validator: (v) {
                     if (v == null || v.isEmpty) return t.errFieldRequired;
                     if (v.length < 8) return t.errPasswordTooShort;
+                    if (!v.contains(RegExp(r'[A-Z]'))) {
+                      return 'Le mot de passe doit contenir une majuscule';
+                    }
+                    if (!v.contains(RegExp(r'[0-9]'))) {
+                      return 'Le mot de passe doit contenir un chiffre';
+                    }
                     return null;
                   },
                 ),
+                PasswordRulesChecklist(password: _newCtrl.text),
+                const SizedBox(height: Sp.sm),
                 const SizedBox(height: Sp.md),
                 AppInput(
                   label: t.changePasswordConfirmLabel,

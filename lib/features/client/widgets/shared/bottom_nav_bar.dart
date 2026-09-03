@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_motion.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
-import 'package:miva_fid/features/client/core/theme/app_radius.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import '../components/app_tap_scale.dart';
 
@@ -21,8 +20,8 @@ List<NavItem> _navItems(AppLocalizations t) => [
       NavItem(LucideIcons.user, LucideIcons.user, t.navProfile),
     ];
 
-/// Bottom tab bar — fond blanc, bordure hairline supérieure, indicateur
-/// actif en pastille pleine (pattern Revolut/Stripe) plutôt qu'un point.
+/// Bottom tab bar — dock flottant détaché des bords avec un état actif
+/// suffisamment contrasté pour rester lisible sans ajouter de texte superflu.
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -36,59 +35,77 @@ class AppBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navItems = _navItems(AppLocalizations.of(context)!);
-    return Container(
-      decoration: BoxDecoration(
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12, 0, 12, bottomPadding + 6),
+      child: Material(
         color: AppColors.surfaceCard,
-        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
-      ),
-      padding: EdgeInsets.only(
-        top: 10,
-        bottom: MediaQuery.of(context).padding.bottom + 8,
-        left: 12,
-        right: 12,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(navItems.length, (i) {
-          final item = navItems[i];
-          final active = i == currentIndex;
-          final color =
-              active ? AppColors.primary : AppColors.inkMuted(opacity: 0.45);
-          return Expanded(
-            child: AppTapScale(
-              onTap: () => onTap(i),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedContainer(
+        elevation: 0,
+        shadowColor: Colors.black.withValues(alpha: 0.16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: AppColors.border),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(4),
+          child: Row(
+            children: List.generate(navItems.length, (i) {
+              final item = navItems[i];
+              final active = i == currentIndex;
+              final color = active
+                  ? AppColors.primary
+                  : AppColors.inkMuted(opacity: 0.45);
+              return Expanded(
+                child: AppTapScale(
+                  onTap: () => onTap(i),
+                  child: AnimatedContainer(
                     duration: AppMotion.pressDuration,
                     curve: AppMotion.pressCurve,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                    height: 44,
                     decoration: BoxDecoration(
-                      color:
-                          active ? AppColors.primaryTint : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      color: active ? AppColors.primaryTint : Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: AnimatedScale(
-                      duration: AppMotion.pressDuration,
-                      curve: AppMotion.pressCurve,
-                      scale: active ? 1.08 : 1.0,
-                      child: Icon(active ? item.activeIcon : item.icon,
-                          size: 22, color: color),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedScale(
+                          duration: AppMotion.pressDuration,
+                          curve: AppMotion.pressCurve,
+                          scale: active ? 1.08 : 1.0,
+                            child: Icon(active ? item.activeIcon : item.icon,
+                              size: 18, color: color),
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            item.label,
+                            style: AppTextStyles.bodySmall(color: color).copyWith(
+                              fontSize: 9,
+                              fontWeight:
+                                  active ? FontWeight.w600 : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(item.label,
-                        style: AppTextStyles.bodySmall(color: color)),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
