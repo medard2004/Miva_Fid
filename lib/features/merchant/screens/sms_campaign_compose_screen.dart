@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
-import '../../../models/sms_campaign_model.dart';
+import '../../../models/campaign_model.dart';
 import '../providers/sms_campaign_draft_provider.dart';
 
 /// Étape 2 du wizard de campagne SMS : composer le message, programmer en
@@ -13,7 +13,7 @@ import '../providers/sms_campaign_draft_provider.dart';
 class SmsCampaignComposeScreen extends ConsumerStatefulWidget {
   const SmsCampaignComposeScreen({super.key, this.editingCampaign});
 
-  final SmsCampaignModel? editingCampaign;
+  final CampaignModel? editingCampaign;
 
   @override
   ConsumerState<SmsCampaignComposeScreen> createState() =>

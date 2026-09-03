@@ -1,14 +1,46 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../models/campaign_model.dart';
 import '../../../models/campaign_recipient_model.dart';
-import '../../../models/sms_campaign_model.dart';
 import 'sms_provider.dart';
 
-/// Brouillon de campagne SMS partagé entre les 2 pages du wizard
-/// ("Destinataires" puis "Message"). Vit le temps du wizard : recréé à
-/// chaque ouverture, jamais persisté.
-class SmsCampaignDraft {
-  const SmsCampaignDraft({
+/// Types de campagne supportés par le wizard.
+enum CampaignType {
+  promotion('promotion', 'Promotion / Annonce', '🏷️'),
+  reminder('reminder', 'Rappel d\'inactivité', '🔔'),
+  review('review', 'Notation / Avis', '⭐'),
+  reward('reward', 'Récompense', '🎁'),
+  progress('progress', 'Progression fidélité', '📈'),
+  referral('referral', 'Parrainage', '🤝');
+
+  const CampaignType(this.value, this.label, this.emoji);
+  final String value;
+  final String label;
+  final String emoji;
+
+  /// Indique si ce type nécessite un champ image.
+  bool get hasImage => this == promotion;
+
+  /// Indique si ce type nécessite un titre.
+  bool get hasTitle => true;
+
+  /// Indique si ce type nécessite un message/description.
+  bool get hasMessage => true;
+
+  static CampaignType fromValue(String value) =>
+      CampaignType.values.firstWhere((t) => t.value == value,
+          orElse: () => CampaignType.promotion);
+}
+
+/// Brouillon de campagne partagé entre les étapes du wizard.
+/// Vit le temps du wizard : recréé à chaque ouverture, jamais persisté.
+class CampaignDraft {
+  const CampaignDraft({
+    this.type,
+    this.title = '',
+    this.message = '',
+    this.imageUrl,
+    this.localImagePath,
     this.recipientType = 'all',
     this.visibleRecipients = const [],
     this.selectedClientIds = const {},
@@ -16,36 +48,40 @@ class SmsCampaignDraft {
     this.search = '',
     this.sort = 'activity',
     this.loadingRecipients = false,
-    this.message = '',
     this.scheduledAt,
     this.sending = false,
   });
 
+  final CampaignType? type;
+  final String title;
+  final String message;
+  final String? imageUrl;
+  final String? localImagePath;
   final String recipientType;
   final List<CampaignRecipientModel> visibleRecipients;
   final Set<int> selectedClientIds;
 
-  /// Vrai dès que la sélection s'écarte d'un segment propre unique (coche
-  /// individuelle décochée, ou cumul de plusieurs segments — ou édition
-  /// d'une campagne existante) — le `recipient_type` envoyé au serveur
-  /// devient alors `'manual'`.
+  /// Vrai dès que la sélection s'écarte d'un segment propre unique.
   final bool manuallyEdited;
   final String search;
   final String sort;
   final bool loadingRecipients;
-  final String message;
   final DateTime? scheduledAt;
   final bool sending;
 
-  /// Étiquette réellement envoyée au serveur (juste informatif, les
-  /// destinataires effectifs sont toujours `selectedClientIds`).
+  /// Étiquette réellement envoyée au serveur.
   String get effectiveRecipientType => manuallyEdited ? 'manual' : recipientType;
 
   bool get allVisibleSelected =>
       visibleRecipients.isNotEmpty &&
       visibleRecipients.every((r) => selectedClientIds.contains(r.clientId));
 
-  SmsCampaignDraft copyWith({
+  CampaignDraft copyWith({
+    CampaignType? Function()? type,
+    String? title,
+    String? message,
+    String? Function()? imageUrl,
+    String? Function()? localImagePath,
     String? recipientType,
     List<CampaignRecipientModel>? visibleRecipients,
     Set<int>? selectedClientIds,
@@ -53,11 +89,15 @@ class SmsCampaignDraft {
     String? search,
     String? sort,
     bool? loadingRecipients,
-    String? message,
     DateTime? Function()? scheduledAt,
     bool? sending,
   }) {
-    return SmsCampaignDraft(
+    return CampaignDraft(
+      type: type != null ? type() : this.type,
+      title: title ?? this.title,
+      message: message ?? this.message,
+      imageUrl: imageUrl != null ? imageUrl() : this.imageUrl,
+      localImagePath: localImagePath != null ? localImagePath() : this.localImagePath,
       recipientType: recipientType ?? this.recipientType,
       visibleRecipients: visibleRecipients ?? this.visibleRecipients,
       selectedClientIds: selectedClientIds ?? this.selectedClientIds,
@@ -65,41 +105,61 @@ class SmsCampaignDraft {
       search: search ?? this.search,
       sort: sort ?? this.sort,
       loadingRecipients: loadingRecipients ?? this.loadingRecipients,
-      message: message ?? this.message,
       scheduledAt: scheduledAt != null ? scheduledAt() : this.scheduledAt,
       sending: sending ?? this.sending,
     );
   }
 }
 
-class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
+class CampaignDraftNotifier extends StateNotifier<CampaignDraft> {
   /// [editingCampaign] non nul : édite cette campagne (encore programmée)
-  /// au lieu d'en créer une nouvelle — préremplit message/date/destinataires
-  /// et appelle `updateCampaign` plutôt que `sendCampaign` à la soumission.
-  SmsCampaignDraftNotifier(this._ref, this.editingCampaign)
+  /// au lieu d'en créer une nouvelle.
+  CampaignDraftNotifier(this._ref, this.editingCampaign)
       : super(
           editingCampaign == null
-              ? const SmsCampaignDraft()
-              : SmsCampaignDraft(
+              ? const CampaignDraft()
+              : CampaignDraft(
+                  type: CampaignType.fromValue(editingCampaign.type),
+                  title: editingCampaign.title,
                   message: editingCampaign.message,
+                  imageUrl: editingCampaign.imageUrl,
                   scheduledAt: editingCampaign.scheduledAt,
                   manuallyEdited: true,
                 ),
         ) {
-    // La toute première liste chargée sert juste à rendre la base cliente
-    // parcourable (recherche/segments) — en édition, la présélection ne
-    // doit PAS venir du segment "Tous" mais de la sélection déjà en base.
     _pendingInitialSelection = editingCampaign?.recipientIds
         ?.map((id) => int.tryParse(id))
         .whereType<int>()
         .toSet();
-    setSegment('all');
+    final initialRecipientType = editingCampaign?.recipientType ??
+        (editingCampaign?.type == 'reward' ? 'reward_available' : 'all');
+    setSegment(initialRecipientType);
   }
 
   final Ref _ref;
-  final SmsCampaignModel? editingCampaign;
+  final CampaignModel? editingCampaign;
   Set<int>? _pendingInitialSelection;
 
+  // ── Step 1: Type ──────────────────────────────────────────────────────
+  void setType(CampaignType type) {
+    state = state.copyWith(
+      type: () => type,
+      recipientType: type == CampaignType.reward ? 'reward_available' : 'all',
+      selectedClientIds: {},
+      manuallyEdited: false,
+    );
+    _reload();
+  }
+
+  // ── Step 2: Content ───────────────────────────────────────────────────
+  void setTitle(String title) => state = state.copyWith(title: title);
+  void setMessage(String message) => state = state.copyWith(message: message);
+  void setImageUrl(String? url) =>
+      state = state.copyWith(imageUrl: () => url);
+  void setLocalImagePath(String? path) =>
+      state = state.copyWith(localImagePath: () => path);
+
+  // ── Step 3: Recipients ────────────────────────────────────────────────
   Future<void> setSegment(String type) async {
     final hadOtherSelection =
         state.selectedClientIds.isNotEmpty && state.recipientType != type;
@@ -129,10 +189,6 @@ class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
             sort: state.sort,
           );
       final pending = _pendingInitialSelection;
-      // Un changement de segment présélectionne (coche) tout son résultat,
-      // sans jamais décocher ce qui a déjà été choisi ailleurs — sauf le
-      // tout premier chargement en mode édition, où la sélection initiale
-      // vient de la campagne existante, pas du segment "Tous".
       final selected = pending ?? {...state.selectedClientIds, ...list.map((r) => r.clientId)};
       _pendingInitialSelection = null;
       state = state.copyWith(
@@ -151,8 +207,6 @@ class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
     state = state.copyWith(selectedClientIds: next, manuallyEdited: true);
   }
 
-  /// Coche/décoche uniquement les lignes actuellement affichées (respecte
-  /// une éventuelle recherche/segment en cours).
   void toggleSelectAllVisible() {
     final next = {...state.selectedClientIds};
     if (state.allVisibleSelected) {
@@ -167,30 +221,62 @@ class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
     state = state.copyWith(selectedClientIds: next, manuallyEdited: true);
   }
 
-  void setMessage(String message) => state = state.copyWith(message: message);
-
+  // ── Step 4: Schedule ──────────────────────────────────────────────────
   void setScheduledAt(DateTime? date) =>
       state = state.copyWith(scheduledAt: () => date);
 
+  Future<void> saveAsDraft(int step) async {
+    state = state.copyWith(sending: true);
+    try {
+      final campaign = editingCampaign;
+      final type = state.type?.value ?? 'promotion';
+      
+      await _ref.read(smsNotifierProvider.notifier).saveDraft(
+            campaignId: campaign?.id,
+            type: type,
+            title: state.title.trim().isEmpty ? null : state.title.trim(),
+            message: state.message.trim().isEmpty ? null : state.message.trim(),
+            imageUrl: state.imageUrl,
+            localImagePath: state.localImagePath,
+            recipientType: state.effectiveRecipientType,
+            clientIds: state.selectedClientIds.toList(),
+            scheduledAt: state.scheduledAt,
+            draftStep: step,
+          );
+    } finally {
+      if (mounted) state = state.copyWith(sending: false);
+    }
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────
   Future<void> submit() async {
     state = state.copyWith(sending: true);
     try {
       final campaign = editingCampaign;
+      final type = state.type?.value ?? 'promotion';
       if (campaign != null) {
         final scheduledAt = state.scheduledAt;
-        if (scheduledAt == null) {
+        if (scheduledAt == null && campaign.status != 'draft') {
           throw Exception('Une date de programmation est requise pour modifier cette campagne.');
         }
         await _ref.read(smsNotifierProvider.notifier).updateCampaign(
               campaignId: campaign.id,
-              message: state.message.trim(),
+              type: type,
+              title: state.title.trim().isEmpty ? null : state.title.trim(),
+              message: state.message.trim().isEmpty ? null : state.message.trim(),
+              imageUrl: state.imageUrl,
+              localImagePath: state.localImagePath,
               recipientType: state.effectiveRecipientType,
               clientIds: state.selectedClientIds.toList(),
               scheduledAt: scheduledAt,
             );
       } else {
         await _ref.read(smsNotifierProvider.notifier).sendCampaign(
-              message: state.message.trim(),
+              type: type,
+              title: state.title.trim().isEmpty ? null : state.title.trim(),
+              message: state.message.trim().isEmpty ? null : state.message.trim(),
+              imageUrl: state.imageUrl,
+              localImagePath: state.localImagePath,
               recipientType: state.effectiveRecipientType,
               clientIds: state.selectedClientIds.toList(),
               scheduledAt: state.scheduledAt,
@@ -202,7 +288,10 @@ class SmsCampaignDraftNotifier extends StateNotifier<SmsCampaignDraft> {
   }
 }
 
-final smsCampaignDraftProvider = StateNotifierProvider.autoDispose
-    .family<SmsCampaignDraftNotifier, SmsCampaignDraft, SmsCampaignModel?>(
-  (ref, editingCampaign) => SmsCampaignDraftNotifier(ref, editingCampaign),
+final campaignDraftProvider = StateNotifierProvider.autoDispose
+    .family<CampaignDraftNotifier, CampaignDraft, CampaignModel?>(
+  (ref, editingCampaign) => CampaignDraftNotifier(ref, editingCampaign),
 );
+
+// Alias pour compatibilité arrière
+final smsCampaignDraftProvider = campaignDraftProvider;

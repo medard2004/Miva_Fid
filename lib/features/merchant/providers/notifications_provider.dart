@@ -31,20 +31,32 @@ class MerchantNotificationsNotifier extends _$MerchantNotificationsNotifier {
   }
 
   Future<void> markRead(String id) async {
-    await ref.read(merchantNotificationRepositoryProvider).markRead(id);
+    // Mise à jour optimiste : le point bleu disparaît au tap.
     final current = state.value;
-    if (current == null) return;
-    state = AsyncData([
-      for (final n in current)
-        if (n.id == id) n.copyWith(isRead: true) else n,
-    ]);
+    if (current != null) {
+      state = AsyncData([
+        for (final n in current)
+          if (n.id == id) n.copyWith(isRead: true) else n,
+      ]);
+    }
+    try {
+      await ref.read(merchantNotificationRepositoryProvider).markRead(id);
+    } catch (_) {
+      // Le prochain build() ré-alignera l'état.
+    }
   }
 
   Future<void> markAllRead() async {
-    await ref.read(merchantNotificationRepositoryProvider).markAllRead();
+    // Mise à jour optimiste.
     final current = state.value;
-    if (current == null) return;
-    state = AsyncData([for (final n in current) n.copyWith(isRead: true)]);
+    if (current != null) {
+      state = AsyncData([for (final n in current) n.copyWith(isRead: true)]);
+    }
+    try {
+      await ref.read(merchantNotificationRepositoryProvider).markAllRead();
+    } catch (_) {
+      // Le prochain build() ré-alignera l'état.
+    }
   }
 
   Future<void> delete(String id) async {

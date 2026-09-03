@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../notifications/notification_destination.dart';
 import '../router/app_router.dart';
+import '../utils/toast_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -55,35 +56,63 @@ class NotificationService {
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     final notification = message.notification;
-    if (notification == null) return;
+    final data = message.data;
+    final type = data['type'] as String? ?? '';
+    final notificationId = data['notification_id'] as String?;
 
-    const androidDetails = AndroidNotificationDetails(
-      'mivafid_channel',
-      'Miva-Fid',
-      channelDescription: 'Notifications Miva-Fid',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-    const iosDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+    const merchantTypes = {
+      'merchant_new_client',
+      'merchant_low_sms',
+      'merchant_weekly_report',
+    };
+    const warningTypes = {
+      'stamp_removed',
+      'points_removed',
+      'cashback_redeemed',
+    };
+    const campaignTypes = {
+      'campaign',
+      'admin_broadcast',
+    };
 
-    await _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      details,
-      // Le payload doit porter tout ce dont le résolveur de destination a
-      // besoin — `data` seul ne contient pas le titre/texte (utile pour la
-      // destination "campagne", qui affiche le texte de la notif elle-même).
-      payload: jsonEncode({
-        ...message.data,
-        'title': notification.title ?? '',
-        'body': notification.body ?? '',
-      }),
-    );
+    if (merchantTypes.contains(type)) return;
+
+    if (notificationId != null && ToastService.hasBeenSeen(notificationId)) {
+      return;
+    }
+
+    final title = notification?.title ?? '';
+    final body = notification?.body ?? '';
+    if (body.isEmpty && title.isEmpty) return;
+
+    // Cas spéciaux : campagnes marchandes — toast façon vignette Instagram
+    if (campaignTypes.contains(type)) {
+      final campaignId =
+          ((data['campaign_id'] ?? data['id'] ?? notificationId)?.toString() ??
+              '')
+              .trim();
+      final imageUrl = data['image_url'] as String?;
+      if (campaignId.isNotEmpty) {
+        ToastService.showCampaign(
+          title: title.isEmpty ? 'Nouvelle offre' : title,
+          body: body.isNotEmpty ? body : title,
+          campaignId: campaignId,
+          imageUrl: imageUrl,
+          notificationId: notificationId,
+          notificationData: data,
+        );
+        return;
+      }
+    }
+
+    ToastService.markSeen(notificationId);
+
+    final messageText = body.isNotEmpty ? body : title;
+    if (warningTypes.contains(type)) {
+      ToastService.showWarning(messageText);
+    } else {
+      ToastService.showSuccess(messageText);
+    }
   }
 
   void _routeFromPayload(String? payload) {

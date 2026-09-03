@@ -26,21 +26,36 @@ class RewardDestination extends NotificationDestination {
 }
 
 /// Campagne marchand (promo ou info générale) — le contenu affiché est
-/// celui déjà porté par la notification elle-même (titre/corps), jamais
-/// re-chargé depuis le serveur.
+/// celui déjà porté par la notification elle-même (titre/corps + image_url
+/// optionnelle), jamais re-chargé depuis le serveur.
 class CampaignDestination extends NotificationDestination {
   const CampaignDestination({
     required this.campaignId,
     required this.title,
     required this.body,
+    this.imageUrl,
+    this.rewardId,
+    this.campaignType,
+    this.cardId,
   });
   final String campaignId;
   final String title;
   final String body;
+  final String? imageUrl;
+  final String? rewardId;
+  final String? campaignType;
+  final String? cardId;
+}
+
+/// Écran de notation (avis) spécifique pour un établissement (via la carte).
+class ReviewDestination extends NotificationDestination {
+  const ReviewDestination(this.cardId);
+  final String cardId;
 }
 
 class ReferralDestination extends NotificationDestination {
-  const ReferralDestination();
+  const ReferralDestination({this.cardId});
+  final String? cardId;
 }
 
 /// Repli par défaut — type inconnu, annonce admin, ou tout type dont la
@@ -64,15 +79,69 @@ NotificationDestination resolveNotificationDestination({
       return const InboxDestination();
 
     case 'campaign':
-      final campaignId = data['campaign_id']?.toString();
-      if (campaignId != null) {
-        return CampaignDestination(campaignId: campaignId, title: title, body: body);
+    case 'promotion':
+    case 'reminder':
+    case 'review':
+    case 'reward':
+    case 'progress':
+    case 'cashback':
+    case 'referral':
+    case 'announcement':
+    case 'admin_broadcast':
+      final campaignType = data['campaign_type']?.toString() ?? type;
+
+      switch (campaignType) {
+        case 'reminder':
+        case 'progress':
+          final cardId = data['card_id']?.toString();
+          if (cardId != null) return CardDestination(cardId);
+          break;
+        case 'review':
+          final cardId = data['card_id']?.toString();
+          if (cardId != null) return ReviewDestination(cardId);
+          break;
+        case 'referral':
+          final cardId = data['card_id']?.toString();
+          return ReferralDestination(cardId: cardId);
+        case 'reward':
+          final rewardId = data['reward_id']?.toString();
+          if (rewardId != null) return RewardDestination(rewardId);
+          final cardId = data['card_id']?.toString();
+          if (cardId != null) return CardDestination(cardId);
+          break;
+        case 'promotion':
+        case 'announcement':
+        default:
+          final campaignId = (data['campaign_id'] ?? data['id'])?.toString();
+          final imageUrl = data['image_url']?.toString();
+          
+          if (campaignId != null) {
+            return CampaignDestination(
+              campaignId: campaignId,
+              title: title,
+              body: body,
+              imageUrl: imageUrl,
+              campaignType: campaignType,
+            );
+          }
+
+          if (title.isNotEmpty || body.isNotEmpty) {
+            return CampaignDestination(
+              campaignId: 'broadcast',
+              title: title,
+              body: body,
+              imageUrl: imageUrl,
+              campaignType: campaignType,
+            );
+          }
+          break;
       }
       return const InboxDestination();
 
     case 'referral_pending':
     case 'referral_validated':
-      return const ReferralDestination();
+      final cardId = data['card_id']?.toString();
+      return ReferralDestination(cardId: cardId);
 
     default:
       final cardId = data['card_id']?.toString();
@@ -91,10 +160,11 @@ void navigateToNotificationDestination(
   NotificationDestination destination, {
   String inboxPath = '/client/notifications',
 }) {
-  // `push` partout, jamais `go` : ces destinations affichent un bouton
-  // retour (`AppDetailBar`, dont le comportement par défaut est
-  // `context.pop()`) — `go` remplace tout l'historique de navigation, il
-  // n'y aurait alors plus rien à dépiler et le bouton resterait inerte.
+  // Fiches hors coquille (`/client/card/:id`, campagne, boîte) : `push`,
+  // pour que `AppDetailBar` puisse `pop`. Onglets de la coquille
+  // (`/client/rewards`, `/client/referral`) : `go` — `push` d'un enfant du
+  // `ShellRoute` alors que la coquille est déjà sous la boîte duplique
+  // la pageKey du Navigator (`!keyReservation.contains(key)`).
   switch (destination) {
     case CardDestination(:final cardId):
       // `CardDetailScreen` sait déjà afficher un état "carte introuvable" —
@@ -103,11 +173,24 @@ void navigateToNotificationDestination(
     case RewardDestination(:final rewardId):
       // Idem : `RewardsScreen` vérifie l'existence et ouvre la fiche, ou
       // affiche l'état indisponible — pas de doublon de logique ici.
-      context.push('/client/rewards?openReward=$rewardId');
-    case CampaignDestination(:final campaignId, :final title, :final body):
-      context.push('/client/campaign/$campaignId', extra: {'title': title, 'body': body});
-    case ReferralDestination():
-      context.push('/client/referral');
+      context.go('/client/rewards?openReward=$rewardId');
+    case CampaignDestination(:final campaignId, :final title, :final body, :final imageUrl, :final rewardId, :final campaignType, :final cardId):
+      context.push('/client/campaign/$campaignId', extra: {
+        'title': title,
+        'body': body,
+        'image_url': imageUrl,
+        'reward_id': rewardId,
+        'campaign_type': campaignType,
+        'card_id': cardId,
+      });
+    case ReviewDestination(:final cardId):
+      context.push('/client/review/$cardId');
+    case ReferralDestination(:final cardId):
+      if (cardId != null) {
+        context.go('/client/referral?cardId=$cardId');
+      } else {
+        context.go('/client/referral');
+      }
     case InboxDestination():
       context.push(inboxPath);
   }

@@ -459,6 +459,11 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/account/qrcode'),
                 ),
                 _buildMenuItem(
+                  icon: LucideIcons.star,
+                  label: 'Avis clients',
+                  onTap: () => context.push('/merchant/more/reviews'),
+                ),
+                _buildMenuItem(
                   icon: LucideIcons.globe,
                   label: t.merchantMoreMyShowcase,
                   onTap: () => context.push('/merchant/more/account/vitrine'),

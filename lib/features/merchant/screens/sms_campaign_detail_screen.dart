@@ -2,400 +2,428 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/api/providers/api_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../l10n/gen/app_localizations.dart';
+import '../../../models/campaign_model.dart';
 import '../../client/providers/settings_provider.dart';
-import '../providers/sms_provider.dart';
-import '../../../models/sms_campaign_model.dart';
 import 'sms_campaign_screen.dart' show targetLabel;
 
-class SmsCampaignDetailScreen extends ConsumerWidget {
+class SmsCampaignDetailScreen extends ConsumerStatefulWidget {
   const SmsCampaignDetailScreen({super.key, required this.campaignId});
-
   final String campaignId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SmsCampaignDetailScreen> createState() =>
+      _SmsCampaignDetailScreenState();
+}
+
+class _SmsCampaignDetailScreenState
+    extends ConsumerState<SmsCampaignDetailScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabCtrl;
+  bool _loading = true;
+  CampaignModel? _campaign;
+  List<Map<String, dynamic>> _recipients = [];
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: 3, vsync: this);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final svc = ref.read(merchantDashboardServiceProvider);
+      final json = await svc.campaignDetail(widget.campaignId);
+      if (!mounted) return;
+      final recipients = (json['recipients'] as List?)
+              ?.map((e) => (e as Map).cast<String, dynamic>())
+              .toList() ??
+          [];
+      setState(() {
+        _campaign = CampaignModel.fromJson(json);
+        _recipients = recipients;
+        _loading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() { _error = '$e'; _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
-    final smsState = ref.watch(smsNotifierProvider);
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_error != null || _campaign == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(backgroundColor: AppColors.background, elevation: 0,
+          leading: IconButton(icon: const Icon(LucideIcons.arrowLeft), onPressed: () => context.pop())),
+        body: Center(child: Text(_error ?? 'Campagne introuvable',
+            style: TextStyle(color: AppColors.textSecondary))),
+      );
+    }
+    final c = _campaign!;
+    final sent = _recipients.where((r) => r['status'] == 'sent').toList();
+    final failed = _recipients.where((r) => r['status'] == 'failed').toList();
+    final pending = _recipients.where((r) => r['status'] == 'pending').toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: smsState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _ErrorState(message: '$e'),
-          data: (campaigns) {
-            final campaign =
-                campaigns.where((c) => c.id == campaignId).firstOrNull;
-            if (campaign == null) {
-              return const _ErrorState(message: 'Campagne introuvable.');
-            }
-            return _CampaignDetailBody(campaign: campaign);
-          },
+        child: RefreshIndicator(
+          color: const Color(0xFF5B50EC),
+          onRefresh: _load,
+          child: NestedScrollView(
+            headerSliverBuilder: (_, __) => [
+              SliverToBoxAdapter(child: _buildHeader(c)),
+              SliverToBoxAdapter(child: _buildStatsRow(c, sent.length, failed.length, pending.length)),
+              SliverToBoxAdapter(child: _buildInfoSection(c)),
+              SliverToBoxAdapter(child: _buildMessageCard(c)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  child: Text('Destinataires', style: TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                ),
+              ),
+              SliverToBoxAdapter(child: _buildTabBar(sent.length, failed.length, pending.length)),
+            ],
+            body: TabBarView(
+              controller: _tabCtrl,
+              children: [
+                _buildRecipientList(sent, 'sent'),
+                _buildRecipientList(failed, 'failed'),
+                _buildRecipientList(pending, 'pending'),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
-}
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.circleAlert,
-                color: AppColors.textSecondary, size: 32),
-            const SizedBox(height: 12),
+  Widget _buildHeader(CampaignModel c) {
+    final isPlanned = !c.isSent;
+    final statusLabel = c.isScheduled ? 'Programmée' : c.isDraft ? 'Brouillon' : 'Envoyée';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 16, 0),
+      child: Row(children: [
+        IconButton(
+          icon: Icon(LucideIcons.chevronLeft, color: AppColors.textPrimary, size: 22),
+          onPressed: () => context.pop(),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              c.title.isNotEmpty ? c.title : (c.message.length > 28 ? '${c.message.substring(0, 28)}...' : c.message),
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
             ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => context.pop(),
-              child: const Text('Retour'),
+            const SizedBox(height: 2),
+            Text(targetLabel(c.recipientType),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          ]),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isPlanned ? AppColors.warningTint : AppColors.successTint,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: isPlanned
+                ? (AppColors.isDark ? const Color(0xFF4A3A14) : const Color(0xFFFDE68A))
+                : (AppColors.isDark ? const Color(0xFF1F4A38) : const Color(0xFFBBF7D0))),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(isPlanned ? LucideIcons.clock : LucideIcons.circleCheck, size: 13,
+                color: isPlanned ? const Color(0xFFD97706) : const Color(0xFF16A34A)),
+            const SizedBox(width: 4),
+            Text(statusLabel, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700,
+                color: isPlanned ? const Color(0xFFD97706) : const Color(0xFF16A34A))),
+          ]),
+        ),
+        if (c.isScheduled) ...[
+          const SizedBox(width: 4),
+          IconButton(
+            icon: Icon(LucideIcons.pencil, color: AppColors.textPrimary, size: 20),
+            tooltip: 'Modifier',
+            onPressed: () => context.push('/merchant/campaigns/new', extra: c),
+          ),
+        ],
+      ]),
+    );
+  }
+
+  Widget _buildStatsRow(CampaignModel c, int sentCount, int failedCount, int pendingCount) {
+    final deliveryRate = c.recipientsCount > 0
+        ? ((sentCount / c.recipientsCount) * 100).round()
+        : 0;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(children: [
+        _kpi('${c.recipientsCount}', 'Ciblés', LucideIcons.users, const Color(0xFF5B50EC)),
+        const SizedBox(width: 8),
+        _kpi('$sentCount', 'Livrés', LucideIcons.circleCheck, const Color(0xFF16A34A)),
+        const SizedBox(width: 8),
+        _kpi('$failedCount', 'Échecs', LucideIcons.circleX, const Color(0xFFDC2626)),
+        const SizedBox(width: 8),
+        _kpi('$deliveryRate%', 'Taux', LucideIcons.activity, const Color(0xFF0EA5E9)),
+      ]),
+    );
+  }
+
+  Widget _kpi(String value, String label, IconData icon, Color accent) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(children: [
+          Icon(icon, size: 16, color: accent),
+          const SizedBox(height: 6),
+          Text(value, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(CampaignModel c) {
+    final typeLabel = _typeLabel(c.type);
+    final fmt = DateFormat('dd/MM/yyyy à HH:mm', 'fr_FR');
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _infoRow(LucideIcons.tag, 'Type', typeLabel),
+          const SizedBox(height: 12),
+          _infoRow(LucideIcons.calendar, 'Créée le', fmt.format(c.createdAt)),
+          if (c.scheduledAt != null) ...[
+            const SizedBox(height: 12),
+            _infoRow(LucideIcons.clock, 'Programmée pour', fmt.format(c.scheduledAt!)),
+          ],
+          if (c.sentAt != null) ...[
+            const SizedBox(height: 12),
+            _infoRow(LucideIcons.send, 'Envoyée le', fmt.format(c.sentAt!)),
+          ],
+          const SizedBox(height: 12),
+          _infoRow(LucideIcons.users, 'Audience', targetLabel(c.recipientType)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(children: [
+      Icon(icon, size: 15, color: AppColors.textSecondary),
+      const SizedBox(width: 10),
+      Text('$label : ', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+      Expanded(child: Text(value, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          textAlign: TextAlign.right)),
+    ]);
+  }
+
+  Widget _buildMessageCard(CampaignModel c) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(LucideIcons.messageSquare, size: 15, color: const Color(0xFF5B50EC)),
+            const SizedBox(width: 8),
+            Text('Message envoyé', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          ]),
+          const SizedBox(height: 12),
+          if (c.title.isNotEmpty) ...[
+            Text(c.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            const SizedBox(height: 6),
+          ],
+          Text(c.message, style: TextStyle(fontSize: 13.5, color: AppColors.textPrimary, height: 1.45, fontWeight: FontWeight.w500)),
+          if (c.imageUrl != null && c.imageUrl!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(c.imageUrl!, height: 140, width: double.infinity, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
             ),
+          ],
+          const SizedBox(height: 12),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('${c.message.length} caractères', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+            Text('${(c.message.length / 160).ceil().clamp(1, 99)} segment(s)',
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildTabBar(int sentCount, int failedCount, int pendingCount) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: TabBar(
+          controller: _tabCtrl,
+          indicator: BoxDecoration(
+            color: const Color(0xFF5B50EC),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelColor: Colors.white,
+          unselectedLabelColor: AppColors.textSecondary,
+          labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          dividerColor: Colors.transparent,
+          tabs: [
+            Tab(text: 'Livrés ($sentCount)'),
+            Tab(text: 'Échecs ($failedCount)'),
+            Tab(text: 'En attente ($pendingCount)'),
           ],
         ),
       ),
     );
   }
-}
 
-class _CampaignDetailBody extends ConsumerWidget {
-  const _CampaignDetailBody({required this.campaign});
-  final SmsCampaignModel campaign;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context)!;
-    final isPlanned = !campaign.isSent;
-    final statusLabel = campaign.isScheduled
-        ? 'Programmée'
-        : campaign.isDraft
-            ? 'Brouillon'
-            : 'Envoyée';
-    final date = campaign.sentAt ?? campaign.createdAt;
-    final dateLabel = campaign.isScheduled && campaign.scheduledAt != null
-        ? 'Prévue ${DateFormatter.short(campaign.scheduledAt!)}'
-        : DateFormatter.relative(date);
-    // 160 caractères = 1 segment SMS-like — approximation cosmétique
-    // conservée de l'écran précédent, le message part réellement en push
-    // FCM (pas de facturation par segment réelle).
-    final segments = (campaign.message.length / 160).ceil().clamp(1, 99);
-
-    return Column(
-      children: [
-        // ── TOP HEADER ──────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
-          child: Row(
-            children: [
-              IconButton(
-                icon: Icon(LucideIcons.chevronLeft,
-                    color: AppColors.textPrimary, size: 22),
-                onPressed: () => context.pop(),
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      campaign.message.length > 32
-                          ? '${campaign.message.substring(0, 32)}...'
-                          : campaign.message,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      targetLabel(campaign.recipientType),
-                      style: TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              if (campaign.isScheduled)
-                IconButton(
-                  icon: Icon(LucideIcons.pencil, color: AppColors.textPrimary, size: 20),
-                  tooltip: 'Modifier',
-                  onPressed: () => context.push('/merchant/sms/new', extra: campaign),
-                ),
-            ],
-          ),
-        ),
-
-        // ── BODY CONTENT ─────────────────────────────────────────────
-        // Les compteurs envoyé/échec (`delivered_count`/`failed_count`)
-        // viennent des jobs FCM async : juste après l'envoi ils sont encore
-        // à 0/0 le temps que la queue les traite. Pull-to-refresh recharge
-        // `smsNotifierProvider` pour lire l'état à jour.
-        Expanded(
-          child: RefreshIndicator(
-            color: const Color(0xFF5B50EC),
-            onRefresh: () => ref.refresh(smsNotifierProvider.future),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. STATS CARD
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isPlanned
-                                    ? AppColors.warningTint
-                                    : AppColors.successTint,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: isPlanned
-                                      ? (AppColors.isDark
-                                          ? const Color(0xFF4A3A14)
-                                          : const Color(0xFFFDE68A))
-                                      : (AppColors.isDark
-                                          ? const Color(0xFF1F4A38)
-                                          : const Color(0xFFBBF7D0)),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    isPlanned
-                                        ? LucideIcons.clock
-                                        : LucideIcons.circleCheck,
-                                    size: 13,
-                                    color: isPlanned
-                                        ? const Color(0xFFD97706)
-                                        : const Color(0xFF16A34A),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    statusLabel,
-                                    style: TextStyle(
-                                      color: isPlanned
-                                          ? const Color(0xFFD97706)
-                                          : const Color(0xFF16A34A),
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              dateLabel,
-                              style: TextStyle(
-                                  color: AppColors.textSecondary, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // 3 mini stats row — données réelles (`notification_logs`
-                        // côté serveur) : pas de suivi d'ouverture des push, donc
-                        // pas de "taux d'ouverture" fabriqué ici.
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatBox(
-                                icon: LucideIcons.users,
-                                value: '${campaign.recipientsCount}',
-                                label: t.merchantSmsCampaignDetailRecipients,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildStatBox(
-                                icon: LucideIcons.send,
-                                value: '${campaign.deliveredCount}',
-                                label: t.merchantSmsCampaignDetailSent,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildStatBox(
-                                icon: LucideIcons.circleAlert,
-                                value: '${campaign.failedCount}',
-                                label: 'Échecs',
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (campaign.recipientsCount > 0) ...[
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Taux de livraison',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                '${campaign.deliveredCount}/${campaign.recipientsCount}',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Container(
-                              height: 6,
-                              width: double.infinity,
-                              color: AppColors.border,
-                              child: FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: (campaign.deliveredCount /
-                                        campaign.recipientsCount)
-                                    .clamp(0, 1)
-                                    .toDouble(),
-                                child:
-                                    Container(color: const Color(0xFF5B50EC)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 2. MESSAGE ENVOYÉ SECTION
-                  Text(
-                    t.merchantSmsCampaignDetailMessageTitle,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          campaign.message,
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            color: AppColors.textPrimary,
-                            height: 1.45,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${campaign.message.length} caractères',
-                              style: TextStyle(
-                                  fontSize: 11, color: AppColors.textSecondary),
-                            ),
-                            Text(
-                              '$segments SMS',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildRecipientList(List<Map<String, dynamic>> list, String type) {
+    if (list.isEmpty) {
+      final label = type == 'sent' ? 'Aucun message livré' : type == 'failed' ? 'Aucun échec' : 'Aucun en attente';
+      return Center(child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(type == 'sent' ? LucideIcons.circleCheck : type == 'failed' ? LucideIcons.circleX : LucideIcons.clock,
+              size: 32, color: AppColors.border),
+          const SizedBox(height: 8),
+          Text(label, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        ]),
+      ));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      itemCount: list.length,
+      itemBuilder: (_, i) => _recipientTile(list[i], type),
     );
   }
 
-  Widget _buildStatBox({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
+  Widget _recipientTile(Map<String, dynamic> r, String type) {
+    final name = (r['name'] as String?) ?? 'Client';
+    final phone = (r['phone'] as String?) ?? '';
+    final sentAt = r['sent_at'] != null ? DateTime.tryParse(r['sent_at'].toString())?.toLocal() : null;
+    final failureReason = r['failure_reason'] as String?;
+
+    final Color accent;
+    final IconData icon;
+    final String statusText;
+    switch (type) {
+      case 'sent':
+        accent = const Color(0xFF16A34A);
+        icon = LucideIcons.circleCheck;
+        statusText = sentAt != null ? 'Livré à ${DateFormatter.time(sentAt)}' : 'Livré';
+      case 'failed':
+        accent = const Color(0xFFDC2626);
+        icon = LucideIcons.circleX;
+        statusText = _friendlyFailure(failureReason);
+      default:
+        accent = const Color(0xFFF59E0B);
+        icon = LucideIcons.clock;
+        statusText = 'En cours d\'envoi…';
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        children: [
-          Icon(icon, size: 16, color: AppColors.textSecondary),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary),
+      child: Row(children: [
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
           ),
+          child: Center(child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : '?',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: accent),
+          )),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 10.5,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
+          Text(phone, style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+        ])),
+        const SizedBox(width: 8),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Icon(icon, size: 16, color: accent),
+          const SizedBox(height: 4),
+          Text(statusText, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: accent)),
+        ]),
+      ]),
     );
   }
+
+  String _friendlyFailure(String? reason) {
+    if (reason == null || reason.isEmpty) return 'Échec';
+    if (reason.contains('no_device_token')) return 'Pas d\'appareil';
+    if (reason.contains('fcm_send_failed')) return 'Envoi échoué';
+    if (reason.contains('exception')) return 'Erreur serveur';
+    return 'Échec';
+  }
+
+  String _typeLabel(String type) => switch (type) {
+    'promotion' => '🏷️ Promotion',
+    'reminder' => '🔔 Rappel',
+    'review' => '⭐ Avis',
+    'reward' => '🎁 Récompense',
+    'progress' => '📈 Progression',
+    'cashback' => '💰 Cashback',
+    'referral' => '🤝 Parrainage',
+    'announcement' => '📢 Annonce',
+    _ => '📋 $type',
+  };
 }

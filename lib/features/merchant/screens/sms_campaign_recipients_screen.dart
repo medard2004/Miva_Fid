@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../models/sms_campaign_model.dart';
+import '../../../models/campaign_model.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_campaign_draft_provider.dart';
 
@@ -29,7 +29,7 @@ class SmsCampaignRecipientsScreen extends ConsumerStatefulWidget {
 
   /// Non nul : édite les destinataires de cette campagne existante au lieu
   /// d'en préparer une nouvelle.
-  final SmsCampaignModel? editingCampaign;
+  final CampaignModel? editingCampaign;
 
   @override
   ConsumerState<SmsCampaignRecipientsScreen> createState() =>

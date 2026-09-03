@@ -71,6 +71,7 @@ class RealtimeService {
   final _cardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
   final _rewardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
   final _notificationCreatedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _campaignUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
   final _reconnectedController = StreamController<void>.broadcast();
 
   /// Payload `LoyaltyCardUpdated::broadcastWith()` — id/progress/status/etc.
@@ -84,6 +85,10 @@ class RealtimeService {
   /// centre de notifications (push ou in-app seule). Les consommateurs
   /// n'ont qu'à recharger leur liste, le payload sert surtout de signal.
   Stream<Map<String, dynamic>> get onNotificationCreated => _notificationCreatedController.stream;
+
+  /// Payload `CampaignUpdated::broadcastWith()` — `{id, status}` pour
+  /// rafraîchir la liste et les statuts des campagnes automatiquement.
+  Stream<Map<String, dynamic>> get onCampaignUpdated => _campaignUpdatedController.stream;
 
   /// Émis à chaque (ré)abonnement réussi au canal privé — y compris le tout
   /// premier après [connect]. Un événement diffusé pendant que le socket
@@ -120,6 +125,7 @@ class RealtimeService {
     _cardUpdatedController.close();
     _rewardUpdatedController.close();
     _notificationCreatedController.close();
+    _campaignUpdatedController.close();
     _reconnectedController.close();
   }
 
@@ -197,6 +203,10 @@ class RealtimeService {
       case 'notification.created':
         final data = _decodeData(message['data']);
         if (data != null) _notificationCreatedController.add(data);
+        return;
+      case 'campaign.updated':
+        final data = _decodeData(message['data']);
+        if (data != null) _campaignUpdatedController.add(data);
         return;
     }
   }

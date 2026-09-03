@@ -16,8 +16,10 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/tier_level_icon.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../models/merchant_display.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
 class ClientDetailScreen extends ConsumerStatefulWidget {
@@ -37,6 +39,16 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   String? _historyCardId;
   StreamSubscription<Map<String, dynamic>>? _cardRealtimeSub;
   StreamSubscription<Map<String, dynamic>>? _rewardRealtimeSub;
+
+  /// Affichage dérivé du programme du restaurant (`loyaltyType`) — unique
+  /// source de vérité pour les libellés/icônes de la fiche client. La fiche
+  /// n'est plus durcie en mode "tampons" : selon le programme, on affiche
+  /// un compteur de points (Achats), un solde cashback (Cashback) ou la
+  /// grille de tampons (Tampons).
+  MerchantDisplay get _display =>
+      MerchantDisplay.fromType(
+        ref.read(merchantAuthProvider).restaurant?.loyaltyType,
+      );
 
   @override
   void initState() {
@@ -291,46 +303,51 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                                     ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Progression',
-                                    style: TextStyle(
-                                      fontSize: 12.5,
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    '$stamps/$required',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: Container(
-                                  height: 6,
-                                  width: double.infinity,
-                                  color: AppColors.border,
-                                  child: FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: required > 0 ? (stamps / required).clamp(0.0, 1.0) : 0.0,
-                                    child: Container(color: AppColors.primary),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+const SizedBox(height: 16),
+                               Row(
+                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                 children: [
+                                   Text(
+                                     _display.progressLabel,
+                                     style: TextStyle(
+                                       fontSize: 12.5,
+                                       color: AppColors.textSecondary,
+                                       fontWeight: FontWeight.w500,
+                                     ),
+                                   ),
+                                   const Spacer(),
+                                   Text(
+                                     _display.isCashback
+                                         ? '$stamps FCFA'
+                                         : '$stamps / $required',
+                                     style: TextStyle(
+                                       fontSize: 13,
+                                       fontWeight: FontWeight.w800,
+                                       color: AppColors.textPrimary,
+                                     ),
+                                   ),
+                                 ],
+                               ),
+                               const SizedBox(height: 8),
+                               if (!_display.isCashback) ...[
+                                 ClipRRect(
+                                   borderRadius: BorderRadius.circular(4),
+                                   child: Container(
+                                     height: 6,
+                                     width: double.infinity,
+                                     color: AppColors.border,
+                                     child: FractionallySizedBox(
+                                       alignment: Alignment.centerLeft,
+                                       widthFactor: (stamps / required).clamp(0.0, 1.0),
+                                       child: Container(color: AppColors.primary),
+                                     ),
+                                   ),
+                                 ),
+                               ],
+                             ],
+                           ),
+                         ),
+                         const SizedBox(height: 12),
 
                         // 2. ACTION BUTTONS ROW
                         Row(
@@ -682,6 +699,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
     final mode = _loyaltyMode();
     return mode == 'points' || mode == 'spend';
   }
+
 
   String _historyTypeLabel(String type, dynamic value) {
     final n = value is num ? value : 0;

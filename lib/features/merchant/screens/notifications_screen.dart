@@ -68,14 +68,57 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           color: const Color(0xFF0284C7)
         );
       case 'merchant_low_sms':
+      case 'merchant_sms_low':
         return (
           icon: LucideIcons.triangleAlert,
+          bg: const Color(0xFFFEF3C7),
+          color: const Color(0xFFD97706)
+        );
+      case 'merchant_sms_depleted':
+        return (
+          icon: LucideIcons.alertCircle,
+          bg: const Color(0xFFFEE2E2),
+          color: const Color(0xFFDC2626)
+        );
+      case 'fraud_alert':
+        return (
+          icon: LucideIcons.shieldAlert,
           bg: const Color(0xFFFEE2E2),
           color: const Color(0xFFDC2626)
         );
       case 'merchant_weekly_report':
         return (
           icon: LucideIcons.trendingUp,
+          bg: const Color(0xFFDCFCE7),
+          color: const Color(0xFF16A34A)
+        );
+      case 'merchant_new_review':
+        return (
+          icon: LucideIcons.star,
+          bg: const Color(0xFFFEF3C7),
+          color: const Color(0xFFD97706)
+        );
+      case 'merchant_campaign_sent':
+        return (
+          icon: LucideIcons.send,
+          bg: const Color(0xFFE0F2FE),
+          color: const Color(0xFF0284C7)
+        );
+      case 'merchant_birthday_reward':
+        return (
+          icon: LucideIcons.cake,
+          bg: const Color(0xFFFCE7F3),
+          color: const Color(0xFFDB2777)
+        );
+      case 'merchant_referral_new':
+        return (
+          icon: LucideIcons.userPlus,
+          bg: const Color(0xFFEDE9FE),
+          color: const Color(0xFF7C3AED)
+        );
+      case 'merchant_referral_valid':
+        return (
+          icon: LucideIcons.userCheck,
           bg: const Color(0xFFDCFCE7),
           color: const Color(0xFF16A34A)
         );

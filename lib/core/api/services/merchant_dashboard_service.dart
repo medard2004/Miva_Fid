@@ -221,8 +221,11 @@ class MerchantDashboardService {
             .toList();
       });
 
-  Future<List<Map<String, dynamic>>> campaigns() => _guard(() async {
-        final response = await _apiClient.dio.get('/merchant/campaigns');
+  Future<List<Map<String, dynamic>>> campaigns({bool archived = false}) => _guard(() async {
+        final response = await _apiClient.dio.get(
+          '/merchant/campaigns',
+          queryParameters: archived ? {'archived': 1} : null,
+        );
         return ((response.data as Map)['campaigns'] as List)
             .map((e) => (e as Map).cast<String, dynamic>())
             .toList();
@@ -232,6 +235,16 @@ class MerchantDashboardService {
   /// suppression) — `POST /merchant/campaigns/{id}/archive`.
   Future<void> archiveCampaign(String campaignId) => _guard(() async {
         await _apiClient.dio.post('/merchant/campaigns/$campaignId/archive');
+      });
+
+  /// Détail complet d'une campagne avec la liste des destinataires et leur
+  /// statut de livraison — `GET /merchant/campaigns/{id}`.
+  Future<Map<String, dynamic>> campaignDetail(String campaignId) =>
+      _guard(() async {
+        final response =
+            await _apiClient.dio.get('/merchant/campaigns/$campaignId');
+        return ((response.data as Map)['campaign'] as Map)
+            .cast<String, dynamic>();
       });
 
   Future<int> recipientCount(String recipientType) => _guard(() async {
@@ -265,36 +278,142 @@ class MerchantDashboardService {
       });
 
   Future<void> sendCampaign({
-    required String message,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
     required String recipientType,
     required List<int> clientIds,
     DateTime? scheduledAt,
   }) =>
       _guard(() async {
-        await _apiClient.dio.post('/merchant/campaigns', data: {
-          'message': message,
-          'recipient_type': recipientType,
-          'client_ids': clientIds,
-          if (scheduledAt != null)
-            'scheduled_at': scheduledAt.toIso8601String(),
-        });
+        if (localImagePath != null) {
+          final Map<String, dynamic> formDataMap = {
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'image': await MultipartFile.fromFile(localImagePath),
+          };
+          for (int i = 0; i < clientIds.length; i++) {
+            formDataMap['client_ids[$i]'] = clientIds[i];
+          }
+          await _apiClient.dio.post(
+            '/merchant/campaigns',
+            data: FormData.fromMap(formDataMap),
+          );
+        } else {
+          await _apiClient.dio.post('/merchant/campaigns', data: {
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            'client_ids': clientIds,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+          });
+        }
       });
 
-  /// Édite une campagne encore programmée — `PUT /merchant/campaigns/{id}`.
-  Future<void> updateCampaign({
-    required String campaignId,
-    required String message,
-    required String recipientType,
-    required List<int> clientIds,
-    required DateTime scheduledAt,
+  /// Sauvegarde une campagne en brouillon — `POST /merchant/campaigns/draft`.
+  Future<void> saveDraft({
+    String? campaignId,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
+    String? recipientType,
+    List<int>? clientIds,
+    DateTime? scheduledAt,
+    int draftStep = 1,
   }) =>
       _guard(() async {
-        await _apiClient.dio.put('/merchant/campaigns/$campaignId', data: {
-          'message': message,
-          'recipient_type': recipientType,
-          'client_ids': clientIds,
-          'scheduled_at': scheduledAt.toIso8601String(),
-        });
+        if (localImagePath != null) {
+          final Map<String, dynamic> formDataMap = {
+            if (campaignId != null) 'id': campaignId,
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            if (recipientType != null) 'recipient_type': recipientType,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'draft_step': draftStep,
+            'image': await MultipartFile.fromFile(localImagePath),
+          };
+          if (clientIds != null) {
+            for (int i = 0; i < clientIds.length; i++) {
+              formDataMap['client_ids[$i]'] = clientIds[i];
+            }
+          }
+          await _apiClient.dio.post(
+            '/merchant/campaigns/draft',
+            data: FormData.fromMap(formDataMap),
+          );
+        } else {
+          await _apiClient.dio.post('/merchant/campaigns/draft', data: {
+            if (campaignId != null) 'id': campaignId,
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            if (recipientType != null) 'recipient_type': recipientType,
+            if (clientIds != null) 'client_ids': clientIds,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'draft_step': draftStep,
+          });
+        }
+      });
+
+  /// Édite une campagne encore programmée ou en brouillon — `PUT /merchant/campaigns/{id}`.
+  Future<void> updateCampaign({
+    required String campaignId,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
+    required String recipientType,
+    required List<int> clientIds,
+    DateTime? scheduledAt,
+  }) =>
+      _guard(() async {
+        if (localImagePath != null) {
+          final Map<String, dynamic> formDataMap = {
+            '_method': 'PUT', // workaround since PUT with multipart is often problematic on some servers
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            if (scheduledAt != null) 'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'image': await MultipartFile.fromFile(localImagePath),
+          };
+          for (int i = 0; i < clientIds.length; i++) {
+            formDataMap['client_ids[$i]'] = clientIds[i];
+          }
+          await _apiClient.dio.post(
+            '/merchant/campaigns/$campaignId',
+            data: FormData.fromMap(formDataMap),
+          );
+        } else {
+          await _apiClient.dio.put('/merchant/campaigns/$campaignId', data: {
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            'client_ids': clientIds,
+            if (scheduledAt != null) 'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+          });
+        }
       });
 }
 

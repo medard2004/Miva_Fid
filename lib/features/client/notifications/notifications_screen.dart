@@ -23,8 +23,35 @@ class NotificationsScreen extends ConsumerWidget {
       case 'birthday':
         return LucideIcons.gift;
       case 'campaign':
+      case 'announcement':
       case 'admin_broadcast':
         return LucideIcons.megaphone;
+      case 'promotion':
+        return LucideIcons.tag;
+      case 'reminder':
+        return LucideIcons.bellRing;
+      case 'review':
+        return LucideIcons.star;
+      case 'reward':
+        return LucideIcons.gift;
+      case 'progress':
+        return LucideIcons.trendingUp;
+      case 'cashback':
+        return LucideIcons.wallet;
+      case 'referral':
+        return LucideIcons.userPlus;
+      case 'stamp_added':
+        return LucideIcons.stamp;
+      case 'points_added':
+        return LucideIcons.coins;
+      case 'stamp_removed':
+      case 'points_removed':
+        return LucideIcons.undo2;
+      case 'cashback_received':
+      case 'cashback_redeemed':
+        return LucideIcons.wallet;
+      case 'level_up':
+        return LucideIcons.trophy;
       default:
         return LucideIcons.info;
     }
@@ -53,7 +80,7 @@ class NotificationsScreen extends ConsumerWidget {
               color: AppColors.primary,
               backgroundColor: AppColors.surfaceCard,
               onRefresh: () =>
-                  Future.delayed(const Duration(milliseconds: 700)),
+                  ref.read(notificationsProvider.notifier).load(),
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding:

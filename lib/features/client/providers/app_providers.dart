@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/api/repositories/auth_repository.dart';
 import 'package:miva_fid/core/services/realtime_service.dart';
+import 'package:miva_fid/core/utils/toast_service.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/models/app_notification.dart';
 import 'package:miva_fid/features/client/models/user.dart';
@@ -96,17 +97,82 @@ final rewardsProvider = StateNotifierProvider<RewardsNotifier, List<Reward>>(
 class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
   NotificationsNotifier(this._ref) : super(const []) {
     _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
-    // Le centre de notifications n'a pas de payload assez riche à patcher en
-    // place (pas d'id local stable côté `AppNotification` avant la 1re
-    // synchro) — recharger la liste est ce qui rend la cloche/l'inbox
-    // instantanées au lieu d'attendre le prochain chargement manuel.
-    _realtimeSub = RealtimeService.instance.onNotificationCreated.listen((_) {
+    _realtimeSub = RealtimeService.instance.onNotificationCreated.listen((payload) {
+      _showToastForPayload(payload);
       load();
     });
   }
 
   final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+
+  static const _merchantTypes = {
+    'merchant_new_client',
+    'merchant_low_sms',
+    'merchant_weekly_report',
+  };
+
+  static const _warningTypes = {
+    'stamp_removed',
+    'points_removed',
+    'cashback_redeemed',
+  };
+
+  static const _campaignTypes = {
+    'campaign',
+    'admin_broadcast',
+  };
+
+  void _showToastForPayload(Map<String, dynamic> payload) {
+    final type = payload['type'] as String? ?? '';
+    if (_merchantTypes.contains(type)) return;
+
+    final title = payload['title'] as String? ?? '';
+    final body = payload['body'] as String? ?? '';
+    final notificationId = payload['id']?.toString();
+    final data = payload['data'] as Map<String, dynamic>? ?? {};
+    final dedupId = data['notification_id']?.toString() ?? notificationId;
+
+    if (ToastService.hasBeenSeen(dedupId)) return;
+
+    // Cas campagnes : toast façon vignette Instagram avec clic vers page détail
+    if (_campaignTypes.contains(type)) {
+      final campaignId =
+          ((data['campaign_id'] ?? data['id'] ?? notificationId)?.toString() ??
+              '')
+              .trim();
+      final imageUrl = data['image_url'] as String? ?? payload['image_url'] as String?;
+      if (campaignId.isNotEmpty) {
+        // Fusionner type + data pour que showCampaign puisse résoudre la
+        // bonne destination (carte, récompense, avis, parrainage, promo…).
+        final mergedData = <String, dynamic>{
+          'type': type,
+          ...data,
+        };
+        ToastService.showCampaign(
+          title: title.isEmpty ? 'Nouvelle offre' : title,
+          body: body.isEmpty ? title : body,
+          campaignId: campaignId,
+          imageUrl: imageUrl,
+          notificationId: dedupId,
+          notificationData: mergedData,
+        );
+        return;
+      }
+    }
+
+    if (body.isEmpty && title.isEmpty) return;
+
+    final alreadyShown = ToastService.markSeen(dedupId);
+    if (alreadyShown) return;
+
+    final message = body.isNotEmpty ? body : title;
+    if (_warningTypes.contains(type)) {
+      ToastService.showWarning(message);
+    } else {
+      ToastService.showSuccess(message);
+    }
+  }
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
@@ -123,16 +189,28 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
   int get unreadCount => state.where((n) => !n.isRead).length;
 
   Future<void> markAllRead() async {
-    await _ref.read(notificationRepositoryProvider).markAllRead();
+    // Mise à jour optimiste : l'interface reflète le changement immédiatement,
+    // l'appel réseau suit en arrière-plan.
     state = [for (final n in state) n.copyWith(isRead: true)];
+    try {
+      await _ref.read(notificationRepositoryProvider).markAllRead();
+    } catch (_) {
+      // En cas d'échec réseau, le prochain `load()` ré-alignera l'état.
+    }
   }
 
   Future<void> markRead(String id) async {
-    await _ref.read(notificationRepositoryProvider).markRead(id);
+    // Mise à jour optimiste : le point bleu disparaît au tap, sans attendre
+    // la réponse serveur.
     state = [
       for (final n in state)
         if (n.id == id) n.copyWith(isRead: true) else n,
     ];
+    try {
+      await _ref.read(notificationRepositoryProvider).markRead(id);
+    } catch (_) {
+      // En cas d'échec réseau, le prochain `load()` ré-alignera l'état.
+    }
   }
 
   Future<void> remove(String id) async {

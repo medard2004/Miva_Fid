@@ -3,11 +3,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'dart:async';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/services/realtime_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../../models/sms_campaign_model.dart';
+import '../../../models/campaign_model.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_provider.dart';
@@ -38,10 +41,31 @@ class SmsCampaignScreen extends ConsumerStatefulWidget {
 }
 
 class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
+  bool _showArchived = false;
+  StreamSubscription? _campaignSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _campaignSub = RealtimeService.instance.onCampaignUpdated.listen((_) {
+      if (mounted) {
+        ref.invalidate(smsNotifierProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _campaignSub?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final merchant = ref.watch(merchantNotifierProvider).value;
-    final smsAsync = ref.watch(smsNotifierProvider);
+    final smsAsync = _showArchived
+        ? ref.watch(archivedCampaignsProvider)
+        : ref.watch(smsNotifierProvider);
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
 
@@ -50,7 +74,12 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           color: const Color(0xFF5B50EC),
-          onRefresh: () => ref.refresh(smsNotifierProvider.future),
+          onRefresh: () {
+            if (_showArchived) {
+              return ref.refresh(archivedCampaignsProvider.future);
+            }
+            return ref.refresh(smsNotifierProvider.future);
+          },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -79,7 +108,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            t.merchantNavSms,
+                            'Campagnes',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -88,7 +117,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Campagnes & messages • ${merchant?.smsRemaining ?? 0} SMS restants',
+                            'Notifications & messages • ${merchant?.smsRemaining ?? 0} crédits',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -98,7 +127,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                       ),
                     ),
                     InkWell(
-                      onTap: () => context.push('/merchant/sms/new'),
+                      onTap: () => context.push('/merchant/campaigns/new'),
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         width: 36,
@@ -183,7 +212,65 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
+                
+                // Toggle Actives / Archivées
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _showArchived = false),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: !_showArchived ? const Color(0xFF5B50EC) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Actives',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: !_showArchived ? Colors.white : AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _showArchived = true),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _showArchived ? const Color(0xFF5B50EC) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Archivées',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _showArchived ? Colors.white : AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 // Campaign Cards
                 smsAsync.when(
@@ -238,31 +325,37 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                         for (final camp in campaigns)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 10),
-                            child: Dismissible(
-                              key: ValueKey(camp.id),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                decoration: BoxDecoration(
-                                  color: AppColors.textSecondary.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  LucideIcons.archive,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              onDismissed: (_) async {
-                                try {
-                                  await ref.read(smsNotifierProvider.notifier).archive(camp.id);
-                                  ToastService.showSuccess('Campagne archivée');
-                                } catch (e) {
-                                  ToastService.showError('Erreur: $e');
-                                }
-                              },
-                              child: _buildCampaignCard(camp),
-                            ),
+                            child: _showArchived
+                                ? _buildCampaignCard(camp) // On ne permet pas de ré-archiver/désarchiver pour l'instant
+                                : Dismissible(
+                                    key: ValueKey(camp.id),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.textSecondary
+                                            .withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Icon(
+                                        LucideIcons.archive,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    onDismissed: (_) async {
+                                      try {
+                                        await ref
+                                            .read(smsNotifierProvider.notifier)
+                                            .archive(camp.id);
+                                        ToastService.showSuccess(
+                                            'Campagne archivée');
+                                      } catch (e) {
+                                        ToastService.showError('Erreur: $e');
+                                      }
+                                    },
+                                    child: _buildCampaignCard(camp),
+                                  ),
                           ),
                       ],
                     );
@@ -277,8 +370,8 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
   }
 
   Widget _buildKpiRow(
-      AsyncValue<List<SmsCampaignModel>> smsAsync, int? smsRemaining) {
-    final campaigns = smsAsync.value ?? const <SmsCampaignModel>[];
+      AsyncValue<List<CampaignModel>> smsAsync, int? smsRemaining) {
+    final campaigns = smsAsync.value ?? const <CampaignModel>[];
     final sentCount = campaigns.where((c) => c.isSent).length;
     final reached = campaigns.fold<int>(0, (sum, c) => sum + c.recipientsCount);
 
@@ -302,19 +395,38 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
     );
   }
 
-  Widget _buildCampaignCard(SmsCampaignModel camp) {
-    final isPlanned = !camp.isSent;
-    final status = camp.isScheduled || camp.isDraft ? 'Planifiée' : 'Envoyée';
+  Widget _buildCampaignCard(CampaignModel camp) {
+    final isPlanned = !camp.isSent && !camp.isDraft;
+    final isDraft = camp.isDraft;
+    final status = isDraft 
+        ? 'Brouillon' 
+        : (camp.isScheduled ? 'Planifiée' : 'Envoyée');
     final date = camp.sentAt ?? camp.createdAt;
     final time = isPlanned && camp.scheduledAt != null
         ? 'Prévue ${DateFormatter.short(camp.scheduledAt!)}'
         : DateFormatter.relative(date);
-    final title = camp.message.length > 24
-        ? '${camp.message.substring(0, 24)}...'
-        : camp.message;
+    final displayTitle = camp.title.isNotEmpty ? camp.title : camp.message;
+    final title = displayTitle.length > 24
+        ? '${displayTitle.substring(0, 24)}...'
+        : displayTitle;
+    final typeEmoji = _typeEmoji(camp.type);
 
     return InkWell(
-      onTap: () => context.push('/merchant/sms/campaign/${camp.id}'),
+      onTap: () {
+        if (camp.isDraft) {
+          String route = '/merchant/campaigns/new';
+          if (camp.draftStep == 2) {
+            route += '/content';
+          } else if (camp.draftStep == 3) {
+            route += '/recipients';
+          } else if (camp.draftStep == 4) {
+            route += '/summary';
+          }
+          context.push(route, extra: camp);
+        } else {
+          context.push('/merchant/sms/campaign/${camp.id}');
+        }
+      },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -328,6 +440,8 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
           children: [
             Row(
               children: [
+                Text(typeEmoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     title,
@@ -344,28 +458,28 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: isPlanned
-                        ? AppColors.warningTint
-                        : AppColors.successTint,
+                    color: isDraft 
+                        ? AppColors.border // grey tint for draft
+                        : (isPlanned ? AppColors.warningTint : AppColors.successTint),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: isPlanned
-                          ? (AppColors.isDark
-                              ? const Color(0xFF4A3A14)
-                              : const Color(0xFFFDE68A))
-                          : (AppColors.isDark
-                              ? const Color(0xFF1F4A38)
-                              : const Color(0xFFBBF7D0)),
+                      color: isDraft 
+                          ? AppColors.textSecondary.withValues(alpha: 0.3)
+                          : (isPlanned
+                              ? (AppColors.isDark ? const Color(0xFF4A3A14) : const Color(0xFFFDE68A))
+                              : (AppColors.isDark ? const Color(0xFF1F4A38) : const Color(0xFFBBF7D0))),
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        isPlanned ? LucideIcons.clock : LucideIcons.circleCheck,
+                        isDraft 
+                            ? LucideIcons.fileEdit
+                            : (isPlanned ? LucideIcons.clock : LucideIcons.circleCheck),
                         size: 11,
-                        color: isPlanned
-                            ? const Color(0xFFD97706)
-                            : const Color(0xFF16A34A),
+                        color: isDraft
+                            ? AppColors.textSecondary
+                            : (isPlanned ? const Color(0xFFD97706) : const Color(0xFF16A34A)),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -417,6 +531,20 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
   }
 
   String _targetLabel(String? recipientType) => targetLabel(recipientType);
+
+  String _typeEmoji(String type) {
+    return switch (type) {
+      'promotion' => '🏷️',
+      'reminder' => '🔔',
+      'review' => '⭐',
+      'reward' => '🎁',
+      'progress' => '📈',
+      'cashback' => '💰',
+      'referral' => '🤝',
+      'announcement' => '📢',
+      _ => '📋',
+    };
+  }
 
   Widget _buildKpiBox({required String value, required String label}) {
     return Container(

@@ -25,7 +25,8 @@ import 'package:miva_fid/features/client/widgets/shared/notification_bell_button
 /// `ReferralService::validateFirstOperation`), reflétée par le passage de
 /// pending à validated dans la liste ci-dessous.
 class ReferralScreen extends ConsumerStatefulWidget {
-  const ReferralScreen({super.key});
+  const ReferralScreen({super.key, this.initialCardId});
+  final String? initialCardId;
 
   @override
   ConsumerState<ReferralScreen> createState() => _ReferralScreenState();
@@ -33,6 +34,20 @@ class ReferralScreen extends ConsumerStatefulWidget {
 
 class _ReferralScreenState extends ConsumerState<ReferralScreen> {
   String? _selectedCardId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCardId = widget.initialCardId;
+  }
+
+  @override
+  void didUpdateWidget(covariant ReferralScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialCardId != widget.initialCardId && widget.initialCardId != null) {
+      _selectedCardId = widget.initialCardId;
+    }
+  }
 
   void _share(LoyaltyCard card, AppLocalizations t) {
     Share.share(t.referralShareMessage(card.restaurantName, card.referralCode ?? ''));

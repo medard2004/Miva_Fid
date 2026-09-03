@@ -1,26 +1,27 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../models/campaign_model.dart';
 import '../../../models/campaign_recipient_model.dart';
-import '../../../models/sms_campaign_model.dart';
 import 'merchant_auth_provider.dart';
 import 'merchant_provider.dart';
 
 part 'sms_provider.g.dart';
 
-/// Campagnes SMS du commerce (`/merchant/campaigns`).
+/// Campagnes du commerce (`/merchant/campaigns`).
 @riverpod
 class SmsNotifier extends _$SmsNotifier {
   @override
-  Future<List<SmsCampaignModel>> build() async {
+  Future<List<CampaignModel>> build() async {
     final restaurant = ref.watch(
       merchantAuthProvider.select((s) => s.restaurant),
     );
     if (restaurant == null) return [];
 
     final rows = await ref.read(merchantDashboardServiceProvider).campaigns();
-    return rows.map(SmsCampaignModel.fromJson).toList();
+    return rows.map(CampaignModel.fromJson).toList();
   }
+
 
   /// Nombre de destinataires pour un ciblage donné — calculé par le serveur,
   /// jamais estimé côté app.
@@ -45,13 +46,21 @@ class SmsNotifier extends _$SmsNotifier {
   }
 
   Future<void> sendCampaign({
-    required String message,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
     required String recipientType,
     required List<int> clientIds,
     DateTime? scheduledAt,
   }) async {
     await ref.read(merchantDashboardServiceProvider).sendCampaign(
+          type: type,
+          title: title,
           message: message,
+          imageUrl: imageUrl,
+          localImagePath: localImagePath,
           recipientType: recipientType,
           clientIds: clientIds,
           scheduledAt: scheduledAt,
@@ -62,17 +71,54 @@ class SmsNotifier extends _$SmsNotifier {
     ref.invalidateSelf();
   }
 
-  /// Édite une campagne encore programmée (message/destinataires/date).
+  Future<void> saveDraft({
+    String? campaignId,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
+    String? recipientType,
+    List<int> clientIds = const [],
+    DateTime? scheduledAt,
+    int draftStep = 1,
+  }) async {
+    final auth = ref.read(merchantAuthProvider);
+    if (!auth.isAuthenticated) throw Exception('Non authentifié');
+
+    await ref.read(merchantDashboardServiceProvider).saveDraft(
+          campaignId: campaignId,
+          type: type,
+          title: title,
+          message: message,
+          imageUrl: imageUrl,
+          localImagePath: localImagePath,
+          recipientType: recipientType,
+          clientIds: clientIds,
+          scheduledAt: scheduledAt,
+        );
+    ref.invalidateSelf();
+  }
+
+  /// Édite une campagne encore programmée ou en brouillon (message/destinataires/date).
   Future<void> updateCampaign({
     required String campaignId,
-    required String message,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
     required String recipientType,
     required List<int> clientIds,
-    required DateTime scheduledAt,
+    DateTime? scheduledAt,
   }) async {
     await ref.read(merchantDashboardServiceProvider).updateCampaign(
           campaignId: campaignId,
+          type: type,
+          title: title,
           message: message,
+          imageUrl: imageUrl,
+          localImagePath: localImagePath,
           recipientType: recipientType,
           clientIds: clientIds,
           scheduledAt: scheduledAt,
@@ -96,4 +142,12 @@ class SmsNotifier extends _$SmsNotifier {
       rethrow;
     }
   }
+}
+
+@riverpod
+Future<List<CampaignModel>> archivedCampaigns(ArchivedCampaignsRef ref) async {
+  final restaurant = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
+  if (restaurant == null) return [];
+  final rows = await ref.read(merchantDashboardServiceProvider).campaigns(archived: true);
+  return rows.map(CampaignModel.fromJson).toList();
 }

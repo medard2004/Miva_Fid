@@ -37,6 +37,15 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
     _maybeOpenReward();
   }
 
+  @override
+  void didUpdateWidget(covariant RewardsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.openRewardId != widget.openRewardId) {
+      _handledOpenReward = false;
+      _maybeOpenReward();
+    }
+  }
+
   void _maybeOpenReward() {
     final rewardId = widget.openRewardId;
     if (rewardId == null || _handledOpenReward) return;
