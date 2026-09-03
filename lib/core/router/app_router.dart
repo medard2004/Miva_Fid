@@ -26,6 +26,7 @@ import '../../features/client/campaign/campaign_detail_screen.dart';
 import '../../features/client/campaign/review_screen.dart';
 import '../../models/campaign_model.dart';
 import '../../features/client/referral/referral_screen.dart';
+import '../../features/client/rewards/welcome_reward_surprise_screen.dart';
 import '../../features/client/profile/profile_screen.dart';
 import '../../features/client/profile/edit_profile_screen.dart';
 import '../../features/client/profile/edit_field_screen.dart';
@@ -69,6 +70,7 @@ import '../../features/merchant/screens/socials_screen.dart';
 import '../../features/merchant/screens/birthday_reward_screen.dart';
 import '../../features/merchant/screens/referral_reward_screen.dart';
 import '../../features/merchant/screens/referrals_screen.dart';
+import '../../features/merchant/screens/welcome_reward_screen.dart';
 import '../../features/merchant/screens/cashback_settings_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/merchant/screens/reviews_screen.dart';
@@ -509,6 +511,18 @@ GoRouter appRouter(AppRouterRef ref) {
         },
       ),
 
+      // Écran surprise récompense de bienvenue
+      GoRoute(
+        path: '/client/welcome-reward/:cardId',
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map?;
+          return _slide(WelcomeRewardSurpriseScreen(
+            cardId: state.pathParameters['cardId'] ?? '',
+            referredBy: extra?['referred_by'] as String?,
+          ));
+        },
+      ),
+
       // Écran de notation (avis)
       GoRoute(
         path: '/client/review/:cardId',
@@ -753,6 +767,10 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/merchant/more/referral-reward',
         pageBuilder: (_, __) => _slide(const ReferralRewardScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/welcome-reward',
+        pageBuilder: (_, __) => _slide(const WelcomeRewardScreen()),
       ),
       GoRoute(
         path: '/merchant/more/referrals',

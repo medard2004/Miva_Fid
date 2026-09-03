@@ -449,6 +449,11 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/referral-reward'),
                 ),
                 _buildMenuItem(
+                  icon: LucideIcons.partyPopper,
+                  label: 'Cadeau de bienvenue',
+                  onTap: () => context.push('/merchant/more/welcome-reward'),
+                ),
+                _buildMenuItem(
                   icon: LucideIcons.users,
                   label: 'Parrainages',
                   onTap: () => context.push('/merchant/more/referrals'),

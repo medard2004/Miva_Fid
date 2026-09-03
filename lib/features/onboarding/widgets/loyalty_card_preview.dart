@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -177,8 +178,14 @@ class _CardTopGroup extends StatelessWidget {
                           color: primaryColor,
                         );
                     if (url.startsWith('http')) {
-                      return Image.network(url,
-                          width: 22, height: 22, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback());
+                      return CachedNetworkImage(
+                        imageUrl: url,
+                        width: 22,
+                        height: 22,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => fallback(),
+                        errorWidget: (context, url, error) => fallback(),
+                      );
                     }
                     try {
                       return Image.file(File(url),

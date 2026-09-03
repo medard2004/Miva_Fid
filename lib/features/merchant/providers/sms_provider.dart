@@ -96,6 +96,7 @@ class SmsNotifier extends _$SmsNotifier {
           recipientType: recipientType,
           clientIds: clientIds,
           scheduledAt: scheduledAt,
+          draftStep: draftStep,
         );
     ref.invalidateSelf();
   }

@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -60,7 +61,12 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
 
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
     if (!mounted || file == null) return;
 
     setState(() => _uploadingLogo = true);
@@ -425,12 +431,18 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                 ),
               )
             else
-              Image.network(
-                logoUrl,
+              CachedNetworkImage(
+                imageUrl: logoUrl,
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                placeholder: (context, url) => Container(
+                  height: 120,
+                  color: AppColors.background,
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator(),
+                ),
+                errorWidget: (context, url, error) => Container(
                   height: 120,
                   color: AppColors.background,
                   alignment: Alignment.center,

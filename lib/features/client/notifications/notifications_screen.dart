@@ -93,6 +93,30 @@ class NotificationsScreen extends ConsumerWidget {
                   return Dismissible(
                     key: ValueKey(n.id),
                     direction: DismissDirection.endToStart,
+                    confirmDismiss: (_) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Supprimer la notification'),
+                          content: const Text(
+                            'Voulez-vous vraiment supprimer cette notification ?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text('Annuler'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text(
+                                'Supprimer',
+                                style: TextStyle(color: Color(0xFFDC2626)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ) ?? false;
+                    },
                     onDismissed: (_) =>
                         ref.read(notificationsProvider.notifier).remove(n.id),
                     background: Container(

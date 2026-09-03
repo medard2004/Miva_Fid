@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/services/realtime_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../models/campaign_model.dart';
@@ -28,16 +32,27 @@ class _SmsCampaignDetailScreenState
   CampaignModel? _campaign;
   List<Map<String, dynamic>> _recipients = [];
   String? _error;
+  StreamSubscription<Map<String, dynamic>>? _campaignSub;
 
   @override
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
     _load();
+    // Écoute les mises à jour temps réel de cette campagne — le backend
+    // diffuse `CampaignUpdated` à chaque changement de statut (envoi,
+    // programmation, archivage). Si l'ID correspond, on recharge les données.
+    _campaignSub = RealtimeService.instance.onCampaignUpdated.listen((payload) {
+      final updatedId = payload['id']?.toString();
+      if (updatedId == widget.campaignId) {
+        _load();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _campaignSub?.cancel();
     _tabCtrl.dispose();
     super.dispose();
   }
@@ -279,8 +294,19 @@ class _SmsCampaignDetailScreenState
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(c.imageUrl!, height: 140, width: double.infinity, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              child: CachedNetworkImage(
+                imageUrl: c.imageUrl!,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  height: 140,
+                  color: AppColors.background,
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator(),
+                ),
+                errorWidget: (context, url, error) => const SizedBox.shrink(),
+              ),
             ),
           ],
           const SizedBox(height: 12),

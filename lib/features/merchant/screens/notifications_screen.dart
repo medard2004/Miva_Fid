@@ -341,10 +341,36 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           if (items.isNotEmpty)
                             Center(
                               child: TextButton.icon(
-                                onPressed: () => ref
-                                    .read(merchantNotificationsNotifierProvider
-                                        .notifier)
-                                    .deleteAll(),
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Tout supprimer'),
+                                      content: const Text(
+                                        'Voulez-vous vraiment supprimer toutes les notifications ?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(ctx).pop(false),
+                                          child: const Text('Annuler'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(ctx).pop(true),
+                                          child: const Text(
+                                            'Supprimer',
+                                            style: TextStyle(color: Color(0xFFDC2626)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true) {
+                                    ref
+                                        .read(merchantNotificationsNotifierProvider
+                                            .notifier)
+                                        .deleteAll();
+                                  }
+                                },
                                 icon: const Icon(LucideIcons.trash2,
                                     size: 16, color: Color(0xFF6B7280)),
                                 label: const Text(

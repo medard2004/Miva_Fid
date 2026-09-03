@@ -64,6 +64,30 @@ class InboxDestination extends NotificationDestination {
   const InboxDestination();
 }
 
+// ── Destinations Marchand ──────────────────────────────────────────────────
+
+class MerchantClientDestination extends NotificationDestination {
+  const MerchantClientDestination(this.clientId);
+  final String clientId;
+}
+
+class MerchantCampaignDestination extends NotificationDestination {
+  const MerchantCampaignDestination(this.campaignId);
+  final String campaignId;
+}
+
+class MerchantReviewsDestination extends NotificationDestination {
+  const MerchantReviewsDestination();
+}
+
+class MerchantReferralsDestination extends NotificationDestination {
+  const MerchantReferralsDestination();
+}
+
+class MerchantInboxDestination extends NotificationDestination {
+  const MerchantInboxDestination();
+}
+
 /// Politique de résolution — pure, sans dépendance Flutter, testable seule.
 NotificationDestination resolveNotificationDestination({
   required String type,
@@ -143,6 +167,32 @@ NotificationDestination resolveNotificationDestination({
       final cardId = data['card_id']?.toString();
       return ReferralDestination(cardId: cardId);
 
+    // ── Destinations Marchand ──────────────────────────────────────────────
+    case 'fraud_alert':
+    case 'merchant_new_client':
+    case 'merchant_birthday_reward':
+      final clientId = data['client_id']?.toString();
+      if (clientId != null) return MerchantClientDestination(clientId);
+      return const MerchantInboxDestination();
+
+    case 'merchant_campaign_sent':
+      final campaignId = data['campaign_id']?.toString();
+      if (campaignId != null) return MerchantCampaignDestination(campaignId);
+      return const MerchantInboxDestination();
+
+    case 'merchant_new_review':
+      return const MerchantReviewsDestination();
+
+    case 'merchant_referral_new':
+    case 'merchant_referral_valid':
+      return const MerchantReferralsDestination();
+
+    case 'merchant_low_sms':
+    case 'merchant_sms_low':
+    case 'merchant_sms_depleted':
+    case 'merchant_weekly_report':
+      return const MerchantInboxDestination();
+
     default:
       final cardId = data['card_id']?.toString();
       if (cardId != null) return CardDestination(cardId);
@@ -191,6 +241,16 @@ void navigateToNotificationDestination(
       } else {
         context.go('/client/referral');
       }
+    case MerchantClientDestination(:final clientId):
+      context.push('/merchant/clients/$clientId');
+    case MerchantCampaignDestination(:final campaignId):
+      context.push('/merchant/sms/campaign/$campaignId');
+    case MerchantReviewsDestination():
+      context.push('/merchant/more/reviews');
+    case MerchantReferralsDestination():
+      context.push('/merchant/more/referrals');
+    case MerchantInboxDestination():
+      context.push('/merchant/more/notifications');
     case InboxDestination():
       context.push(inboxPath);
   }

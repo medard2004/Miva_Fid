@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -148,7 +149,12 @@ class _CampaignContentScreenState
                       InkWell(
                         onTap: () async {
                           final picker = ImagePicker();
-                          final xfile = await picker.pickImage(source: ImageSource.gallery);
+                          final xfile = await picker.pickImage(
+                            source: ImageSource.gallery,
+                            maxWidth: 1024,
+                            maxHeight: 1024,
+                            imageQuality: 85,
+                          );
                           if (xfile != null) {
                             notifier.setLocalImagePath(xfile.path);
                             notifier.setImageUrl(null);
@@ -174,9 +180,13 @@ class _CampaignContentScreenState
                               : draft.imageUrl != null && draft.imageUrl!.isNotEmpty
                                   ? ClipRRect(
                                       borderRadius: BorderRadius.circular(12),
-                                      child: Image.network(
-                                        draft.imageUrl!,
+                                      child: CachedNetworkImage(
+                                        imageUrl: draft.imageUrl!,
                                         fit: BoxFit.cover,
+                                        placeholder: (context, url) => const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                        errorWidget: (context, url, error) => const Icon(Icons.error),
                                       ),
                                     )
                                   : Center(

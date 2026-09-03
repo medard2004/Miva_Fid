@@ -28,7 +28,6 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
     with SingleTickerProviderStateMixin {
   bool _revealing = false;
   LoyaltyCard? _realCard;
-  bool _isNewCard = true;
   String? _realError;
   String? _referredBy;
 
@@ -72,9 +71,22 @@ class _JoinRestaurantScreenState extends ConsumerState<JoinRestaurantScreen>
       setState(() {
         _revealing = true;
         _realCard = result.card;
-        _isNewCard = result.isNew;
         _referredBy = result.referredBy;
       });
+
+      // Si une récompense de bienvenue ou de parrainage (filleul) a été accordée,
+      // afficher l'écran surprise festif plutôt que la simple animation de révélation.
+      if (result.welcomeRewardId != null || result.referralRewardId != null) {
+        await Future.delayed(const Duration(milliseconds: 400));
+        if (mounted) {
+          context.pushReplacement(
+            '/client/welcome-reward/${result.card.id}',
+            extra: {'referred_by': result.referredBy},
+          );
+        }
+        return;
+      }
+
       // Même respiration que l'ancienne animation de révélation avant de
       // partir sur la fiche carte.
       await Future.delayed(const Duration(milliseconds: 900));

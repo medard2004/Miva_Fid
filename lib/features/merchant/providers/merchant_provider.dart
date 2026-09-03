@@ -131,14 +131,51 @@ class MerchantNotifier extends _$MerchantNotifier {
         'birthday_reward_surprise': config['birthday_reward_surprise'] ??
             config['birthday_reward']?['surprise'] ??
             false,
-        // Récompense de parrainage — même principe que la récompense
-        // anniversaire : toujours incluse pour ne pas la perdre lors d'un
-        // enregistrement sans rapport (paliers, cashback...).
+        // Récompense de parrainage (Parrain + Filleul)
         'referral_reward_enabled': config['referral_reward_enabled'] ??
             config['referral_reward']?['enabled'] ??
             true,
         'referral_reward_label': config['referral_reward_label'] ??
             config['referral_reward']?['label'],
+        'referral_reward_description': config['referral_reward_description'] ??
+            config['referral_reward']?['description'],
+        'referral_reward_validity_days':
+            config['referral_reward_validity_days'] ??
+                config['referral_reward']?['validity_days'],
+        'referral_reward_surprise': config['referral_reward_surprise'] ??
+            config['referral_reward']?['surprise'] ??
+            false,
+        'referral_referred_reward_enabled':
+            config['referral_referred_reward_enabled'] ??
+                config['referral_reward']?['referred_enabled'] ??
+                false,
+        'referral_referred_reward_label':
+            config['referral_referred_reward_label'] ??
+                config['referral_reward']?['referred_label'],
+        'referral_referred_reward_description':
+            config['referral_referred_reward_description'] ??
+                config['referral_reward']?['referred_description'],
+        'referral_referred_reward_validity_days':
+            config['referral_referred_reward_validity_days'] ??
+                config['referral_reward']?['referred_validity_days'],
+        'referral_referred_reward_surprise':
+            config['referral_referred_reward_surprise'] ??
+                config['referral_reward']?['referred_surprise'] ??
+                false,
+        // Récompense de bienvenue (immédiate à l'adhésion)
+        'welcome_reward_enabled': config['welcome_reward_enabled'] ??
+            config['welcome_reward']?['enabled'] ??
+            false,
+        'welcome_reward_title': config['welcome_reward_title'] ??
+            config['welcome_reward']?['title'],
+        'welcome_reward_description': config['welcome_reward_description'] ??
+            config['welcome_reward']?['description'],
+        'welcome_reward_validity_days':
+            config['welcome_reward_validity_days'] ??
+                config['welcome_reward']?['validity_days'],
+        'welcome_reward_surprise': config['welcome_reward_surprise'] ??
+            config['welcome_reward']?['surprise'] ??
+            false,
         if (restaurant.loyaltyType == 'spend')
           'fcfa_per_point': config['fcfa_per_point'] ?? 100,
         if (restaurant.loyaltyType == 'cashback') ...{
@@ -203,6 +240,19 @@ const _configKeys = {
   'birthday_reward_surprise',
   'referral_reward_enabled',
   'referral_reward_label',
+  'referral_reward_description',
+  'referral_reward_validity_days',
+  'referral_reward_surprise',
+  'referral_referred_reward_enabled',
+  'referral_referred_reward_label',
+  'referral_referred_reward_description',
+  'referral_referred_reward_validity_days',
+  'referral_referred_reward_surprise',
+  'welcome_reward_enabled',
+  'welcome_reward_title',
+  'welcome_reward_description',
+  'welcome_reward_validity_days',
+  'welcome_reward_surprise',
 };
 
 /// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,

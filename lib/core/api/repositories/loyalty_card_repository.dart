@@ -16,11 +16,19 @@ class JoinCardResult {
   /// client était déjà membre du commerce (donc `referredBy` reste `null`).
   final bool viaReferral;
 
+  /// L'ID de la récompense de bienvenue si une a été accordée
+  final String? welcomeRewardId;
+
+  /// L'ID de la récompense de parrainage attribuée au filleul si configurée
+  final String? referralRewardId;
+
   const JoinCardResult({
     required this.card,
     required this.isNew,
     this.referredBy,
     this.viaReferral = false,
+    this.welcomeRewardId,
+    this.referralRewardId,
   });
 }
 
@@ -50,6 +58,8 @@ class LoyaltyCardRepository {
       isNew: response['was_recently_created'] as bool? ?? true,
       referredBy: response['referred_by'] as String?,
       viaReferral: response['via_referral'] as bool? ?? false,
+      welcomeRewardId: response['welcome_reward_id']?.toString(),
+      referralRewardId: response['referral_reward_id']?.toString(),
     );
   }
 

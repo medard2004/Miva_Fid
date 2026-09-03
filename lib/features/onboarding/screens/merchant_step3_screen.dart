@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -29,7 +30,12 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
 
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
     if (!mounted || file == null) return;
 
     setState(() => _uploadingLogo = true);
@@ -280,7 +286,14 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                       if (!hasLogo)
                         const Icon(LucideIcons.store, color: AppColors.merchant, size: 28)
                       else
-                        Image.network(state.logoUrl!, fit: BoxFit.cover),
+                        CachedNetworkImage(
+                          imageUrl: state.logoUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          errorWidget: (context, url, error) => const Icon(Icons.error),
+                        ),
                       if (_uploadingLogo)
                         Container(
                           color: Colors.black.withValues(alpha: 0.35),

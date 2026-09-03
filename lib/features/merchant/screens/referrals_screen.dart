@@ -16,6 +16,7 @@ class _MerchantReferral {
   final bool isValidated;
   final DateTime? createdAt;
   final String? rewardTitle;
+  final String? referredRewardTitle;
 
   const _MerchantReferral({
     required this.referrerName,
@@ -23,12 +24,14 @@ class _MerchantReferral {
     required this.isValidated,
     this.createdAt,
     this.rewardTitle,
+    this.referredRewardTitle,
   });
 
   factory _MerchantReferral.fromJson(Map<String, dynamic> json) {
     final referrer = json['referrer_client'] as Map<String, dynamic>?;
     final referred = json['referred_client'] as Map<String, dynamic>?;
     final reward = json['reward'] as Map<String, dynamic>?;
+    final referredReward = json['referred_reward'] as Map<String, dynamic>?;
     return _MerchantReferral(
       referrerName: referrer?['first_name'] as String? ?? '—',
       referredName: referred?['first_name'] as String? ?? '—',
@@ -37,6 +40,7 @@ class _MerchantReferral {
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
       rewardTitle: reward?['title'] as String?,
+      referredRewardTitle: referredReward?['title'] as String?,
     );
   }
 }
@@ -190,9 +194,10 @@ class _ReferralRow extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   referral.isValidated
-                      ? 'Validé${referral.rewardTitle != null ? ' — ${referral.rewardTitle}' : ''}'
+                      ? 'Validé${referral.rewardTitle != null ? ' — Parrain : ${referral.rewardTitle}' : ''}'
                       : 'En attente'
-                          '${referral.createdAt != null ? ' depuis le ${DateFormat('dd/MM/yyyy').format(referral.createdAt!)}' : ''}',
+                          '${referral.referredRewardTitle != null ? ' — Filleul : ${referral.referredRewardTitle}' : ''}'
+                          '${referral.createdAt != null ? ' (depuis le ${DateFormat('dd/MM/yyyy').format(referral.createdAt!)})' : ''}',
                   style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
                 ),
               ],

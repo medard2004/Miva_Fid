@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/theme/app_colors.dart';
@@ -67,8 +68,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
-    final file =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
     if (!mounted || file == null) return;
 
     final extension = file.name.split('.').last.toLowerCase();
@@ -371,7 +376,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     image: (logoUrl != null &&
                                             logoUrl.isNotEmpty)
                                         ? DecorationImage(
-                                            image: NetworkImage(logoUrl),
+                                            image: CachedNetworkImageProvider(logoUrl),
                                             fit: BoxFit.cover,
                                           )
                                         : null,
