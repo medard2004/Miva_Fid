@@ -26,15 +26,15 @@ class NotificationBellButton extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 38,
+              height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.surfaceCard,
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.resting,
               ),
-              child: Icon(LucideIcons.bell, color: AppColors.ink, size: 20),
+              child: Icon(LucideIcons.bell, color: AppColors.ink, size: 18),
             ),
             if (unreadCount > 0)
               Positioned(

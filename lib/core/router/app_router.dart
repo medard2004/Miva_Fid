@@ -66,7 +66,6 @@ import '../../features/onboarding/screens/merchant_step3_screen.dart';
 import '../../features/onboarding/screens/merchant_review_screen.dart';
 import '../../features/onboarding/screens/merchant_verify_otp_screen.dart';
 import '../../features/onboarding/screens/merchant_reset_password_screen.dart';
-import '../../features/onboarding/screens/qr_success_screen.dart';
 import '../../features/onboarding/screens/profile_onboarding_screen.dart';
 import '../../features/onboarding/screens/role_selection_screen.dart';
 
@@ -190,7 +189,6 @@ const _merchantOnboardingRoutes = {
   '/auth/merchant/step2',
   '/auth/merchant/step3',
   '/auth/merchant/review',
-  '/auth/merchant/success',
 };
 
 @Riverpod(keepAlive: true)
@@ -241,11 +239,7 @@ GoRouter appRouter(AppRouterRef ref) {
           _merchantOnboardingRoutes.contains(location)) {
         final merchantAuth = ref.read(merchantAuthProvider);
         if (merchantAuth.isAuthenticated) {
-          // `/auth/merchant/success` est l'écran d'arrivée juste après la
-          // création du programme : le renvoyer directement à la validation
-          // priverait le marchand de son QR code et de la feuille comptoir.
-          if ((merchantAuth.restaurant?.hasLoyaltyProgram ?? false) &&
-              location != '/auth/merchant/success') {
+          if ((merchantAuth.restaurant?.hasLoyaltyProgram ?? false)) {
             return '/merchant/validate';
           }
           if (_merchantEntryRoutes.contains(location)) {
@@ -344,10 +338,6 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/auth/merchant/review',
         pageBuilder: (_, __) => _slide(const MerchantReviewScreen()),
-      ),
-      GoRoute(
-        path: '/auth/merchant/success',
-        pageBuilder: (_, __) => _slide(const QrSuccessScreen()),
       ),
       GoRoute(
         path: '/onboarding/merchant',

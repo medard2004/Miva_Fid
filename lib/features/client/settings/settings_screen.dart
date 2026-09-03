@@ -216,12 +216,84 @@ class _NotifToggleRow extends ConsumerWidget {
           Expanded(
             child: Text(name, style: AppTextStyles.bodyMedium()),
           ),
-          Switch(
-            value: enabled,
-            onChanged: (v) =>
-                ref.read(notificationPrefsProvider.notifier).toggle(cardId, v),
+          _NotificationToggle(
+            enabled: enabled,
+            onChanged: (value) => ref
+                .read(notificationPrefsProvider.notifier)
+                .toggle(cardId, value),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NotificationToggle extends StatelessWidget {
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  const _NotificationToggle({
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      toggled: enabled,
+      label: 'Notifications',
+      onTap: () => onChanged(!enabled),
+      child: GestureDetector(
+        onTap: () => onChanged(!enabled),
+        child: SizedBox(
+          width: 64,
+          height: 44,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              width: 50,
+              height: 28,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: enabled ? AppColors.primaryTint : AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: enabled ? AppColors.primary : AppColors.border,
+                ),
+              ),
+              child: AnimatedAlign(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                alignment: enabled
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: enabled ? AppColors.primary : AppColors.surfaceCard,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.ink.withValues(alpha: 0.12),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    enabled ? LucideIcons.bell : LucideIcons.bellOff,
+                    size: 13,
+                    color: enabled ? Colors.white : AppColors.inkMuted(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

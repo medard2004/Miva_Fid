@@ -26,21 +26,26 @@ class AppSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final header = Container(
       color: AppColors.surface,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (eyebrow != null) ...[
                   SectionEyebrow(eyebrow!),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                 ],
                 Text(
                   title,
-                  style: AppTextStyles.displayLarge(),
+                  style: AppTextStyles.displayMedium().copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -52,7 +57,7 @@ class AppSectionHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (int i = 0; i < actions.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 14),
+                  if (i > 0) const SizedBox(width: 10),
                   actions[i],
                 ],
               ],

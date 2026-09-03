@@ -38,7 +38,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
       if (mounted) {
         ToastService.showSuccess(
             'Votre programme a été enregistré avec succès !');
-        context.go('/auth/merchant/success');
+        context.go('/merchant/qrcode');
       }
     } catch (e) {
       debugPrint('Save loyalty program error: $e');

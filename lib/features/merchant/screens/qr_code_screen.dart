@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,12 +43,16 @@ class QrCodeScreen extends ConsumerWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        leading: Navigator.canPop(context)
-            ? IconButton(
-                icon: Icon(LucideIcons.chevronLeft, color: AppColors.textPrimary, size: 22),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
+        leading: IconButton(
+          icon: Icon(LucideIcons.chevronLeft, color: AppColors.textPrimary, size: 22),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/merchant/validate');
+            }
+          },
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
