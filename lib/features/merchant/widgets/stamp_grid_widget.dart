@@ -87,14 +87,27 @@ class StampGridWidget extends StatelessWidget {
           }
         }
 
+        final isLastSlot = (i == total - 1);
+        if (!isFilled && isLastSlot) {
+          child = Center(
+            child: Icon(
+              LucideIcons.gift,
+              color: Colors.white,
+              size: stampSize * 0.55,
+            ),
+          );
+        }
+
         Widget stamp = Container(
           width: stampSize,
           height: stampSize,
           decoration: BoxDecoration(
-            color: isFilled ? Colors.white : Colors.transparent,
+            color: isFilled
+                ? Colors.white
+                : (isLastSlot ? Colors.white.withValues(alpha: 0.18) : Colors.transparent),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isFilled ? Colors.white : Colors.white.withValues(alpha: 0.4),
+              color: isFilled || isLastSlot ? Colors.white : Colors.white.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),

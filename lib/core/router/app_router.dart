@@ -21,6 +21,7 @@ import '../../features/client/onboarding/join_restaurant_screen.dart';
 import '../../features/client/wallet/wallet_dashboard_screen.dart';
 import '../../features/client/wallet/wallet_search_screen.dart';
 import '../../features/client/card_detail/card_detail_screen.dart';
+import '../../features/client/card_detail/card_unlocked_rewards_screen.dart';
 import '../../features/client/rewards/rewards_screen.dart';
 import '../../features/client/campaign/campaign_detail_screen.dart';
 import '../../features/client/campaign/review_screen.dart';
@@ -496,6 +497,14 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
 
       GoRoute(
+        path: '/client/card/:id/rewards',
+        pageBuilder: (_, state) {
+          final id = state.pathParameters['id']!;
+          return _slide(CardUnlockedRewardsScreen(cardId: id));
+        },
+      ),
+
+      GoRoute(
         path: '/client/campaign/:id',
         pageBuilder: (_, state) {
           final extra = state.extra as Map?;
@@ -657,7 +666,14 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: '/merchant/sms/conversation',
-        pageBuilder: (_, __) => _slide(const SmsConversationScreen()),
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return _slide(SmsConversationScreen(
+            clientName: extra?['clientName'] as String? ?? 'Client',
+            clientPhone: extra?['clientPhone'] as String? ?? '',
+            clientInitials: extra?['clientInitials'] as String? ?? 'C',
+          ));
+        },
       ),
       GoRoute(
         path: '/merchant/sms/campaign/:id',

@@ -35,19 +35,29 @@ class MerchantReward {
     required this.title,
     required this.status,
     required this.isExpired,
+    this.source,
+    this.isSurprise = false,
     this.token,
     this.clientName,
+    this.clientPhone,
+    this.expiresAt,
+    this.unlockedAt,
   });
 
   final String id;
   final String title;
   final String status;
   final bool isExpired;
+  final String? source;
+  final bool isSurprise;
 
   /// Jeton QR renvoyé par le lookup — requis par le serveur pour valider
   /// la récompense (prouve que le QR a été scanné).
   final String? token;
   final String? clientName;
+  final String? clientPhone;
+  final DateTime? expiresAt;
+  final DateTime? unlockedAt;
 
   bool get isRedeemable => status == 'available' && !isExpired;
 
@@ -58,8 +68,13 @@ class MerchantReward {
       title: json['title'] as String? ?? '',
       status: json['status'] as String? ?? 'available',
       isExpired: json['is_expired'] as bool? ?? false,
+      source: json['source'] as String?,
+      isSurprise: json['is_surprise'] as bool? ?? false,
       token: json['token'] as String?,
       clientName: client?['name'] as String?,
+      clientPhone: client?['phone'] as String?,
+      expiresAt: json['expires_at'] != null ? DateTime.tryParse(json['expires_at'] as String) : null,
+      unlockedAt: json['unlocked_at'] != null ? DateTime.tryParse(json['unlocked_at'] as String) : null,
     );
   }
 }

@@ -20,6 +20,8 @@ class MerchantDisplay {
       isCashback ? 'cashback' : (isAchats ? 'points' : 'tampons');
   String get progressLabel =>
       isCashback ? 'Cashback' : (isAchats ? 'Points' : 'Tampons');
+  String get programTypeLabel =>
+      isCashback ? 'Cashback' : (isAchats ? 'Achats' : 'Tampons');
   String get removeLabel => isCashback ? 'Retirer le dernier crédit'
       : (isAchats ? 'Retirer le dernier point' : 'Retirer un tampon');
   String removalLabel(int value) {

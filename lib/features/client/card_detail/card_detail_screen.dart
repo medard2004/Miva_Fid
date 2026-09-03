@@ -108,10 +108,56 @@ class CardDetailScreen extends ConsumerWidget {
                     if (card.mechanic != LoyaltyMechanic.cashback) ...[
                       const SizedBox(height: 20),
 
-                      Text(t.rewardsTitle,
-                          style: AppTextStyles.displayMedium()),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(t.rewardsTitle,
+                              style: AppTextStyles.displayMedium()),
+                          TextButton.icon(
+                            onPressed: () => context.push('/client/card/${card.id}/rewards'),
+                            icon: const Icon(LucideIcons.gift, size: 16, color: AppColors.primary),
+                            label: Text(
+                              'Voir tout',
+                              style: AppTextStyles.label(color: AppColors.primary),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
+
+                      if (rewards.isNotEmpty) ...[
+                        AppCard(
+                          onTap: () => context.push('/client/card/${card.id}/rewards'),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+                          bordered: true,
+                          child: Row(
+                            children: [
+                              const Icon(LucideIcons.gift, color: AppColors.primary, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Toutes mes récompenses débloquées',
+                                      style: AppTextStyles.label(color: AppColors.primary),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${rewards.length} offre${rewards.length > 1 ? 's' : ''} débloquée${rewards.length > 1 ? 's' : ''}',
+                                      style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(LucideIcons.chevronRight, color: AppColors.primary.withValues(alpha: 0.7), size: 18),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
 
                       Builder(builder: (context) {
                         // Multi-palier : la liste inclut aussi un aperçu

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/services/realtime_service.dart';
 import '../../client/providers/settings_provider.dart';
 
 /// Un parrainage tel que renvoyé par `GET /merchant/referrals` — parrain,
@@ -56,11 +58,33 @@ class ReferralsScreen extends ConsumerStatefulWidget {
 
 class _ReferralsScreenState extends ConsumerState<ReferralsScreen> {
   late Future<List<_MerchantReferral>> _future;
+  StreamSubscription<void>? _realtimeNotifSub;
+  StreamSubscription<void>? _realtimeRewardSub;
+  StreamSubscription<void>? _reconnectSub;
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+    _realtimeNotifSub = RealtimeService.instance.onNotificationCreated.listen((_) => _refresh());
+    _realtimeRewardSub = RealtimeService.instance.onRewardUpdated.listen((_) => _refresh());
+    _reconnectSub = RealtimeService.instance.onReconnected.listen((_) => _refresh());
+  }
+
+  void _refresh() {
+    if (mounted) {
+      setState(() {
+        _future = _load();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _realtimeNotifSub?.cancel();
+    _realtimeRewardSub?.cancel();
+    _reconnectSub?.cancel();
+    super.dispose();
   }
 
   Future<List<_MerchantReferral>> _load() async {

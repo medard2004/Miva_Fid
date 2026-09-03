@@ -12,21 +12,25 @@ import '../../../core/widgets/tier_level_icon.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../../client/providers/settings_provider.dart';
+import '../models/restaurant_account.dart';
 import '../providers/clients_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
 
-String _tierLabel(AppLocalizations t, String tier) {
-  switch (tier) {
-    case 'Argent':
-      return t.merchantTierSilver;
-    case 'Or':
-      return t.merchantTierGold;
-    case 'Platine':
-      return t.merchantTierPlatinum;
-    default:
-      return tier;
-  }
+class _DisplayTier {
+  final int position;
+  final String label;
+  final String key;
+  final String? iconKey;
+
+  const _DisplayTier({
+    required this.position,
+    required this.label,
+    required this.key,
+    this.iconKey,
+  });
 }
+
 
 class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
@@ -36,12 +40,9 @@ class ClientsScreen extends ConsumerStatefulWidget {
 }
 
 class _ClientsScreenState extends ConsumerState<ClientsScreen> {
-  static const _inactivePreset = 30;
-
   final _searchCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   bool _isSearchOpen = false;
-  String _selectedFilterPill = 'Tous';
 
   @override
   void initState() {
@@ -68,34 +69,42 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   Future<void> _refresh() =>
       ref.read(clientsNotifierProvider.notifier).refresh();
 
-  void _applyFilterPill(String filter, ClientsFilter current) {
-    setState(() => _selectedFilterPill = filter);
-    final notifier = ref.read(clientsNotifierProvider.notifier);
-
-    if (filter == 'Tous') {
-      notifier.applyFilter(current.copyWith(
-        levelKey: null,
-        inactiveDays: null,
-      ));
-    } else if (filter == '+30j') {
-      notifier.applyFilter(current.copyWith(
-        inactiveDays: current.inactiveDays == _inactivePreset ? null : _inactivePreset,
-      ));
-    } else {
-      // Argent / Or / Platine
-      final levelKey = switch (filter) {
-        'Argent' => 'silver',
-        'Or' => 'gold',
-        'Platine' => 'platinum',
-        _ => null,
-      };
-      notifier.applyFilter(current.copyWith(
-        levelKey: current.levelKey == levelKey ? null : levelKey,
-      ));
+  List<_DisplayTier> _getDisplayTiers(RestaurantAccount? restaurant) {
+    final rawTiers = restaurant?.loyaltyConfig['tiers'];
+    if (rawTiers is List && rawTiers.isNotEmpty) {
+      return List.generate(rawTiers.length, (i) {
+        final item = rawTiers[i];
+        final map = item is Map ? item : <String, dynamic>{};
+        final position = i + 1;
+        final rawName = (map['level_name'] ?? map['name']) as String?;
+        final fixedLevel = LoyaltyLevel.forPosition(position);
+        final label = rawName ?? fixedLevel?.label ?? 'Niveau $position';
+        final key = position <= 5
+            ? (fixedLevel?.key ?? rawName ?? 'custom')
+            : (rawName ?? 'custom');
+        final iconKey = map['icon_key'] as String?;
+        return _DisplayTier(
+          position: position,
+          label: label,
+          key: key,
+          iconKey: iconKey,
+        );
+      });
     }
+
+    return [
+      for (final l in LoyaltyLevel.values)
+        _DisplayTier(
+          position: l == LoyaltyLevel.custom ? 5 : l.index + 1,
+          label: l.label,
+          key: l.key,
+          iconKey: null,
+        ),
+    ];
   }
 
-  Future<void> _openFilterSheet(ClientsFilter current) async {
+  Future<void> _openFilterSheet(
+      ClientsFilter current, List<_DisplayTier> displayTiers) async {
     final applied = await showModalBottomSheet<ClientsFilter>(
       context: context,
       isScrollControlled: true,
@@ -103,7 +112,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _ClientsFilterSheet(initial: current),
+      builder: (_) => _ClientsFilterSheet(
+        initial: current,
+        displayTiers: displayTiers,
+      ),
     );
     if (applied == null) return;
     ref.read(clientsNotifierProvider.notifier).applyFilter(applied);
@@ -174,7 +186,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final t = AppLocalizations.of(context)!;
           return Container(
             padding: EdgeInsets.only(
               left: 20,
@@ -307,8 +318,15 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         final name = nameCtrl.text.trim();
-                        if (name.isEmpty) {
-                          ToastService.showError('Veuillez saisir le nom');
+                        final phone = phoneCtrl.text.trim();
+                        final digitsOnly = phone.replaceAll(RegExp(r'[^\d]'), '');
+
+                        if (name.isEmpty || name.length < 2) {
+                          ToastService.showError('Le nom doit comporter au moins 2 caractères');
+                          return;
+                        }
+                        if (digitsOnly.length < 8) {
+                          ToastService.showError('Veuillez saisir un numéro de téléphone valide (au moins 8 chiffres)');
                           return;
                         }
                         Navigator.pop(ctx);
@@ -349,6 +367,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     final merchantAsync = ref.watch(merchantNotifierProvider);
     final stampsRequired = merchantAsync.value?.stampsRequired ?? 10;
     final t = AppLocalizations.of(context)!;
+    final restaurant = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
+    final displayTiers = _getDisplayTiers(restaurant);
 
     final subtitle = clientsAsync.maybeWhen(
       data: (state) =>
@@ -597,64 +617,157 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  ...['Tous', 'Argent', 'Or', 'Platine', '+30j'].map((filter) {
-                    final isSelected = _selectedFilterPill == filter;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: GestureDetector(
-                        onTap: () => _applyFilterPill(filter, currentFilter),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.surface
-                                : AppColors.border,
-                            borderRadius: BorderRadius.circular(20),
-                            border: isSelected
-                                ? Border.all(
-                                    color: AppColors.textPrimary,
-                                    width: 1.2)
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              if (filter == 'Tous') ...[
-                                Icon(
-                                  LucideIcons.alignLeft,
-                                  size: 12,
-                                  color: isSelected
-                                      ? AppColors.textPrimary
-                                      : AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                              ],
-                              Text(
-                                filter == 'Tous'
-                                    ? t.merchantClientsFilterAll
-                                    : filter == '+30j'
-                                        ? t.merchantClientsFilterInactive30d
-                                        : _tierLabel(t, filter),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: isSelected
-                                      ? AppColors.textPrimary
-                                      : AppColors.textSecondary,
-                                ),
+                  // 'Tous' pill
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        ref.read(clientsNotifierProvider.notifier).applyFilter(
+                              currentFilter.copyWith(
+                                levelKey: null,
+                                inactiveDays: null,
                               ),
-                            ],
+                            );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (currentFilter.levelKey == null &&
+                                  currentFilter.inactiveDays == null)
+                              ? AppColors.surface
+                              : AppColors.border,
+                          borderRadius: BorderRadius.circular(20),
+                          border: (currentFilter.levelKey == null &&
+                                  currentFilter.inactiveDays == null)
+                              ? Border.all(
+                                  color: AppColors.textPrimary,
+                                  width: 1.2)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.alignLeft,
+                              size: 12,
+                              color: (currentFilter.levelKey == null &&
+                                      currentFilter.inactiveDays == null)
+                                  ? AppColors.textPrimary
+                                  : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              t.merchantClientsFilterAll,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: (currentFilter.levelKey == null &&
+                                        currentFilter.inactiveDays == null)
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: (currentFilter.levelKey == null &&
+                                        currentFilter.inactiveDays == null)
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (displayTiers.length > 1)
+                    for (final tier in displayTiers)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: GestureDetector(
+                          onTap: () {
+                            final newKey = currentFilter.levelKey == tier.key
+                                ? null
+                                : tier.key;
+                            ref.read(clientsNotifierProvider.notifier).applyFilter(
+                                  currentFilter.copyWith(
+                                    levelKey: newKey,
+                                    inactiveDays: null,
+                                  ),
+                                );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: currentFilter.levelKey == tier.key
+                                  ? AppColors.surface
+                                  : AppColors.border,
+                              borderRadius: BorderRadius.circular(20),
+                              border: currentFilter.levelKey == tier.key
+                                  ? Border.all(
+                                      color: AppColors.textPrimary,
+                                      width: 1.2)
+                                  : null,
+                            ),
+                            child: Text(
+                              tier.label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: currentFilter.levelKey == tier.key
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: currentFilter.levelKey == tier.key
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    );
-                  }),
+                  // Inactive 30d pill
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        final newDays = currentFilter.inactiveDays == 30
+                            ? null
+                            : 30;
+                        ref.read(clientsNotifierProvider.notifier).applyFilter(
+                              currentFilter.copyWith(
+                                inactiveDays: newDays,
+                                levelKey: null,
+                              ),
+                            );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: currentFilter.inactiveDays == 30
+                              ? AppColors.surface
+                              : AppColors.border,
+                          borderRadius: BorderRadius.circular(20),
+                          border: currentFilter.inactiveDays == 30
+                              ? Border.all(
+                                  color: AppColors.textPrimary,
+                                  width: 1.2)
+                              : null,
+                        ),
+                        child: Text(
+                          t.merchantClientsFilterInactive30d,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: currentFilter.inactiveDays == 30
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: currentFilter.inactiveDays == 30
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 4),
                   _FilterButton(
                     activeCount: currentFilter.activeFilterCount,
-                    onTap: () => _openFilterSheet(currentFilter),
+                    onTap: () => _openFilterSheet(currentFilter, displayTiers),
                   ),
                   const SizedBox(width: 6),
                   _QuickPill(
@@ -776,7 +889,20 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                       stampsRequired: stampsRequired,
                                       onTap: () => context
                                           .push('/merchant/clients/${client.id}'),
-                                      onSms: () => context.push('/merchant/sms/conversation'),
+                                      onSms: () {
+                                        final cName = client.client?.name ?? 'Client';
+                                        final cPhone = client.client?.phone ?? '';
+                                        final cInitials = client.client?.initials ??
+                                            (cName.isNotEmpty ? cName[0].toUpperCase() : 'C');
+                                        context.push(
+                                          '/merchant/sms/conversation',
+                                          extra: {
+                                            'clientName': cName,
+                                            'clientPhone': cPhone,
+                                            'clientInitials': cInitials,
+                                          },
+                                        );
+                                      },
                                     );
                                   },
                                 ),
@@ -1011,9 +1137,13 @@ class _QuickPill extends StatelessWidget {
 }
 
 class _ClientsFilterSheet extends StatefulWidget {
-  const _ClientsFilterSheet({required this.initial});
+  const _ClientsFilterSheet({
+    required this.initial,
+    required this.displayTiers,
+  });
 
   final ClientsFilter initial;
+  final List<_DisplayTier> displayTiers;
 
   @override
   State<_ClientsFilterSheet> createState() => _ClientsFilterSheetState();
@@ -1154,12 +1284,12 @@ class _ClientsFilterSheetState extends State<_ClientsFilterSheet> {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  for (final level in LoyaltyLevel.values)
+                  for (final tier in widget.displayTiers)
                     _LevelChip(
-                      level: level,
-                      isSelected: _levelKey == level.key,
+                      tier: tier,
+                      isSelected: _levelKey == tier.key,
                       onTap: () => setState(() {
-                        _levelKey = _levelKey == level.key ? null : level.key;
+                        _levelKey = _levelKey == tier.key ? null : tier.key;
                       }),
                     ),
                 ],
@@ -1291,40 +1421,49 @@ class _FilterChip extends StatelessWidget {
 
 class _LevelChip extends StatelessWidget {
   const _LevelChip({
-    required this.level,
+    required this.tier,
     required this.isSelected,
     required this.onTap,
   });
 
-  final LoyaltyLevel level;
+  final _DisplayTier tier;
   final bool isSelected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final fixedLevel = LoyaltyLevel.forPosition(tier.position);
+    final color = fixedLevel?.color ?? const Color(0xFF8B5CF6);
+    final background = fixedLevel?.background ?? const Color(0xFFF3E8FF);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? level.background : AppColors.surface,
+          color: isSelected ? background : AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? level.color : AppColors.border,
+            color: isSelected ? color : AppColors.border,
             width: isSelected ? 1.3 : 1,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(level.icon, size: 14, color: level.color),
+            TierLevelIcon(
+              position: tier.position,
+              iconKey: tier.iconKey,
+              size: 14,
+              color: color,
+            ),
             const SizedBox(width: 5),
             Text(
-              level.label,
+              tier.label,
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? level.color : AppColors.textSecondary,
+                color: isSelected ? color : AppColors.textSecondary,
               ),
             ),
           ],
@@ -1368,9 +1507,6 @@ class _ClientCard extends StatelessWidget {
     final lastActivity = client.lastActivityAt == null
         ? null
         : DateFormatter.relative(client.lastActivityAt!);
-
-    final progressFactor =
-        (client.stampsCount / stampsRequired).clamp(0.0, 1.0);
 
     return InkWell(
       onTap: onTap,
@@ -1521,35 +1657,6 @@ class _ClientCard extends StatelessWidget {
                       size: 14,
                       color: AppColors.textSecondary,
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
-                    child: Container(
-                      height: 4,
-                      color: AppColors.border,
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: progressFactor,
-                        child: Container(color: AppColors.primary),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${client.stampsCount}/$stampsRequired',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
                   ),
                 ),
               ],

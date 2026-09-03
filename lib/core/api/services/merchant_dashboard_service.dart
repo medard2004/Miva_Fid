@@ -114,11 +114,32 @@ class MerchantDashboardService {
   /// avec attribution : `staff_name`/`staff_role` valent `null` quand
   /// l'opération a été effectuée par l'admin directement (pas par un
   /// opérateur).
-  Future<List<Map<String, dynamic>>> history(String cardId) => _guard(() async {
-        final response = await _apiClient.dio.get('/merchant/clients/$cardId/history');
-        return ((response.data as Map)['history'] as List)
+  Future<HistoryPage> history(
+    String cardId, {
+    int page = 1,
+    int perPage = 15,
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.get(
+          '/merchant/clients/$cardId/history',
+          queryParameters: {
+            'page': page,
+            'per_page': perPage,
+          },
+        );
+        final body = (response.data as Map).cast<String, dynamic>();
+        final items = ((body['history'] as List?) ?? const [])
             .map((e) => (e as Map).cast<String, dynamic>())
             .toList();
+        final meta =
+            ((body['meta'] as Map?) ?? const {}).cast<String, dynamic>();
+
+        return HistoryPage(
+          items: items,
+          total: (meta['total'] as num?)?.toInt() ?? items.length,
+          currentPage: (meta['current_page'] as num?)?.toInt() ?? page,
+          lastPage: (meta['last_page'] as num?)?.toInt() ?? page,
+        );
       });
 
   /// Retourne `null` quand aucune carte du commerce ne correspond (404),
@@ -420,6 +441,23 @@ class MerchantDashboardService {
 /// Une page de la liste clients marchande (voir [MerchantDashboardService.clients]).
 class ClientsPage {
   const ClientsPage({
+    required this.items,
+    required this.total,
+    required this.currentPage,
+    required this.lastPage,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final int total;
+  final int currentPage;
+  final int lastPage;
+
+  bool get hasMore => currentPage < lastPage;
+}
+
+/// Page d'historique paginé d'une carte (voir [MerchantDashboardService.history]).
+class HistoryPage {
+  const HistoryPage({
     required this.items,
     required this.total,
     required this.currentPage,

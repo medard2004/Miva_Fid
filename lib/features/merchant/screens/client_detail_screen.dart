@@ -35,10 +35,16 @@ class ClientDetailScreen extends ConsumerStatefulWidget {
 
 class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   late Future<Map<String, dynamic>?> _clientFuture;
-  Future<List<Map<String, dynamic>>>? _historyFuture;
-  String? _historyCardId;
   StreamSubscription<Map<String, dynamic>>? _cardRealtimeSub;
   StreamSubscription<Map<String, dynamic>>? _rewardRealtimeSub;
+
+  List<Map<String, dynamic>> _historyItems = [];
+  int _historyCurrentPage = 1;
+  int _historyLastPage = 1;
+  bool _isHistoryInitialLoading = false;
+  bool _isHistoryLoadingMore = false;
+  bool _historyHasError = false;
+  String? _loadedHistoryCardId;
 
   /// Affichage dérivé du programme du restaurant (`loyaltyType`) — unique
   /// source de vérité pour les libellés/icônes de la fiche client. La fiche
@@ -57,10 +63,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
     // Synchronisation temps réel (voir `MerchantRealtimeConnection`) : une
     // transaction confirmée par le backend sur CETTE carte (tampon, cashback
     // crédité/utilisé, récompense) recharge fiche + historique sans refresh
-    // manuel. Filtré sur `widget.clientId` pour les cartes (payload porte
-    // `id`) ; les récompenses n'ont pas de filtre fiable (`loyalty_card_id`
-    // absent pour une carte supprimée) donc rechargent systématiquement —
-    // volume faible, écran mono-client.
+    // manuel.
     _cardRealtimeSub = RealtimeService.instance.onCardUpdated.listen((payload) {
       if (payload['id']?.toString() == widget.clientId) _reload();
     });
@@ -81,20 +84,35 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
     if (!mounted) return;
     setState(() {
       _clientFuture = ref.read(merchantDashboardServiceProvider).client(widget.clientId);
-      _historyFuture = null;
-      _historyCardId = null;
+      _historyItems = [];
+      _historyCurrentPage = 1;
+      _historyLastPage = 1;
+      _loadedHistoryCardId = null;
+      _historyHasError = false;
     });
   }
 
   Future<void> _makeCall(String phone) async {
     final cleanPhone = phone.replaceAll(RegExp(r'[\s\-]'), '');
+    final digitsOnly = cleanPhone.replaceAll(RegExp(r'[^\d]'), '');
+    if (digitsOnly.length < 8) {
+      if (mounted) AppToast.error(context, 'Numéro de téléphone invalide ou absent');
+      return;
+    }
     final uri = Uri.parse('tel:$cleanPhone');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
+    } else {
+      if (mounted) AppToast.error(context, 'Impossible de passer l\'appel');
     }
   }
 
   Future<void> _removeStamp(Map<String, dynamic> data) async {
+    final currentStamps = (data['stamps_current'] as int?) ?? 0;
+    if (currentStamps <= 0) {
+      AppToast.error(context, 'Ce client n\'a aucun tampon à retirer');
+      return;
+    }
     try {
       await ref
           .read(clientsNotifierProvider.notifier)
@@ -151,7 +169,19 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
 
             final client = data['client'] as Map<String, dynamic>?;
             final stamps = data['stamps_current'] as int? ?? 0;
-            final required = merchantAsync.value?.stampsRequired ?? 10;
+            final restaurant = ref.read(merchantAuthProvider).restaurant;
+            final tiers = restaurant?.loyaltyConfig['tiers'] as List?;
+            int globalGoal = merchantAsync.value?.stampsRequired ?? 10;
+            if (tiers != null && tiers.isNotEmpty) {
+              int maxGoal = 0;
+              for (final item in tiers) {
+                if (item is Map) {
+                  final g = (item['goal'] as num?)?.toInt() ?? 0;
+                  if (g > maxGoal) maxGoal = g;
+                }
+              }
+              if (maxGoal > 0) globalGoal = maxGoal;
+            }
             final firstName = client?['first_name'] as String? ?? '';
             final lastName = client?['last_name'] as String? ?? '';
             final clientName =
@@ -319,7 +349,7 @@ const SizedBox(height: 16),
                                    Text(
                                      _display.isCashback
                                          ? '$stamps FCFA'
-                                         : '$stamps / $required',
+                                         : '$stamps / $globalGoal',
                                      style: TextStyle(
                                        fontSize: 13,
                                        fontWeight: FontWeight.w800,
@@ -328,8 +358,8 @@ const SizedBox(height: 16),
                                    ),
                                  ],
                                ),
-                               const SizedBox(height: 8),
                                if (!_display.isCashback) ...[
+                                 const SizedBox(height: 8),
                                  ClipRRect(
                                    borderRadius: BorderRadius.circular(4),
                                    child: Container(
@@ -338,7 +368,7 @@ const SizedBox(height: 16),
                                      color: AppColors.border,
                                      child: FractionallySizedBox(
                                        alignment: Alignment.centerLeft,
-                                       widthFactor: (stamps / required).clamp(0.0, 1.0),
+                                       widthFactor: (stamps / globalGoal).clamp(0.0, 1.0),
                                        child: Container(color: AppColors.primary),
                                      ),
                                    ),
@@ -356,7 +386,21 @@ const SizedBox(height: 16),
                               child: SizedBox(
                                 height: 46,
                                 child: ElevatedButton.icon(
-                                  onPressed: () => context.push('/merchant/sms'),
+                                  onPressed: () {
+                                    final digitsOnly = clientPhone.replaceAll(RegExp(r'[^\d]'), '');
+                                    if (digitsOnly.length < 8) {
+                                      AppToast.error(context, 'Numéro de téléphone invalide pour l\'envoi de SMS');
+                                      return;
+                                    }
+                                    context.push(
+                                      '/merchant/sms/conversation',
+                                      extra: {
+                                        'clientName': clientName,
+                                        'clientPhone': clientPhone,
+                                        'clientInitials': clientInitials,
+                                      },
+                                    );
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
@@ -439,8 +483,10 @@ const SizedBox(height: 16),
                             Expanded(
                               child: _buildMiniStat(
                                 icon: LucideIcons.stamp,
-                                value: '$stamps/$required',
-                                label: 'Tampons',
+                                value: _display.isCashback
+                                    ? '$stamps FCFA'
+                                    : '$stamps/$globalGoal',
+                                label: _display.programTypeLabel,
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -573,44 +619,106 @@ const SizedBox(height: 16),
     );
   }
 
-  Future<List<Map<String, dynamic>>> _historyFor(String cardId) {
-    if (_historyFuture == null || _historyCardId != cardId) {
-      _historyCardId = cardId;
-      _historyFuture =
-          ref.read(merchantDashboardServiceProvider).history(cardId);
+  Future<void> _fetchInitialHistory(String cardId) async {
+    _loadedHistoryCardId = cardId;
+    _isHistoryInitialLoading = true;
+    _historyHasError = false;
+    _historyItems = [];
+    _historyCurrentPage = 1;
+    _historyLastPage = 1;
+    if (mounted) setState(() {});
+
+    try {
+      final page = await ref
+          .read(merchantDashboardServiceProvider)
+          .history(cardId, page: 1, perPage: 15);
+      if (mounted) {
+        setState(() {
+          _historyItems = page.items;
+          _historyCurrentPage = page.currentPage;
+          _historyLastPage = page.lastPage;
+          _isHistoryInitialLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _historyHasError = true;
+          _isHistoryInitialLoading = false;
+        });
+      }
     }
-    return _historyFuture!;
+  }
+
+  Future<void> _loadMoreHistory(String cardId) async {
+    if (_isHistoryLoadingMore || _historyCurrentPage >= _historyLastPage) return;
+    setState(() {
+      _isHistoryLoadingMore = true;
+    });
+
+    try {
+      final nextPage = _historyCurrentPage + 1;
+      final page = await ref
+          .read(merchantDashboardServiceProvider)
+          .history(cardId, page: nextPage, perPage: 15);
+      if (mounted) {
+        setState(() {
+          _historyItems.addAll(page.items);
+          _historyCurrentPage = page.currentPage;
+          _historyLastPage = page.lastPage;
+          _isHistoryLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isHistoryLoadingMore = false;
+        });
+        AppToast.error(context, "Impossible de charger la suite de l'historique");
+      }
+    }
   }
 
   Widget _buildHistory(String cardId) {
+    if (_loadedHistoryCardId != cardId && !_isHistoryInitialLoading) {
+      Future.microtask(() => _fetchInitialHistory(cardId));
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _historyFor(cardId),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
+      child: Builder(
+        builder: (context) {
+          if (_isHistoryInitialLoading) {
             return const Padding(
               padding: EdgeInsets.all(Sp.lg),
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          if (snap.hasError) {
+          if (_historyHasError) {
             return Padding(
               padding: const EdgeInsets.all(Sp.lg),
               child: Center(
-                child: Text(
-                  "Impossible de charger l'historique.",
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                child: Column(
+                  children: [
+                    Text(
+                      "Impossible de charger l'historique.",
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => _fetchInitialHistory(cardId),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
                 ),
               ),
             );
           }
-          final entries = snap.data ?? const [];
-          if (entries.isEmpty) {
+          if (_historyItems.isEmpty) {
             return Padding(
               padding: const EdgeInsets.all(Sp.lg),
               child: Center(
@@ -621,11 +729,35 @@ const SizedBox(height: 16),
               ),
             );
           }
+          final hasMore = _historyCurrentPage < _historyLastPage;
+
           return Column(
             children: [
-              for (var i = 0; i < entries.length; i++) ...[
+              for (var i = 0; i < _historyItems.length; i++) ...[
                 if (i > 0) Divider(height: 1, color: AppColors.border),
-                _buildHistoryItem(entries[i]),
+                _buildHistoryItem(_historyItems[i]),
+              ],
+              if (hasMore) ...[
+                Divider(height: 1, color: AppColors.border),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: _isHistoryLoadingMore
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : TextButton.icon(
+                            onPressed: () => _loadMoreHistory(cardId),
+                            icon: const Icon(LucideIcons.chevronDown, size: 16),
+                            label: const Text(
+                              'Voir plus',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                  ),
+                ),
               ],
             ],
           );
@@ -686,7 +818,7 @@ const SizedBox(height: 16),
   IconData _historyTypeIcon(String type) {
     return switch (type) {
       'cashback_redeem' || 'stamp_reversal' => LucideIcons.circleMinus,
-      'reward' => LucideIcons.gift,
+      'reward' || 'reward_unlocked' || 'reward_redeemed' || 'reward_available' => LucideIcons.gift,
       'signup' => LucideIcons.userPlus,
       _ => LucideIcons.stamp,
     };
@@ -716,10 +848,18 @@ const SizedBox(height: 16),
       }
       return a == 1 ? '-1 tampon' : '-$a tampons';
     }
+    if (type == 'reward_unlocked') {
+      final title = value is String && value.isNotEmpty ? value : null;
+      return title != null ? 'Récompense débloquée : $title' : 'Récompense débloquée';
+    }
+    if (type == 'reward_redeemed' || type == 'reward') {
+      final title = value is String && value.isNotEmpty ? value : null;
+      return title != null ? 'Récompense utilisée : $title' : 'Récompense utilisée';
+    }
     return switch (type) {
       'cashback_earn' => '+$n FCFA de cashback crédité',
       'cashback_redeem' => '-$n FCFA de cashback utilisé',
-      'reward' => 'Récompense utilisée',
+      'reward_available' => 'Récompense disponible',
       'signup' => 'Inscription au programme',
       _ => type,
     };

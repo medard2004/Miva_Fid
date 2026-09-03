@@ -41,11 +41,11 @@ class ClientCardSheet extends StatefulWidget {
   /// Mode Cashback uniquement : solde minimum (FCFA) que le client doit
   /// avoir atteint pour pouvoir l'utiliser — `null` = pas de seuil.
   final double? cashbackRedeemThresholdFcfa;
-  final ValueChanged<double?> onValidate;
+  final Future<void> Function(double? amount) onValidate;
 
   /// Mode Cashback uniquement : utilisation d'une partie du solde comme
   /// réduction sur l'achat en cours — `(montantAchat, montantUtilisé)`.
-  final void Function(double purchaseAmount, double redeemAmount)? onRedeemCashback;
+  final Future<void> Function(double purchaseAmount, double redeemAmount)? onRedeemCashback;
 
   @override
   State<ClientCardSheet> createState() => _ClientCardSheetState();
@@ -128,16 +128,24 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     super.dispose();
   }
 
-  void _submit() {
-    if (!_canSubmit) return;
+  Future<void> _submit() async {
+    if (!_canSubmit || _submitting) return;
     setState(() => _submitting = true);
-    widget.onValidate(_isSpend || _isCashback ? _amount : null);
+    try {
+      await widget.onValidate(_isSpend || _isCashback ? _amount : null);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
-  void _submitRedeem() {
-    if (!_canRedeem) return;
+  Future<void> _submitRedeem() async {
+    if (!_canRedeem || _submitting) return;
     setState(() => _submitting = true);
-    widget.onRedeemCashback?.call(_amount!, _redeemAmount!);
+    try {
+      await widget.onRedeemCashback?.call(_amount!, _redeemAmount!);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   String _fcfa(double v) => '${v.round()} FCFA';
