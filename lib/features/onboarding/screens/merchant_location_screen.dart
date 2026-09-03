@@ -248,15 +248,16 @@ class _MerchantLocationScreenState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
+                          color: AppColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                          border: Border.all(
+                              color: AppColors.success.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
                             const Icon(
                               LucideIcons.circleCheck,
-                              color: Color(0xFF16A34A),
+                              color: AppColors.success,
                               size: 16,
                             ),
                             const SizedBox(width: 8),
@@ -266,7 +267,7 @@ class _MerchantLocationScreenState
                                     ? 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)} (Auto-détecté)'
                                     : 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}',
                                 style: const TextStyle(
-                                  color: Color(0xFF15803D),
+                                  color: AppColors.success,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -317,7 +318,7 @@ class _MerchantLocationScreenState
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -439,9 +440,9 @@ class _CompactLocationAction extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+          border: Border.all(color: AppColors.border, width: 1.2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),

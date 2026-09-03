@@ -808,6 +808,10 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
         ],
       ),
+      GoRoute(
+        path: '/merchant/qrcode',
+        pageBuilder: (_, __) => _fade(const QrCodeScreen()),
+      ),
 
     ],
   );

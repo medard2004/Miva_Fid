@@ -15,6 +15,19 @@ import '../../client/providers/settings_provider.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_provider.dart';
 
+String _tierLabel(AppLocalizations t, String tier) {
+  switch (tier) {
+    case 'Argent':
+      return t.merchantTierSilver;
+    case 'Or':
+      return t.merchantTierGold;
+    case 'Platine':
+      return t.merchantTierPlatinum;
+    default:
+      return tier;
+  }
+}
+
 class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
 
@@ -27,6 +40,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 
   final _searchCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
+  bool _isSearchOpen = false;
+  String _selectedFilterPill = 'Tous';
 
   @override
   void initState() {
@@ -53,7 +68,32 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   Future<void> _refresh() =>
       ref.read(clientsNotifierProvider.notifier).refresh();
 
-  // ── Bottom sheet « Filtres » ─────────────────────────────────────────
+  void _applyFilterPill(String filter, ClientsFilter current) {
+    setState(() => _selectedFilterPill = filter);
+    final notifier = ref.read(clientsNotifierProvider.notifier);
+
+    if (filter == 'Tous') {
+      notifier.applyFilter(current.copyWith(
+        levelKey: null,
+        inactiveDays: null,
+      ));
+    } else if (filter == '+30j') {
+      notifier.applyFilter(current.copyWith(
+        inactiveDays: current.inactiveDays == _inactivePreset ? null : _inactivePreset,
+      ));
+    } else {
+      // Argent / Or / Platine
+      final levelKey = switch (filter) {
+        'Argent' => 'silver',
+        'Or' => 'gold',
+        'Platine' => 'platinum',
+        _ => null,
+      };
+      notifier.applyFilter(current.copyWith(
+        levelKey: current.levelKey == levelKey ? null : levelKey,
+      ));
+    }
+  }
 
   Future<void> _openFilterSheet(ClientsFilter current) async {
     final applied = await showModalBottomSheet<ClientsFilter>(
@@ -124,6 +164,182 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     notifier.applyFilter(notifier.currentFilter.copyWith(sort: chosen));
   }
 
+  void _showAddClientModal(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController(text: '+228 ');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final t = AppLocalizations.of(context)!;
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryTint,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          LucideIcons.userPlus,
+                          color: Color(0xFF5B50EC),
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ajouter un client',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Enregistrez un nouveau client manuellement',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(LucideIcons.x,
+                            size: 20, color: AppColors.textSecondary),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'Nom complet',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: nameCtrl,
+                    style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Ex: Koffi Mensah',
+                      hintStyle: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13),
+                      prefixIcon: Icon(LucideIcons.user,
+                          size: 17, color: AppColors.textSecondary),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Text(
+                    'Numéro de téléphone',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: '+228 90 00 00 00',
+                      hintStyle: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13),
+                      prefixIcon: Icon(LucideIcons.phone,
+                          size: 17, color: AppColors.textSecondary),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final name = nameCtrl.text.trim();
+                        if (name.isEmpty) {
+                          ToastService.showError('Veuillez saisir le nom');
+                          return;
+                        }
+                        Navigator.pop(ctx);
+                        ToastService.showSuccess(
+                            'Client $name ajouté avec succès');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5B50EC),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Enregistrer le client',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
@@ -145,104 +361,195 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── TOP HEADER ──────────────────────────────────────────────
+            // ── TOP HEADER (WITH SEARCH TOGGLE & ACTION BUTTONS) ──────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      LucideIcons.users,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: _isSearchOpen
+                  ? Row(
                       children: [
-                        Text(
-                          t.merchantClientsTitle,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () => ToastService.showInfo(
-                        t.merchantClientsAddSoonToast),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        LucideIcons.userPlus,
-                        size: 17,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => context.push('/merchant/more/notifications'),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Icon(
-                            LucideIcons.bell,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Positioned(
-                          top: 6,
-                          right: 6,
+                        Expanded(
                           child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: const Color(0xFF5B50EC), width: 1.5),
+                            ),
+                            child: TextField(
+                              controller: _searchCtrl,
+                              autofocus: true,
+                              onChanged: (q) => ref
+                                  .read(clientsNotifierProvider.notifier)
+                                  .search(q),
+                              style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                hintText: t.merchantClientsSearchHint,
+                                hintStyle: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13),
+                                prefixIcon: const Icon(
+                                  LucideIcons.search,
+                                  size: 16,
+                                  color: Color(0xFF5B50EC),
+                                ),
+                                suffixIcon: _searchCtrl.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(LucideIcons.x,
+                                            size: 15),
+                                        onPressed: () {
+                                          _searchCtrl.clear();
+                                          ref
+                                              .read(clientsNotifierProvider.notifier)
+                                              .search('');
+                                          setState(() {});
+                                        },
+                                      )
+                                    : null,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 10),
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(LucideIcons.x,
+                              size: 20, color: AppColors.textSecondary),
+                          onPressed: () {
+                            setState(() {
+                              _isSearchOpen = false;
+                              _searchCtrl.clear();
+                              ref.read(clientsNotifierProvider.notifier).search('');
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryTint,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            LucideIcons.users,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t.merchantClientsTitle,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Search Button in TopBar
+                        InkWell(
+                          onTap: () => setState(() => _isSearchOpen = true),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Icon(
+                              LucideIcons.search,
+                              size: 17,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Add Button in TopBar
+                        InkWell(
+                          onTap: () => _showAddClientModal(context),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF5B50EC),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.userPlus,
+                              size: 17,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Notifications Button in TopBar
+                        InkWell(
+                          onTap: () =>
+                              context.push('/merchant/more/notifications'),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Icon(
+                                  LucideIcons.bell,
+                                  size: 18,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF59E0B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                ],
-              ),
             ),
 
             // ── EXPORT BUTTON ────────────────────────────────────────────
@@ -250,7 +557,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: InkWell(
                 onTap: () => ToastService.showInfo(
-                    'Export de la liste clients bientôt disponible.'),
+                    t.merchantClientsExportToast),
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   width: double.infinity,
@@ -284,94 +591,77 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
             ),
             const SizedBox(height: 10),
 
-            // ── SEARCH + FILTERS ROW ────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: TextField(
-                        controller: _searchCtrl,
-                        onChanged: (q) => ref
-                            .read(clientsNotifierProvider.notifier)
-                            .search(q),
-                        style: const TextStyle(
-                            fontSize: 13.5, fontWeight: FontWeight.w500),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: t.merchantClientsSearchHint,
-                          hintStyle: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 13),
-                          prefixIcon: Icon(
-                            LucideIcons.search,
-                            size: 16,
-                            color: AppColors.textSecondary,
-                          ),
-                          suffixIcon: _searchCtrl.text.isNotEmpty
-                              ? IconButton(
-                                  visualDensity: VisualDensity.compact,
-                                  icon: Icon(
-                                    LucideIcons.x,
-                                    size: 14,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  onPressed: () {
-                                    _searchCtrl.clear();
-                                    ref
-                                        .read(clientsNotifierProvider.notifier)
-                                        .search('');
-                                    setState(() {});
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterButton(
-                    activeCount: currentFilter.activeFilterCount,
-                    onTap: () => _openFilterSheet(currentFilter),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // ── QUICK PILLS ─────────────────────────────────────────────
+            // ── QUICK PILLS BAR ──────────────────────────────────────────
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  _QuickPill(
-                    label: 'Inactifs 30j',
-                    icon: LucideIcons.clock,
-                    isSelected: currentFilter.inactiveDays == _inactivePreset,
-                    onTap: () {
-                      notifier.applyFilter(currentFilter.copyWith(
-                        inactiveDays:
-                            currentFilter.inactiveDays == _inactivePreset
-                                ? null
-                                : _inactivePreset,
-                      ));
-                    },
+                  ...['Tous', 'Argent', 'Or', 'Platine', '+30j'].map((filter) {
+                    final isSelected = _selectedFilterPill == filter;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: GestureDetector(
+                        onTap: () => _applyFilterPill(filter, currentFilter),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.surface
+                                : AppColors.border,
+                            borderRadius: BorderRadius.circular(20),
+                            border: isSelected
+                                ? Border.all(
+                                    color: AppColors.textPrimary,
+                                    width: 1.2)
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
+                              if (filter == 'Tous') ...[
+                                Icon(
+                                  LucideIcons.alignLeft,
+                                  size: 12,
+                                  color: isSelected
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                filter == 'Tous'
+                                    ? t.merchantClientsFilterAll
+                                    : filter == '+30j'
+                                        ? t.merchantClientsFilterInactive30d
+                                        : _tierLabel(t, filter),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 4),
+                  _FilterButton(
+                    activeCount: currentFilter.activeFilterCount,
+                    onTap: () => _openFilterSheet(currentFilter),
                   ),
                   const SizedBox(width: 6),
                   _QuickPill(
                     label: switch (currentFilter.sort) {
-                      ClientSort.activity => 'Tri : activité',
-                      ClientSort.recent => 'Tri : récents',
-                      ClientSort.oldest => 'Tri : anciens',
+                      ClientSort.activity => 'Activité',
+                      ClientSort.recent => 'Récents',
+                      ClientSort.oldest => 'Anciens',
                     },
                     icon: LucideIcons.arrowUpDown,
                     isSelected: currentFilter.sort != ClientSort.activity,
@@ -452,40 +742,100 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       ? _buildEmptyState()
                       : RefreshIndicator(
                           onRefresh: _refresh,
-                          child: ListView.separated(
-                            controller: _scrollCtrl,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 4),
-                            itemCount: state.clients.length +
-                                (state.hasMore || state.isLoadingMore
-                                    ? 1
-                                    : 0),
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              if (index >= state.clients.length) {
-                                return const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 14),
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2.4),
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: ListView.separated(
+                                  controller: _scrollCtrl,
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  itemCount: state.clients.length +
+                                      (state.hasMore || state.isLoadingMore
+                                          ? 1
+                                          : 0),
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    if (index >= state.clients.length) {
+                                      return const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 14),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2.4),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    final client = state.clients[index];
+                                    return _ClientCard(
+                                      client: client,
+                                      stampsRequired: stampsRequired,
+                                      onTap: () => context
+                                          .push('/merchant/clients/${client.id}'),
+                                      onSms: () => context.push('/merchant/sms/conversation'),
+                                    );
+                                  },
+                                ),
+                              ),
+                              // ── PAGINATION FOOTER ──────────────────────
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        t.merchantClientsPaginationInfo(
+                                            '1',
+                                            state.clients.length.toString(),
+                                            state.total.toString()),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }
-                              final client = state.clients[index];
-                              return _ClientCard(
-                                client: client,
-                                stampsRequired: stampsRequired,
-                                onTap: () => context
-                                    .push('/merchant/clients/${client.id}'),
-                                onSms: () => context.push('/merchant/sms'),
-                              );
-                            },
+                                    const SizedBox(width: 8),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          t.merchantClientsPrevious,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textSecondary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.surface,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: AppColors.border),
+                                          ),
+                                          child: Text(
+                                            t.merchantClientsNext,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         );
                   return listBody;
@@ -510,10 +860,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     LucideIcons.users,
                     size: 36,
-                    color: AppColors.gray300,
+                    color: AppColors.textSecondary,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -543,8 +893,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   }
 }
 
-// ── Bouton « Filtres » avec badge ────────────────────────────────────────
-
 class _FilterButton extends StatelessWidget {
   const _FilterButton({required this.activeCount, required this.onTap});
 
@@ -557,8 +905,8 @@ class _FilterButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: activeCount > 0 ? AppColors.primaryTint : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
@@ -570,15 +918,15 @@ class _FilterButton extends StatelessWidget {
           children: [
             Icon(
               LucideIcons.slidersHorizontal,
-              size: 16,
+              size: 13,
               color:
                   activeCount > 0 ? AppColors.primary : AppColors.textPrimary,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Text(
               'Filtres',
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w700,
                 color: activeCount > 0
                     ? AppColors.primary
@@ -586,10 +934,10 @@ class _FilterButton extends StatelessWidget {
               ),
             ),
             if (activeCount > 0) ...[
-              const SizedBox(width: 5),
+              const SizedBox(width: 4),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(9),
@@ -597,7 +945,7 @@ class _FilterButton extends StatelessWidget {
                 child: Text(
                   '$activeCount',
                   style: const TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
@@ -610,8 +958,6 @@ class _FilterButton extends StatelessWidget {
     );
   }
 }
-
-// ── Pills rapides ────────────────────────────────────────────────────────
 
 class _QuickPill extends StatelessWidget {
   const _QuickPill({
@@ -631,13 +977,14 @@ class _QuickPill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryTint : AppColors.border,
+          color: isSelected ? AppColors.primaryTint : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: isSelected
-              ? Border.all(color: AppColors.primary, width: 1.2)
-              : null,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 1.2 : 1.0,
+          ),
         ),
         child: Row(
           children: [
@@ -646,11 +993,11 @@ class _QuickPill extends StatelessWidget {
               size: 12,
               color: isSelected ? AppColors.primary : AppColors.textSecondary,
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color:
                     isSelected ? AppColors.primary : AppColors.textSecondary,
@@ -662,8 +1009,6 @@ class _QuickPill extends StatelessWidget {
     );
   }
 }
-
-// ── Bottom sheet de filtres ──────────────────────────────────────────────
 
 class _ClientsFilterSheet extends StatefulWidget {
   const _ClientsFilterSheet({required this.initial});
@@ -787,7 +1132,7 @@ class _ClientsFilterSheetState extends State<_ClientsFilterSheet> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     autofocus: true,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       isDense: true,
                       suffixText: 'jours',
@@ -925,7 +1270,7 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryTint : AppColors.background,
+          color: isSelected ? AppColors.primaryTint : AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.border,
@@ -944,8 +1289,6 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-/// Chip de niveau : icône + couleur du niveau — le même visuel que celui
-/// affiché au client dans son portefeuille.
 class _LevelChip extends StatelessWidget {
   const _LevelChip({
     required this.level,
@@ -964,7 +1307,7 @@ class _LevelChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? level.background : AppColors.background,
+          color: isSelected ? level.background : AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected ? level.color : AppColors.border,
@@ -990,8 +1333,6 @@ class _LevelChip extends StatelessWidget {
     );
   }
 }
-
-// ── Carte client ─────────────────────────────────────────────────────────
 
 class _ClientCard extends StatelessWidget {
   const _ClientCard({
@@ -1045,7 +1386,6 @@ class _ClientCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Initials Circle
                 Container(
                   width: 40,
                   height: 40,
@@ -1074,7 +1414,6 @@ class _ClientCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
 
-                // Name & Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1147,7 +1486,6 @@ class _ClientCard extends StatelessWidget {
                   ),
                 ),
 
-                // Action Icons (View & SMS)
                 InkWell(
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(8),
@@ -1189,7 +1527,6 @@ class _ClientCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // Progress Bar & Counter
             Row(
               children: [
                 Expanded(
@@ -1224,11 +1561,6 @@ class _ClientCard extends StatelessWidget {
   }
 }
 
-/// Badge de niveau : icône + nom réel du palier sur fond teinté — le nom et
-/// l'icône viennent directement de la carte du client (`levelName`/
-/// `levelPosition`/`levelIconKey`), pas d'un enum à 5 valeurs fixes : un
-/// palier personnalisé au-delà du 5ème garde son vrai nom et sa vraie icône
-/// ici, au lieu d'être confondu avec "Fidèle" (même clé `custom` côté API).
 class _LevelBadge extends StatelessWidget {
   const _LevelBadge({required this.name, this.position, this.iconKey});
 

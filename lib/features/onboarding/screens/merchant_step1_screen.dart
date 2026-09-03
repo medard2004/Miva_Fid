@@ -187,9 +187,9 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
           builder: (ctx, setModalState) {
             return Container(
               height: MediaQuery.of(context).size.height * 0.70,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 children: [
@@ -367,9 +367,9 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     final state = ref.watch(onboardingNotifierProvider);
 
     final inputDecorationTheme = InputDecoration(
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppColors.surface,
       border: OutlineInputBorder(
         borderRadius: Rd.input,
         borderSide: BorderSide(color: AppColors.border, width: 1.5),
@@ -447,7 +447,11 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(c),
+                                      Text(
+                                        c,
+                                        style: AppTextStyles.bodyMd()
+                                            .copyWith(color: AppColors.textPrimary),
+                                      ),
                                       Icon(
                                         iconForCommerceType(c),
                                         size: 18,
@@ -502,7 +506,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                             : null,
                         style: AppTextStyles.bodyMd().copyWith(color: AppColors.textPrimary),
                         decoration: inputDecorationTheme,
-                        dropdownColor: Colors.white,
+                        dropdownColor: AppColors.surface,
                         borderRadius: Rd.card,
                       ),
 

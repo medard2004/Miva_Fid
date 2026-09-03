@@ -379,7 +379,7 @@ class _SelectionCardState extends State<_SelectionCard> {
                 height: 26,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
+                  color: AppColors.surface,
                   border: Border.all(color: accentColor, width: 1.5),
                   boxShadow: [
                     BoxShadow(color: accentColor.withValues(alpha: 0.4), blurRadius: 8),

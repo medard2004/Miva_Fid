@@ -12,6 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/password_rules_checklist.dart';
 import '../../../core/services/social_auth_service.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/errors/error_messages.dart';
@@ -44,7 +45,18 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
     ..onTap = () => context.push('/client/legal/privacy');
 
   @override
+  void initState() {
+    super.initState();
+    _passwordCtrl.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _passwordCtrl.removeListener(_onPasswordChanged);
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _termsTap.dispose();
@@ -236,7 +248,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   height: 46,
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 245, 244, 255),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                         color: AppColors.border.withValues(alpha: 0.5)),
@@ -254,7 +266,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color:
-                                  !_isLogin ? Colors.white : Colors.transparent,
+                                  !_isLogin ? AppColors.background : Colors.transparent,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: !_isLogin
                                   ? [
@@ -295,7 +307,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color:
-                                  _isLogin ? Colors.white : Colors.transparent,
+                                  _isLogin ? AppColors.background : Colors.transparent,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: _isLogin
                                   ? [
@@ -413,6 +425,9 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 )
                     .animate(key: ValueKey('pass_$_isLogin'))
                     .fadeIn(duration: 300.ms),
+
+                if (!_isLogin)
+                  PasswordRulesChecklist(password: _passwordCtrl.text),
 
                 // "Mot de passe oublié" for login — le flux `/auth/forgot-password`
                 // réinitialise le mot de passe du compte Restaurant, pas celui
@@ -555,7 +570,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 const SizedBox(height: Sp.sm),
                 _SocialAuthButton(
                   label: 'Continuer avec Apple',
-                  leading: const Icon(SimpleIcons.apple, size: 18, color: Colors.black),
+                  leading: Icon(SimpleIcons.apple, size: 18, color: AppColors.textPrimary),
                   onTap: () {
                     if (!_loading) _continueWithSocial('apple');
                   },
@@ -630,7 +645,7 @@ class _SocialAuthButton extends StatelessWidget {
       width: double.infinity,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.5),
         boxShadow: [

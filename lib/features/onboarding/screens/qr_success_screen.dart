@@ -114,7 +114,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
     final qrPayload = _buildQrPayload();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           Align(
@@ -181,7 +181,7 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: Sp.md),
                     padding: const EdgeInsets.all(Sp.lg),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: Rd.card20,
                       boxShadow: [
                         BoxShadow(
@@ -193,12 +193,19 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                     ),
                     child: Column(
                       children: [
-                        QrImageView(
-                          data: qrPayload,
-                          size: 200,
-                          eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.square,
-                            color: AppColors.merchant,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: QrImageView(
+                            data: qrPayload,
+                            size: 200,
+                            eyeStyle: const QrEyeStyle(
+                              eyeShape: QrEyeShape.square,
+                              color: AppColors.merchant,
+                            ),
                           ),
                         ),
                         const SizedBox(height: Sp.sm),

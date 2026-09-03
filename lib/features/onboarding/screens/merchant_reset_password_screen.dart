@@ -8,6 +8,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/password_rules_checklist.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/errors/error_messages.dart';
 import '../../../core/errors/error_translator.dart';
@@ -40,7 +41,18 @@ class _MerchantResetPasswordScreenState
   bool _loading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _passwordCtrl.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _passwordCtrl.removeListener(_onPasswordChanged);
     _passwordCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
@@ -127,6 +139,8 @@ class _MerchantResetPasswordScreenState
                     return null;
                   },
                 ),
+                PasswordRulesChecklist(password: _passwordCtrl.text),
+                const SizedBox(height: Sp.sm),
                 AppInput(
                   label: 'CONFIRMER LE MOT DE PASSE',
                   hint: '••••••••',

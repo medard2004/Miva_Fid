@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/notifications/notification_destination.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../client/models/app_notification.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/notifications_provider.dart';
@@ -52,81 +53,81 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'merchant_new_client':
         return (
           icon: LucideIcons.userPlus,
-          bg: const Color(0xFFEEF2FF),
-          color: const Color(0xFF6366F1)
+          bg: AppColors.primaryTint,
+          color: AppColors.primary
         );
       case 'reward_unlocked':
         return (
           icon: LucideIcons.gift,
-          bg: const Color(0xFFFEF3C7),
-          color: const Color(0xFFD97706)
+          bg: AppColors.warningTint,
+          color: AppColors.warningDark
         );
       case 'campaign':
         return (
           icon: LucideIcons.messageSquare,
-          bg: const Color(0xFFE0F2FE),
-          color: const Color(0xFF0284C7)
+          bg: AppColors.primaryTint,
+          color: AppColors.primary
         );
       case 'merchant_low_sms':
       case 'merchant_sms_low':
         return (
           icon: LucideIcons.triangleAlert,
-          bg: const Color(0xFFFEF3C7),
-          color: const Color(0xFFD97706)
+          bg: AppColors.warningTint,
+          color: AppColors.warningDark
         );
       case 'merchant_sms_depleted':
         return (
           icon: LucideIcons.alertCircle,
-          bg: const Color(0xFFFEE2E2),
-          color: const Color(0xFFDC2626)
+          bg: AppColors.dangerTint,
+          color: AppColors.danger
         );
       case 'fraud_alert':
         return (
           icon: LucideIcons.shieldAlert,
-          bg: const Color(0xFFFEE2E2),
-          color: const Color(0xFFDC2626)
+          bg: AppColors.dangerTint,
+          color: AppColors.danger
         );
       case 'merchant_weekly_report':
         return (
           icon: LucideIcons.trendingUp,
-          bg: const Color(0xFFDCFCE7),
-          color: const Color(0xFF16A34A)
+          bg: AppColors.successTint,
+          color: AppColors.success
         );
       case 'merchant_new_review':
         return (
           icon: LucideIcons.star,
-          bg: const Color(0xFFFEF3C7),
-          color: const Color(0xFFD97706)
+          bg: AppColors.warningTint,
+          color: AppColors.warningDark
         );
       case 'merchant_campaign_sent':
         return (
           icon: LucideIcons.send,
-          bg: const Color(0xFFE0F2FE),
-          color: const Color(0xFF0284C7)
+          bg: AppColors.primaryTint,
+          color: AppColors.primary
         );
       case 'merchant_birthday_reward':
         return (
           icon: LucideIcons.cake,
-          bg: const Color(0xFFFCE7F3),
-          color: const Color(0xFFDB2777)
+          bg: AppColors.merchantTint,
+          color: AppColors.merchant
         );
       case 'merchant_referral_new':
         return (
           icon: LucideIcons.userPlus,
-          bg: const Color(0xFFEDE9FE),
-          color: const Color(0xFF7C3AED)
+          bg: AppColors.merchantTint,
+          color: AppColors.merchant
         );
       case 'merchant_referral_valid':
         return (
           icon: LucideIcons.userCheck,
-          bg: const Color(0xFFDCFCE7),
-          color: const Color(0xFF16A34A)
+          bg: AppColors.successTint,
+          color: AppColors.success
         );
       default:
         return (
           icon: LucideIcons.bell,
-          bg: const Color(0xFFF3E8FF),
-          color: const Color(0xFF9333EA)
+          bg: AppColors.merchantTint,
+          color: AppColors.merchant
         );
     }
   }
@@ -164,13 +165,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final notificationsAsync = ref.watch(merchantNotificationsNotifierProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft,
-              color: Color(0xFF111827), size: 22),
+          icon: Icon(LucideIcons.arrowLeft,
+              color: AppColors.textPrimary, size: 22),
           onPressed: () => context.pop(),
         ),
         title: notificationsAsync.when(
@@ -179,54 +180,56 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Notifications',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
                   '$unreadCount non lues',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF6B7280),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
             );
           },
-          loading: () => const Text(
+          loading: () => Text(
             'Notifications',
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF111827)),
+                color: AppColors.textPrimary),
           ),
-          error: (_, __) => const Text(
+          error: (_, __) => Text(
             'Notifications',
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF111827)),
+                color: AppColors.textPrimary),
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.settings,
-                color: Color(0xFF4B5563), size: 20),
+            icon: Icon(LucideIcons.settings,
+                color: AppColors.textSecondary, size: 20),
             onPressed: () => context.push('/merchant/more/preferences'),
           ),
         ],
       ),
       body: notificationsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Color(0xFF5B50EC)),
+        ),
         error: (error, _) => Center(
           child: Text(
             'Impossible de charger les notifications.',
-            style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
         ),
         data: (notifications) {
@@ -271,13 +274,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               .markAllRead()
                           : null,
                       icon: const Icon(LucideIcons.check,
-                          size: 16, color: Color(0xFF6366F1)),
+                          size: 16, color: Color(0xFF5B50EC)),
                       label: const Text(
                         'Tout lire',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF6366F1),
+                          color: Color(0xFF5B50EC),
                         ),
                       ),
                     ),
@@ -288,11 +291,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               // ── LIST OF NOTIFICATIONS BY SECTION ──
               Expanded(
                 child: items.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'Aucune notification',
-                          style:
-                              TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 14),
                         ),
                       )
                     : ListView(
@@ -305,20 +308,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   left: 4, top: 12, bottom: 8),
                               child: Text(
                                 section,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF6B7280),
+                                  color: AppColors.textSecondary,
                                   letterSpacing: 0.6,
                                 ),
                               ),
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(16),
                                 border:
-                                    Border.all(color: const Color(0xFFE5E7EB)),
+                                    Border.all(color: AppColors.border),
                               ),
                               child: Column(
                                 children: [
@@ -328,10 +331,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                     _buildNotificationTile(
                                         sections[section]![i]),
                                     if (i < sections[section]!.length - 1)
-                                      const Divider(
+                                      Divider(
                                           height: 1,
                                           indent: 64,
-                                          color: Color(0xFFF3F4F6)),
+                                          color: AppColors.border),
                                   ],
                                 ],
                               ),
@@ -345,20 +348,33 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   final confirmed = await showDialog<bool>(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
-                                      title: const Text('Tout supprimer'),
-                                      content: const Text(
+                                      backgroundColor: AppColors.surface,
+                                      title: Text(
+                                        'Tout supprimer',
+                                        style: TextStyle(
+                                            color: AppColors.textPrimary),
+                                      ),
+                                      content: Text(
                                         'Voulez-vous vraiment supprimer toutes les notifications ?',
+                                        style: TextStyle(
+                                            color: AppColors.textSecondary),
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(false),
-                                          child: const Text('Annuler'),
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(false),
+                                          child: Text('Annuler',
+                                              style: TextStyle(
+                                                  color: AppColors
+                                                      .textSecondary)),
                                         ),
                                         TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(true),
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(true),
                                           child: const Text(
                                             'Supprimer',
-                                            style: TextStyle(color: Color(0xFFDC2626)),
+                                            style: TextStyle(
+                                                color: AppColors.danger),
                                           ),
                                         ),
                                       ],
@@ -366,19 +382,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   );
                                   if (confirmed == true) {
                                     ref
-                                        .read(merchantNotificationsNotifierProvider
-                                            .notifier)
+                                        .read(
+                                            merchantNotificationsNotifierProvider
+                                                .notifier)
                                         .deleteAll();
                                   }
                                 },
-                                icon: const Icon(LucideIcons.trash2,
-                                    size: 16, color: Color(0xFF6B7280)),
-                                label: const Text(
+                                icon: Icon(LucideIcons.trash2,
+                                    size: 16, color: AppColors.textSecondary),
+                                label: Text(
                                   'Effacer toutes les notifications',
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF6B7280),
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ),
@@ -407,11 +424,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6366F1) : Colors.white,
+          color: isSelected ? const Color(0xFF5B50EC) : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color:
-                isSelected ? const Color(0xFF6366F1) : const Color(0xFFE5E7EB),
+            color: isSelected ? const Color(0xFF5B50EC) : AppColors.border,
           ),
         ),
         child: Row(
@@ -422,7 +438,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : const Color(0xFF374151),
+                color: isSelected ? Colors.white : AppColors.textPrimary,
               ),
             ),
             if (count != null && count > 0) ...[
@@ -432,12 +448,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Colors.white.withValues(alpha: 0.25)
-                      : const Color(0xFF6366F1),
+                      : const Color(0xFF5B50EC),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   '$count',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -493,10 +509,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       Expanded(
                         child: Text(
                           item.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -506,7 +522,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           height: 8,
                           margin: const EdgeInsets.only(left: 6),
                           decoration: const BoxDecoration(
-                            color: Color(0xFF6366F1),
+                            color: Color(0xFF5B50EC),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -515,18 +531,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   const SizedBox(height: 2),
                   Text(
                     item.subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
-                      color: Color(0xFF4B5563),
+                      color: AppColors.textSecondary,
                       height: 1.3,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     item.time,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF9CA3AF),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

@@ -13,49 +13,68 @@ import '../providers/clients_provider.dart';
 import '../providers/dashboard_stats_provider.dart';
 import '../providers/merchant_provider.dart';
 
-class DashboardScreen extends ConsumerWidget {
+import 'merchant_shell.dart';
+
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  int _animVersion = 0;
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
+
+    ref.listen<int>(merchantTabIndexProvider, (previous, next) {
+      if (next == 1 && previous != 1 && mounted) {
+        setState(() {
+          _animVersion++;
+        });
+      }
+    });
 
     final statsAsync = ref.watch(dashboardStatsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: statsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFF5B50EC)),
-        ),
-        error: (err, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'Erreur : $err',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+      body: SafeArea(
+        child: statsAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: Color(0xFF5B50EC)),
+          ),
+          error: (err, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Erreur : $err',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              ),
             ),
           ),
-        ),
-        data: (stats) {
-          final cards = ref.watch(clientsNotifierProvider).valueOrNull?.clients ??
-              const <LoyaltyCardModel>[];
+          data: (stats) {
+            final cards = ref.watch(clientsNotifierProvider).valueOrNull?.clients ??
+                const <LoyaltyCardModel>[];
 
-          return RefreshIndicator(
-            color: const Color(0xFF5B50EC),
-            onRefresh: () async {
-              ref.invalidate(merchantNotifierProvider);
-              ref.invalidate(dashboardStatsProvider);
-              ref.invalidate(clientsNotifierProvider);
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            return RefreshIndicator(
+              color: const Color(0xFF5B50EC),
+              onRefresh: () async {
+                ref.invalidate(merchantNotifierProvider);
+                ref.invalidate(dashboardStatsProvider);
+                ref.invalidate(clientsNotifierProvider);
+              },
+              child: SingleChildScrollView(
+                key: ValueKey('stats_body_$_animVersion'),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // ── TOP HEADER ──────────────────────────────────────────────
                   Row(
                     children: [
@@ -317,6 +336,7 @@ class DashboardScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 
