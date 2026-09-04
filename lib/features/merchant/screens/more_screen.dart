@@ -143,13 +143,12 @@ class MoreScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── TOP HEADER ──────────────────────────────────────────────
-              Row(
+        child: Column(
+          children: [
+            // ── TOP HEADER (PERSISTENT / FIXED ON SCROLL) ──────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              child: Row(
                 children: [
                   Container(
                     width: 38,
@@ -167,10 +166,10 @@ class MoreScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      t.settingsTitle,
+                      t.merchantNavSettings,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -212,9 +211,14 @@ class MoreScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // ── 1. PROFIL DU COMMERCE CARD ──────────────────────────────
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── 1. PROFIL DU COMMERCE CARD ──────────────────────────────
               InkWell(
                 onTap: () => context.push('/merchant/more/profile'),
                 borderRadius: BorderRadius.circular(16),
@@ -557,7 +561,10 @@ class MoreScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ],
+  ),
+),
+);
   }
 
   String _initials(String name) {

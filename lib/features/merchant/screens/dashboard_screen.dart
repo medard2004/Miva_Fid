@@ -43,118 +43,109 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: statsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: Color(0xFF5B50EC)),
-          ),
-          error: (err, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Erreur : $err',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        child: Column(
+          children: [
+            // ── TOP HEADER (PERSISTENT / FIXED ON SCROLL) ──────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryTint,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      LucideIcons.chartColumnBig,
+                      color: Color(0xFF5B50EC),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      t.merchantDashboardTitle,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => context.push('/merchant/more/notifications'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Icon(
+                            LucideIcons.bell,
+                            size: 18,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          data: (stats) {
-            final cards = ref.watch(clientsNotifierProvider).valueOrNull?.clients ??
-                const <LoyaltyCardModel>[];
-
-            return RefreshIndicator(
-              color: const Color(0xFF5B50EC),
-              onRefresh: () async {
-                ref.invalidate(merchantNotifierProvider);
-                ref.invalidate(dashboardStatsProvider);
-                ref.invalidate(clientsNotifierProvider);
-              },
-              child: SingleChildScrollView(
-                key: ValueKey('stats_body_$_animVersion'),
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                  // ── TOP HEADER ──────────────────────────────────────────────
-                  Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryTint,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          LucideIcons.chartColumnBig,
-                          color: Color(0xFF5B50EC),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.merchantDashboardTitle,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _monthSubtitle(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => context.push('/merchant/more/notifications'),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Icon(
-                                LucideIcons.bell,
-                                size: 18,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                width: 7,
-                                height: 7,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFF59E0B),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+            Expanded(
+              child: statsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF5B50EC)),
+                ),
+                error: (err, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Erreur : $err',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                ),
+                data: (stats) {
+                  final cards = ref.watch(clientsNotifierProvider).valueOrNull?.clients ??
+                      const <LoyaltyCardModel>[];
 
-                  // ── 3 TOP KPI STAT CARDS ─────────────────────────────────────
+                  return RefreshIndicator(
+                    color: const Color(0xFF5B50EC),
+                    onRefresh: () async {
+                      ref.invalidate(merchantNotifierProvider);
+                      ref.invalidate(dashboardStatsProvider);
+                      ref.invalidate(clientsNotifierProvider);
+                    },
+                    child: SingleChildScrollView(
+                      key: ValueKey('stats_body_$_animVersion'),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── 3 TOP KPI STAT CARDS ─────────────────────────────────────
                   Row(
                     children: [
                       Expanded(
@@ -337,26 +328,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         },
       ),
     ),
-    );
-  }
-
-  String _monthSubtitle() {
-    const months = [
-      'janvier',
-      'février',
-      'mars',
-      'avril',
-      'mai',
-      'juin',
-      'juillet',
-      'août',
-      'septembre',
-      'octobre',
-      'novembre',
-      'décembre',
-    ];
-    final now = DateTime.now();
-    return 'Aperçu de votre activité — ${months[now.month - 1]} ${now.year}';
+  ],
+),
+),
+);
   }
 
   List<Widget> _buildVipDistribution(List<LoyaltyCardModel> cards) {
@@ -451,41 +426,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          Row(
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              if (sublabel != null) ...[
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
+                if (sublabel != null) ...[
+                  const SizedBox(width: 4),
+                  Text(
                     sublabel,
                     style: TextStyle(
                       fontSize: 10.5,
                       color: AppColors.textSecondary,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-              if (badge != null) ...[
-                const SizedBox(width: 4),
-                Text(
-                  badge,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: badgeColor ?? const Color(0xFF16A34A),
+                ],
+                if (badge != null) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: badgeColor ?? const Color(0xFF16A34A),
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ],
       ),

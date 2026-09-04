@@ -72,119 +72,110 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: RefreshIndicator(
-          color: const Color(0xFF5B50EC),
-          onRefresh: () {
-            if (_showArchived) {
-              return ref.refresh(archivedCampaignsProvider.future);
-            }
-            return ref.refresh(smsNotifierProvider.future);
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── TOP HEADER ──────────────────────────────────────────────
-                Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryTint,
-                        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            // ── TOP HEADER (PERSISTENT / FIXED ON SCROLL) ──────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryTint,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      LucideIcons.messageSquare,
+                      color: Color(0xFF5B50EC),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      t.merchantNavSms,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => context.push('/merchant/campaigns/new'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF5B50EC),
+                        shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        LucideIcons.messageSquare,
-                        color: Color(0xFF5B50EC),
-                        size: 20,
+                        LucideIcons.plus,
+                        size: 19,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Campagnes',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                            ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => context.push('/merchant/more/notifications'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Notifications & messages • ${merchant?.smsRemaining ?? 0} crédits',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
+                          child: Icon(
+                            LucideIcons.bell,
+                            size: 18,
+                            color: AppColors.textPrimary,
                           ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => context.push('/merchant/campaigns/new'),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF5B50EC),
-                          shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          LucideIcons.plus,
-                          size: 19,
-                          color: Colors.white,
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => context.push('/merchant/more/notifications'),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Icon(
-                              LucideIcons.bell,
-                              size: 18,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFF59E0B),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // ── 3 KPI STAT CARDS ROW ─────────────────────────────────────
-                _buildKpiRow(smsAsync, merchant?.smsRemaining),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                color: const Color(0xFF5B50EC),
+                onRefresh: () {
+                  if (_showArchived) {
+                    return ref.refresh(archivedCampaignsProvider.future);
+                  }
+                  return ref.refresh(smsNotifierProvider.future);
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── 3 KPI STAT CARDS ROW ─────────────────────────────────────
+                      _buildKpiRow(smsAsync, merchant?.smsRemaining),
                 const SizedBox(height: 20),
 
                 // ── SECTION HISTORIQUE ───────────────────────────────────────
@@ -366,7 +357,10 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
           ),
         ),
       ),
-    );
+    ],
+  ),
+),
+);
   }
 
   Widget _buildKpiRow(

@@ -31,6 +31,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        toolbarHeight: 48,
         foregroundColor: AppColors.textPrimary,
         iconTheme: IconThemeData(color: AppColors.textPrimary, size: 20),
         titleTextStyle: GoogleFonts.plusJakartaSans(
@@ -44,7 +45,7 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.border,
-          minimumSize: const Size(0, 48),
+          minimumSize: const Size.fromHeight(48),
           padding: const EdgeInsets.symmetric(horizontal: Sp.md),
           shape: const RoundedRectangleBorder(borderRadius: Rd.button),
           elevation: 0,
@@ -57,7 +58,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          minimumSize: const Size(0, 48),
+          minimumSize: const Size.fromHeight(48),
           padding: const EdgeInsets.symmetric(horizontal: Sp.md),
           shape: const RoundedRectangleBorder(borderRadius: Rd.button),
           side: BorderSide(color: AppColors.border, width: 1.5),
@@ -202,11 +203,18 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.bgDark,
       textTheme: GoogleFonts.manropeTextTheme(ThemeData.dark().textTheme),
       iconTheme: const IconThemeData(color: AppColors.gray300, size: 22),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        toolbarHeight: 48,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white, size: 20),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surfaceDark,
@@ -218,7 +226,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48),
+          minimumSize: const Size.fromHeight(48),
           padding: const EdgeInsets.symmetric(horizontal: Sp.md),
           shape: const RoundedRectangleBorder(borderRadius: Rd.button),
           elevation: 0,
@@ -231,7 +239,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48),
+          minimumSize: const Size.fromHeight(48),
           padding: const EdgeInsets.symmetric(horizontal: Sp.md),
           shape: const RoundedRectangleBorder(borderRadius: Rd.button),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1.5),

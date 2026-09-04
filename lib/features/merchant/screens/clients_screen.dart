@@ -370,12 +370,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     final restaurant = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
     final displayTiers = _getDisplayTiers(restaurant);
 
-    final subtitle = clientsAsync.maybeWhen(
-      data: (state) =>
-          '${state.total} ${state.total > 1 ? 'clients' : 'client'}',
-      orElse: () => 'Chargement...',
-    );
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -470,26 +464,13 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.merchantClientsTitle,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                subtitle,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            t.merchantClientsTitle,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                         // Search Button in TopBar
