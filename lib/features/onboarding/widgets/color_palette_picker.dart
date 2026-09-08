@@ -39,6 +39,14 @@ class _ColorPalettePickerState extends State<ColorPalettePicker> {
   }
 
   @override
+  void didUpdateWidget(covariant ColorPalettePicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selected != oldWidget.selected) {
+      setState(() => _selected = widget.selected);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +154,7 @@ class _CustomColorSheetState extends State<_CustomColorSheet> {
       padding: const EdgeInsets.all(Sp.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

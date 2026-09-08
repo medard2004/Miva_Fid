@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,9 +14,14 @@ import 'premium_card_surface.dart';
 import 'stamp_grid_widget_preview.dart';
 
 class LoyaltyCardPreview extends ConsumerWidget {
-  const LoyaltyCardPreview({super.key, this.previewStamps = 7});
+  const LoyaltyCardPreview({
+    super.key,
+    this.previewStamps = 7,
+    this.height = 204,
+  });
 
   final int previewStamps;
+  final double? height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,11 +33,15 @@ class LoyaltyCardPreview extends ConsumerWidget {
     final isStampsMode = state.loyaltyMode == 'stamps';
     // For stamps mode, calculate progress based on stampsRequired
     // For points mode, simulate 70% progress in preview
-    final currentPoints = (state.stampsRequired * 0.7).round();
-    final remainingPoints = state.stampsRequired - currentPoints;
-    final progress = isStampsMode
-        ? previewStamps / state.stampsRequired
-        : currentPoints / state.stampsRequired;
+    final totalStamps = state.stampsRequired > 0 ? state.stampsRequired : 10;
+    final currentPoints = (totalStamps * 0.7).round();
+    final remainingPoints = (totalStamps - currentPoints).clamp(0, totalStamps);
+    final double rawProgress = isStampsMode
+        ? previewStamps / totalStamps
+        : currentPoints / totalStamps;
+    final progress = (rawProgress.isNaN || rawProgress.isInfinite)
+        ? 0.0
+        : rawProgress.clamp(0.0, 1.0);
 
     // Gradient configuration
     final gradient = state.cardGradientType == 'radial'
@@ -49,7 +57,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
           );
 
     return PremiumCardSurface(
-      height: 148,
+      height: height,
       gradient: gradient,
       shadowColor: primary,
       child: Stack(
@@ -65,15 +73,9 @@ class LoyaltyCardPreview extends ConsumerWidget {
               ),
             ),
 
-          // Content — même grammaire visuelle que la carte du module
-          // client (badge catégorie + nom en serif Cormorant + bloc de
-          // données en DM Mono), adaptée à la personnalisation marchand
-          // (logo, motif, mode tampons/points en direct). Hauteur et
-          // paddings alignés sur la carte compacte du module client
-          // (lib/features/client/wallet/widgets/loyalty_card_widget.dart)
-          // pour une cohérence visuelle entre les deux parcours.
+          // Content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,11 +106,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
           ),
         ],
       ),
-    ).animate().scale(
-          begin: const Offset(0.98, 0.98),
-          end: const Offset(1.0, 1.0),
-          duration: 150.ms,
-        );
+    );
   }
 }
 
@@ -273,8 +271,8 @@ class _CardBottomGroup extends StatelessWidget {
           StampGridWidgetPreview(
             filled: previewStamps,
             total: stampsRequired,
-            stampSize: 15,
-            gap: 4,
+            stampSize: 18,
+            gap: 5,
             designType: stampDesignType,
             emoji: stampEmoji,
             iconName: stampIcon,
@@ -391,7 +389,7 @@ class _CardBottomGroup extends StatelessWidget {
           ClipRRect(
             borderRadius: Rd.pill,
             child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
+              value: progress.isNaN ? 0.0 : progress.clamp(0.0, 1.0),
               color: Colors.white,
               backgroundColor: Colors.white.withValues(alpha: 0.3),
               minHeight: 3,

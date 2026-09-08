@@ -283,7 +283,26 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                       if (!hasLogo)
                         const Icon(LucideIcons.store, color: AppColors.merchant, size: 28)
                       else
-                        Image.network(state.logoUrl!, fit: BoxFit.cover),
+                        Builder(builder: (_) {
+                          final url = state.logoUrl!;
+                          Widget fallback() => const Icon(LucideIcons.store, color: AppColors.merchant, size: 28);
+                          if (url.startsWith('http')) {
+                            return Image.network(
+                              url,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => fallback(),
+                            );
+                          }
+                          try {
+                            return Image.file(
+                              File(url),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => fallback(),
+                            );
+                          } catch (_) {
+                            return fallback();
+                          }
+                        }),
                       if (_uploadingLogo)
                         Container(
                           color: Colors.black.withValues(alpha: 0.35),

@@ -205,6 +205,8 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                   OutlinedButton.icon(
                     onPressed: () => _showPreviewSheet(context, merchant),
                     style: OutlinedButton.styleFrom(
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       side: BorderSide(color: AppColors.border),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(

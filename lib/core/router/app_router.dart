@@ -243,11 +243,13 @@ GoRouter appRouter(AppRouterRef ref) {
         // sans eux, le menu compte de l'opérateur sur `/merchant/validate`
         // mènerait à des routes aussitôt renvoyées ici.
         final isAdmin = ref.read(isAdminProvider);
-        final isOperatorReachable = location.startsWith('/merchant/validate') ||
+        final isOperatorReachable = location == '/merchant' ||
+            location == '/merchant/validate' ||
+            location.startsWith('/merchant/validate') ||
             location == '/merchant/more/change-password' ||
             location == '/merchant/more/profile';
         if (!isAdmin && !isOperatorReachable) {
-          return '/merchant/validate';
+          return '/merchant';
         }
 
         return null;

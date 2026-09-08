@@ -53,10 +53,11 @@ class StampGridWidgetPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final clampedFilled = filled.clamp(0, total);
-    final hasOverflow = total > _maxVisibleDots;
-    final dotsToRender = hasOverflow ? _maxVisibleDots - 1 : total;
-    final overflowCount = total - dotsToRender;
+    final safeTotal = total > 0 ? total : 10;
+    final clampedFilled = filled.clamp(0, safeTotal);
+    final hasOverflow = safeTotal > _maxVisibleDots;
+    final dotsToRender = hasOverflow ? _maxVisibleDots - 1 : safeTotal;
+    final overflowCount = safeTotal - dotsToRender;
 
     return Wrap(
       spacing: gap,
