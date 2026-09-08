@@ -21,6 +21,11 @@ import '../../features/client/onboarding/join_restaurant_screen.dart';
 import '../../features/client/wallet/wallet_dashboard_screen.dart';
 import '../../features/client/wallet/wallet_search_screen.dart';
 import '../../features/client/card_detail/card_detail_screen.dart';
+<<<<<<< HEAD
+=======
+import '../../features/client/card_detail/card_unlocked_rewards_screen.dart';
+import '../../features/client/card_detail/merchant_map_screen.dart';
+>>>>>>> 2c11929 (miv)
 import '../../features/client/rewards/rewards_screen.dart';
 import '../../features/client/referral/referral_screen.dart';
 import '../../features/client/profile/profile_screen.dart';
@@ -462,6 +467,69 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
 
       GoRoute(
+<<<<<<< HEAD
+=======
+        path: '/client/card/:id/rewards',
+        pageBuilder: (_, state) {
+          final id = state.pathParameters['id']!;
+          return _slide(CardUnlockedRewardsScreen(cardId: id));
+        },
+      ),
+
+      GoRoute(
+        path: '/client/card/:id/map',
+        builder: (_, state) {
+          final extra = state.extra;
+          final args = extra is MerchantMapArguments ? extra : null;
+          return MerchantMapScreen(
+            merchantName: args?.merchantName ?? 'Établissement',
+            address: args?.address ?? '',
+            latitude: args?.latitude,
+            longitude: args?.longitude,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/client/campaign/:id',
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map?;
+          return _slide(CampaignDetailScreen(
+            campaignId: state.pathParameters['id'] ?? '',
+            title: extra?['title'] as String? ?? 'Offre',
+            body: extra?['body'] as String? ?? '',
+            imageUrl: extra?['image_url'] as String?,
+            rewardId: extra?['reward_id'] as String?,
+            campaignType: extra?['campaign_type'] as String?,
+            cardId: extra?['card_id'] as String?,
+          ));
+        },
+      ),
+
+      // Écran surprise récompense de bienvenue
+      GoRoute(
+        path: '/client/welcome-reward/:cardId',
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map?;
+          return _slide(WelcomeRewardSurpriseScreen(
+            cardId: state.pathParameters['cardId'] ?? '',
+            referredBy: extra?['referred_by'] as String?,
+          ));
+        },
+      ),
+
+      // Écran de notation (avis)
+      GoRoute(
+        path: '/client/review/:cardId',
+        pageBuilder: (_, state) {
+          return _slide(ReviewScreen(
+            cardId: state.pathParameters['cardId'] ?? '',
+          ));
+        },
+      ),
+
+      GoRoute(
+>>>>>>> 2c11929 (miv)
         path: '/client/profile/edit',
         builder: (_, __) => const EditProfileScreen(),
       ),
