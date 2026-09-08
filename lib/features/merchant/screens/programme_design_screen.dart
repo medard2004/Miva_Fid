@@ -466,29 +466,42 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
 
                     Text(t.merchantProgrammeDesignPatternLabel, style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.sm),
-                    Wrap(
-                      spacing: Sp.xs,
-                      runSpacing: Sp.xs,
+                    Row(
                       children: [
-                        _buildSegmentButton(
-                          label: t.merchantProgrammeDesignPatternNone,
-                          isSelected: state.cardDecorationPattern == 'none',
-                          onTap: () => notifier.setCardDecorationPattern('none'),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: t.merchantProgrammeDesignPatternNone,
+                            isSelected: state.cardDecorationPattern == 'none',
+                            onTap: () => notifier.setCardDecorationPattern('none'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: t.merchantProgrammeDesignPatternLines,
-                          isSelected: state.cardDecorationPattern == 'lines',
-                          onTap: () => notifier.setCardDecorationPattern('lines'),
+                        const SizedBox(width: Sp.sm),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: t.merchantProgrammeDesignPatternLines,
+                            isSelected: state.cardDecorationPattern == 'lines',
+                            onTap: () => notifier.setCardDecorationPattern('lines'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: t.merchantProgrammeDesignPatternWaves,
-                          isSelected: state.cardDecorationPattern == 'waves',
-                          onTap: () => notifier.setCardDecorationPattern('waves'),
+                      ],
+                    ),
+                    const SizedBox(height: Sp.xs),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: t.merchantProgrammeDesignPatternWaves,
+                            isSelected: state.cardDecorationPattern == 'waves',
+                            onTap: () => notifier.setCardDecorationPattern('waves'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: t.merchantProgrammeDesignPatternDots,
-                          isSelected: state.cardDecorationPattern == 'dots',
-                          onTap: () => notifier.setCardDecorationPattern('dots'),
+                        const SizedBox(width: Sp.sm),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: t.merchantProgrammeDesignPatternDots,
+                            isSelected: state.cardDecorationPattern == 'dots',
+                            onTap: () => notifier.setCardDecorationPattern('dots'),
+                          ),
                         ),
                       ],
                     ),

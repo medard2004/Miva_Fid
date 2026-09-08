@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/api/repositories/merchant_auth_repository.dart';
 import '../models/restaurant_account.dart';
@@ -69,6 +70,16 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
       state = MerchantAuthState(isAuthenticated: true, restaurant: restaurant);
       return true;
     } catch (e) {
+      if (e is UnauthorizedException) {
+        try {
+          final restaurant = await _authRepository.staffLogin(email, password);
+          state = MerchantAuthState(isAuthenticated: true, restaurant: restaurant);
+          return true;
+        } catch (staffError) {
+          state = state.copyWith(lastError: staffError);
+          return false;
+        }
+      }
       state = state.copyWith(lastError: e);
       return false;
     }
