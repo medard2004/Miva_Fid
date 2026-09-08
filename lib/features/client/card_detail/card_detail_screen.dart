@@ -23,6 +23,7 @@ import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/reward_detail_sheet.dart';
 import '../wallet/widgets/card_face_content.dart';
 import 'card_export_service.dart';
+import 'merchant_map_screen.dart';
 import '../../../core/widgets/tier_level_icon.dart';
 
 class CardDetailScreen extends ConsumerWidget {
@@ -1103,6 +1104,22 @@ class _MerchantShowcaseCard extends StatelessWidget {
     } catch (_) {}
   }
 
+  void _openMap(BuildContext context) {
+    final fullAddress = [
+      if (card.restaurantAddress?.isNotEmpty ?? false) card.restaurantAddress!,
+      if (card.restaurantCity?.isNotEmpty ?? false) card.restaurantCity!,
+    ].join(', ');
+    context.push(
+      '/client/card/${card.id}/map',
+      extra: MerchantMapArguments(
+        merchantName: card.restaurantName,
+        address: fullAddress,
+        latitude: card.restaurantLatitude,
+        longitude: card.restaurantLongitude,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasAddress = (card.restaurantAddress?.isNotEmpty ?? false) ||
@@ -1280,16 +1297,7 @@ class _MerchantShowcaseCard extends StatelessWidget {
                     icon: LucideIcons.map,
                     label: 'Plan',
                     color: AppColors.primary,
-                    onTap: () {
-                      if (card.restaurantLatitude != null &&
-                          card.restaurantLongitude != null) {
-                        _launch(
-                            'https://maps.google.com/?q=${card.restaurantLatitude},${card.restaurantLongitude}');
-                      } else {
-                        final q = Uri.encodeComponent(fullAddress);
-                        _launch('https://maps.google.com/?q=$q');
-                      }
-                    },
+                    onTap: () => _openMap(context),
                   ),
                 ),
               ],
@@ -1519,20 +1527,16 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                       ),
                       AppTapScale(
                         onTap: () {
-                          if (card.restaurantLatitude != null &&
-                              card.restaurantLongitude != null) {
-                            launchUrl(
-                              Uri.parse(
-                                  'https://maps.google.com/?q=${card.restaurantLatitude},${card.restaurantLongitude}'),
-                              mode: LaunchMode.externalApplication,
-                            );
-                          } else {
-                            final q = Uri.encodeComponent(fullAddress);
-                            launchUrl(
-                              Uri.parse('https://maps.google.com/?q=$q'),
-                              mode: LaunchMode.externalApplication,
-                            );
-                          }
+                          Navigator.pop(ctx);
+                          context.push(
+                            '/client/card/${card.id}/map',
+                            extra: MerchantMapArguments(
+                              merchantName: card.restaurantName,
+                              address: fullAddress,
+                              latitude: card.restaurantLatitude,
+                              longitude: card.restaurantLongitude,
+                            ),
+                          );
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
