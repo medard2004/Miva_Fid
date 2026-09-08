@@ -200,46 +200,66 @@ class _UnlockedRewardCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               StatusBadge(
                 label: statusLabel,
                 tone: statusTone,
                 icon: statusIcon,
               ),
+              const Spacer(),
               if (reward.expiresAt != null && isReady)
-                Text(
-                  'Expire le ${DateFormat('dd/MM/yyyy', dateFormatLocale).format(reward.expiresAt!)}',
-                  style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
+                Flexible(
+                  child: Text(
+                    'Expire le ${DateFormat('dd/MM/yyyy', dateFormatLocale).format(reward.expiresAt!)}',
+                    style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             reward.title,
-            style: AppTextStyles.titleMedium().copyWith(fontSize: 16),
+            style: AppTextStyles.titleMedium().copyWith(fontSize: 16, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (reward.unlockedAt != null)
-                Text(
-                  'Débloquée le ${DateFormat('dd MMMM yyyy', dateFormatLocale).format(reward.unlockedAt!)}',
-                  style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.6)),
+                Expanded(
+                  child: Text(
+                    'Débloquée le ${DateFormat('dd MMM yyyy', dateFormatLocale).format(reward.unlockedAt!)}',
+                    style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.6)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )
               else
-                const SizedBox.shrink(),
+                const Spacer(),
               if (isReady)
-                Row(
-                  children: [
-                    Text(
-                      'Afficher QR',
-                      style: AppTextStyles.label(color: AppColors.primary),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(LucideIcons.qrCode, size: 16, color: AppColors.primary),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Afficher QR',
+                        style: AppTextStyles.label(color: AppColors.primary).copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(LucideIcons.qrCode, size: 14, color: AppColors.primary),
+                    ],
+                  ),
                 ),
             ],
           ),

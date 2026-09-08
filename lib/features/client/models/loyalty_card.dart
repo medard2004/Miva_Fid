@@ -137,9 +137,38 @@ class LoyaltyCard {
   final String? referralQrToken;
 
   /// Date d'adhésion à la carte — sert de repère à l'entrée "inscription"
+  /// Date d'adhésion à la carte — sert de repère à l'entrée "inscription"
   /// de l'historique (`_HistoryAccordionBar`). `null` seulement si la carte
   /// vient d'un flux qui n'a pas encore cette donnée.
   final DateTime? createdAt;
+
+  /// Coordonnées et vitrine du commerce / restaurant
+  final String? restaurantPhone;
+  final String? restaurantAddress;
+  final String? restaurantCity;
+  final String? restaurantCountry;
+  final String? restaurantDescription;
+  final String? restaurantWhatsapp;
+  final String? restaurantInstagram;
+  final String? restaurantFacebook;
+  final String? restaurantTiktok;
+  final String? googleReviewUrl;
+  final double? restaurantLatitude;
+  final double? restaurantLongitude;
+  final Map<String, dynamic> restaurantOpeningHours;
+
+  bool get hasRestaurantSocials =>
+      (restaurantWhatsapp?.isNotEmpty ?? false) ||
+      (restaurantInstagram?.isNotEmpty ?? false) ||
+      (restaurantFacebook?.isNotEmpty ?? false) ||
+      (restaurantTiktok?.isNotEmpty ?? false) ||
+      (googleReviewUrl?.isNotEmpty ?? false);
+
+  bool get hasRestaurantContact =>
+      (restaurantPhone?.isNotEmpty ?? false) ||
+      (restaurantAddress?.isNotEmpty ?? false) ||
+      hasRestaurantSocials ||
+      (restaurantLatitude != null && restaurantLongitude != null);
 
   const LoyaltyCard({
     required this.id,
@@ -171,6 +200,19 @@ class LoyaltyCard {
     this.createdAt,
     this.referralCode,
     this.referralQrToken,
+    this.restaurantPhone,
+    this.restaurantAddress,
+    this.restaurantCity,
+    this.restaurantCountry,
+    this.restaurantDescription,
+    this.restaurantWhatsapp,
+    this.restaurantInstagram,
+    this.restaurantFacebook,
+    this.restaurantTiktok,
+    this.googleReviewUrl,
+    this.restaurantLatitude,
+    this.restaurantLongitude,
+    this.restaurantOpeningHours = const {},
   });
 
   /// Construit une carte réelle depuis `POST/GET /loyalty-cards/*`
@@ -223,6 +265,19 @@ class LoyaltyCard {
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
       referralCode: json['referral_code'] as String?,
       referralQrToken: json['referral_qr_token'] as String?,
+      restaurantPhone: restaurant['phone'] as String?,
+      restaurantAddress: restaurant['address'] as String?,
+      restaurantCity: restaurant['city'] as String?,
+      restaurantCountry: restaurant['country'] as String?,
+      restaurantDescription: restaurant['description'] as String?,
+      restaurantWhatsapp: restaurant['whatsapp'] as String?,
+      restaurantInstagram: restaurant['instagram'] as String?,
+      restaurantFacebook: restaurant['facebook'] as String?,
+      restaurantTiktok: restaurant['tiktok'] as String?,
+      googleReviewUrl: (restaurant['google_review_url'] ?? config['google_review_url']) as String?,
+      restaurantLatitude: (restaurant['latitude'] as num?)?.toDouble(),
+      restaurantLongitude: (restaurant['longitude'] as num?)?.toDouble(),
+      restaurantOpeningHours: (restaurant['opening_hours'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
   }
 
@@ -268,6 +323,19 @@ class LoyaltyCard {
       createdAt: createdAt,
       referralCode: referralCode,
       referralQrToken: referralQrToken,
+      restaurantPhone: restaurantPhone,
+      restaurantAddress: restaurantAddress,
+      restaurantCity: restaurantCity,
+      restaurantCountry: restaurantCountry,
+      restaurantDescription: restaurantDescription,
+      restaurantWhatsapp: restaurantWhatsapp,
+      restaurantInstagram: restaurantInstagram,
+      restaurantFacebook: restaurantFacebook,
+      restaurantTiktok: restaurantTiktok,
+      googleReviewUrl: googleReviewUrl,
+      restaurantLatitude: restaurantLatitude,
+      restaurantLongitude: restaurantLongitude,
+      restaurantOpeningHours: restaurantOpeningHours,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
@@ -14,11 +15,7 @@ import 'package:miva_fid/features/client/widgets/shared/password_input.dart';
 import 'package:miva_fid/features/client/widgets/shared/password_rules_checklist.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
-/// Seconde étape du changement de mot de passe.
-///
-/// [currentPassword] a été validé par l'écran précédent ; l'API le redemande
-/// à l'écriture (`PUT /auth/change-password`) pour ne pas se fier au seul
-/// parcours côté client.
+/// Seconde étape du changement de mot de passe : définition et confirmation du nouveau mot de passe.
 class SetNewPasswordScreen extends ConsumerStatefulWidget {
   const SetNewPasswordScreen({super.key, required this.currentPassword});
 
@@ -65,8 +62,6 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen>
 
     if (done) {
       showSuccessToast(ErrorMessages.passwordChangeSuccess);
-      // Deux niveaux à dépiler : cet écran et la vérification qui l'a poussé,
-      // pour revenir au profil et non à la saisie du mot de passe actuel.
       context
         ..pop()
         ..pop();
@@ -89,78 +84,127 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen>
       appBar: AppDetailBar(title: t.changePasswordNewTitle),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.changePasswordNewTitle,
-                    style: AppTextStyles.displayHero()),
-                const SizedBox(height: 10),
-                Text(
-                  t.changePasswordNewSubtitle,
-                  style: AppTextStyles.bodyMedium(
-                      color: AppColors.inkMuted(opacity: 0.65)),
-                ),
-                const SizedBox(height: 32),
-                Text(t.changePasswordNewLabel, style: AppTextStyles.label()),
-                const SizedBox(height: 8),
-                PasswordInput(
-                  controller: _passwordController,
-                  obscure: _obscurePassword,
-                  autofillHints: const [AutofillHints.newPassword],
-                  onToggle: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                  onChanged: (_) {
-                    clearFieldError('password');
-                    setState(() {});
-                  },
-                  validator: fieldValidator(
-                    'password',
-                    requiredMessage: ErrorMessages.fieldRequired,
-                    extra: (value) {
-                      if (value.length < 8) {
-                        return ErrorMessages.passwordTooShort;
-                      }
-                      if (!value.contains(RegExp(r'[A-Z]'))) {
-                        return ErrorMessages.passwordNeedsUppercase;
-                      }
-                      if (!value.contains(RegExp(r'[0-9]'))) {
-                        return ErrorMessages.passwordNeedsDigit;
-                      }
-                      if (value == widget.currentPassword) {
-                        return ErrorMessages.passwordMustDiffer;
-                      }
-                      return null;
-                    },
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryTint,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.2),
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      LucideIcons.keyRound,
+                      size: 30,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-                ClientPasswordRulesChecklist(password: _passwordController.text),
-                const SizedBox(height: 16),
-                Text(t.createPasswordConfirmLabel,
-                    style: AppTextStyles.label()),
+                Center(
+                  child: Text(
+                    t.changePasswordNewTitle,
+                    style: AppTextStyles.displayMedium().copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                PasswordInput(
-                  controller: _confirmController,
-                  obscure: _obscureConfirm,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => isBusy ? null : _submit(),
-                  onToggle: () =>
-                      setState(() => _obscureConfirm = !_obscureConfirm),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return ErrorMessages.fieldRequired;
-                    }
-                    if (value != _password) {
-                      return ErrorMessages.passwordMismatch;
-                    }
-                    return null;
-                  },
+                Center(
+                  child: Text(
+                    t.changePasswordNewSubtitle,
+                    style: AppTextStyles.bodyMedium(
+                      color: AppColors.inkMuted(opacity: 0.65),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                AppCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.changePasswordNewLabel,
+                        style: AppTextStyles.label().copyWith(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      PasswordInput(
+                        controller: _passwordController,
+                        obscure: _obscurePassword,
+                        autofillHints: const [AutofillHints.newPassword],
+                        onToggle: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
+                        onChanged: (_) {
+                          clearFieldError('password');
+                          setState(() {});
+                        },
+                        validator: fieldValidator(
+                          'password',
+                          requiredMessage: ErrorMessages.fieldRequired,
+                          extra: (value) {
+                            if (value.length < 8) {
+                              return ErrorMessages.passwordTooShort;
+                            }
+                            if (!value.contains(RegExp(r'[A-Z]'))) {
+                              return ErrorMessages.passwordNeedsUppercase;
+                            }
+                            if (!value.contains(RegExp(r'[0-9]'))) {
+                              return ErrorMessages.passwordNeedsDigit;
+                            }
+                            if (value == widget.currentPassword) {
+                              return ErrorMessages.passwordMustDiffer;
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClientPasswordRulesChecklist(
+                          password: _passwordController.text),
+                      const SizedBox(height: 20),
+                      Text(
+                        t.createPasswordConfirmLabel,
+                        style: AppTextStyles.label().copyWith(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      PasswordInput(
+                        controller: _confirmController,
+                        obscure: _obscureConfirm,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => isBusy ? null : _submit(),
+                        onToggle: () =>
+                            setState(() => _obscureConfirm = !_obscureConfirm),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return ErrorMessages.fieldRequired;
+                          }
+                          if (value != _password) {
+                            return ErrorMessages.passwordMismatch;
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 28),
                 AppButton(
                   label: t.changePasswordSubmit,
+                  fullWidth: true,
+                  height: 50,
                   onTap: isBusy ? null : _submit,
                 ),
               ],

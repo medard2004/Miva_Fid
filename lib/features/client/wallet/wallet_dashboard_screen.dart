@@ -81,7 +81,7 @@ class WalletDashboardScreen extends ConsumerWidget {
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics()),
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -103,18 +103,23 @@ class WalletDashboardScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 8, right: 4),
+        padding: const EdgeInsets.only(bottom: 74, right: 6),
         child: Container(
-          width: 52,
-          height: 52,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             color: AppColors.primary,
             shape: BoxShape.circle,
-            boxShadow: AppShadows.raised,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: IconButton(
-            icon:
-                const Icon(LucideIcons.scanLine, color: Colors.white, size: 24),
+            icon: const Icon(LucideIcons.scanLine, color: Colors.white, size: 26),
             onPressed: () => context.push('/client/onboarding/scan'),
           ),
         ),

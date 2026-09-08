@@ -301,7 +301,8 @@ GoRouter appRouter(AppRouterRef ref) {
       // passer la réinitialisation de mot de passe, légitime en session.
       if (isAuthOnlyEntryScreen &&
           location != '/client/reset-password' &&
-          location != '/client/otp') {
+          location != '/client/otp' &&
+          location != '/client/forgot-password') {
         return '/client/wallet';
       }
 
@@ -464,6 +465,11 @@ GoRouter appRouter(AppRouterRef ref) {
             path: '/client/profile',
             pageBuilder: (_, state) => _clientTabFadePage(state, const ProfileScreen()),
           ),
+          GoRoute(
+            path: '/client/settings',
+            pageBuilder: (_, state) =>
+                _clientTabFadePage(state, const client_settings.SettingsScreen()),
+          ),
         ],
       ),
 
@@ -584,11 +590,6 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/client/notifications',
         builder: (_, __) => const NotificationsScreen(),
       ),
-      GoRoute(
-        path: '/client/settings',
-        builder: (_, __) => const client_settings.SettingsScreen(),
-      ),
-
       // Recherche du Wallet — glisse depuis le bas.
       GoRoute(
         path: '/client/wallet/search',
