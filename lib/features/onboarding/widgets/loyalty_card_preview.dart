@@ -17,7 +17,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
   const LoyaltyCardPreview({
     super.key,
     this.previewStamps = 7,
-    this.height = 204,
+    this.height = 148,
   });
 
   final int previewStamps;
@@ -73,9 +73,15 @@ class LoyaltyCardPreview extends ConsumerWidget {
               ),
             ),
 
-          // Content
+          // Content — même grammaire visuelle que la carte du module
+          // client (badge catégorie + nom en serif Cormorant + bloc de
+          // données en DM Mono), adaptée à la personnalisation marchand
+          // (logo, motif, mode tampons/points en direct). Hauteur et
+          // paddings alignés sur la carte compacte du module client
+          // (lib/features/client/wallet/widgets/loyalty_card_widget.dart)
+          // pour une cohérence visuelle entre les deux parcours.
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -271,8 +277,8 @@ class _CardBottomGroup extends StatelessWidget {
           StampGridWidgetPreview(
             filled: previewStamps,
             total: stampsRequired,
-            stampSize: 18,
-            gap: 5,
+            stampSize: 15,
+            gap: 4,
             designType: stampDesignType,
             emoji: stampEmoji,
             iconName: stampIcon,
