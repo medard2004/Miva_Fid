@@ -12,6 +12,7 @@ import '../../../core/utils/toast_service.dart';
 import '../../../models/merchant_model.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
+import '../../onboarding/utils/card_colors.dart';
 import '../../onboarding/widgets/color_palette_picker.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -41,36 +42,24 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     if (_initialized && !force) return;
 
     final m = ref.read(merchantNotifierProvider).value;
-    final restaurant = ref.read(merchantAuthProvider).restaurant;
-    final ob = ref.read(onboardingNotifierProvider);
-
-    final cfg = restaurant?.loyaltyConfig ?? {};
-
-    final colorHex = m?.colorPrimary ?? (cfg['color_primary'] as String?) ?? '#5B50EC';
-    String hex = colorHex.replaceAll('#', '');
-    if (hex.length == 6) hex = 'FF$hex';
-    final color = Color(int.tryParse(hex, radix: 16) ?? 0xFF5B50EC);
-
-    final notifier = ref.read(onboardingNotifierProvider.notifier);
-    final commerceName = m?.name ?? restaurant?.name ?? (ob.commerceName.isNotEmpty ? ob.commerceName : 'Votre Commerce');
-    final commerceType = m?.category ?? restaurant?.category ?? (ob.commerceType.isNotEmpty ? ob.commerceType : 'Restaurant');
-
-    notifier.setCommerceName(commerceName);
-    notifier.setCommerceType(commerceType);
-    notifier.setColorPrimary(color);
-    notifier.setCardDecorationPattern(m?.cardDecorationPattern ?? (cfg['card_decoration_pattern'] as String?) ?? ob.cardDecorationPattern);
-    notifier.setStampDesignType(m?.stampDesignType ?? (cfg['stamp_design_type'] as String?) ?? ob.stampDesignType);
-    notifier.setStampIcon(m?.stampIcon ?? (cfg['stamp_icon'] as String?) ?? ob.stampIcon);
-    notifier.setStampEmoji(m?.stampEmoji ?? (cfg['stamp_emoji'] as String?) ?? ob.stampEmoji);
-    notifier.setLogoUrl(m?.logoUrl ?? restaurant?.logoUrl ?? ob.logoUrl ?? '');
-    notifier.setLoyaltyMode(m?.loyaltyMode ?? restaurant?.loyaltyType ?? ob.loyaltyMode);
-    
-    final goal = m?.stampsRequired ?? (cfg['goal'] as int?) ?? ob.stampsRequired;
-    notifier.setStampsRequired(goal > 0 ? goal : 10);
-
-    final reward = m?.rewardDescription ?? (cfg['reward_description'] as String?) ?? ob.rewardDescription;
-    if (reward.isNotEmpty) {
-      notifier.setRewardDescription(reward);
+    if (m != null) {
+      String hex = m.colorPrimary.replaceAll('#', '');
+      if (hex.length == 6) hex = 'FF$hex';
+      final parsed = int.tryParse(hex, radix: 16);
+      if (parsed == null) return;
+      final color = Color(parsed);
+      
+      final notifier = ref.read(onboardingNotifierProvider.notifier);
+      notifier.setColorPrimary(color);
+      notifier.setCardDecorationPattern(m.cardDecorationPattern);
+      notifier.setStampDesignType(m.stampDesignType);
+      notifier.setStampIcon(m.stampIcon);
+      notifier.setStampEmoji(m.stampEmoji);
+      notifier.setLogoUrl(m.logoUrl ?? '');
+      
+      setState(() {
+        _initialized = true;
+      });
     }
 
     _initialized = true;
@@ -78,7 +67,12 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
 
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
     if (!mounted || file == null) return;
 
     setState(() => _uploadingLogo = true);
@@ -116,10 +110,16 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     setState(() => _saving = true);
 
     final hexColor = '#${state.colorPrimary.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+    // Le dégradé de la carte client dérive la secondaire de la primaire
+    // (voir LoyaltyCardPreview) : on renvoie la secondaire recalculée, sinon
+    // l'ancienne valeur figée à l'onboarding créerait un écart aperçu/carte.
+    final secondaryColor = deriveSecondaryColor(state.colorPrimary);
+    final hexSecondary = '#${secondaryColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
 
     try {
       await ref.read(merchantNotifierProvider.notifier).updateProgramme({
         'color_primary': hexColor,
+        'color_secondary': hexSecondary,
         'card_decoration_pattern': state.cardDecorationPattern,
         'stamp_design_type': state.stampDesignType,
         'stamp_icon': state.stampIcon,

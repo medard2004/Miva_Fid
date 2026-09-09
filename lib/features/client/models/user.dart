@@ -19,7 +19,6 @@ class AppUser {
   final DateTime joinDate;
   final String? email;
   final String? photoUrl;
-  final String referralCode;
   final int friendsInvited;
   final int friendsJoined;
   final String? city;
@@ -38,7 +37,6 @@ class AppUser {
     required this.joinDate,
     this.email,
     this.photoUrl,
-    required this.referralCode,
     this.friendsInvited = 0,
     this.friendsJoined = 0,
     this.city,
@@ -79,7 +77,6 @@ class AppUser {
           : DateTime.now(),
       email: json['email'] as String?,
       photoUrl: json['avatar_url'] as String?,
-      referralCode: json['referral_code']?.toString() ?? '',
       city: json['city'] as String?,
       country: json['country'] as String?,
       neighborhood: json['neighborhood'] as String?,
@@ -190,7 +187,6 @@ class AppUser {
       joinDate: joinDate ?? this.joinDate,
       email: email ?? this.email,
       photoUrl: photoUrl ?? this.photoUrl,
-      referralCode: referralCode,
       friendsInvited: friendsInvited,
       friendsJoined: friendsJoined,
       city: city ?? this.city,

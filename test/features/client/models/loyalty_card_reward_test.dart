@@ -81,10 +81,11 @@ void main() {
       json['tiers'] = [
         {
           'order': 2,
+          'position': 2,
           'goal': 500,
           'level_name': 'Argent',
           'reward_description': '10% de réduction',
-          'icon': '🥈',
+          'icon_key': null,
           'status': 'current',
         },
       ];
@@ -94,10 +95,11 @@ void main() {
       expect(card.tiers, hasLength(1));
       final tier = card.tiers.single;
       expect(tier.order, 2);
+      expect(tier.position, 2);
       expect(tier.goal, 500);
       expect(tier.levelName, 'Argent');
       expect(tier.rewardDescription, '10% de réduction');
-      expect(tier.icon, '🥈');
+      expect(tier.iconKey, isNull);
       expect(tier.status, 'current');
     });
 
@@ -143,10 +145,12 @@ void main() {
       json['level'] = null;
       json['tiers'] = [];
       json['next_reward'] = {
+        'order': 1,
+        'position': 1,
         'goal': 2,
         'level_name': null,
         'reward_description': 'Café offert',
-        'icon': '🎁',
+        'icon_key': null,
       };
 
       final card = LoyaltyCard.fromApi(json);
@@ -155,7 +159,7 @@ void main() {
       expect(card.nextReward, isNotNull);
       expect(card.nextReward!.rewardDescription, 'Café offert');
       expect(card.nextReward!.goal, 2);
-      expect(card.nextReward!.icon, '🎁');
+      expect(card.nextReward!.iconKey, isNull);
     });
 
     test('a program with no configured reward sends next_reward: null', () {
@@ -172,6 +176,25 @@ void main() {
       final card = LoyaltyCard.fromApi(json);
 
       expect(card.nextReward, isNull);
+    });
+
+    test('parses tier position and icon_key from the tiers roadmap', () {
+      final json = baseJson(
+        stampsCurrent: 700,
+        goal: 1000,
+        percent: 40,
+        level: {'name': 'Argent', 'percent_to_next': 40, 'is_max_level': false, 'position': 2, 'icon_key': null},
+      )..['tiers'] = [
+          {'order': 1, 'position': 1, 'goal': 500, 'level_name': 'Bronze', 'reward_description': 'Boisson offerte', 'icon_key': null, 'status': 'reached'},
+          {'order': 2, 'position': 2, 'goal': 1000, 'level_name': 'Argent', 'reward_description': 'Dessert offert', 'icon_key': null, 'status': 'current'},
+        ];
+
+      final card = LoyaltyCard.fromApi(json);
+
+      expect(card.tiers, hasLength(2));
+      expect(card.tiers[0].position, 1);
+      expect(card.tiers[0].iconKey, isNull);
+      expect(card.tiers[1].position, 2);
     });
   });
 
@@ -248,10 +271,11 @@ void main() {
         'tiers': [
           {
             'order': 1,
+            'position': 1,
             'goal': 2,
             'level_name': 'Bronze',
             'reward_description': 'Café offert',
-            'icon': '🥉',
+            'icon_key': null,
             'status': 'current',
           },
         ],
@@ -282,10 +306,11 @@ void main() {
         'tiers': [
           {
             'order': 1,
+            'position': 1,
             'goal': 2,
             'level_name': 'Bronze',
             'reward_description': 'Café offert',
-            'icon': '🥉',
+            'icon_key': null,
             'status': 'current',
           },
         ],

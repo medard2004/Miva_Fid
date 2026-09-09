@@ -186,6 +186,21 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
+  /// Change l'email du commerce et met à jour la session. Lève l'[ApiException]
+  /// du serveur (mauvais mot de passe, email déjà pris) pour que l'appelant
+  /// puisse afficher le message exact.
+  Future<void> updateEmail(String email, String currentPassword) async {
+    final restaurant = await _authRepository.updateEmail(email, currentPassword);
+    state = state.copyWith(restaurant: restaurant);
+  }
+
+  /// Supprime le compte (soft delete serveur) puis purge la session locale.
+  /// Le token est révoqué côté serveur : l'appel logout échouera silencieusement.
+  Future<void> deleteAccount(String currentPassword) async {
+    await _authRepository.deleteAccount(currentPassword);
+    await signOut();
+  }
+
   Future<bool> verifyPassword(String currentPassword) async {
     state = state.copyWith(clearError: true);
     try {
@@ -208,10 +223,10 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
-  Future<bool> forgotPassword(String email) async {
+  Future<bool> forgotPassword(String identifier) async {
     state = state.copyWith(clearError: true);
     try {
-      await _authRepository.forgotPassword(email);
+      await _authRepository.forgotPassword(identifier);
       return true;
     } catch (e) {
       state = state.copyWith(lastError: e);
@@ -220,10 +235,10 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
   }
 
   /// Renvoie le `reset_token` si l'OTP est bon, `null` sinon.
-  Future<String?> verifyResetOtp(String email, String otp) async {
+  Future<String?> verifyResetOtp(String identifier, String otp) async {
     state = state.copyWith(clearError: true);
     try {
-      return await _authRepository.verifyResetOtp(email, otp);
+      return await _authRepository.verifyResetOtp(identifier, otp);
     } catch (e) {
       state = state.copyWith(lastError: e);
       return null;
@@ -231,10 +246,10 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
   }
 
   Future<bool> resetPassword(
-      String email, String resetToken, String password) async {
+      String identifier, String resetToken, String password) async {
     state = state.copyWith(clearError: true);
     try {
-      await _authRepository.resetPassword(email, resetToken, password);
+      await _authRepository.resetPassword(identifier, resetToken, password);
       return true;
     } catch (e) {
       state = state.copyWith(lastError: e);

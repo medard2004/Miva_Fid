@@ -11,6 +11,7 @@ class MerchantAuthService {
   MerchantAuthService(this._apiClient);
 
   set suppressUnauthorized(bool value) => _apiClient.suppressUnauthorized = value;
+  bool get suppressUnauthorized => _apiClient.suppressUnauthorized;
 
   Never _throwFromDio(DioException e) {
     final status = e.response?.statusCode;
@@ -151,6 +152,25 @@ class MerchantAuthService {
         return response.data as Map<String, dynamic>;
       });
 
+  Future<Map<String, dynamic>> updateEmail(
+    String email,
+    String currentPassword,
+  ) =>
+      _guard(() async {
+        final response =
+            await _apiClient.dio.put('/auth/merchant/email', data: {
+          'email': email,
+          'current_password': currentPassword,
+        });
+        return response.data as Map<String, dynamic>;
+      });
+
+  Future<void> deleteAccount(String currentPassword) => _guard(() async {
+        await _apiClient.dio.delete('/auth/merchant/account', data: {
+          'current_password': currentPassword,
+        });
+      });
+
   Future<Map<String, dynamic>> getMe() => _guard(() async {
         final response = await _apiClient.dio.get('/auth/merchant/me');
         return response.data as Map<String, dynamic>;
@@ -169,30 +189,43 @@ class MerchantAuthService {
     }
   }
 
-  Future<Map<String, dynamic>> forgotPassword(String email) => _guard(() async {
-        final response = await _apiClient.dio
-            .post('/auth/merchant/forgot-password', data: {'email': email});
+  /// Construit la clé de payload appropriée pour un identifiant (mirror
+  /// `AuthService._identifierPayload`, côté client) : `email` si `@`, sinon
+  /// `phone`.
+  Map<String, String> _identifierPayload(String identifier) {
+    if (identifier.contains('@')) {
+      return {'email': identifier};
+    }
+    return {'phone': identifier};
+  }
+
+  Future<Map<String, dynamic>> forgotPassword(String identifier) =>
+      _guard(() async {
+        final response = await _apiClient.dio.post(
+          '/auth/merchant/forgot-password',
+          data: _identifierPayload(identifier),
+        );
         return response.data as Map<String, dynamic>;
       });
 
-  Future<Map<String, dynamic>> verifyResetOtp(String email, String otp) =>
+  Future<Map<String, dynamic>> verifyResetOtp(String identifier, String otp) =>
       _guard(() async {
         final response = await _apiClient.dio.post('/auth/merchant/verify-otp', data: {
-          'email': email,
+          ..._identifierPayload(identifier),
           'otp': otp,
         });
         return response.data as Map<String, dynamic>;
       });
 
   Future<Map<String, dynamic>> resetPassword(
-    String email,
+    String identifier,
     String resetToken,
     String password,
   ) =>
       _guard(() async {
         final response =
             await _apiClient.dio.post('/auth/merchant/reset-password', data: {
-          'email': email,
+          ..._identifierPayload(identifier),
           'reset_token': resetToken,
           'password': password,
           'password_confirmation': password,

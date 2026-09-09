@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import '../services/merchant_auth_service.dart';
-import '../storage/merchant_token_storage.dart';
+import '../storage/token_storage.dart' show TokenStorageBase;
 import '../../../features/merchant/models/restaurant_account.dart';
 
 /// Normalise la charge `restaurant` de la réponse `staffLogin`.
@@ -26,7 +27,7 @@ Map<String, dynamic> mergeStaffLoginActor(Map<String, dynamic> response) {
 
 class MerchantAuthRepository {
   final MerchantAuthService _authService;
-  final MerchantTokenStorage _tokenStorage;
+  final TokenStorageBase _tokenStorage;
 
   MerchantAuthRepository(this._authService, this._tokenStorage);
 
@@ -86,6 +87,17 @@ class MerchantAuthRepository {
     return RestaurantAccount.fromJson(response['restaurant'] ?? {});
   }
 
+  Future<RestaurantAccount> updateEmail(
+    String email,
+    String currentPassword,
+  ) async {
+    final response = await _authService.updateEmail(email, currentPassword);
+    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+  }
+
+  Future<void> deleteAccount(String currentPassword) =>
+      _authService.deleteAccount(currentPassword);
+
   Future<bool> verifyPassword(String currentPassword) async {
     final response = await _authService.verifyPassword(currentPassword);
     return response['valid'] == true;
@@ -122,7 +134,13 @@ class MerchantAuthRepository {
       }
     } finally {
       await _tokenStorage.deleteToken();
-      _authService.suppressUnauthorized = false;
+      // Voir AuthRepository.logout (mirror client) : délai avant de
+      // réactiver le garde-fou, le temps qu'une requête déjà en vol au
+      // moment de la déconnexion reçoive son 401 sans déclencher à tort le
+      // toast "session expirée".
+      unawaited(Future.delayed(const Duration(seconds: 2), () {
+        _authService.suppressUnauthorized = false;
+      }));
     }
   }
 
@@ -131,20 +149,20 @@ class MerchantAuthRepository {
     return token != null;
   }
 
-  Future<String> forgotPassword(String email) async {
-    final response = await _authService.forgotPassword(email);
+  Future<String> forgotPassword(String identifier) async {
+    final response = await _authService.forgotPassword(identifier);
     return response['message'] ?? 'Code envoyé';
   }
 
-  Future<String> verifyResetOtp(String email, String otp) async {
-    final response = await _authService.verifyResetOtp(email, otp);
+  Future<String> verifyResetOtp(String identifier, String otp) async {
+    final response = await _authService.verifyResetOtp(identifier, otp);
     return response['reset_token'] as String;
   }
 
   Future<String> resetPassword(
-      String email, String resetToken, String password) async {
+      String identifier, String resetToken, String password) async {
     final response =
-        await _authService.resetPassword(email, resetToken, password);
+        await _authService.resetPassword(identifier, resetToken, password);
     return response['message'] ?? 'Mot de passe réinitialisé';
   }
 }

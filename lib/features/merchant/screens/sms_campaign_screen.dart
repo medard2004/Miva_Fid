@@ -3,30 +3,34 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'dart:async';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/toast_service.dart';
+import '../../../core/services/realtime_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../../models/campaign_model.dart';
 import '../../client/providers/settings_provider.dart';
+import '../providers/merchant_provider.dart';
+import '../providers/sms_provider.dart';
 
-class _CampaignMock {
-  final String id;
-  final String title;
-  final String status;
-  final bool isPlanned;
-  final String target;
-  final String time;
-  final String sentStats;
-  final String? openStats;
-
-  const _CampaignMock({
-    required this.id,
-    required this.title,
-    required this.status,
-    this.isPlanned = false,
-    required this.target,
-    required this.time,
-    required this.sentStats,
-    this.openStats,
-  });
+/// Libellé affiché pour un `recipient_type` de campagne — partagé entre la
+/// liste ([SmsCampaignScreen]) et le détail (`SmsCampaignDetailScreen`) pour
+/// ne pas diverger.
+String targetLabel(String? recipientType) {
+  switch (recipientType) {
+    case 'all':
+      return 'Tous les clients';
+    case 'inactive':
+      return 'Clients inactifs';
+    case 'near_reward':
+      return 'Proches récompense';
+    case 'manual':
+      return 'Sélection manuelle';
+    default:
+      return 'Tous les clients';
+  }
 }
 
 class SmsCampaignScreen extends ConsumerStatefulWidget {
@@ -37,44 +41,24 @@ class SmsCampaignScreen extends ConsumerStatefulWidget {
 }
 
 class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
-  static const _mockCampaigns = [
-    _CampaignMock(
-      id: '1',
-      title: 'Relance inactifs',
-      status: 'Envoyée',
-      target: 'Inactifs +14j',
-      time: 'il y a 2j',
-      sentStats: '12/12 envoyés',
-      openStats: '75% ouverts',
-    ),
-    _CampaignMock(
-      id: '2',
-      title: 'Promo week-end',
-      status: 'Envoyée',
-      target: 'Tous actifs',
-      time: 'il y a 5j',
-      sentStats: '47/47 envoyés',
-      openStats: '81% ouverts',
-    ),
-    _CampaignMock(
-      id: '3',
-      title: 'Anniv. Akosua',
-      status: 'Planifiée',
-      isPlanned: true,
-      target: 'Akosua Tetteh',
-      time: 'Demain 10h',
-      sentStats: '0/1 envoyés',
-    ),
-    _CampaignMock(
-      id: '4',
-      title: 'Nouveauté menu',
-      status: 'Envoyée',
-      target: 'VIP Or & Platine',
-      time: 'il y a 10j',
-      sentStats: '16/16 envoyés',
-      openStats: '88% ouverts',
-    ),
-  ];
+  bool _showArchived = false;
+  StreamSubscription? _campaignSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _campaignSub = RealtimeService.instance.onCampaignUpdated.listen((_) {
+      if (mounted) {
+        ref.invalidate(smsNotifierProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _campaignSub?.cancel();
+    super.dispose();
+  }
 
   late List<_CampaignMock> _campaigns;
 
@@ -391,6 +375,10 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final merchant = ref.watch(merchantNotifierProvider).value;
+    final smsAsync = _showArchived
+        ? ref.watch(archivedCampaignsProvider)
+        : ref.watch(smsNotifierProvider);
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
 
@@ -399,7 +387,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── TOP HEADER (STATIC) ───────────────────────────────────────
+            // ── TOP HEADER (PERSISTENT / FIXED ON SCROLL) ──────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Row(
@@ -429,7 +417,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     ),
                   ),
                   InkWell(
-                    onTap: () => _showNewCampaignModal(context),
+                    onTap: () => context.push('/merchant/campaigns/new'),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 36,
@@ -484,201 +472,385 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                 ],
               ),
             ),
-
-            // ── SCROLLABLE BODY ───────────────────────────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: RefreshIndicator(
+                color: const Color(0xFF5B50EC),
+                onRefresh: () {
+                  if (_showArchived) {
+                    return ref.refresh(archivedCampaignsProvider.future);
+                  }
+                  return ref.refresh(smsNotifierProvider.future);
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── 3 KPI STAT CARDS ROW ─────────────────────────────────────
+                      _buildKpiRow(smsAsync, merchant?.smsRemaining),
+                const SizedBox(height: 20),
+
+                // ── SECTION HISTORIQUE ───────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // ── 3 KPI STAT CARDS ROW ─────────────────────────────
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKpiBox(
-                            value: '12',
-                            label: t.merchantSmsCampaignSentLabel,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildKpiBox(
-                            value: '82%',
-                            label: t.merchantSmsCampaignOpenRateLabel,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildKpiBox(
-                            value: '143',
-                            label: t.merchantSmsCampaignReachedLabel,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      t.merchantClientDetailHistoryTitle,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // ── SECTION HISTORIQUE ───────────────────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          t.merchantClientDetailHistoryTitle,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          t.merchantSmsCampaignCount(_campaigns.length.toString()),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      smsAsync.maybeWhen(
+                        data: (list) =>
+                            '${list.length} campagne${list.length > 1 ? 's' : ''}',
+                        orElse: () => '',
+                      ),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-
-                    // Campaign Cards
-                    ..._campaigns.map((camp) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: InkWell(
-                          onTap: () => context.push('/merchant/sms/campaign/${camp.id}'),
-                          borderRadius: BorderRadius.circular(16),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Toggle Actives / Archivées
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _showArchived = false),
                           child: Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
+                              color: !_showArchived ? const Color(0xFF5B50EC) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        camp.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: camp.isPlanned
-                                            ? AppColors.warningTint
-                                            : AppColors.successTint,
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: camp.isPlanned
-                                              ? (AppColors.isDark
-                                                  ? const Color(0xFF4A3A14)
-                                                  : const Color(0xFFFDE68A))
-                                              : (AppColors.isDark
-                                                  ? const Color(0xFF1F4A38)
-                                                  : const Color(0xFFBBF7D0)),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            camp.isPlanned
-                                                ? LucideIcons.clock
-                                                : LucideIcons.circleCheck,
-                                            size: 11,
-                                            color: camp.isPlanned
-                                                ? const Color(0xFFD97706)
-                                                : const Color(0xFF16A34A),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            camp.status,
-                                            style: TextStyle(
-                                              color: camp.isPlanned
-                                                  ? const Color(0xFFD97706)
-                                                  : const Color(0xFF16A34A),
-                                              fontSize: 10.5,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Icon(
-                                      LucideIcons.chevronRight,
-                                      size: 16,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${camp.target} • ${camp.time}',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        camp.sentStats,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                    if (camp.openStats != null) ...[
-                                      const SizedBox(width: 8),
-                                      Flexible(
-                                        child: Text(
-                                          camp.openStats!,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: Color(0xFF16A34A),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Actives',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: !_showArchived ? Colors.white : AppColors.textSecondary,
+                              ),
                             ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _showArchived = true),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _showArchived ? const Color(0xFF5B50EC) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Archivées',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _showArchived ? Colors.white : AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Campaign Cards
+                smsAsync.when(
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF5B50EC),
+                      ),
+                    ),
+                  ),
+                  error: (err, _) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Erreur: $err',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ),
+                  data: (campaigns) {
+                    if (campaigns.isEmpty) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(
+                                LucideIcons.messageSquare,
+                                size: 32,
+                                color: Color(0xFF94A3B8),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Aucune campagne pour le moment',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
-                    }),
-                  ],
+                    }
+                    return Column(
+                      children: [
+                        for (final camp in campaigns)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _showArchived
+                                ? _buildCampaignCard(camp) // On ne permet pas de ré-archiver/désarchiver pour l'instant
+                                : Dismissible(
+                                    key: ValueKey(camp.id),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.textSecondary
+                                            .withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Icon(
+                                        LucideIcons.archive,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    onDismissed: (_) async {
+                                      try {
+                                        await ref
+                                            .read(smsNotifierProvider.notifier)
+                                            .archive(camp.id);
+                                        ToastService.showSuccess(
+                                            'Campagne archivée');
+                                      } catch (e) {
+                                        ToastService.showError('Erreur: $e');
+                                      }
+                                    },
+                                    child: _buildCampaignCard(camp),
+                                  ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+);
+  }
+
+  Widget _buildKpiRow(
+      AsyncValue<List<CampaignModel>> smsAsync, int? smsRemaining) {
+    final campaigns = smsAsync.value ?? const <CampaignModel>[];
+    final sentCount = campaigns.where((c) => c.isSent).length;
+    final reached = campaigns.fold<int>(0, (sum, c) => sum + c.recipientsCount);
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildKpiBox(value: '$sentCount', label: 'Envoyées'),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildKpiBox(value: '$reached', label: 'Atteints'),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildKpiBox(
+            value: '${smsRemaining ?? 0}',
+            label: 'Solde SMS',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampaignCard(CampaignModel camp) {
+    final isPlanned = !camp.isSent && !camp.isDraft;
+    final isDraft = camp.isDraft;
+    final status = isDraft 
+        ? 'Brouillon' 
+        : (camp.isScheduled ? 'Planifiée' : 'Envoyée');
+    final date = camp.sentAt ?? camp.createdAt;
+    final time = isPlanned && camp.scheduledAt != null
+        ? 'Prévue ${DateFormatter.short(camp.scheduledAt!)}'
+        : DateFormatter.relative(date);
+    final displayTitle = camp.title.isNotEmpty ? camp.title : camp.message;
+    final title = displayTitle.length > 24
+        ? '${displayTitle.substring(0, 24)}...'
+        : displayTitle;
+    final typeEmoji = _typeEmoji(camp.type);
+
+    return InkWell(
+      onTap: () {
+        if (camp.isDraft) {
+          String route = '/merchant/campaigns/new';
+          if (camp.draftStep == 2) {
+            route += '/content';
+          } else if (camp.draftStep == 3) {
+            route += '/recipients';
+          } else if (camp.draftStep == 4) {
+            route += '/summary';
+          }
+          context.push(route, extra: camp);
+        } else {
+          context.push('/merchant/sms/campaign/${camp.id}');
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(typeEmoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isDraft 
+                        ? AppColors.border // grey tint for draft
+                        : (isPlanned ? AppColors.warningTint : AppColors.successTint),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDraft 
+                          ? AppColors.textSecondary.withValues(alpha: 0.3)
+                          : (isPlanned
+                              ? (AppColors.isDark ? const Color(0xFF4A3A14) : const Color(0xFFFDE68A))
+                              : (AppColors.isDark ? const Color(0xFF1F4A38) : const Color(0xFFBBF7D0))),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isDraft 
+                            ? LucideIcons.fileEdit
+                            : (isPlanned ? LucideIcons.clock : LucideIcons.circleCheck),
+                        size: 11,
+                        color: isDraft
+                            ? AppColors.textSecondary
+                            : (isPlanned ? const Color(0xFFD97706) : const Color(0xFF16A34A)),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        status,
+                        style: TextStyle(
+                          color: isPlanned
+                              ? const Color(0xFFD97706)
+                              : const Color(0xFF16A34A),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_targetLabel(camp.recipientType)} • $time',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: AppColors.textSecondary,
               ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(
+                  '${camp.recipientsCount}/${camp.recipientsCount} envoyés',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _targetLabel(String? recipientType) => targetLabel(recipientType);
+
+  String _typeEmoji(String type) {
+    return switch (type) {
+      'promotion' => '🏷️',
+      'reminder' => '🔔',
+      'review' => '⭐',
+      'reward' => '🎁',
+      'progress' => '📈',
+      'cashback' => '💰',
+      'referral' => '🤝',
+      'announcement' => '📢',
+      _ => '📋',
+    };
   }
 
   Widget _buildKpiBox({required String value, required String label}) {

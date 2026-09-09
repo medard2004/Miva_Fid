@@ -3,15 +3,20 @@ import '../core/api_client.dart';
 import '../storage/token_storage.dart';
 import '../storage/merchant_token_storage.dart';
 import '../services/auth_service.dart';
+import '../services/device_token_service.dart';
 import '../services/merchant_auth_service.dart';
 import '../services/loyalty_program_service.dart';
 import '../services/loyalty_card_service.dart';
 import '../services/loyalty_reward_service.dart';
 import '../services/merchant_dashboard_service.dart';
+import '../services/referral_service.dart';
+import '../services/notification_service.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/merchant_auth_repository.dart';
 import '../repositories/loyalty_card_repository.dart';
 import '../repositories/loyalty_reward_repository.dart';
+import '../repositories/referral_repository.dart';
+import '../repositories/notification_repository.dart';
 
 /// Compteur incrémenté chaque fois que le serveur rejette le token (401).
 ///
@@ -62,6 +67,11 @@ final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService(apiClient);
 });
 
+final deviceTokenServiceProvider = Provider<DeviceTokenService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return DeviceTokenService(apiClient);
+});
+
 final merchantAuthServiceProvider = Provider<MerchantAuthService>((ref) {
   final apiClient = ref.watch(merchantApiClientProvider);
   return MerchantAuthService(apiClient);
@@ -109,4 +119,35 @@ final loyaltyRewardServiceProvider = Provider<LoyaltyRewardService>((ref) {
 final loyaltyRewardRepositoryProvider = Provider<LoyaltyRewardRepository>((ref) {
   final service = ref.watch(loyaltyRewardServiceProvider);
   return LoyaltyRewardRepository(service);
+});
+
+final referralServiceProvider = Provider<ReferralService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ReferralService(apiClient);
+});
+
+final referralRepositoryProvider = Provider<ReferralRepository>((ref) {
+  final service = ref.watch(referralServiceProvider);
+  return ReferralRepository(service);
+});
+
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return NotificationService(apiClient);
+});
+
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  final service = ref.watch(notificationServiceProvider);
+  return NotificationRepository(service);
+});
+
+final merchantNotificationServiceProvider = Provider<NotificationService>((ref) {
+  final apiClient = ref.watch(merchantApiClientProvider);
+  return NotificationService(apiClient, basePath: '/merchant/notifications');
+});
+
+final merchantNotificationRepositoryProvider =
+    Provider<NotificationRepository>((ref) {
+  final service = ref.watch(merchantNotificationServiceProvider);
+  return NotificationRepository(service);
 });

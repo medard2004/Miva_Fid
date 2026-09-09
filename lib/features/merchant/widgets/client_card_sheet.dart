@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/tier_level_icon.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import 'stamp_grid_widget.dart';
@@ -25,6 +26,7 @@ class ClientCardSheet extends StatefulWidget {
     required this.onValidate,
     this.fcfaPerPoint = 100,
     this.cashbackPercentage = 0,
+    this.cashbackRedeemThresholdFcfa,
     this.onRedeemCashback,
   });
 
@@ -35,12 +37,15 @@ class ClientCardSheet extends StatefulWidget {
   final int goal;
   final int fcfaPerPoint;
   final double cashbackPercentage;
-  final ValueChanged<double?> onValidate;
+
+  /// Mode Cashback uniquement : solde minimum (FCFA) que le client doit
+  /// avoir atteint pour pouvoir l'utiliser — `null` = pas de seuil.
+  final double? cashbackRedeemThresholdFcfa;
+  final Future<void> Function(double? amount) onValidate;
 
   /// Mode Cashback uniquement : utilisation d'une partie du solde comme
-  /// réduction sur l'achat en cours — `(montantAchat, montantUtilisé)`, le
-  /// premier sert de base au plafond serveur (`cashback_redeem_cap_percent`).
-  final void Function(double purchaseAmount, double redeemAmount)? onRedeemCashback;
+  /// réduction sur l'achat en cours — `(montantAchat, montantUtilisé)`.
+  final Future<void> Function(double purchaseAmount, double redeemAmount)? onRedeemCashback;
 
   @override
   State<ClientCardSheet> createState() => _ClientCardSheetState();
@@ -88,8 +93,14 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     return true;
   }
 
+  /// Seuil configuré et non atteint par le solde actuel de la carte.
+  bool get _belowRedeemThreshold {
+    final threshold = widget.cashbackRedeemThresholdFcfa;
+    return threshold != null && widget.card.cashbackBalanceFcfa < threshold;
+  }
+
   bool get _canRedeem {
-    if (_submitting || !_isActive) return false;
+    if (_submitting || !_isActive || _belowRedeemThreshold) return false;
     final amount = _redeemAmount ?? 0;
     final purchase = _amount ?? 0;
     return purchase > 0 &&
@@ -117,16 +128,24 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
     super.dispose();
   }
 
-  void _submit() {
-    if (!_canSubmit) return;
+  Future<void> _submit() async {
+    if (!_canSubmit || _submitting) return;
     setState(() => _submitting = true);
-    widget.onValidate(_isSpend || _isCashback ? _amount : null);
+    try {
+      await widget.onValidate(_isSpend || _isCashback ? _amount : null);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
-  void _submitRedeem() {
-    if (!_canRedeem) return;
+  Future<void> _submitRedeem() async {
+    if (!_canRedeem || _submitting) return;
     setState(() => _submitting = true);
-    widget.onRedeemCashback?.call(_amount!, _redeemAmount!);
+    try {
+      await widget.onRedeemCashback?.call(_amount!, _redeemAmount!);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   String _fcfa(double v) => '${v.round()} FCFA';
@@ -147,6 +166,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
 
   List<Widget> _buildCashbackChoiceStep(AppLocalizations t) {
     final hasBalance = widget.card.cashbackBalanceFcfa > 0;
+    final canRedeemNow = hasBalance && !_belowRedeemThreshold;
     return [
       AppButton.primary(
         t.merchantValidateCreditCashbackButton,
@@ -160,7 +180,7 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
       const SizedBox(height: Sp.sm),
       AppButton.outlined(
         t.merchantValidateRedeemCashbackButton,
-        onPressed: _isActive && hasBalance
+        onPressed: _isActive && canRedeemNow
             ? () => setState(() {
                   _cbIsRedeem = true;
                   _cbStep = _CashbackStep.form;
@@ -171,6 +191,15 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
         const SizedBox(height: Sp.xs),
         Text(t.merchantValidateNoCashbackBalance,
             style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary)),
+      ] else if (_isActive && _belowRedeemThreshold) ...[
+        const SizedBox(height: Sp.xs),
+        Text(
+          t.merchantValidateBelowCashbackThreshold(
+            _fcfa(widget.cashbackRedeemThresholdFcfa!),
+            _fcfa(widget.card.cashbackBalanceFcfa),
+          ),
+          style: AppTextStyles.caption().copyWith(color: AppColors.textSecondary),
+        ),
       ],
       const SizedBox(height: Sp.sm),
       AppButton.ghost(t.commonCancel, onPressed: () => Navigator.pop(context)),
@@ -365,7 +394,11 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
                                   ),
                                   if (card.levelName != null) ...[
                                     const SizedBox(width: 6),
-                                    _LevelBadge(name: card.levelName!),
+                                    _LevelBadge(
+                                      name: card.levelName!,
+                                      position: card.levelPosition,
+                                      iconKey: card.levelIconKey,
+                                    ),
                                   ],
                                 ],
                               ),
@@ -519,7 +552,9 @@ class _ClientCardSheetState extends State<ClientCardSheet> {
 /// client.
 class _LevelBadge extends StatelessWidget {
   final String name;
-  const _LevelBadge({required this.name});
+  final int? position;
+  final String? iconKey;
+  const _LevelBadge({required this.name, this.position, this.iconKey});
 
   @override
   Widget build(BuildContext context) {
@@ -529,13 +564,20 @@ class _LevelBadge extends StatelessWidget {
         color: AppColors.merchantTint,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(
-        name.toUpperCase(),
-        style: AppTextStyles.caption().copyWith(
-          color: AppColors.merchant,
-          fontWeight: FontWeight.w700,
-          fontSize: 10,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TierLevelIcon(position: position, iconKey: iconKey, size: 11, color: AppColors.merchant),
+          const SizedBox(width: 4),
+          Text(
+            name.toUpperCase(),
+            style: AppTextStyles.caption().copyWith(
+              color: AppColors.merchant,
+              fontWeight: FontWeight.w700,
+              fontSize: 10,
+            ),
+          ),
+        ],
       ),
     );
   }

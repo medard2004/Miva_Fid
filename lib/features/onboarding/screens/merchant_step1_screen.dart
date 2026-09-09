@@ -189,7 +189,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
               height: MediaQuery.of(context).size.height * 0.70,
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 children: [
@@ -367,7 +367,7 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     final state = ref.watch(onboardingNotifierProvider);
 
     final inputDecorationTheme = InputDecoration(
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
       fillColor: AppColors.surface,
       border: OutlineInputBorder(
@@ -447,7 +447,11 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(c),
+                                      Text(
+                                        c,
+                                        style: AppTextStyles.bodyMd()
+                                            .copyWith(color: AppColors.textPrimary),
+                                      ),
                                       Icon(
                                         iconForCommerceType(c),
                                         size: 18,

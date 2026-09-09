@@ -36,7 +36,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
 
   // Mode Cashback
   late final TextEditingController _cashbackPercentCtrl;
-  late final TextEditingController _cashbackMinRedeemCtrl;
   late final TextEditingController _cashbackExpiryCtrl;
 
   @override
@@ -67,7 +66,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
         state.cashbackPercentage % 1 == 0 ? 0 : 1,
       ),
     );
-    _cashbackMinRedeemCtrl = TextEditingController(text: '1000');
     _cashbackExpiryCtrl = TextEditingController(
       text: state.cashbackExpiryDays?.toString() ?? '',
     );
@@ -81,7 +79,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     _pointsGoalCtrl.dispose();
     _pointsRewardCtrl.dispose();
     _cashbackPercentCtrl.dispose();
-    _cashbackMinRedeemCtrl.dispose();
     _cashbackExpiryCtrl.dispose();
     super.dispose();
   }
@@ -161,8 +158,11 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: AppColors.border,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.border.withValues(alpha: 0.6),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -263,7 +263,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.surface : Colors.transparent,
+            color: isSelected ? AppColors.background : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
                 ? [
@@ -345,12 +345,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$count'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: AppColors.isDark ? AppColors.background : AppColors.border,
-                      side: BorderSide(
-                        color: isSelected
-                            ? AppColors.merchant
-                            : AppColors.border,
-                      ),
+                      backgroundColor: AppColors.background,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -466,12 +461,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$val F'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: AppColors.isDark ? AppColors.background : AppColors.border,
-                      side: BorderSide(
-                        color: isSelected
-                            ? AppColors.merchant
-                            : AppColors.border,
-                      ),
+                      backgroundColor: AppColors.background,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -564,7 +554,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     final pct = double.tryParse(
             _cashbackPercentCtrl.text.trim().replaceAll(',', '.')) ??
         5;
-    final minRedeem = int.tryParse(_cashbackMinRedeemCtrl.text.trim()) ?? 1000;
     final earnedOn20k = (20000 * pct / 100).round();
 
     return Column(
@@ -600,12 +589,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
                       label: Text('$count%'),
                       selected: isSelected,
                       selectedColor: AppColors.merchant,
-                      backgroundColor: AppColors.isDark ? AppColors.background : AppColors.border,
-                      side: BorderSide(
-                        color: isSelected
-                            ? AppColors.merchant
-                            : AppColors.border,
-                      ),
+                      backgroundColor: AppColors.background,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -645,18 +629,6 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
               ),
               const SizedBox(height: Sp.sm),
 
-              // Seuil minimal d'utilisation
-              AppInput(
-                label: 'Seuil minimum pour utiliser la cagnotte (FCFA)',
-                hint: 'Ex: 1000',
-                controller: _cashbackMinRedeemCtrl,
-                keyboardType: TextInputType.number,
-                prefixIcon: LucideIcons.walletCards,
-                accentColor: AppColors.merchant,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: Sp.sm),
-
               // Expiration
               AppInput(
                 label: 'Durée de validité du solde (jours, optionnel)',
@@ -676,7 +648,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
           icon: LucideIcons.sparkles,
           title: 'Fonctionnement du cashback',
           description:
-              '• Pour 20 000 FCFA d\'achat, le client gagne $earnedOn20k FCFA ($pct%).\n• Dès $minRedeem FCFA cumulés, il peut déduire son solde.',
+              '• Pour 20 000 FCFA d\'achat, le client gagne $earnedOn20k FCFA ($pct%).\n• Il peut ensuite déduire son solde de ses achats.',
         ),
       ],
     );
@@ -744,11 +716,7 @@ class _ExplanationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryTint,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.isDark
-              ? AppColors.primary.withValues(alpha: 0.3)
-              : const Color(0xFFC7D2FE),
-        ),
+        border: Border.all(color: AppColors.merchant.withValues(alpha: 0.25)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -769,9 +737,7 @@ class _ExplanationCard extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: AppColors.isDark
-                        ? AppColors.textPrimary
-                        : const Color(0xFF312E81),
+                    color: AppColors.merchant,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -780,9 +746,7 @@ class _ExplanationCard extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    color: AppColors.isDark
-                        ? AppColors.primaryLight
-                        : const Color(0xFF4338CA),
+                    color: AppColors.textPrimary,
                     fontSize: 11.5,
                     height: 1.4,
                   ),

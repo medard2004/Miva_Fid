@@ -1,7 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:simple_icons/simple_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:miva_fid/core/notifications/content_unavailable_view.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
@@ -16,14 +20,11 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
-import 'package:miva_fid/core/constants/reward_qr.dart';
+import 'package:miva_fid/features/client/widgets/shared/reward_detail_sheet.dart';
 import '../wallet/widgets/card_face_content.dart';
 import 'card_export_service.dart';
-<<<<<<< HEAD
-=======
 import 'merchant_map_screen.dart';
 import '../../../core/widgets/tier_level_icon.dart';
->>>>>>> 2c11929 (miv)
 
 class CardDetailScreen extends ConsumerWidget {
   final String cardId;
@@ -50,7 +51,15 @@ class CardDetailScreen extends ConsumerWidget {
         : ref.watch(rewardsProvider).where((r) => r.cardId == card.id).toList();
 
     if (card == null) {
-      return Scaffold(body: Center(child: Text(t.cardDetailNotFound)));
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppDetailBar(title: t.cardDetailTitle),
+        body: ContentUnavailableView(
+          message: t.cardDetailNotFound,
+          actionLabel: 'Voir mon wallet',
+          onAction: () => context.go('/client/wallet'),
+        ),
+      );
     }
 
     return Scaffold(
@@ -103,10 +112,56 @@ class CardDetailScreen extends ConsumerWidget {
                     if (card.mechanic != LoyaltyMechanic.cashback) ...[
                       const SizedBox(height: 20),
 
-                      Text(t.rewardsTitle,
-                          style: AppTextStyles.displayMedium()),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(t.rewardsTitle,
+                              style: AppTextStyles.displayMedium()),
+                          TextButton.icon(
+                            onPressed: () => context.push('/client/card/${card.id}/rewards'),
+                            icon: const Icon(LucideIcons.gift, size: 16, color: AppColors.primary),
+                            label: Text(
+                              'Voir tout',
+                              style: AppTextStyles.label(color: AppColors.primary),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
+
+                      if (rewards.isNotEmpty) ...[
+                        AppCard(
+                          onTap: () => context.push('/client/card/${card.id}/rewards'),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+                          bordered: true,
+                          child: Row(
+                            children: [
+                              const Icon(LucideIcons.gift, color: AppColors.primary, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Toutes mes récompenses débloquées',
+                                      style: AppTextStyles.label(color: AppColors.primary),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${rewards.length} offre${rewards.length > 1 ? 's' : ''} débloquée${rewards.length > 1 ? 's' : ''}',
+                                      style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(LucideIcons.chevronRight, color: AppColors.primary.withValues(alpha: 0.7), size: 18),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
 
                       Builder(builder: (context) {
                         // Multi-palier : la liste inclut aussi un aperçu
@@ -136,20 +191,22 @@ class CardDetailScreen extends ConsumerWidget {
                                 return _DetailedRewardCard(
                                   reward: rewards[i],
                                   t: t,
-                                  onTap: () => _showRewardDetailSheet(
-                                      context, ref, rewards[i], t),
+                                  onTap: () => showRewardDetailSheet(
+                                      context, ref, rewards[i]),
                                 );
                               }
                               if (showLockedTiers) {
                                 return _LockedTierCard(
                                   t: t,
                                   tier: lockedTiers[i - rewards.length],
+                                  isLevelTier: true,
                                 );
                               }
                               return _LockedTierCard(
                                 t: t,
                                 tier: card.nextReward,
                                 fallbackGoal: card.stampsGoal,
+                                isLevelTier: false,
                               );
                             },
                           ),
@@ -162,6 +219,10 @@ class CardDetailScreen extends ConsumerWidget {
                     _HistoryAccordionBar(card: card, t: t),
 
                     const SizedBox(height: 16),
+
+                    _MerchantShowcaseCard(card: card),
+
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -558,7 +619,7 @@ class _TierRoadmapRow extends StatelessWidget {
                 : (isCurrent ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surfaceMuted),
             border: isCurrent ? Border.all(color: AppColors.primary, width: 1.5) : null,
           ),
-          child: Text(tier.icon, style: const TextStyle(fontSize: 16)),
+          child: TierLevelIcon(position: tier.position, iconKey: tier.iconKey, size: 18),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -670,15 +731,25 @@ class _LockedTierCard extends StatelessWidget {
   final AppLocalizations t;
   final CardTier? tier;
   final int? fallbackGoal;
-  const _LockedTierCard({required this.t, this.tier, this.fallbackGoal});
+
+  /// `true` quand [tier] est un vrai palier de la roadmap de niveau (icône
+  /// pilotée par sa position/icon_key) ; `false` pour l'aperçu générique de
+  /// prochaine récompense d'un programme mono-palier (pas de niveau, voir
+  /// `LoyaltyTierService` — icône générique de cadeau).
+  final bool isLevelTier;
+
+  const _LockedTierCard({
+    required this.t,
+    this.tier,
+    this.fallbackGoal,
+    required this.isLevelTier,
+  });
 
   @override
   Widget build(BuildContext context) {
     final goal = tier?.goal ?? fallbackGoal;
     final description = tier?.rewardDescription ?? '';
-    final title = description.isNotEmpty
-        ? (tier != null ? '${tier!.icon} $description' : description)
-        : t.cardDetailDefaultOfferTitle;
+    final title = description.isNotEmpty ? description : t.cardDetailDefaultOfferTitle;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -696,11 +767,24 @@ class _LockedTierCard extends StatelessWidget {
                 icon: LucideIcons.lock,
               ),
               const SizedBox(height: 8),
-              Text(
-                title,
-                style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (tier != null) ...[
+                    isLevelTier
+                        ? TierLevelIcon(position: tier!.position, iconKey: tier!.iconKey, size: 15)
+                        : Icon(Icons.card_giftcard, size: 15, color: AppColors.inkMuted(opacity: 0.6)),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
               if (goal != null) ...[
                 const SizedBox(height: 3),
@@ -754,7 +838,7 @@ class _CurrentLevelCard extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.12),
               border: Border.all(color: AppColors.primary, width: 1.5),
             ),
-            child: Text(tier?.icon ?? '⭐', style: const TextStyle(fontSize: 16)),
+            child: TierLevelIcon(position: tier?.position, iconKey: tier?.iconKey, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1013,14 +1097,6 @@ class _CardQr extends StatelessWidget {
   }
 }
 
-<<<<<<< HEAD
-/// Affiche une modale contenant le détail d'une récompense (popup dédié avec QR et expiration)
-void _showRewardDetailSheet(
-    BuildContext context, WidgetRef ref, Reward reward, AppLocalizations t) {
-  final dateFormatLocale =
-      Localizations.localeOf(context).languageCode == 'fr' ? 'fr_FR' : 'en_US';
-      
-=======
 /// Carte de présentation et vitrine du commerce.
 class _MerchantShowcaseCard extends StatelessWidget {
   final LoyaltyCard card;
@@ -1306,281 +1382,154 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
     'sun': 'Dimanche',
   };
 
->>>>>>> 2c11929 (miv)
   showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
-    builder: (context) {
-      final isReady = reward.isRedeemable;
-      final statusLabel = isReady 
-          ? t.rewardStatusReady 
-          : (reward.isExpired ? t.rewardStatusExpired : t.rewardStatusUsed);
-      final statusTone = isReady 
-          ? StatusTone.success 
-          : (reward.isExpired ? StatusTone.error : StatusTone.neutral);
-      final statusIcon = isReady ? LucideIcons.circleCheckBig : (reward.isExpired ? LucideIcons.circleX : LucideIcons.circleCheckBig);
-
+    builder: (ctx) {
       return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Handle for bottom sheet
               Center(
                 child: Container(
-                  width: 48,
-                  height: 6,
-                  margin: const EdgeInsets.only(bottom: 24),
+                  width: 44,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 18),
                   decoration: BoxDecoration(
                     color: AppColors.border,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
               ),
-              
-              // Header Icon
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: statusTone == StatusTone.success 
-                        ? AppColors.successTint 
-                        : (statusTone == StatusTone.error ? AppColors.errorTint : AppColors.surfaceMuted),
-                  ),
-                  child: Icon(
-                    isReady ? LucideIcons.gift : (reward.isExpired ? LucideIcons.calendarX : LucideIcons.calendarCheck),
-                    size: 32,
-                    color: statusTone == StatusTone.success 
-                        ? AppColors.success 
-                        : (statusTone == StatusTone.error ? AppColors.error : AppColors.inkMuted()),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Title & Subtitle
-              Text(
-                reward.title,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.displayLarge(),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                reward.restaurantName,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodyLarge(color: AppColors.inkMuted()),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Status Badge centered
-              Center(
-                child: StatusBadge(
-                  label: statusLabel,
-                  tone: statusTone,
-                  icon: statusIcon,
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Central Content: QR Code or Info Box
-              if (isReady) ...[
-                if (reward.expiresAt != null)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _RewardCountdown(
-                        expiresAt: reward.expiresAt!,
-                        t: t,
-                      ),
-                    ),
-                  ),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
+
+              // Header commerce
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: AppColors.border, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.ink.withValues(alpha: 0.05),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        )
-                      ],
+                      gradient: AppColors.cardGradient(card.liningColor),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        QrImageView(
-                          data: '$rewardQrPrefix${reward.redeemToken}',
-                          size: 220,
-                          backgroundColor: Colors.white,
-                          eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.square,
-                            color: AppColors.inkSolid,
-                          ),
-                          dataModuleStyle: const QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.square,
-                            color: AppColors.inkSolid,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              reward.redeemToken.replaceAll('-', ' - '),
-                              style: AppTextStyles.monoMedium(color: AppColors.inkSolid)
-                                  .copyWith(fontSize: 18),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () async {
-                                await Clipboard.setData(ClipboardData(text: reward.redeemToken));
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(t.cardDetailIdCopied)),
-                                  );
-                                }
-                              },
-                              behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(
-                                  LucideIcons.copy,
-                                  size: 16,
-                                  color: AppColors.inkSolid.withValues(alpha: 0.5),
+                    child: Center(
+                      child: card.logoUrl != null && card.logoUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: CachedNetworkImage(
+                                imageUrl: card.logoUrl!,
+                                width: 52,
+                                height: 52,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => const Icon(
+                                  LucideIcons.store,
+                                  color: Colors.white,
+                                  size: 26,
                                 ),
                               ),
+                            )
+                          : const Icon(
+                              LucideIcons.store,
+                              color: Colors.white,
+                              size: 26,
                             ),
-                          ],
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          card.restaurantName,
+                          style: AppTextStyles.displayMedium()
+                              .copyWith(fontSize: 18),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            card.restaurantCategory.isNotEmpty
+                                ? card.restaurantCategory
+                                : 'Établissement partenaire',
+                            style: AppTextStyles.eyebrow(
+                              color: AppColors.inkMuted(opacity: 0.8),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  t.rewardQrInstructions2,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyMedium(color: AppColors.inkMuted()),
-                ),
-              ] else if (reward.usedAt != null) ...[
+                ],
+              ),
+
+              if (card.restaurantDescription?.isNotEmpty ?? false) ...[
+                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Column(
-                    children: [
-                      Icon(LucideIcons.calendarCheck, size: 40, color: AppColors.inkMuted()),
-                      const SizedBox(height: 16),
-                      Text(
-                        t.rewardUsedDate,
-                        style: AppTextStyles.label(color: AppColors.inkMuted()),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        reward.formattedUsedDate(dateFormatLocale),
-                        style: AppTextStyles.displayMedium(color: AppColors.ink),
-                      ),
-                    ],
+                  child: Text(
+                    card.restaurantDescription!,
+                    style: AppTextStyles.bodyMedium(
+                      color: AppColors.ink.withValues(alpha: 0.85),
+                    ).copyWith(height: 1.45),
                   ),
-                )
-              ] else if (reward.isExpired) ...[
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.errorTint,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(LucideIcons.calendarX, size: 40, color: AppColors.error),
-                      const SizedBox(height: 16),
-                      Text(
-                        t.rewardStatusExpired,
-                        style: AppTextStyles.displayMedium(color: AppColors.error),
-                      ),
-                    ],
-                  ),
-                )
+                ),
               ],
 
-              // Expiration Date at bottom
-              if (reward.expiresAt != null && isReady) ...[
-                const SizedBox(height: 32),
+              const SizedBox(height: 18),
+
+              // Coordonnées & localisation
+              if (hasAddress) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: reward.isExpiringSoon ? AppColors.errorTint : AppColors.surfaceCard,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: reward.isExpiringSoon 
-                          ? AppColors.error.withValues(alpha: 0.3) 
-                          : AppColors.border
-                    ),
+                    color: AppColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: reward.isExpiringSoon 
-                              ? AppColors.error.withValues(alpha: 0.1) 
-                              : AppColors.surfaceMuted,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          LucideIcons.calendarClock, 
-                          size: 20, 
-                          color: reward.isExpiringSoon 
-                              ? AppColors.error 
-                              : AppColors.inkMuted()
-                        ),
-                      ),
-                      const SizedBox(width: 16),
+                      const Icon(LucideIcons.mapPin,
+                          size: 20, color: AppColors.primary),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              t.rewardExpirationDate,
-                              style: AppTextStyles.label(
-                                  color: reward.isExpiringSoon 
-                                      ? AppColors.error 
-                                      : AppColors.inkMuted()),
+                              'Adresse',
+                              style: AppTextStyles.label().copyWith(fontSize: 12),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              DateFormat('dd MMMM yyyy', dateFormatLocale).format(reward.expiresAt!),
-                              style: AppTextStyles.monoMedium(
-                                color: reward.isExpiringSoon 
-                                    ? AppColors.error 
-                                    : AppColors.ink
+                              fullAddress,
+                              style: AppTextStyles.bodySmall(
+                                color: AppColors.inkMuted(opacity: 0.8),
                               ),
                             ),
                           ],
                         ),
                       ),
-<<<<<<< HEAD
-=======
                       AppTapScale(
                         onTap: () {
                           Navigator.pop(ctx);
@@ -1618,9 +1567,163 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                           ),
                         ),
                       ),
->>>>>>> 2c11929 (miv)
                     ],
                   ),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              // Horaires d'ouverture
+              if (card.restaurantOpeningHours.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(LucideIcons.clock,
+                              size: 16, color: AppColors.inkMuted()),
+                          const SizedBox(width: 8),
+                          Text('Horaires d\'ouverture',
+                              style: AppTextStyles.titleMedium()
+                                  .copyWith(fontSize: 14)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ...dayLabels.entries.map((e) {
+                        final info = card.restaurantOpeningHours[e.key] as Map?;
+                        final isOpen = info?['open'] == true;
+                        final from = info?['from']?.toString() ?? '';
+                        final to = info?['to']?.toString() ?? '';
+                        final timeStr = isOpen
+                            ? (from.isNotEmpty && to.isNotEmpty
+                                ? '$from - $to'
+                                : 'Ouvert')
+                            : 'Fermé';
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                e.value,
+                                style: AppTextStyles.bodySmall(
+                                  color: AppColors.inkMuted(opacity: 0.8),
+                                ),
+                              ),
+                              Text(
+                                timeStr,
+                                style: AppTextStyles.bodySmall(
+                                  color: isOpen
+                                      ? AppColors.ink
+                                      : AppColors.error.withValues(alpha: 0.8),
+                                ).copyWith(
+                                    fontWeight: isOpen
+                                        ? FontWeight.w600
+                                        : FontWeight.w400),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              // Réseaux sociaux & contact direct
+              if (card.hasRestaurantContact) ...[
+                Text(
+                  'Contact & Réseaux',
+                  style: AppTextStyles.eyebrow(color: AppColors.inkMuted()),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    if (card.restaurantPhone?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: LucideIcons.phone,
+                        label: card.restaurantPhone!,
+                        color: const Color(0xFF2563EB),
+                        onTap: () => launchUrl(
+                            Uri.parse('tel:${card.restaurantPhone}'),
+                            mode: LaunchMode.externalApplication),
+                      ),
+                    if (card.restaurantWhatsapp?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.whatsapp,
+                        label: 'WhatsApp',
+                        color: const Color(0xFF16A34A),
+                        onTap: () {
+                          final clean = card.restaurantWhatsapp!
+                              .replaceAll(RegExp(r'[^0-9+]'), '');
+                          launchUrl(Uri.parse('https://wa.me/$clean'),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.restaurantInstagram?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.instagram,
+                        label: card.restaurantInstagram!,
+                        color: const Color(0xFFE1306C),
+                        onTap: () {
+                          final handle = card.restaurantInstagram!
+                              .replaceAll('@', '')
+                              .trim();
+                          launchUrl(Uri.parse('https://instagram.com/$handle'),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.restaurantFacebook?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.facebook,
+                        label: 'Facebook',
+                        color: const Color(0xFF1877F2),
+                        onTap: () {
+                          final fb = card.restaurantFacebook!.trim();
+                          final url = fb.startsWith('http')
+                              ? fb
+                              : 'https://facebook.com/$fb';
+                          launchUrl(Uri.parse(url),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.restaurantTiktok?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.tiktok,
+                        label: 'TikTok',
+                        color: const Color(0xFF000000),
+                        onTap: () {
+                          final tt = card.restaurantTiktok!
+                              .replaceAll('@', '')
+                              .trim();
+                          launchUrl(Uri.parse('https://tiktok.com/@$tt'),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.googleReviewUrl?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.google,
+                        label: 'Avis Google',
+                        color: const Color(0xFFEA4335),
+                        onTap: () {
+                          final url = card.googleReviewUrl!.trim();
+                          final full = url.startsWith('http') ? url : 'https://$url';
+                          launchUrl(Uri.parse(full),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                  ],
                 ),
               ],
             ],
@@ -1631,83 +1734,46 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
   );
 }
 
-class _RewardCountdown extends StatefulWidget {
-  final DateTime expiresAt;
-  final AppLocalizations t;
+class _SocialPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
 
-  const _RewardCountdown({required this.expiresAt, required this.t});
-
-  @override
-  State<_RewardCountdown> createState() => _RewardCountdownState();
-}
-
-class _RewardCountdownState extends State<_RewardCountdown> {
-  late Timer _timer;
-  late Duration _timeLeft;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateTimeLeft();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {
-          _updateTimeLeft();
-        });
-      }
-    });
-  }
-
-  void _updateTimeLeft() {
-    final now = DateTime.now();
-    _timeLeft = widget.expiresAt.difference(now);
-    if (_timeLeft.isNegative) {
-      _timeLeft = Duration.zero;
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
+  const _SocialPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (_timeLeft == Duration.zero) return const SizedBox.shrink();
-
-    final days = _timeLeft.inDays;
-    final hours = _timeLeft.inHours.remainder(24).toString().padLeft(2, '0');
-    final minutes = _timeLeft.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = _timeLeft.inSeconds.remainder(60).toString().padLeft(2, '0');
-    
-    final isExpiringSoon = _timeLeft.inHours < 48;
-    
-    final timeString = days > 0 
-        ? '$days ${widget.t.commonCountdownPrefix.replaceAll('-', '')} $hours:$minutes:$seconds' 
-        : '$hours:$minutes:$seconds';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isExpiringSoon ? AppColors.errorTint : AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(
-          color: isExpiringSoon ? AppColors.error.withValues(alpha: 0.3) : AppColors.border
-        )
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(LucideIcons.calendarClock, size: 16, color: isExpiringSoon ? AppColors.error : AppColors.inkMuted()),
-          const SizedBox(width: 8),
-          Text(
-            timeString,
-            style: AppTextStyles.monoMedium(
-              color: isExpiringSoon ? AppColors.error : AppColors.ink
-            ).copyWith(fontWeight: FontWeight.w700),
-          ),
-        ],
+    return AppTapScale(
+      onTap: onTap,
+      scaleDown: 0.95,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

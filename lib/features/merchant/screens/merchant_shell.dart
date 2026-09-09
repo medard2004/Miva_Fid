@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../providers/clients_provider.dart';
+import '../providers/merchant_ui_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../../client/providers/settings_provider.dart';
 
@@ -16,8 +16,8 @@ class MerchantShell extends ConsumerWidget {
 
   Widget _buildNavItem({
     required int index,
-    required IconData outlinedIcon,
-    required IconData filledIcon,
+    required IconData icon,
+    required IconData activeIcon,
     required String label,
     required int currentIndex,
     required WidgetRef ref,
@@ -35,18 +35,19 @@ class MerchantShell extends ConsumerWidget {
             initialLocation: index == currentIndex,
           );
         },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                isActive ? filledIcon : outlinedIcon,
+                isActive ? activeIcon : icon,
                 color: isActive ? activeColor : inactiveColor,
                 size: 22,
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
@@ -87,48 +88,48 @@ class MerchantShell extends ConsumerWidget {
                 ),
               ),
               padding: EdgeInsets.only(
-                top: 6,
-                bottom: MediaQuery.of(context).padding.bottom + 6,
+                top: 4,
+                bottom: MediaQuery.of(context).padding.bottom + 4,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildNavItem(
                     index: 0,
-                    outlinedIcon: Icons.people_outline_rounded,
-                    filledIcon: Icons.people_rounded,
+                    icon: Icons.people_outline_rounded,
+                    activeIcon: Icons.people_rounded,
                     label: t.merchantNavClients,
                     currentIndex: currentIndex,
                     ref: ref,
                   ),
                   _buildNavItem(
                     index: 1,
-                    outlinedIcon: Icons.bar_chart_rounded,
-                    filledIcon: Icons.insert_chart_rounded,
+                    icon: Icons.bar_chart_rounded,
+                    activeIcon: Icons.insert_chart_rounded,
                     label: t.merchantNavStats,
                     currentIndex: currentIndex,
                     ref: ref,
                   ),
                   _buildNavItem(
                     index: 2,
-                    outlinedIcon: Icons.qr_code_scanner_rounded,
-                    filledIcon: Icons.qr_code_2_rounded,
+                    icon: Icons.qr_code_scanner_rounded,
+                    activeIcon: Icons.qr_code_2_rounded,
                     label: t.merchantNavValidate,
                     currentIndex: currentIndex,
                     ref: ref,
                   ),
                   _buildNavItem(
                     index: 3,
-                    outlinedIcon: Icons.chat_bubble_outline_rounded,
-                    filledIcon: Icons.chat_bubble_rounded,
+                    icon: Icons.chat_bubble_outline_rounded,
+                    activeIcon: Icons.chat_bubble_rounded,
                     label: t.merchantNavSms,
                     currentIndex: currentIndex,
                     ref: ref,
                   ),
                   _buildNavItem(
                     index: 4,
-                    outlinedIcon: Icons.settings_outlined,
-                    filledIcon: Icons.settings_rounded,
+                    icon: Icons.settings_outlined,
+                    activeIcon: Icons.settings_rounded,
                     label: t.merchantNavSettings,
                     currentIndex: currentIndex,
                     ref: ref,

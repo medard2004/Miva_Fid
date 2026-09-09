@@ -10,7 +10,8 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/providers/wallet_provider.dart';
 import 'package:miva_fid/core/utils/loading_overlay_service.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
-import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
+import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
+import 'package:miva_fid/features/client/widgets/shared/user_avatar.dart';
 
 /// Paramètres — apparence (clair/sombre/système), langue, notifications
 /// par établissement et déconnexion. Regroupe ce qui encombrait
@@ -60,104 +61,185 @@ class SettingsScreen extends ConsumerWidget {
     ref.watch(appBrightnessProvider);
     final locale = ref.watch(localeProvider);
     final cards = ref.watch(walletProvider);
+    final auth = ref.watch(authProvider);
+    final user = auth.user;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppDetailBar(title: t.settingsTitle),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        children: [
-          SectionEyebrow(t.settingsAppearance),
-          const SizedBox(height: 8),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                _OptionRow(
-                  icon: LucideIcons.sun,
-                  label: t.settingsThemeLight,
-                  selected: themeMode == ThemeMode.light,
-                  onTap: () => ref
-                      .read(themeModeProvider.notifier)
-                      .setThemeMode(ThemeMode.light),
-                ),
-                Divider(height: 1, color: AppColors.border),
-                _OptionRow(
-                  icon: LucideIcons.moon,
-                  label: t.settingsThemeDark,
-                  selected: themeMode == ThemeMode.dark,
-                  onTap: () => ref
-                      .read(themeModeProvider.notifier)
-                      .setThemeMode(ThemeMode.dark),
-                ),
-                Divider(height: 1, color: AppColors.border),
-                _OptionRow(
-                  icon: LucideIcons.monitor,
-                  label: t.settingsThemeSystem,
-                  selected: themeMode == ThemeMode.system,
-                  onTap: () => ref
-                      .read(themeModeProvider.notifier)
-                      .setThemeMode(ThemeMode.system),
-                ),
-              ],
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            AppSectionHeader(
+              title: t.settingsTitle,
+              showDivider: false,
             ),
-          ),
-          const SizedBox(height: 20),
-          SectionEyebrow(t.settingsLanguage),
-          const SizedBox(height: 8),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                _OptionRow(
-                  icon: LucideIcons.languages,
-                  label: t.settingsLanguageFrench,
-                  selected: locale.languageCode == 'fr',
-                  onTap: () => ref
-                      .read(localeProvider.notifier)
-                      .setLocale(const Locale('fr')),
-                ),
-                Divider(height: 1, color: AppColors.border),
-                _OptionRow(
-                  icon: LucideIcons.languages,
-                  label: t.settingsLanguageEnglish,
-                  selected: locale.languageCode == 'en',
-                  onTap: () => ref
-                      .read(localeProvider.notifier)
-                      .setLocale(const Locale('en')),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          SectionEyebrow(t.settingsNotifications),
-          const SizedBox(height: 8),
-          AppCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                for (int i = 0; i < cards.length; i++) ...[
-                  if (i > 0) Divider(height: 1, color: AppColors.border),
-                  _NotifToggleRow(
-                    cardId: cards[i].id,
-                    name: cards[i].restaurantName,
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+                children: [
+                  if (user != null) ...[
+                    AppCard(
+                      onTap: () => context.push('/client/profile/edit'),
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          UserAvatar(
+                            fullName: user.fullName,
+                            photoUrl: user.photoUrl,
+                            localImage: auth.localAvatar,
+                            radius: 28,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.fullName.isNotEmpty
+                                      ? user.fullName
+                                      : t.profileTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.titleMedium()
+                                      .copyWith(fontSize: 17, fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  user.maskedPhoneNumber,
+                                  style: AppTextStyles.bodySmall(
+                                    color: AppColors.inkMuted(opacity: 0.65),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            LucideIcons.chevronRight,
+                            size: 20,
+                            color: AppColors.inkMuted(opacity: 0.35),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  SectionEyebrow(t.settingsAccount),
+                  const SizedBox(height: 8),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _ActionRow(
+                          icon: LucideIcons.userRoundPen,
+                          label: t.profileEditProfile,
+                          subtitle: t.editProfileTitle,
+                          onTap: () => context.push('/client/profile/edit'),
+                        ),
+                        Divider(height: 1, color: AppColors.border),
+                        _ActionRow(
+                          icon: LucideIcons.shieldCheck,
+                          label: t.editProfileSecurity,
+                          subtitle: t.changePasswordTitle,
+                          onTap: () => context.push('/client/profile/verify-password'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SectionEyebrow(t.settingsAppearance),
+                  const SizedBox(height: 8),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _OptionRow(
+                          icon: LucideIcons.sun,
+                          label: t.settingsThemeLight,
+                          selected: themeMode == ThemeMode.light,
+                          onTap: () => ref
+                              .read(themeModeProvider.notifier)
+                              .setThemeMode(ThemeMode.light),
+                        ),
+                        Divider(height: 1, color: AppColors.border),
+                        _OptionRow(
+                          icon: LucideIcons.moon,
+                          label: t.settingsThemeDark,
+                          selected: themeMode == ThemeMode.dark,
+                          onTap: () => ref
+                              .read(themeModeProvider.notifier)
+                              .setThemeMode(ThemeMode.dark),
+                        ),
+                        Divider(height: 1, color: AppColors.border),
+                        _OptionRow(
+                          icon: LucideIcons.monitor,
+                          label: t.settingsThemeSystem,
+                          selected: themeMode == ThemeMode.system,
+                          onTap: () => ref
+                              .read(themeModeProvider.notifier)
+                              .setThemeMode(ThemeMode.system),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SectionEyebrow(t.settingsLanguage),
+                  const SizedBox(height: 8),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _OptionRow(
+                          icon: LucideIcons.languages,
+                          label: t.settingsLanguageFrench,
+                          selected: locale.languageCode == 'fr',
+                          onTap: () => ref
+                              .read(localeProvider.notifier)
+                              .setLocale(const Locale('fr')),
+                        ),
+                        Divider(height: 1, color: AppColors.border),
+                        _OptionRow(
+                          icon: LucideIcons.languages,
+                          label: t.settingsLanguageEnglish,
+                          selected: locale.languageCode == 'en',
+                          onTap: () => ref
+                              .read(localeProvider.notifier)
+                              .setLocale(const Locale('en')),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SectionEyebrow(t.settingsNotifications),
+                  const SizedBox(height: 8),
+                  AppCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < cards.length; i++) ...[
+                          if (i > 0) Divider(height: 1, color: AppColors.border),
+                          _NotifToggleRow(
+                            cardId: cards[i].id,
+                            name: cards[i].restaurantName,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  AppButton(
+                    label: t.settingsSignOut,
+                    variant: AppButtonVariant.destructive,
+                    icon: LucideIcons.logOut,
+                    fullWidth: true,
+                    height: 48,
+                    onTap: () => _confirmSignOut(context, ref, t),
                   ),
                 ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 28),
-          Center(
-            child: AppButton(
-              label: t.settingsSignOut,
-              variant: AppButtonVariant.destructive,
-              icon: LucideIcons.logOut,
-              fullWidth: false,
-              height: 44,
-              onTap: () => _confirmSignOut(context, ref, t),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -192,6 +274,57 @@ class _OptionRow extends StatelessWidget {
             ),
             if (selected)
               const Icon(LucideIcons.check, size: 18, color: AppColors.primary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ActionRow({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppTapScale(
+      onTap: onTap,
+      scaleDown: 0.99,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 19, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.bodyMedium()),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.bodySmall(
+                      color: AppColors.inkMuted(opacity: 0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              size: 18,
+              color: AppColors.inkMuted(opacity: 0.35),
+            ),
           ],
         ),
       ),

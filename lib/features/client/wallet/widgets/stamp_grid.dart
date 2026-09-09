@@ -103,15 +103,33 @@ class StampGrid extends StatelessWidget {
                     ),
                     child: Center(child: _stampMark()),
                   )
-                : DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: textColor.withValues(alpha: 0.5),
-                        width: 1.8,
+                : (i == dotsToRender - 1)
+                    ? DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: textColor,
+                            width: 1.8,
+                          ),
+                          color: textColor.withValues(alpha: 0.18),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            LucideIcons.gift,
+                            color: textColor,
+                            size: stampSize * 0.55,
+                          ),
+                        ),
+                      )
+                    : DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: textColor.withValues(alpha: 0.5),
+                            width: 1.8,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
           ),
         if (hasOverflow)
           Container(

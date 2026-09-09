@@ -168,7 +168,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     icon: LucideIcons.palette,
                     title: t.merchantProgrammeAppearanceTitle,
                     subtitle: t.merchantProgrammeAppearanceSubtitle,
-                    onTap: () => context.go('/merchant/more/programme/design'),
+                    onTap: () => context.push('/merchant/more/programme/design'),
                   ),
                   const SizedBox(height: Sp.md),
 
@@ -176,7 +176,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     icon: LucideIcons.gift,
                     title: t.merchantProgrammeTiersTitle,
                     subtitle: t.merchantProgrammeTiersSubtitle,
-                    onTap: () => context.go('/merchant/more/programme/tiers'),
+                    onTap: () => context.push('/merchant/more/programme/tiers'),
                   ),
                   const SizedBox(height: Sp.md),
 
@@ -185,7 +185,17 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                       icon: LucideIcons.calculator,
                       title: t.merchantProgrammeRulesTitle,
                       subtitle: t.merchantProgrammeRulesSubtitle,
-                      onTap: () => context.go('/merchant/more/programme/rules'),
+                      onTap: () => context.push('/merchant/more/programme/rules'),
+                    ),
+                    const SizedBox(height: Sp.md),
+                  ],
+
+                  if (loyaltyMode == 'cashback') ...[
+                    _buildCategoryItem(
+                      icon: LucideIcons.percent,
+                      title: 'Paramètres cashback',
+                      subtitle: 'Taux de remise, plafond d\'utilisation et validité du solde',
+                      onTap: () => context.push('/merchant/more/programme/cashback'),
                     ),
                     const SizedBox(height: Sp.md),
                   ],

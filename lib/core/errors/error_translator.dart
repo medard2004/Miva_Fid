@@ -109,9 +109,7 @@ class ErrorTranslator {
       return _invalidMessage(field);
     }
     if (_has(raw, ['exists', 'existe pas', 'not found', 'introuvable'])) {
-      return field == 'referral_code'
-          ? ErrorMessages.referralCodeInvalid
-          : _invalidMessage(field);
+      return _invalidMessage(field);
     }
 
     // Motif non reconnu : message du catalogue propre au champ, jamais le brut.
@@ -159,8 +157,6 @@ class ErrorTranslator {
         return ErrorMessages.birthdateInvalid;
       case 'avatar':
         return ErrorMessages.avatarInvalid;
-      case 'referral_code':
-        return ErrorMessages.referralCodeInvalid;
       case 'otp':
         return ErrorMessages.otpFieldInvalid;
       default:

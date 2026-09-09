@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// No description provided for @referralSubtitle.
   ///
   /// In fr, this message translates to:
-  /// **'Recommandez vos restaurants favoris et cumulez des points.'**
+  /// **'Partagez votre QR : votre récompense arrive dès la première visite de votre filleul.'**
   String get referralSubtitle;
 
   /// No description provided for @referralEmptyTitle.
@@ -419,92 +419,62 @@ abstract class AppLocalizations {
   /// No description provided for @referralEmptyMessage.
   ///
   /// In fr, this message translates to:
-  /// **'Rejoignez au moins un établissement pour pouvoir le recommander à vos proches.'**
+  /// **'Rejoignez au moins un établissement pour obtenir votre QR de parrainage.'**
   String get referralEmptyMessage;
 
-  /// No description provided for @referralPointsLabel.
+  /// No description provided for @referralSelectEstablishment.
   ///
   /// In fr, this message translates to:
-  /// **'Points de parrainage'**
-  String get referralPointsLabel;
+  /// **'Établissement'**
+  String get referralSelectEstablishment;
 
-  /// No description provided for @referralPointsEarned.
+  /// No description provided for @referralYourCode.
   ///
   /// In fr, this message translates to:
-  /// **'{count} points cumulés'**
-  String referralPointsEarned(int count);
+  /// **'Votre identifiant'**
+  String get referralYourCode;
 
-  /// No description provided for @referralSharesToNext.
+  /// No description provided for @referralShareButton.
   ///
   /// In fr, this message translates to:
-  /// **'Encore {count} partages'**
-  String referralSharesToNext(int count);
+  /// **'Partager mon parrainage'**
+  String get referralShareButton;
 
-  /// No description provided for @referralChoosePartner.
+  /// No description provided for @referralShareMessage.
   ///
   /// In fr, this message translates to:
-  /// **'Choisir le partenaire'**
-  String get referralChoosePartner;
+  /// **'Rejoins {restaurant} avec mon code de parrainage {code} sur MivaFid !'**
+  String referralShareMessage(String restaurant, String code);
 
-  /// No description provided for @referralRecipientHint.
+  /// No description provided for @referralPendingTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Téléphone ou nom'**
-  String get referralRecipientHint;
+  /// **'En attente'**
+  String get referralPendingTitle;
 
-  /// No description provided for @referralSendButton.
+  /// No description provided for @referralPendingEmpty.
   ///
   /// In fr, this message translates to:
-  /// **'Envoyer l\'invitation'**
-  String get referralSendButton;
+  /// **'Aucun parrainage en attente.'**
+  String get referralPendingEmpty;
 
-  /// No description provided for @referralSendButtonWithCount.
+  /// No description provided for @referralValidatedTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Envoyer l\'invitation ({count})'**
-  String referralSendButtonWithCount(int count);
+  /// **'Validés'**
+  String get referralValidatedTitle;
 
-  /// No description provided for @referralDuplicateRecipient.
+  /// No description provided for @referralValidatedEmpty.
   ///
   /// In fr, this message translates to:
-  /// **'Ce destinataire est déjà dans votre liste d\'envoi.'**
-  String get referralDuplicateRecipient;
+  /// **'Aucun parrainage validé pour le moment.'**
+  String get referralValidatedEmpty;
 
-  /// No description provided for @referralNoRecipient.
+  /// No description provided for @referralRewardObtained.
   ///
   /// In fr, this message translates to:
-  /// **'Veuillez ajouter au moins un destinataire avant d\'envoyer.'**
-  String get referralNoRecipient;
-
-  /// No description provided for @referralSentSuccess.
-  ///
-  /// In fr, this message translates to:
-  /// **'{count} invitation(s) envoyée(s) !'**
-  String referralSentSuccess(int count);
-
-  /// No description provided for @referralHistoryTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Historique des partages'**
-  String get referralHistoryTitle;
-
-  /// No description provided for @referralHistoryEmpty.
-  ///
-  /// In fr, this message translates to:
-  /// **'Aucun partage effectué pour le moment.'**
-  String get referralHistoryEmpty;
-
-  /// No description provided for @referralMessageLabel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Votre message'**
-  String get referralMessageLabel;
-
-  /// No description provided for @referralRecipientsLabel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Destinataires'**
-  String get referralRecipientsLabel;
+  /// **'Récompense obtenue : {title}'**
+  String referralRewardObtained(String title);
 
   /// No description provided for @notificationsTitle.
   ///
@@ -1334,6 +1304,12 @@ abstract class AppLocalizations {
   /// **'Carte créée !'**
   String get joinCardCreatedTitle;
 
+  /// No description provided for @joinReferredByMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parrainé(e) par {name}'**
+  String joinReferredByMessage(String name);
+
   /// No description provided for @joinCardAlreadyMemberTitle.
   ///
   /// In fr, this message translates to:
@@ -1345,6 +1321,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Vous êtes déjà membre de ce programme de fidélité.'**
   String get joinCardAlreadyMemberMessage;
+
+  /// No description provided for @joinCardAlreadyMemberViaReferralMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes déjà membre de ce commerce, redirection vers votre carte.'**
+  String get joinCardAlreadyMemberViaReferralMessage;
 
   /// No description provided for @phonePickerTitle.
   ///
@@ -1903,12 +1885,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Veuillez indiquer votre date de naissance.'**
   String get errBirthdateRequired;
-
-  /// No description provided for @errReferralCodeInvalid.
-  ///
-  /// In fr, this message translates to:
-  /// **'Ce code de parrainage n\'existe pas.'**
-  String get errReferralCodeInvalid;
 
   /// No description provided for @errOtpFieldInvalid.
   ///
@@ -3715,6 +3691,13 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun solde cashback à utiliser pour ce client.'**
   String get merchantValidateNoCashbackBalance;
+
+  /// No description provided for @merchantValidateBelowCashbackThreshold.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seuil non atteint : {threshold} requis pour utiliser le cashback (solde actuel : {balance}).'**
+  String merchantValidateBelowCashbackThreshold(
+      String threshold, String balance);
 
   /// No description provided for @merchantValidatePurchaseAmountLabel.
   ///

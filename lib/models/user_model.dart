@@ -5,6 +5,7 @@ class UserModel {
     this.phone,
     required this.role,
     required this.createdAt,
+    this.avatarUrl,
   });
 
   final String id;
@@ -12,6 +13,7 @@ class UserModel {
   final String? phone;
   final String role; // 'client' | 'merchant' | 'both'
   final DateTime createdAt;
+  final String? avatarUrl;
 
   String get firstName => name.split(' ').first;
   String get lastName =>
@@ -26,11 +28,14 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      phone: json['phone'] as String?,
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Client',
+      phone: json['phone']?.toString(),
       role: json['role'] as String? ?? 'client',
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+              DateTime.now(),
+      avatarUrl: json['avatar_url'] as String?,
     );
   }
 
@@ -41,6 +46,7 @@ class UserModel {
       'phone': phone,
       'role': role,
       'created_at': createdAt.toIso8601String(),
+      'avatar_url': avatarUrl,
     };
   }
 
@@ -50,6 +56,7 @@ class UserModel {
     String? phone,
     String? role,
     DateTime? createdAt,
+    String? avatarUrl,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -57,6 +64,7 @@ class UserModel {
       phone: phone ?? this.phone,
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }

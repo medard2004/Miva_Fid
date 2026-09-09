@@ -4,6 +4,7 @@ import '../../../core/api/providers/api_providers.dart';
 import '../../../models/merchant_model.dart';
 import '../models/restaurant_account.dart';
 import 'merchant_auth_provider.dart';
+import 'merchant_realtime_provider.dart';
 
 part 'merchant_provider.g.dart';
 
@@ -22,6 +23,11 @@ part 'merchant_provider.g.dart';
 class MerchantNotifier extends _$MerchantNotifier {
   @override
   Future<MerchantModel?> build() async {
+    // Ouvre/ferme la connexion Reverb marchande en même temps que ce
+    // provider (déjà `keepAlive` et déjà surveillé par la quasi totalité
+    // des écrans marchand) — voir `MerchantRealtimeConnection`.
+    ref.watch(merchantRealtimeConnectionProvider);
+
     final restaurant = ref.watch(
       merchantAuthProvider.select((s) => s.restaurant),
     );
@@ -65,7 +71,10 @@ class MerchantNotifier extends _$MerchantNotifier {
     }
 
     if (businessPatch.isNotEmpty) {
-      await ref.read(merchantAuthProvider.notifier).updateBusinessInfo({
+      // `updateBusinessInfo` avale l'exception et renvoie false : sans cette
+      // vérification, un 422/erreur réseau serait annoncé comme un succès
+      // par les écrans (vitrine, socials...).
+      final ok = await ref.read(merchantAuthProvider.notifier).updateBusinessInfo({
         'name': restaurant.name,
         'category': restaurant.category,
         'phone': restaurant.phone,
@@ -78,6 +87,11 @@ class MerchantNotifier extends _$MerchantNotifier {
         'tiktok': restaurant.tiktok,
         ...businessPatch,
       });
+      if (!ok) {
+        final error = ref.read(merchantAuthProvider).lastError;
+        throw Exception(
+            'La mise à jour des informations du commerce a échoué${error == null ? '' : ' : $error'}');
+      }
     }
 
     if (configPatch.isNotEmpty) {
@@ -99,14 +113,78 @@ class MerchantNotifier extends _$MerchantNotifier {
         'card_gradient_type': config['card_gradient_type'],
         'logo_url': config['logo_url'],
         'loops': config['loops'] ?? true,
+        // Récompense anniversaire — indépendante du mode, toujours incluse
+        // pour ne pas la perdre quand on sauvegarde un réglage sans rapport
+        // (paliers, cashback...). Le patch (`birthday_reward_*`, clé plate)
+        // prime ; sinon on relit la valeur nichée renvoyée par le serveur
+        // (`config['birthday_reward']`).
+        'birthday_reward_enabled': config['birthday_reward_enabled'] ??
+            config['birthday_reward']?['enabled'] ??
+            false,
+        'birthday_reward_title': config['birthday_reward_title'] ??
+            config['birthday_reward']?['title'],
+        'birthday_reward_description': config['birthday_reward_description'] ??
+            config['birthday_reward']?['description'],
+        'birthday_reward_validity_days':
+            config['birthday_reward_validity_days'] ??
+                config['birthday_reward']?['validity_days'],
+        'birthday_reward_surprise': config['birthday_reward_surprise'] ??
+            config['birthday_reward']?['surprise'] ??
+            false,
+        // Récompense de parrainage (Parrain + Filleul)
+        'referral_reward_enabled': config['referral_reward_enabled'] ??
+            config['referral_reward']?['enabled'] ??
+            true,
+        'referral_reward_label': config['referral_reward_label'] ??
+            config['referral_reward']?['label'],
+        'referral_reward_description': config['referral_reward_description'] ??
+            config['referral_reward']?['description'],
+        'referral_reward_validity_days':
+            config['referral_reward_validity_days'] ??
+                config['referral_reward']?['validity_days'],
+        'referral_reward_surprise': config['referral_reward_surprise'] ??
+            config['referral_reward']?['surprise'] ??
+            false,
+        'referral_referred_reward_enabled':
+            config['referral_referred_reward_enabled'] ??
+                config['referral_reward']?['referred_enabled'] ??
+                false,
+        'referral_referred_reward_label':
+            config['referral_referred_reward_label'] ??
+                config['referral_reward']?['referred_label'],
+        'referral_referred_reward_description':
+            config['referral_referred_reward_description'] ??
+                config['referral_reward']?['referred_description'],
+        'referral_referred_reward_validity_days':
+            config['referral_referred_reward_validity_days'] ??
+                config['referral_reward']?['referred_validity_days'],
+        'referral_referred_reward_surprise':
+            config['referral_referred_reward_surprise'] ??
+                config['referral_reward']?['referred_surprise'] ??
+                false,
+        // Récompense de bienvenue (immédiate à l'adhésion)
+        'welcome_reward_enabled': config['welcome_reward_enabled'] ??
+            config['welcome_reward']?['enabled'] ??
+            false,
+        'welcome_reward_title': config['welcome_reward_title'] ??
+            config['welcome_reward']?['title'],
+        'welcome_reward_description': config['welcome_reward_description'] ??
+            config['welcome_reward']?['description'],
+        'welcome_reward_validity_days':
+            config['welcome_reward_validity_days'] ??
+                config['welcome_reward']?['validity_days'],
+        'welcome_reward_surprise': config['welcome_reward_surprise'] ??
+            config['welcome_reward']?['surprise'] ??
+            false,
         if (restaurant.loyaltyType == 'spend')
           'fcfa_per_point': config['fcfa_per_point'] ?? 100,
         if (restaurant.loyaltyType == 'cashback') ...{
           'cashback_percentage': config['cashback_percentage'] ?? 5,
-          if (config['cashback_redeem_cap_percent'] != null)
-            'cashback_redeem_cap_percent': config['cashback_redeem_cap_percent'],
+          if (config['cashback_redeem_threshold_fcfa'] != null)
+            'cashback_redeem_threshold_fcfa': config['cashback_redeem_threshold_fcfa'],
           if (config['cashback_expiry_days'] != null)
             'cashback_expiry_days': config['cashback_expiry_days'],
+          'cashback_tier_basis': config['cashback_tier_basis'] ?? 'cumulative',
         },
       });
     }
@@ -127,6 +205,7 @@ const _businessKeys = {
   'instagram',
   'facebook',
   'tiktok',
+  'opening_hours',
 };
 
 /// Clés portées par la `config` du programme (`POST /loyalty-programs`).
@@ -148,9 +227,32 @@ const _configKeys = {
   'card_gradient_type',
   'logo_url',
   'fcfa_per_point',
+  'cashback_percentage',
+  'cashback_redeem_threshold_fcfa',
   'cashback_expiry_days',
+  'cashback_tier_basis',
   'tiers',
   'loops',
+  'birthday_reward_enabled',
+  'birthday_reward_title',
+  'birthday_reward_description',
+  'birthday_reward_validity_days',
+  'birthday_reward_surprise',
+  'referral_reward_enabled',
+  'referral_reward_label',
+  'referral_reward_description',
+  'referral_reward_validity_days',
+  'referral_reward_surprise',
+  'referral_referred_reward_enabled',
+  'referral_referred_reward_label',
+  'referral_referred_reward_description',
+  'referral_referred_reward_validity_days',
+  'referral_referred_reward_surprise',
+  'welcome_reward_enabled',
+  'welcome_reward_title',
+  'welcome_reward_description',
+  'welcome_reward_validity_days',
+  'welcome_reward_surprise',
 };
 
 /// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,

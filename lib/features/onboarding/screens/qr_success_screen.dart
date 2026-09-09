@@ -193,12 +193,19 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
                     ),
                     child: Column(
                       children: [
-                        QrImageView(
-                          data: qrPayload,
-                          size: 200,
-                          eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.square,
-                            color: AppColors.merchant,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: QrImageView(
+                            data: qrPayload,
+                            size: 200,
+                            eyeStyle: const QrEyeStyle(
+                              eyeShape: QrEyeShape.square,
+                              color: AppColors.merchant,
+                            ),
                           ),
                         ),
                         const SizedBox(height: Sp.sm),

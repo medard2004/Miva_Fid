@@ -8,6 +8,7 @@ import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -42,6 +43,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   String get _mechanic =>
       ref.read(merchantAuthProvider).restaurant?.loyaltyType ?? 'stamps';
 
+  String get _validationTitle => switch (_mechanic) {
+        'points' || 'spend' => 'Valider un achat',
+        'cashback' => 'Valider un cashback',
+        _ => 'Valider un tampon',
+      };
+
   int get _goal {
     final config =
         ref.read(merchantAuthProvider).restaurant?.loyaltyConfig ?? const {};
@@ -58,6 +65,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     final config =
         ref.read(merchantAuthProvider).restaurant?.loyaltyConfig ?? const {};
     return (config['cashback_percentage'] as num?)?.toDouble() ?? 0;
+  }
+
+  double? get _cashbackRedeemThresholdFcfa {
+    final config =
+        ref.read(merchantAuthProvider).restaurant?.loyaltyConfig ?? const {};
+    return (config['cashback_redeem_threshold_fcfa'] as num?)?.toDouble();
   }
 
   Future<void> _onQrDetected(BarcodeCapture capture) async {
@@ -107,7 +120,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
     await AppHaptics.medium();
     if (!mounted) return;
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -117,6 +130,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         goal: _goal,
         fcfaPerPoint: _fcfaPerPoint,
         cashbackPercentage: _cashbackPercentage,
+        cashbackRedeemThresholdFcfa: _cashbackRedeemThresholdFcfa,
         onValidate: (amount) => _validateStamp(resolvedCard, amount),
         onRedeemCashback: (purchaseAmount, redeemAmount) => _redeemCashback(
           resolvedCard,
@@ -155,35 +169,90 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
     await AppHaptics.medium();
     if (!mounted) return;
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => RewardRedeemSheet(
         reward: resolvedReward,
-        onRedeem: () => _confirmRewardRedeem(resolvedReward.id),
-        onCancel: (_) async {},
+        onRedeem: () => _confirmRewardRedeem(resolvedReward),
+        onCancel: (reason) => _confirmRewardCancel(resolvedReward.id, reason: reason),
       ),
     );
   }
 
-  Future<void> _confirmRewardRedeem(String rewardId) async {
+  Future<void> _confirmRewardRedeem(MerchantReward reward) async {
     final sheetNavigator = Navigator.of(context);
     try {
       await ref
           .read(validateNotifierProvider.notifier)
-          .redeemReward(rewardId);
+          .redeemReward(reward.id, token: reward.token ?? '');
       if (!mounted) return;
       sheetNavigator.pop();
       await AppHaptics.heavy();
       if (mounted) {
         ToastService.showSuccess(AppLocalizations.of(context)!.merchantValidateRewardSuccess);
       }
+    } on ValidationException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(e.message);
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(
+        e.statusCode == 409 ? e.message : 'Échec de la validation. Réessayez.',
+      );
+    } on NetworkException {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
     } catch (_) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Échec de la validation. Réessayez.');
+    }
+  }
+
+  Future<void> _confirmRewardCancel(String rewardId, {String? reason}) async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Annuler cette récompense ?',
+      message:
+          'Le client ne pourra plus utiliser cette récompense. Action tracée dans l\'historique.',
+      confirmLabel: 'Annuler la récompense',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    if (!mounted) return;
+    final sheetNavigator = Navigator.of(context);
+    try {
+      await ref
+          .read(validateNotifierProvider.notifier)
+          .cancelReward(rewardId, reason: reason);
+      if (!mounted) return;
+      sheetNavigator.pop();
       if (mounted) {
-        sheetNavigator.pop();
-        ToastService.showError(AppLocalizations.of(context)!.merchantValidateRewardError);
+        ToastService.showSuccess('Récompense annulée.');
       }
+    } on ValidationException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(e.message);
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError(
+        e.statusCode == 409 ? e.message : 'Échec de l\'annulation. Réessayez.',
+      );
+    } on NetworkException {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
+    } catch (_) {
+      if (!mounted) return;
+      sheetNavigator.pop();
+      ToastService.showError('Échec de l\'annulation. Réessayez.');
     }
   }
 
@@ -278,9 +347,27 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     await _lookupAndShowSheet(query);
   }
 
+  Future<void> _signOut() async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Se déconnecter ?',
+      message: 'Vous devrez vous reconnecter pour accéder à votre espace marchand.',
+      confirmLabel: 'Se déconnecter',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    await ref.read(merchantAuthProvider.notifier).signOut();
+    if (context.mounted) context.go('/auth/merchant/auth');
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
+    // Un opérateur n'a pas accès au dashboard (`MerchantShell` le confine à
+    // cet écran) : sans ce menu, il n'aurait aucun moyen de changer son mot
+    // de passe ou de se déconnecter.
+    final isAdmin = ref.watch(isAdminProvider);
+    final staffName = ref.watch(merchantAuthProvider).restaurant?.staffName;
     final t = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -290,26 +377,26 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           children: [
             // ── TOP APP BAR ──────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       LucideIcons.qrCode,
-                      color: Color(0xFF5B50EC),
+                      color: AppColors.primary,
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      t.merchantValidateTitle,
+                      _validationTitle,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -317,6 +404,52 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                       ),
                     ),
                   ),
+                  if (!isAdmin)
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        LucideIcons.userCircle,
+                        size: 20,
+                        color: AppColors.textPrimary,
+                      ),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'profile':
+                            context.push('/merchant/more/profile');
+                            break;
+                          case 'change-password':
+                            context.push('/merchant/more/change-password');
+                            break;
+                          case 'sign-out':
+                            _signOut();
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        if (staffName != null && staffName.isNotEmpty)
+                          PopupMenuItem<String>(
+                            enabled: false,
+                            child: Text(
+                              staffName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        const PopupMenuItem<String>(
+                          value: 'profile',
+                          child: Text('Mon profil'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'change-password',
+                          child: Text('Changer mon mot de passe'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'sign-out',
+                          child: Text('Se déconnecter'),
+                        ),
+                      ],
+                    ),
                   InkWell(
                     onTap: () => context.push('/merchant/more/notifications'),
                     borderRadius: BorderRadius.circular(20),
@@ -344,7 +477,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                             width: 7,
                             height: 7,
                             decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
+                              color: AppColors.warning,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -578,7 +711,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                 setState(() => _isCameraActive = !_isCameraActive);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5B50EC),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -625,7 +758,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            t.merchantValidateManualSearchTitle,
+            'Recherche manuelle',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -634,7 +767,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            t.merchantValidateManualSearchSubtitle,
+            'Entrez le numéro de téléphone ou le code client pour valider un tampon.',
             style: TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
@@ -653,11 +786,14 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
               textCapitalization: TextCapitalization.characters,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
-                hintText: t.merchantValidateManualSearchHint,
-                hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
-                prefixIcon: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 18),
+                hintText: 'Ex : +228 90 12 34 56 ou CODE',
+                hintStyle:
+                    TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                prefixIcon: Icon(LucideIcons.phone,
+                    color: AppColors.textSecondary, size: 18),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               ),
               onSubmitted: (_) => _searchClientByIdentifier(),
             ),
@@ -669,7 +805,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
             child: ElevatedButton.icon(
               onPressed: _searchClientByIdentifier,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5B50EC),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(

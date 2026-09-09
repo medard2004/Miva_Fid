@@ -250,14 +250,14 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                     child: ElevatedButton(
                       onPressed: _loading ? null : _createMerchant,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5B50EC),
+                        backgroundColor: AppColors.merchant,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         disabledBackgroundColor:
-                            const Color(0xFF5B50EC).withValues(alpha: 0.6),
+                            AppColors.merchant.withValues(alpha: 0.6),
                       ),
                       child: _loading
                           ? const SizedBox(

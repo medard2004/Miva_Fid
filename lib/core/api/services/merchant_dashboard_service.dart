@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../core/api_client.dart';
 import '../core/api_exceptions.dart';
+import '../../../models/campaign_recipient_model.dart';
 
 /// Appels HTTP du dashboard marchand (`/merchant/*`) : clientèle, validation
 /// de tampons, statistiques et campagnes SMS.
@@ -55,21 +56,47 @@ class MerchantDashboardService {
         return (response.data as Map).cast<String, dynamic>();
       });
 
-  Future<List<Map<String, dynamic>>> clients({
+  /// Page de résultats de `GET /merchant/clients`.
+  ///
+  /// L'API renvoie `{ data: [...cartes], meta: { current_page, last_page,
+  /// per_page, total } }` — [total] alimente le compteur « X clients » de
+  /// l'écran, [hasMore] pilote le scroll infini.
+  Future<ClientsPage> clients({
     String? search,
-    String? filter,
+    int? inactiveDays,
+    String? levelKey,
+    int? minCycles,
+    String sort = 'activity',
+    int page = 1,
+    int perPage = 25,
   }) =>
       _guard(() async {
         final response = await _apiClient.dio.get(
           '/merchant/clients',
           queryParameters: {
             if (search != null && search.isNotEmpty) 'q': search,
-            if (filter != null && filter.isNotEmpty) 'filter': filter,
+            if (inactiveDays != null && inactiveDays > 0)
+              'inactive_days': inactiveDays,
+            if (levelKey != null && levelKey.isNotEmpty) 'level': levelKey,
+            if (minCycles != null && minCycles > 0) 'min_cycles': minCycles,
+            'sort': sort,
+            'page': page,
+            'per_page': perPage,
           },
         );
-        return ((response.data as Map)['clients'] as List)
+        final body = (response.data as Map).cast<String, dynamic>();
+        final items = ((body['data'] as List?) ?? const [])
             .map((e) => (e as Map).cast<String, dynamic>())
             .toList();
+        final meta =
+            ((body['meta'] as Map?) ?? const {}).cast<String, dynamic>();
+
+        return ClientsPage(
+          items: items,
+          total: (meta['total'] as num?)?.toInt() ?? items.length,
+          currentPage: (meta['current_page'] as num?)?.toInt() ?? page,
+          lastPage: (meta['last_page'] as num?)?.toInt() ?? page,
+        );
       });
 
   /// Fiche d'une carte du commerce (`GET /merchant/clients/{card}`).
@@ -87,11 +114,32 @@ class MerchantDashboardService {
   /// avec attribution : `staff_name`/`staff_role` valent `null` quand
   /// l'opération a été effectuée par l'admin directement (pas par un
   /// opérateur).
-  Future<List<Map<String, dynamic>>> history(String cardId) => _guard(() async {
-        final response = await _apiClient.dio.get('/merchant/clients/$cardId/history');
-        return ((response.data as Map)['history'] as List)
+  Future<HistoryPage> history(
+    String cardId, {
+    int page = 1,
+    int perPage = 15,
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.get(
+          '/merchant/clients/$cardId/history',
+          queryParameters: {
+            'page': page,
+            'per_page': perPage,
+          },
+        );
+        final body = (response.data as Map).cast<String, dynamic>();
+        final items = ((body['history'] as List?) ?? const [])
             .map((e) => (e as Map).cast<String, dynamic>())
             .toList();
+        final meta =
+            ((body['meta'] as Map?) ?? const {}).cast<String, dynamic>();
+
+        return HistoryPage(
+          items: items,
+          total: (meta['total'] as num?)?.toInt() ?? items.length,
+          currentPage: (meta['current_page'] as num?)?.toInt() ?? page,
+          lastPage: (meta['last_page'] as num?)?.toInt() ?? page,
+        );
       });
 
   /// Retourne `null` quand aucune carte du commerce ne correspond (404),
@@ -118,6 +166,14 @@ class MerchantDashboardService {
           '/merchant/clients/$cardId/stamps',
           data: amountFcfa != null ? {'amount_fcfa': amountFcfa} : null,
         );
+        return (response.data as Map).cast<String, dynamic>();
+      });
+
+  /// Annule le dernier tampon accordé sur la carte. Le serveur refuse
+  /// (422) si la récompense qu'il avait débloquée a déjà été utilisée.
+  Future<Map<String, dynamic>> removeStamp(String cardId) => _guard(() async {
+        final response =
+            await _apiClient.dio.delete('/merchant/clients/$cardId/stamps');
         return (response.data as Map).cast<String, dynamic>();
       });
 
@@ -154,9 +210,17 @@ class MerchantDashboardService {
     }
   }
 
-  Future<Map<String, dynamic>> redeemReward(String rewardId) => _guard(() async {
-        final response =
-            await _apiClient.dio.post('/merchant/rewards/$rewardId/redeem');
+  /// [token] est le jeton QR renvoyé par [lookupReward] — le serveur refuse
+  /// la validation (422) sans preuve que le QR a bien été scanné.
+  Future<Map<String, dynamic>> redeemReward(
+    String rewardId, {
+    required String token,
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.post(
+          '/merchant/rewards/$rewardId/redeem',
+          data: {'token': token},
+        );
         return (response.data as Map).cast<String, dynamic>();
       });
 
@@ -169,11 +233,39 @@ class MerchantDashboardService {
         return (response.data as Map).cast<String, dynamic>();
       });
 
-  Future<List<Map<String, dynamic>>> campaigns() => _guard(() async {
-        final response = await _apiClient.dio.get('/merchant/campaigns');
+  /// Parrainages de l'établissement (`GET /merchant/referrals`) — parrain,
+  /// filleul, statut, récompense attribuée.
+  Future<List<Map<String, dynamic>>> referrals() => _guard(() async {
+        final response = await _apiClient.dio.get('/merchant/referrals');
+        return ((response.data as Map)['referrals'] as List)
+            .map((e) => (e as Map).cast<String, dynamic>())
+            .toList();
+      });
+
+  Future<List<Map<String, dynamic>>> campaigns({bool archived = false}) => _guard(() async {
+        final response = await _apiClient.dio.get(
+          '/merchant/campaigns',
+          queryParameters: archived ? {'archived': 1} : null,
+        );
         return ((response.data as Map)['campaigns'] as List)
             .map((e) => (e as Map).cast<String, dynamic>())
             .toList();
+      });
+
+  /// Masque une campagne de l'historique (réversible côté serveur, pas de
+  /// suppression) — `POST /merchant/campaigns/{id}/archive`.
+  Future<void> archiveCampaign(String campaignId) => _guard(() async {
+        await _apiClient.dio.post('/merchant/campaigns/$campaignId/archive');
+      });
+
+  /// Détail complet d'une campagne avec la liste des destinataires et leur
+  /// statut de livraison — `GET /merchant/campaigns/{id}`.
+  Future<Map<String, dynamic>> campaignDetail(String campaignId) =>
+      _guard(() async {
+        final response =
+            await _apiClient.dio.get('/merchant/campaigns/$campaignId');
+        return ((response.data as Map)['campaign'] as Map)
+            .cast<String, dynamic>();
       });
 
   Future<int> recipientCount(String recipientType) => _guard(() async {
@@ -184,17 +276,198 @@ class MerchantDashboardService {
         return (response.data as Map)['recipients_count'] as int? ?? 0;
       });
 
-  Future<void> sendCampaign({
-    required String message,
+  /// Liste hydratée (nom/téléphone) des destinataires d'un segment, pour la
+  /// page "Destinataires" du wizard de campagne (cases à cocher).
+  Future<List<CampaignRecipientModel>> recipientsList({
     required String recipientType,
+    String? q,
+    String sort = 'activity',
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.get(
+          '/merchant/campaigns/recipients-list',
+          queryParameters: {
+            'recipient_type': recipientType,
+            if (q != null && q.isNotEmpty) 'q': q,
+            'sort': sort,
+          },
+        );
+        return ((response.data as Map)['recipients'] as List)
+            .map((e) =>
+                CampaignRecipientModel.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+      });
+
+  Future<void> sendCampaign({
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
+    required String recipientType,
+    required List<int> clientIds,
     DateTime? scheduledAt,
   }) =>
       _guard(() async {
-        await _apiClient.dio.post('/merchant/campaigns', data: {
-          'message': message,
-          'recipient_type': recipientType,
-          if (scheduledAt != null)
-            'scheduled_at': scheduledAt.toIso8601String(),
-        });
+        if (localImagePath != null) {
+          final Map<String, dynamic> formDataMap = {
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'image': await MultipartFile.fromFile(localImagePath),
+          };
+          for (int i = 0; i < clientIds.length; i++) {
+            formDataMap['client_ids[$i]'] = clientIds[i];
+          }
+          await _apiClient.dio.post(
+            '/merchant/campaigns',
+            data: FormData.fromMap(formDataMap),
+          );
+        } else {
+          await _apiClient.dio.post('/merchant/campaigns', data: {
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            'client_ids': clientIds,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+          });
+        }
       });
+
+  /// Sauvegarde une campagne en brouillon — `POST /merchant/campaigns/draft`.
+  Future<void> saveDraft({
+    String? campaignId,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
+    String? recipientType,
+    List<int>? clientIds,
+    DateTime? scheduledAt,
+    int draftStep = 1,
+  }) =>
+      _guard(() async {
+        if (localImagePath != null) {
+          final Map<String, dynamic> formDataMap = {
+            if (campaignId != null) 'id': campaignId,
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            if (recipientType != null) 'recipient_type': recipientType,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'draft_step': draftStep,
+            'image': await MultipartFile.fromFile(localImagePath),
+          };
+          if (clientIds != null) {
+            for (int i = 0; i < clientIds.length; i++) {
+              formDataMap['client_ids[$i]'] = clientIds[i];
+            }
+          }
+          await _apiClient.dio.post(
+            '/merchant/campaigns/draft',
+            data: FormData.fromMap(formDataMap),
+          );
+        } else {
+          await _apiClient.dio.post('/merchant/campaigns/draft', data: {
+            if (campaignId != null) 'id': campaignId,
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            if (recipientType != null) 'recipient_type': recipientType,
+            if (clientIds != null) 'client_ids': clientIds,
+            if (scheduledAt != null)
+              'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'draft_step': draftStep,
+          });
+        }
+      });
+
+  /// Édite une campagne encore programmée ou en brouillon — `PUT /merchant/campaigns/{id}`.
+  Future<void> updateCampaign({
+    required String campaignId,
+    required String type,
+    String? title,
+    String? message,
+    String? imageUrl,
+    String? localImagePath,
+    required String recipientType,
+    required List<int> clientIds,
+    DateTime? scheduledAt,
+  }) =>
+      _guard(() async {
+        if (localImagePath != null) {
+          final Map<String, dynamic> formDataMap = {
+            '_method': 'PUT', // workaround since PUT with multipart is often problematic on some servers
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            if (scheduledAt != null) 'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+            'image': await MultipartFile.fromFile(localImagePath),
+          };
+          for (int i = 0; i < clientIds.length; i++) {
+            formDataMap['client_ids[$i]'] = clientIds[i];
+          }
+          await _apiClient.dio.post(
+            '/merchant/campaigns/$campaignId',
+            data: FormData.fromMap(formDataMap),
+          );
+        } else {
+          await _apiClient.dio.put('/merchant/campaigns/$campaignId', data: {
+            'type': type,
+            if (title != null) 'title': title,
+            if (message != null) 'message': message,
+            if (imageUrl != null) 'image_url': imageUrl,
+            'recipient_type': recipientType,
+            'client_ids': clientIds,
+            if (scheduledAt != null) 'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+          });
+        }
+      });
+}
+
+/// Une page de la liste clients marchande (voir [MerchantDashboardService.clients]).
+class ClientsPage {
+  const ClientsPage({
+    required this.items,
+    required this.total,
+    required this.currentPage,
+    required this.lastPage,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final int total;
+  final int currentPage;
+  final int lastPage;
+
+  bool get hasMore => currentPage < lastPage;
+}
+
+/// Page d'historique paginé d'une carte (voir [MerchantDashboardService.history]).
+class HistoryPage {
+  const HistoryPage({
+    required this.items,
+    required this.total,
+    required this.currentPage,
+    required this.lastPage,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final int total;
+  final int currentPage;
+  final int lastPage;
+
+  bool get hasMore => currentPage < lastPage;
 }

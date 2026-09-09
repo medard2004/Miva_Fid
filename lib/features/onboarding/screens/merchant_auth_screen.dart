@@ -51,7 +51,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
   }
 
   void _onPasswordChanged() {
-    if (!_isLogin && mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -248,7 +248,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   height: 46,
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                         color: AppColors.border.withValues(alpha: 0.5)),
@@ -266,7 +266,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color:
-                                  !_isLogin ? AppColors.surface : Colors.transparent,
+                                  !_isLogin ? AppColors.background : Colors.transparent,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: !_isLogin
                                   ? [
@@ -307,7 +307,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color:
-                                  _isLogin ? AppColors.surface : Colors.transparent,
+                                  _isLogin ? AppColors.background : Colors.transparent,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: _isLogin
                                   ? [
@@ -394,7 +394,6 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     .animate(key: ValueKey('pass_$_isLogin'))
                     .fadeIn(duration: 300.ms),
 
-                // Checklist dynamique des exigences de mot de passe (inscription)
                 if (!_isLogin)
                   PasswordRulesChecklist(password: _passwordCtrl.text),
 

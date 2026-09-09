@@ -114,6 +114,28 @@ class StampGridWidgetPreview extends StatelessWidget {
                   duration: 100.ms,
                 );
           }
+          final isLastSlot = (i == dotsToRender - 1);
+          if (isLastSlot) {
+            return Container(
+              width: stampSize,
+              height: stampSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.18),
+                border: Border.all(
+                  color: Colors.white,
+                  width: 2.2,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  LucideIcons.gift,
+                  color: Colors.white,
+                  size: stampSize * 0.55,
+                ),
+              ),
+            );
+          }
           return Container(
             width: stampSize,
             height: stampSize,

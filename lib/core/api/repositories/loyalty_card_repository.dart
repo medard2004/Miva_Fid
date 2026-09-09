@@ -8,7 +8,28 @@ class JoinCardResult {
   final LoyaltyCard card;
   final bool isNew;
 
-  const JoinCardResult({required this.card, required this.isNew});
+  /// Prénom du parrain si l'adhésion vient d'un scan de QR de parrainage,
+  /// `null` sinon (join normal via le QR de l'établissement).
+  final String? referredBy;
+
+  /// `true` si le code scanné était un QR/code de parrainage, même quand le
+  /// client était déjà membre du commerce (donc `referredBy` reste `null`).
+  final bool viaReferral;
+
+  /// L'ID de la récompense de bienvenue si une a été accordée
+  final String? welcomeRewardId;
+
+  /// L'ID de la récompense de parrainage attribuée au filleul si configurée
+  final String? referralRewardId;
+
+  const JoinCardResult({
+    required this.card,
+    required this.isNew,
+    this.referredBy,
+    this.viaReferral = false,
+    this.welcomeRewardId,
+    this.referralRewardId,
+  });
 }
 
 class LoyaltyCardRepository {
@@ -35,6 +56,10 @@ class LoyaltyCardRepository {
     return JoinCardResult(
       card: LoyaltyCard.fromApi(response['card'] as Map<String, dynamic>),
       isNew: response['was_recently_created'] as bool? ?? true,
+      referredBy: response['referred_by'] as String?,
+      viaReferral: response['via_referral'] as bool? ?? false,
+      welcomeRewardId: response['welcome_reward_id']?.toString(),
+      referralRewardId: response['referral_reward_id']?.toString(),
     );
   }
 

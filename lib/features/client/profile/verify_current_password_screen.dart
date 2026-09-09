@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
@@ -13,13 +14,7 @@ import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/password_input.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
-/// Première étape du changement de mot de passe : prouver qu'on connaît
-/// l'actuel.
-///
-/// Cette vérification est faite à part (`POST /auth/verify-password`) pour que
-/// l'utilisateur sache tout de suite si son mot de passe actuel est bon, sans
-/// avoir à composer le nouveau d'abord. Le mot de passe validé est ensuite
-/// transmis à l'écran suivant, que `PUT /auth/change-password` exige.
+/// Première étape du changement de mot de passe : vérification du mot de passe actuel.
 class VerifyCurrentPasswordScreen extends ConsumerStatefulWidget {
   const VerifyCurrentPasswordScreen({super.key});
 
@@ -61,8 +56,6 @@ class _VerifyCurrentPasswordScreenState
       return;
     }
 
-    // Le serveur répond 422 sur un mot de passe faux : `lastError` porte alors
-    // le détail. Sans erreur remontée, c'est simplement que `valid` est faux.
     final error = ref.read(authProvider).lastError;
     if (error != null) {
       handleError(error,
@@ -82,53 +75,97 @@ class _VerifyCurrentPasswordScreenState
       appBar: AppDetailBar(title: t.changePasswordTitle),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.changePasswordTitle,
-                    style: AppTextStyles.displayHero()),
-                const SizedBox(height: 10),
-                Text(
-                  t.changePasswordVerifySubtitle,
-                  style: AppTextStyles.bodyMedium(
-                      color: AppColors.inkMuted(opacity: 0.65)),
-                ),
-                const SizedBox(height: 32),
-                Text(t.changePasswordCurrentLabel,
-                    style: AppTextStyles.label()),
-                const SizedBox(height: 8),
-                PasswordInput(
-                  controller: _passwordController,
-                  obscure: _obscure,
-                  textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.password],
-                  onToggle: () => setState(() => _obscure = !_obscure),
-                  onSubmitted: (_) => isBusy ? null : _submit(),
-                  onChanged: (_) => clearFieldError('current_password'),
-                  validator: fieldValidator(
-                    'current_password',
-                    requiredMessage: ErrorMessages.fieldRequired,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: AppTapScale(
-                    onTap: () => context.push('/client/forgot-password'),
-                    scaleDown: 0.95,
-                    child: Text(
-                      t.authForgotPasswordLink,
-                      style: AppTextStyles.bodySmall(color: AppColors.primary)
-                          .copyWith(fontWeight: FontWeight.w600),
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryTint,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.2),
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      LucideIcons.shieldCheck,
+                      size: 30,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    t.changePasswordTitle,
+                    style: AppTextStyles.displayMedium().copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    t.changePasswordVerifySubtitle,
+                    style: AppTextStyles.bodyMedium(
+                      color: AppColors.inkMuted(opacity: 0.65),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                AppCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.changePasswordCurrentLabel,
+                        style: AppTextStyles.label().copyWith(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      PasswordInput(
+                        controller: _passwordController,
+                        obscure: _obscure,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        onToggle: () => setState(() => _obscure = !_obscure),
+                        onSubmitted: (_) => isBusy ? null : _submit(),
+                        onChanged: (_) => clearFieldError('current_password'),
+                        validator: fieldValidator(
+                          'current_password',
+                          requiredMessage: ErrorMessages.fieldRequired,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: AppTapScale(
+                          onTap: () => context.push('/client/forgot-password'),
+                          scaleDown: 0.95,
+                          child: Text(
+                            t.authForgotPasswordLink,
+                            style: AppTextStyles.bodySmall(color: AppColors.primary)
+                                .copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
                 AppButton(
                   label: t.changePasswordContinue,
+                  fullWidth: true,
+                  height: 50,
                   onTap: isBusy ? null : _submit,
                 ),
               ],

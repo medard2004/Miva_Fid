@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
+import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
-import '../providers/merchant_provider.dart';
+import '../providers/team_provider.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -35,27 +38,114 @@ class MoreScreen extends ConsumerWidget {
     if (context.mounted) context.go('/auth/merchant/auth');
   }
 
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Supprimer votre compte ?',
+      message:
+          'Votre commerce, votre programme de fidélité et l\'accès de toute votre équipe seront désactivés. Cette action est définitive.',
+      confirmLabel: 'Continuer',
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var submitting = false;
+
+    final done = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Confirmer avec votre mot de passe'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: passwordCtrl,
+              obscureText: true,
+              autofocus: true,
+              decoration:
+                  const InputDecoration(labelText: 'Mot de passe actuel'),
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Mot de passe requis.' : null,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626)),
+              onPressed: submitting
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setDialogState(() => submitting = true);
+                      try {
+                        await ref
+                            .read(merchantAuthProvider.notifier)
+                            .deleteAccount(passwordCtrl.text);
+                        if (ctx.mounted) Navigator.of(ctx).pop(true);
+                      } on ValidationException catch (e) {
+                        setDialogState(() => submitting = false);
+                        if (ctx.mounted) ToastService.showError(e.message);
+                      } catch (_) {
+                        setDialogState(() => submitting = false);
+                        if (ctx.mounted) {
+                          ToastService.showError(
+                              'Impossible de supprimer le compte. Réessayez.');
+                        }
+                      }
+                    },
+              child: submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child:
+                          CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Supprimer définitivement'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (done == true && context.mounted) {
+      ToastService.showInfo('Compte supprimé.');
+      context.go('/auth/merchant/auth');
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final locale = ref.watch(localeProvider);
-    final merchant = ref.watch(merchantNotifierProvider).value;
-    final merchantName = merchant?.name.isNotEmpty == true
-        ? merchant!.name
-        : 'Restaurant La Saveur';
-    final city = merchant?.address?.isNotEmpty == true
-        ? 'Lomé'
-        : 'Lomé';
-    const category = 'Restaurant';
-    final initials = merchant?.initials ?? 'RL';
+    final account = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
+    final teamAsync = ref.watch(teamNotifierProvider);
+
+    final merchantName =
+        (account?.name?.isNotEmpty ?? false) ? account!.name! : 'Votre Commerce';
+    final category = (account?.category?.isNotEmpty ?? false)
+        ? account!.category!
+        : 'Commerce';
+    final city = (account?.city?.isNotEmpty ?? false)
+        ? account!.city!
+        : ((account?.address?.isNotEmpty ?? false) ? account!.address! : '');
+    final logoUrl = account?.logoUrl;
+    final initials = _initials(merchantName);
+
+    final completion = _profileCompletion(context, account);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // ── TOP HEADER (STATIC) ───────────────────────────────────────
+            // ── TOP HEADER (PERSISTENT / FIXED ON SCROLL) ──────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Row(
@@ -122,15 +212,13 @@ class MoreScreen extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // ── SCROLLABLE BODY ───────────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── 1. PROFIL DU COMMERCE CARD ────────────────────────
+                    // ── 1. PROFIL DU COMMERCE CARD ──────────────────────────────
               InkWell(
                 onTap: () => context.push('/merchant/more/profile'),
                 borderRadius: BorderRadius.circular(16),
@@ -149,17 +237,25 @@ class MoreScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: AppColors.primaryTint,
                           shape: BoxShape.circle,
+                          image: (logoUrl != null && logoUrl.isNotEmpty)
+                              ? DecorationImage(
+                                  image: NetworkImage(logoUrl),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Center(
-                          child: Text(
-                            initials,
-                            style: const TextStyle(
-                              color: Color(0xFF5B50EC),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
+                        child: (logoUrl == null || logoUrl.isEmpty)
+                            ? Center(
+                                child: Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5B50EC),
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -177,7 +273,7 @@ class MoreScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '$category • $city',
+                              city.isNotEmpty ? '$category • $city' : category,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -197,7 +293,8 @@ class MoreScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
 
-              // ── 2. COMPLÉTER MON PROFIL 2/5 CARD ────────────────────────
+              // ── 2. COMPLÉTER MON PROFIL CARD ────────────────────────────
+              if (completion.done < completion.total) ...[
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -220,7 +317,7 @@ class MoreScreen extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          '2/5',
+                          '${completion.done}/${completion.total}',
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
@@ -238,30 +335,32 @@ class MoreScreen extends ConsumerWidget {
                         color: AppColors.border,
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
-                          widthFactor: 0.4,
+                          widthFactor: completion.ratio,
                           child: Container(color: const Color(0xFF5B50EC)),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildTaskRow(
-                      title: t.merchantMoreLogoBusiness,
-                      onTap: () => context.push('/merchant/more/profile'),
-                    ),
-                    Divider(height: 16, color: AppColors.border),
-                    _buildTaskRow(
-                      title: t.merchantMoreSocials,
-                      onTap: () => context.push('/merchant/more/socials'),
-                    ),
-                    Divider(height: 16, color: AppColors.border),
-                    _buildTaskRow(
-                      title: t.merchantMoreGoogleReviewLink,
-                      onTap: () => context.push('/merchant/more/profile'),
-                    ),
+                    ...completion.tasks.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final task = entry.value;
+                      return Column(
+                        children: [
+                          if (i > 0)
+                            Divider(height: 16, color: AppColors.border),
+                          _buildTaskRow(
+                            title: task.label,
+                            done: task.done,
+                            onTap: task.onTap,
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
+              ],
 
               // ── 3. SECTION COMPTE ────────────────────────────────────────
               _buildSectionLabel(t.merchantMoreSectionAccount),
@@ -273,9 +372,17 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/profile'),
                 ),
                 _buildMenuItem(
+                  icon: LucideIcons.clock,
+                  label: t.merchantMoreHours,
+                  tag: completion.hoursDone ? 'Configuré' : null,
+                  tagDone: completion.hoursDone,
+                  onTap: () => context.push('/merchant/more/hours'),
+                ),
+                _buildMenuItem(
                   icon: LucideIcons.link,
                   label: t.merchantMoreSocials,
-                  tag: t.merchantMoreToComplete,
+                  tag: completion.socialsDone ? 'Configuré' : t.merchantMoreToComplete,
+                  tagDone: completion.socialsDone,
                   onTap: () => context.push('/merchant/more/socials'),
                 ),
                 _buildMenuItem(
@@ -300,8 +407,13 @@ class MoreScreen extends ConsumerWidget {
                 _buildMenuItem(
                   icon: LucideIcons.users,
                   label: t.merchantMoreTeam,
-                  tag: '3',
+                  tag: teamAsync.value?.length.toString(),
                   onTap: () => context.push('/merchant/more/team'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.lock,
+                  label: 'Changer le mot de passe',
+                  onTap: () => context.push('/merchant/more/change-password'),
                 ),
               ]),
               const SizedBox(height: 20),
@@ -311,6 +423,11 @@ class MoreScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               _buildGroupCard([
                 _buildMenuItem(
+                  icon: LucideIcons.award,
+                  label: 'Options du programme',
+                  onTap: () => context.push('/merchant/more/programme'),
+                ),
+                _buildMenuItem(
                   icon: LucideIcons.creditCard,
                   label: t.merchantMoreCustomizeCard,
                   onTap: () => context.push('/merchant/more/programme/design'),
@@ -318,13 +435,47 @@ class MoreScreen extends ConsumerWidget {
                 _buildMenuItem(
                   icon: LucideIcons.gift,
                   label: t.merchantMoreGoalReward,
-                  tag: '10 visites',
                   onTap: () => context.push('/merchant/more/programme/tiers'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.sparkles,
+                  label: t.merchantMoreLoyaltyProgram,
+                  onTap: () => context.push('/merchant/more/programme/rules'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.cake,
+                  label: 'Récompense anniversaire',
+                  onTap: () => context.push('/merchant/more/birthday-reward'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.userPlus,
+                  label: 'Récompense de parrainage',
+                  onTap: () => context.push('/merchant/more/referral-reward'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.partyPopper,
+                  label: 'Cadeau de bienvenue',
+                  onTap: () => context.push('/merchant/more/welcome-reward'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.users,
+                  label: 'Parrainages',
+                  onTap: () => context.push('/merchant/more/referrals'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.qrCode,
                   label: t.merchantMoreMyQrCode,
-                  onTap: () => context.push('/merchant/more/qrcode'),
+                  onTap: () => context.push('/merchant/more/account/qrcode'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.star,
+                  label: 'Avis clients',
+                  onTap: () => context.push('/merchant/more/reviews'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.globe,
+                  label: t.merchantMoreMyShowcase,
+                  onTap: () => context.push('/merchant/more/account/vitrine'),
                 ),
               ]),
               const SizedBox(height: 20),
@@ -351,7 +502,20 @@ class MoreScreen extends ConsumerWidget {
               ]),
               const SizedBox(height: 20),
 
-              // ── 6. SE DÉCONNECTER BUTTON ─────────────────────────────────
+              // ── 6. ZONE DANGEREUX ────────────────────────────────────────
+              _buildSectionLabel('ZONE DANGEREUSE'),
+              const SizedBox(height: 8),
+              _buildGroupCard([
+                _buildMenuItem(
+                  icon: LucideIcons.trash2,
+                  label: 'Supprimer mon compte',
+                  danger: true,
+                  onTap: () => _deleteAccount(context, ref),
+                ),
+              ]),
+              const SizedBox(height: 20),
+
+              // ── 7. SE DÉCONNECTER BUTTON ─────────────────────────────────
               InkWell(
                 onTap: () => _signOut(context, ref),
                 borderRadius: BorderRadius.circular(16),
@@ -401,7 +565,52 @@ class MoreScreen extends ConsumerWidget {
   ),
 ),
 );
-}
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  _ProfileCompletion _profileCompletion(
+    BuildContext context,
+    RestaurantAccount? account,
+  ) {
+    final hoursDone = account?.hasOpeningHours ?? false;
+    final socialsDone = account?.hasSocials ?? false;
+
+    final tasks = [
+      _CompletionTask(
+        label: 'Logo du commerce',
+        done: (account?.logoUrl?.isNotEmpty ?? false),
+        onTap: () => context.push('/merchant/more/profile'),
+      ),
+      _CompletionTask(
+        label: 'Description du commerce',
+        done: (account?.description?.isNotEmpty ?? false),
+        onTap: () => context.push('/merchant/more/profile'),
+      ),
+      _CompletionTask(
+        label: "Horaires d'ouverture",
+        done: hoursDone,
+        onTap: () => context.push('/merchant/more/hours'),
+      ),
+      _CompletionTask(
+        label: 'Réseaux sociaux',
+        done: socialsDone,
+        onTap: () => context.push('/merchant/more/socials'),
+      ),
+    ];
+
+    return _ProfileCompletion(
+      tasks: tasks,
+      total: tasks.length,
+      hoursDone: hoursDone,
+      socialsDone: socialsDone,
+    );
+  }
 
   Widget _buildSectionLabel(String label) {
     return Padding(
@@ -441,38 +650,46 @@ class MoreScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTaskRow({required String title, required VoidCallback onTap}) {
+  Widget _buildTaskRow({
+    required String title,
+    required bool done,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Row(
         children: [
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.textSecondary,
-                width: 1.5,
-                strokeAlign: BorderSide.strokeAlignInside,
-              ),
-            ),
-          ),
+          done
+              ? const Icon(LucideIcons.circleCheck,
+                  size: 20, color: Color(0xFF10B981))
+              : Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.textSecondary,
+                      width: 1.5,
+                      strokeAlign: BorderSide.strokeAlignInside,
+                    ),
+                  ),
+                ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               title,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textPrimary,
+                color: done ? AppColors.textSecondary : AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
+                decoration: done ? TextDecoration.lineThrough : null,
               ),
             ),
           ),
           Icon(
-            LucideIcons.chevronRight,
+            done ? LucideIcons.check : LucideIcons.chevronRight,
             size: 16,
-            color: AppColors.textSecondary,
+            color: done ? const Color(0xFF10B981) : AppColors.textSecondary,
           ),
         ],
       ),
@@ -483,8 +700,12 @@ class MoreScreen extends ConsumerWidget {
     required IconData icon,
     required String label,
     String? tag,
+    bool tagDone = false,
+    bool danger = false,
     required VoidCallback onTap,
   }) {
+    final labelColor = danger ? const Color(0xFFDC2626) : AppColors.textPrimary;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -492,7 +713,7 @@ class MoreScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.textSecondary),
+            Icon(icon, size: 18, color: danger ? const Color(0xFFDC2626) : AppColors.textSecondary),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
@@ -500,7 +721,7 @@ class MoreScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: labelColor,
                 ),
               ),
             ),
@@ -509,7 +730,7 @@ class MoreScreen extends ConsumerWidget {
                 tag,
                 style: TextStyle(
                   fontSize: 12.5,
-                  color: AppColors.textSecondary,
+                  color: tagDone ? const Color(0xFF10B981) : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -525,4 +746,34 @@ class MoreScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _CompletionTask {
+  const _CompletionTask({
+    required this.label,
+    required this.done,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool done;
+  final VoidCallback onTap;
+}
+
+class _ProfileCompletion {
+  const _ProfileCompletion({
+    required this.tasks,
+    required this.total,
+    required this.hoursDone,
+    required this.socialsDone,
+  });
+
+  final List<_CompletionTask> tasks;
+  final int total;
+  final bool hoursDone;
+  final bool socialsDone;
+
+  int get done => tasks.where((t) => t.done).length;
+
+  double get ratio => total == 0 ? 0 : done / total;
 }

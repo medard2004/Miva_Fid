@@ -10,30 +10,39 @@ enum VipTier { none, silver, gold, platinum }
 /// vide tant que le programme n'a qu'un seul palier configuré.
 class CardTier {
   final int order;
+
+  /// Rang 1-based du palier dans le programme — pilote l'icône/couleur
+  /// fixe pour les positions 1 à 5 (voir `LoyaltyLevel.forPosition`).
+  final int? position;
   final int goal;
   final String? levelName;
   final String rewardDescription;
-  final String icon;
+
+  /// Icône choisie par le marchand pour un palier custom (position > 5,
+  /// voir `TierIconPalette`) — `null` pour les positions 1 à 5.
+  final String? iconKey;
 
   /// `reached`, `current` ou `upcoming`.
   final String status;
 
   const CardTier({
     required this.order,
+    this.position,
     required this.goal,
     this.levelName,
     required this.rewardDescription,
-    required this.icon,
+    this.iconKey,
     required this.status,
   });
 
   factory CardTier.fromJson(Map<String, dynamic> json) {
     return CardTier(
       order: (json['order'] as num?)?.toInt() ?? 0,
+      position: (json['position'] as num?)?.toInt(),
       goal: (json['goal'] as num?)?.toInt() ?? 0,
       levelName: json['level_name'] as String?,
       rewardDescription: json['reward_description'] as String? ?? '',
-      icon: json['icon'] as String? ?? '⭐',
+      iconKey: json['icon_key'] as String?,
       status: json['status'] as String? ?? 'upcoming',
     );
   }
@@ -118,10 +127,48 @@ class LoyaltyCard {
   final String fallbackId; // ex. "SUN-28392"
   final String welcomeOffer;
 
+  /// Identifiant de parrainage court, partageable, propre à cette carte
+  /// (donc à cet établissement) — voir `referral_screen.dart`.
+  final String? referralCode;
+
+  /// Jeton UUID encodé dans le QR de parrainage (préfixe
+  /// [referralQrPrefix]) — distinct de `qr_token` (scanné par le marchand
+  /// pour créditer tampons/points, jamais pour parrainer).
+  final String? referralQrToken;
+
+  /// Date d'adhésion à la carte — sert de repère à l'entrée "inscription"
   /// Date d'adhésion à la carte — sert de repère à l'entrée "inscription"
   /// de l'historique (`_HistoryAccordionBar`). `null` seulement si la carte
   /// vient d'un flux qui n'a pas encore cette donnée.
   final DateTime? createdAt;
+
+  /// Coordonnées et vitrine du commerce / restaurant
+  final String? restaurantPhone;
+  final String? restaurantAddress;
+  final String? restaurantCity;
+  final String? restaurantCountry;
+  final String? restaurantDescription;
+  final String? restaurantWhatsapp;
+  final String? restaurantInstagram;
+  final String? restaurantFacebook;
+  final String? restaurantTiktok;
+  final String? googleReviewUrl;
+  final double? restaurantLatitude;
+  final double? restaurantLongitude;
+  final Map<String, dynamic> restaurantOpeningHours;
+
+  bool get hasRestaurantSocials =>
+      (restaurantWhatsapp?.isNotEmpty ?? false) ||
+      (restaurantInstagram?.isNotEmpty ?? false) ||
+      (restaurantFacebook?.isNotEmpty ?? false) ||
+      (restaurantTiktok?.isNotEmpty ?? false) ||
+      (googleReviewUrl?.isNotEmpty ?? false);
+
+  bool get hasRestaurantContact =>
+      (restaurantPhone?.isNotEmpty ?? false) ||
+      (restaurantAddress?.isNotEmpty ?? false) ||
+      hasRestaurantSocials ||
+      (restaurantLatitude != null && restaurantLongitude != null);
 
   const LoyaltyCard({
     required this.id,
@@ -151,6 +198,21 @@ class LoyaltyCard {
     required this.fallbackId,
     this.welcomeOffer = '',
     this.createdAt,
+    this.referralCode,
+    this.referralQrToken,
+    this.restaurantPhone,
+    this.restaurantAddress,
+    this.restaurantCity,
+    this.restaurantCountry,
+    this.restaurantDescription,
+    this.restaurantWhatsapp,
+    this.restaurantInstagram,
+    this.restaurantFacebook,
+    this.restaurantTiktok,
+    this.googleReviewUrl,
+    this.restaurantLatitude,
+    this.restaurantLongitude,
+    this.restaurantOpeningHours = const {},
   });
 
   /// Construit une carte réelle depuis `POST/GET /loyalty-cards/*`
@@ -201,6 +263,21 @@ class LoyaltyCard {
           : null,
       fallbackId: json['card_code'] as String? ?? '',
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      referralCode: json['referral_code'] as String?,
+      referralQrToken: json['referral_qr_token'] as String?,
+      restaurantPhone: restaurant['phone'] as String?,
+      restaurantAddress: restaurant['address'] as String?,
+      restaurantCity: restaurant['city'] as String?,
+      restaurantCountry: restaurant['country'] as String?,
+      restaurantDescription: restaurant['description'] as String?,
+      restaurantWhatsapp: restaurant['whatsapp'] as String?,
+      restaurantInstagram: restaurant['instagram'] as String?,
+      restaurantFacebook: restaurant['facebook'] as String?,
+      restaurantTiktok: restaurant['tiktok'] as String?,
+      googleReviewUrl: (restaurant['google_review_url'] ?? config['google_review_url']) as String?,
+      restaurantLatitude: (restaurant['latitude'] as num?)?.toDouble(),
+      restaurantLongitude: (restaurant['longitude'] as num?)?.toDouble(),
+      restaurantOpeningHours: (restaurant['opening_hours'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
   }
 
@@ -244,6 +321,21 @@ class LoyaltyCard {
       fallbackId: fallbackId,
       welcomeOffer: welcomeOffer,
       createdAt: createdAt,
+      referralCode: referralCode,
+      referralQrToken: referralQrToken,
+      restaurantPhone: restaurantPhone,
+      restaurantAddress: restaurantAddress,
+      restaurantCity: restaurantCity,
+      restaurantCountry: restaurantCountry,
+      restaurantDescription: restaurantDescription,
+      restaurantWhatsapp: restaurantWhatsapp,
+      restaurantInstagram: restaurantInstagram,
+      restaurantFacebook: restaurantFacebook,
+      restaurantTiktok: restaurantTiktok,
+      googleReviewUrl: googleReviewUrl,
+      restaurantLatitude: restaurantLatitude,
+      restaurantLongitude: restaurantLongitude,
+      restaurantOpeningHours: restaurantOpeningHours,
     );
   }
 

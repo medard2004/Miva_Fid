@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/api/repositories/auth_repository.dart';
 import 'package:miva_fid/core/services/realtime_service.dart';
-import 'package:miva_fid/features/client/data/mock_data.dart';
+import 'package:miva_fid/core/utils/toast_service.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/models/app_notification.dart';
 import 'package:miva_fid/features/client/models/user.dart';
@@ -22,16 +22,24 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
     // liste est ce qui garde l'écran "Mes récompenses" fiable sans
     // pull-to-refresh, comme le wallet le fait déjà pour la progression.
     _realtimeSub = RealtimeService.instance.onRewardUpdated.listen((_) {
-      loadMine().catchError((_) {});
+      _loadMineWithRetry();
+    });
+    // Rattrapage : si le socket a été coupé (app en arrière-plan) pendant
+    // qu'un déblocage se produisait côté marchand, l'événement Reverb est
+    // perdu pour de bon (pas de replay serveur) — une reconnexion réussie
+    // est le seul signal disponible pour se remettre à jour.
+    _reconnectSub = RealtimeService.instance.onReconnected.listen((_) {
+      _loadMineWithRetry();
     });
   }
 
   final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  StreamSubscription<void>? _reconnectSub;
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
-      loadMine().catchError((_) {});
+      _loadMineWithRetry();
     } else if (previous?.isAuthenticated == true && !next.isAuthenticated) {
       state = const [];
     }
@@ -48,9 +56,28 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
     state = await _ref.read(loyaltyRewardRepositoryProvider).listMine();
   }
 
+  /// Comme [loadMine], mais retente plusieurs fois avant d'abandonner —
+  /// utilisé pour les rechargements déclenchés par le temps réel, où avaler
+  /// silencieusement un simple aléa réseau (timeout, coupure passagère)
+  /// laissait auparavant une récompense fraîchement débloquée affichée
+  /// comme "verrouillée" jusqu'au prochain pull-to-refresh manuel.
+  Future<void> _loadMineWithRetry() async {
+    const delays = [Duration(seconds: 1), Duration(seconds: 2), Duration(seconds: 5)];
+    for (var attempt = 0; ; attempt++) {
+      try {
+        await loadMine();
+        return;
+      } catch (_) {
+        if (attempt >= delays.length) return;
+        await Future.delayed(delays[attempt]);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _realtimeSub?.cancel();
+    _reconnectSub?.cancel();
     super.dispose();
   }
 }
@@ -63,68 +90,138 @@ final rewardsProvider = StateNotifierProvider<RewardsNotifier, List<Reward>>(
 // Notifications
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Le reste du flux notifications est mock (stamp/points/cashback/vip/
-/// referral/system) — aucune infra serveur n'existe encore pour eux. Seule
-/// la partie récompenses est réelle, dérivée de [rewardsProvider] : pas de
-/// nouvelle table de notifications côté backend, on synthétise ces entrées
-/// depuis la liste de récompenses déjà chargée.
+/// Chargé depuis `GET /notifications` — les récompenses débloquées arrivent
+/// maintenant par ce même flux serveur (voir `NotificationDispatcher::send`
+/// côté backend, appelé au vrai déblocage), plus besoin de les synthétiser
+/// depuis [rewardsProvider].
 class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
-  NotificationsNotifier(this._ref) : super(MockData.notifications) {
-    _ref.listen<List<Reward>>(
-      rewardsProvider,
-      (previous, next) => _syncRewardNotifications(next),
-      fireImmediately: true,
-    );
+  NotificationsNotifier(this._ref) : super(const []) {
+    _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
+    _realtimeSub = RealtimeService.instance.onNotificationCreated.listen((payload) {
+      _showToastForPayload(payload);
+      load();
+    });
   }
 
   final Ref _ref;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
 
-  void _syncRewardNotifications(List<Reward> rewards) {
-    final derived = <AppNotification>[];
-    for (final reward in rewards) {
-      if (reward.status == RewardStatus.available && !reward.isExpired) {
-        derived.add(AppNotification(
-          id: 'reward-unlocked-${reward.id}',
-          restaurantName: reward.restaurantName,
-          kind: NotificationKind.reward,
-          message: 'Récompense débloquée : ${reward.title}',
-          timestamp: reward.unlockedAt ?? DateTime.now(),
-        ));
-      } else if (reward.status == RewardStatus.used) {
-        derived.add(AppNotification(
-          id: 'reward-used-${reward.id}',
-          restaurantName: reward.restaurantName,
-          kind: NotificationKind.reward,
-          message: 'Récompense utilisée : ${reward.title}',
-          timestamp: reward.usedAt ?? reward.unlockedAt ?? DateTime.now(),
-        ));
+  static const _merchantTypes = {
+    'merchant_new_client',
+    'merchant_low_sms',
+    'merchant_weekly_report',
+  };
+
+  static const _warningTypes = {
+    'stamp_removed',
+    'points_removed',
+    'cashback_redeemed',
+  };
+
+  static const _campaignTypes = {
+    'campaign',
+    'admin_broadcast',
+  };
+
+  void _showToastForPayload(Map<String, dynamic> payload) {
+    final type = payload['type'] as String? ?? '';
+    if (_merchantTypes.contains(type)) return;
+
+    final title = payload['title'] as String? ?? '';
+    final body = payload['body'] as String? ?? '';
+    final notificationId = payload['id']?.toString();
+    final data = payload['data'] as Map<String, dynamic>? ?? {};
+    final dedupId = data['notification_id']?.toString() ?? notificationId;
+
+    if (ToastService.hasBeenSeen(dedupId)) return;
+
+    // Cas campagnes : toast façon vignette Instagram avec clic vers page détail
+    if (_campaignTypes.contains(type)) {
+      final campaignId =
+          ((data['campaign_id'] ?? data['id'] ?? notificationId)?.toString() ??
+              '')
+              .trim();
+      final imageUrl = data['image_url'] as String? ?? payload['image_url'] as String?;
+      if (campaignId.isNotEmpty) {
+        // Fusionner type + data pour que showCampaign puisse résoudre la
+        // bonne destination (carte, récompense, avis, parrainage, promo…).
+        final mergedData = <String, dynamic>{
+          'type': type,
+          ...data,
+        };
+        ToastService.showCampaign(
+          title: title.isEmpty ? 'Nouvelle offre' : title,
+          body: body.isEmpty ? title : body,
+          campaignId: campaignId,
+          imageUrl: imageUrl,
+          notificationId: dedupId,
+          notificationData: mergedData,
+        );
+        return;
       }
     }
 
-    // Préserve l'état lu des entrées déjà connues (dérivées ou mock).
-    final readById = {for (final n in state) n.id: n.isRead};
-    final others = state.where((n) => !n.id.startsWith('reward-')).toList();
-    state = [
-      ...others,
-      ...derived.map((n) => n.copyWith(isRead: readById[n.id] ?? false)),
-    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    if (body.isEmpty && title.isEmpty) return;
+
+    final alreadyShown = ToastService.markSeen(dedupId);
+    if (alreadyShown) return;
+
+    final message = body.isNotEmpty ? body : title;
+    if (_warningTypes.contains(type)) {
+      ToastService.showWarning(message);
+    } else {
+      ToastService.showSuccess(message);
+    }
+  }
+
+  void _onAuthChanged(AuthState? previous, AuthState next) {
+    if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
+      load();
+    } else if (previous?.isAuthenticated == true && !next.isAuthenticated) {
+      state = const [];
+    }
+  }
+
+  Future<void> load() async {
+    state = await _ref.read(notificationRepositoryProvider).list();
   }
 
   int get unreadCount => state.where((n) => !n.isRead).length;
 
-  void markAllRead() {
+  Future<void> markAllRead() async {
+    // Mise à jour optimiste : l'interface reflète le changement immédiatement,
+    // l'appel réseau suit en arrière-plan.
     state = [for (final n in state) n.copyWith(isRead: true)];
+    try {
+      await _ref.read(notificationRepositoryProvider).markAllRead();
+    } catch (_) {
+      // En cas d'échec réseau, le prochain `load()` ré-alignera l'état.
+    }
   }
 
-  void markRead(String id) {
+  Future<void> markRead(String id) async {
+    // Mise à jour optimiste : le point bleu disparaît au tap, sans attendre
+    // la réponse serveur.
     state = [
       for (final n in state)
         if (n.id == id) n.copyWith(isRead: true) else n,
     ];
+    try {
+      await _ref.read(notificationRepositoryProvider).markRead(id);
+    } catch (_) {
+      // En cas d'échec réseau, le prochain `load()` ré-alignera l'état.
+    }
   }
 
-  void remove(String id) {
+  Future<void> remove(String id) async {
+    await _ref.read(notificationRepositoryProvider).delete(id);
     state = state.where((n) => n.id != id).toList();
+  }
+
+  @override
+  void dispose() {
+    _realtimeSub?.cancel();
+    super.dispose();
   }
 }
 

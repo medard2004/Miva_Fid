@@ -21,13 +21,14 @@ import '../../features/client/onboarding/join_restaurant_screen.dart';
 import '../../features/client/wallet/wallet_dashboard_screen.dart';
 import '../../features/client/wallet/wallet_search_screen.dart';
 import '../../features/client/card_detail/card_detail_screen.dart';
-<<<<<<< HEAD
-=======
 import '../../features/client/card_detail/card_unlocked_rewards_screen.dart';
 import '../../features/client/card_detail/merchant_map_screen.dart';
->>>>>>> 2c11929 (miv)
 import '../../features/client/rewards/rewards_screen.dart';
+import '../../features/client/campaign/campaign_detail_screen.dart';
+import '../../features/client/campaign/review_screen.dart';
+import '../../models/campaign_model.dart';
 import '../../features/client/referral/referral_screen.dart';
+import '../../features/client/rewards/welcome_reward_surprise_screen.dart';
 import '../../features/client/profile/profile_screen.dart';
 import '../../features/client/profile/edit_profile_screen.dart';
 import '../../features/client/profile/edit_field_screen.dart';
@@ -49,6 +50,7 @@ import '../../features/merchant/screens/programme_tiers_screen.dart';
 import '../../features/merchant/screens/programme_rules_screen.dart';
 import '../../features/merchant/screens/programme_design_screen.dart';
 import '../../features/merchant/screens/qr_code_screen.dart';
+import '../../features/merchant/screens/account_category_screen.dart';
 import '../../features/merchant/screens/profile_screen.dart' as merchant_profile;
 import '../../features/merchant/screens/subscription_screen.dart';
 import '../../features/merchant/screens/team_screen.dart';
@@ -58,9 +60,22 @@ import '../../features/merchant/screens/language_theme_screen.dart';
 import '../../features/merchant/screens/sms_campaign_screen.dart';
 import '../../features/merchant/screens/sms_conversation_screen.dart';
 import '../../features/merchant/screens/sms_campaign_detail_screen.dart';
+import '../../features/merchant/screens/sms_campaign_compose_screen.dart';
+import '../../features/merchant/screens/campaign_type_screen.dart';
+import '../../features/merchant/screens/campaign_content_screen.dart';
+import '../../features/merchant/screens/campaign_recipients_screen.dart';
+import '../../features/merchant/screens/campaign_summary_screen.dart';
 import '../../features/merchant/screens/validate_screen.dart';
+import '../../features/merchant/screens/vitrine_screen.dart';
+import '../../features/merchant/screens/opening_hours_screen.dart';
 import '../../features/merchant/screens/socials_screen.dart';
+import '../../features/merchant/screens/birthday_reward_screen.dart';
+import '../../features/merchant/screens/referral_reward_screen.dart';
+import '../../features/merchant/screens/referrals_screen.dart';
+import '../../features/merchant/screens/welcome_reward_screen.dart';
+import '../../features/merchant/screens/cashback_settings_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
+import '../../features/merchant/screens/reviews_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
 import '../../features/onboarding/screens/merchant_auth_screen.dart';
 import '../../features/onboarding/screens/merchant_location_map_screen.dart';
@@ -223,12 +238,13 @@ GoRouter appRouter(AppRouterRef ref) {
 
         // Opérateur : uniquement l'écran de validation, jamais le dashboard,
         // la clientèle, les campagnes ou la configuration (voir spec équipe).
-        // Le changement de mot de passe reste accessible : sans lui, le menu
-        // compte de l'opérateur sur `/merchant/validate` mènerait à une route
-        // aussitôt renvoyée ici.
+        // Le changement de mot de passe et le profil restent accessibles :
+        // sans eux, le menu compte de l'opérateur sur `/merchant/validate`
+        // mènerait à des routes aussitôt renvoyées ici.
         final isAdmin = ref.read(isAdminProvider);
         final isOperatorReachable = location.startsWith('/merchant/validate') ||
-            location == '/merchant/more/change-password';
+            location == '/merchant/more/change-password' ||
+            location == '/merchant/more/profile';
         if (!isAdmin && !isOperatorReachable) {
           return '/merchant/validate';
         }
@@ -280,7 +296,8 @@ GoRouter appRouter(AppRouterRef ref) {
       // passer la réinitialisation de mot de passe, légitime en session.
       if (isAuthOnlyEntryScreen &&
           location != '/client/reset-password' &&
-          location != '/client/otp') {
+          location != '/client/otp' &&
+          location != '/client/forgot-password') {
         return '/client/wallet';
       }
 
@@ -307,7 +324,9 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/auth/merchant/verify-otp',
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          return _slide(MerchantVerifyOtpScreen(email: extra?['email'] as String? ?? ''));
+          return _slide(MerchantVerifyOtpScreen(
+            identifier: extra?['identifier'] as String? ?? '',
+          ));
         },
       ),
       GoRoute(
@@ -315,7 +334,7 @@ GoRouter appRouter(AppRouterRef ref) {
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return _slide(MerchantResetPasswordScreen(
-            email: extra?['email'] as String? ?? '',
+            identifier: extra?['identifier'] as String? ?? '',
             resetToken: extra?['reset_token'] as String? ?? '',
           ));
         },
@@ -424,15 +443,23 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/client/rewards',
-            pageBuilder: (_, state) => _clientTabFadePage(state, const RewardsScreen()),
+            pageBuilder: (_, state) => _clientTabFadePage(
+              state,
+              RewardsScreen(openRewardId: state.uri.queryParameters['openReward']),
+            ),
           ),
           GoRoute(
             path: '/client/referral',
-            pageBuilder: (_, state) => _clientTabFadePage(state, const ReferralScreen()),
+            pageBuilder: (_, state) => _clientTabFadePage(state, ReferralScreen(initialCardId: state.uri.queryParameters['cardId'])),
           ),
           GoRoute(
             path: '/client/profile',
             pageBuilder: (_, state) => _clientTabFadePage(state, const ProfileScreen()),
+          ),
+          GoRoute(
+            path: '/client/settings',
+            pageBuilder: (_, state) =>
+                _clientTabFadePage(state, const client_settings.SettingsScreen()),
           ),
         ],
       ),
@@ -467,8 +494,6 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
 
       GoRoute(
-<<<<<<< HEAD
-=======
         path: '/client/card/:id/rewards',
         pageBuilder: (_, state) {
           final id = state.pathParameters['id']!;
@@ -529,7 +554,6 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
 
       GoRoute(
->>>>>>> 2c11929 (miv)
         path: '/client/profile/edit',
         builder: (_, __) => const EditProfileScreen(),
       ),
@@ -571,11 +595,6 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/client/notifications',
         builder: (_, __) => const NotificationsScreen(),
       ),
-      GoRoute(
-        path: '/client/settings',
-        builder: (_, __) => const client_settings.SettingsScreen(),
-      ),
-
       // Recherche du Wallet — glisse depuis le bas.
       GoRoute(
         path: '/client/wallet/search',
@@ -610,15 +629,6 @@ GoRouter appRouter(AppRouterRef ref) {
             GoRoute(
               path: '/merchant/clients',
               pageBuilder: (_, __) => _fade(const ClientsScreen()),
-              routes: [
-                GoRoute(
-                  path: ':id',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, s) => _slide(
-                    ClientDetailScreen(clientId: s.pathParameters['id']!),
-                  ),
-                ),
-              ],
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -634,103 +644,19 @@ GoRouter appRouter(AppRouterRef ref) {
             ),
             GoRoute(
               path: '/merchant/validate',
-              pageBuilder: (_, __) => _fade(const ValidateScreen()),
+              redirect: (_, __) => '/merchant',
             ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/merchant/sms',
               pageBuilder: (_, __) => _fade(const SmsCampaignScreen()),
-              routes: [
-                GoRoute(
-                  path: 'conversation',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const SmsConversationScreen()),
-                ),
-                GoRoute(
-                  path: 'campaign/:id',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, state) => _slide(SmsCampaignDetailScreen(
-                    campaignId: state.pathParameters['id'] ?? '1',
-                  )),
-                ),
-              ],
             ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/merchant/more',
               pageBuilder: (_, __) => _fade(const MoreScreen()),
-              routes: [
-                GoRoute(
-                  path: 'programme',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const ProgrammeScreen()),
-                  routes: [
-                    GoRoute(
-                      path: 'tiers',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const ProgrammeTiersScreen()),
-                    ),
-                    GoRoute(
-                      path: 'rules',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const ProgrammeRulesScreen()),
-                    ),
-                    GoRoute(
-                      path: 'design',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (_, __) => _slide(const ProgrammeDesignScreen()),
-                    ),
-                  ],
-                ),
-                // Profil — route directe, plus de sous-imbrication account/profile
-                GoRoute(
-                  path: 'profile',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const merchant_profile.ProfileScreen()),
-                ),
-                GoRoute(
-                  path: 'notifications',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const merchant_notifs.NotificationsScreen()),
-                ),
-                GoRoute(
-                  path: 'preferences',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const PreferencesScreen()),
-                ),
-                GoRoute(
-                  path: 'team',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const TeamScreen()),
-                ),
-                GoRoute(
-                  path: 'language',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const LanguageThemeScreen()),
-                ),
-                GoRoute(
-                  path: 'socials',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const SocialsScreen()),
-                ),
-                GoRoute(
-                  path: 'change-password',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
-                ),
-                GoRoute(
-                  path: 'qrcode',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const QrCodeScreen()),
-                ),
-                GoRoute(
-                  path: 'subscription',
-                  parentNavigatorKey: rootNavigatorKey,
-                  pageBuilder: (_, __) => _slide(const SubscriptionScreen()),
-                ),
-              ],
             ),
             GoRoute(
               path: '/merchant/qrcode',
@@ -738,6 +664,179 @@ GoRouter appRouter(AppRouterRef ref) {
             ),
           ]),
         ],
+      ),
+
+      // --- Routes that hide the bottom navigation bar ---
+      // These are defined at the top level so they are naturally pushed on the root navigator.
+      GoRoute(
+        path: '/merchant/clients/:id',
+        pageBuilder: (_, s) => _slide(
+          ClientDetailScreen(clientId: s.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/merchant/sms/conversation',
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return _slide(SmsConversationScreen(
+            clientName: extra?['clientName'] as String? ?? 'Client',
+            clientPhone: extra?['clientPhone'] as String? ?? '',
+            clientInitials: extra?['clientInitials'] as String? ?? 'C',
+          ));
+        },
+      ),
+      GoRoute(
+        path: '/merchant/sms/campaign/:id',
+        pageBuilder: (_, state) => _slide(SmsCampaignDetailScreen(
+          campaignId: state.pathParameters['id'] ?? '',
+        )),
+      ),
+      GoRoute(
+        path: '/merchant/campaigns/new',
+        pageBuilder: (_, state) => _slide(CampaignTypeScreen(
+          editingCampaign: state.extra as CampaignModel?,
+        )),
+        routes: [
+          GoRoute(
+            path: 'content',
+            pageBuilder: (_, state) => _slide(CampaignContentScreen(
+              editingCampaign: state.extra as CampaignModel?,
+            )),
+          ),
+          GoRoute(
+            path: 'recipients',
+            pageBuilder: (_, state) => _slide(CampaignRecipientsScreen(
+              editingCampaign: state.extra as CampaignModel?,
+            )),
+          ),
+          GoRoute(
+            path: 'summary',
+            pageBuilder: (_, state) => _slide(CampaignSummaryScreen(
+              editingCampaign: state.extra as CampaignModel?,
+            )),
+          ),
+        ],
+      ),
+      // Legacy SMS wizard routes kept for backward compatibility
+      GoRoute(
+        path: '/merchant/sms/new',
+        pageBuilder: (_, state) => _slide(CampaignTypeScreen(
+          editingCampaign: state.extra as CampaignModel?,
+        )),
+        routes: [
+          GoRoute(
+            path: 'message',
+            pageBuilder: (_, state) => _slide(SmsCampaignComposeScreen(
+              editingCampaign: state.extra as CampaignModel?,
+            )),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/merchant/more/programme',
+        pageBuilder: (_, __) => _slide(const ProgrammeScreen()),
+        routes: [
+          GoRoute(
+            path: 'tiers',
+            pageBuilder: (_, __) => _slide(const ProgrammeTiersScreen()),
+          ),
+          GoRoute(
+            path: 'rules',
+            pageBuilder: (_, __) => _slide(const ProgrammeRulesScreen()),
+          ),
+          GoRoute(
+            path: 'design',
+            pageBuilder: (_, __) => _slide(const ProgrammeDesignScreen()),
+          ),
+          GoRoute(
+            path: 'cashback',
+            pageBuilder: (_, __) => _slide(const CashbackSettingsScreen()),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/merchant/more/profile',
+        pageBuilder: (_, __) => _slide(const merchant_profile.ProfileScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/notifications',
+        pageBuilder: (_, __) => _slide(const merchant_notifs.NotificationsScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/preferences',
+        pageBuilder: (_, __) => _slide(const PreferencesScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/team',
+        pageBuilder: (_, __) => _slide(const TeamScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/language',
+        pageBuilder: (_, __) => _slide(const LanguageThemeScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/hours',
+        pageBuilder: (_, __) => _slide(const OpeningHoursScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/socials',
+        pageBuilder: (_, __) => _slide(const SocialsScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/change-password',
+        pageBuilder: (_, __) => _slide(const ChangePasswordScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/birthday-reward',
+        pageBuilder: (_, __) => _slide(const BirthdayRewardScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/referral-reward',
+        pageBuilder: (_, __) => _slide(const ReferralRewardScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/welcome-reward',
+        pageBuilder: (_, __) => _slide(const WelcomeRewardScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/referrals',
+        pageBuilder: (_, __) => _slide(const ReferralsScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/reviews',
+        pageBuilder: (_, __) => _slide(const ReviewsScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/account',
+        pageBuilder: (_, __) => _slide(const AccountCategoryScreen()),
+        routes: [
+          GoRoute(
+            path: 'vitrine',
+            pageBuilder: (_, __) => _slide(const VitrineScreen()),
+          ),
+          GoRoute(
+            path: 'qrcode',
+            pageBuilder: (_, __) => _slide(const QrCodeScreen()),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/merchant/more/subscription',
+        pageBuilder: (_, __) => _slide(const SubscriptionScreen()),
+        routes: [
+          GoRoute(
+            path: 'plan',
+            pageBuilder: (_, __) => _slide(const SubscriptionScreen()),
+          ),
+          GoRoute(
+            path: 'team',
+            pageBuilder: (_, __) => _slide(const TeamScreen()),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/merchant/qrcode',
+        pageBuilder: (_, __) => _fade(const QrCodeScreen()),
       ),
 
     ],

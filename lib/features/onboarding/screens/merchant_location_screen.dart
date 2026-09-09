@@ -248,19 +248,16 @@ class _MerchantLocationScreenState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.successTint,
+                          color: AppColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: AppColors.isDark
-                                ? AppColors.success.withValues(alpha: 0.3)
-                                : const Color(0xFFBBF7D0),
-                          ),
+                              color: AppColors.success.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
                             const Icon(
                               LucideIcons.circleCheck,
-                              color: Color(0xFF16A34A),
+                              color: AppColors.success,
                               size: 16,
                             ),
                             const SizedBox(width: 8),
@@ -269,10 +266,8 @@ class _MerchantLocationScreenState
                                 _autoDetected
                                     ? 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)} (Auto-détecté)'
                                     : 'GPS : ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}',
-                                style: TextStyle(
-                                  color: AppColors.isDark
-                                      ? const Color(0xFF86EFAC)
-                                      : const Color(0xFF15803D),
+                                style: const TextStyle(
+                                  color: AppColors.success,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),

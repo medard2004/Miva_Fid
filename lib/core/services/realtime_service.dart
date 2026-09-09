@@ -46,11 +46,15 @@ class ReverbConfig {
 /// self-hosted), donc implémentation directe plutôt qu'une dépendance qui ne
 /// couvrirait pas Reverb.
 ///
-/// Périmètre volontairement réduit à ce dont l'app a besoin : un canal privé
-/// par client, un seul type d'événement écouté (mise à jour de carte de
-/// fidélité). Pas de canaux publics/présence, pas de reconnexion agressive —
-/// une carte qui n'a pas pu être patchée en direct reste simplement à jour
-/// au prochain chargement normal du wallet.
+/// Périmètre volontairement réduit à ce dont l'app a besoin : un seul canal
+/// privé à la fois (client OU marchand, jamais les deux en même temps — un
+/// appareil n'est connecté que dans un seul rôle), un seul jeu d'événements
+/// écoutés (mise à jour de carte / récompense de fidélité, diffusées par le
+/// backend à la fois sur `loyalty.{clientId}` et `merchant.{restaurantId}`,
+/// voir `LoyaltyCardUpdated`/`LoyaltyRewardUpdated` côté backend). Pas de
+/// canaux publics/présence, pas de reconnexion agressive — une carte qui n'a
+/// pas pu être patchée en direct reste simplement à jour au prochain
+/// chargement normal de l'écran.
 class RealtimeService {
   RealtimeService._();
   static final RealtimeService instance = RealtimeService._();
@@ -60,12 +64,15 @@ class RealtimeService {
   Timer? _pingTimer;
   Timer? _reconnectTimer;
   String? _socketId;
-  String? _clientId;
+  String? _channelName;
   ApiClient? _apiClient;
   bool _disposed = true;
 
   final _cardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
   final _rewardUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _notificationCreatedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _campaignUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _reconnectedController = StreamController<void>.broadcast();
 
   /// Payload `LoyaltyCardUpdated::broadcastWith()` — id/progress/status/etc.
   Stream<Map<String, dynamic>> get onCardUpdated => _cardUpdatedController.stream;
@@ -74,13 +81,31 @@ class RealtimeService {
   /// chaque déblocage/validation/annulation d'une récompense.
   Stream<Map<String, dynamic>> get onRewardUpdated => _rewardUpdatedController.stream;
 
-  /// Ouvre la connexion et s'abonne au canal privé du client authentifié.
-  /// Idempotent : un appel alors qu'une connexion est déjà active la
-  /// remplace proprement (ex. changement de compte).
-  void connect({required String clientId, required ApiClient apiClient}) {
+  /// Payload `NotificationCreated::broadcastWith()` — nouvelle ligne dans le
+  /// centre de notifications (push ou in-app seule). Les consommateurs
+  /// n'ont qu'à recharger leur liste, le payload sert surtout de signal.
+  Stream<Map<String, dynamic>> get onNotificationCreated => _notificationCreatedController.stream;
+
+  /// Payload `CampaignUpdated::broadcastWith()` — `{id, status}` pour
+  /// rafraîchir la liste et les statuts des campagnes automatiquement.
+  Stream<Map<String, dynamic>> get onCampaignUpdated => _campaignUpdatedController.stream;
+
+  /// Émis à chaque (ré)abonnement réussi au canal privé — y compris le tout
+  /// premier après [connect]. Un événement diffusé pendant que le socket
+  /// était coupé (app en arrière-plan) n'est jamais rejoué par le serveur :
+  /// une reconnexion réussie est le seul signal qu'un consommateur peut
+  /// utiliser pour se remettre à jour par un rechargement complet.
+  Stream<void> get onReconnected => _reconnectedController.stream;
+
+  /// Ouvre la connexion et s'abonne au canal privé donné — `channelName` est
+  /// le nom SANS le préfixe `private-` (ex. `loyalty.42` côté client,
+  /// `merchant.7` côté marchand ; voir `routes/channels.php`). Idempotent :
+  /// un appel alors qu'une connexion est déjà active la remplace proprement
+  /// (ex. changement de compte).
+  void connect({required String channelName, required ApiClient apiClient}) {
     disconnect();
     _disposed = false;
-    _clientId = clientId;
+    _channelName = channelName;
     _apiClient = apiClient;
     _open();
   }
@@ -99,6 +124,9 @@ class RealtimeService {
     disconnect();
     _cardUpdatedController.close();
     _rewardUpdatedController.close();
+    _notificationCreatedController.close();
+    _campaignUpdatedController.close();
+    _reconnectedController.close();
   }
 
   void _open() {
@@ -172,6 +200,14 @@ class RealtimeService {
         final data = _decodeData(message['data']);
         if (data != null) _rewardUpdatedController.add(data);
         return;
+      case 'notification.created':
+        final data = _decodeData(message['data']);
+        if (data != null) _notificationCreatedController.add(data);
+        return;
+      case 'campaign.updated':
+        final data = _decodeData(message['data']);
+        if (data != null) _campaignUpdatedController.add(data);
+        return;
     }
   }
 
@@ -189,11 +225,11 @@ class RealtimeService {
 
   Future<void> _subscribePrivateChannel() async {
     final socketId = _socketId;
-    final clientId = _clientId;
+    final channelSuffix = _channelName;
     final apiClient = _apiClient;
-    if (socketId == null || clientId == null || apiClient == null) return;
+    if (socketId == null || channelSuffix == null || apiClient == null) return;
 
-    final channelName = 'private-loyalty.$clientId';
+    final channelName = 'private-$channelSuffix';
     try {
       final response = await apiClient.dio.post(
         '/broadcasting/auth',
@@ -206,6 +242,7 @@ class RealtimeService {
         'event': 'pusher:subscribe',
         'data': {'channel': channelName, 'auth': auth},
       });
+      _reconnectedController.add(null);
     } catch (e) {
       if (kDebugMode) debugPrint('RealtimeService: auth du canal échouée ($e)');
     }
