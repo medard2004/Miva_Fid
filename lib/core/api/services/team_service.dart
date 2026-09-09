@@ -53,17 +53,7 @@ class TeamService {
 
   Future<List<Map<String, dynamic>>> list() => _guard(() async {
         final response = await _apiClient.dio.get('/auth/merchant/team');
-        final data = response.data;
-        if (data is List) {
-          return List<Map<String, dynamic>>.from(data);
-        }
-        if (data is Map) {
-          final raw = data['team'] ?? data['data'] ?? data['members'] ?? [];
-          if (raw is List) {
-            return List<Map<String, dynamic>>.from(raw);
-          }
-        }
-        return <Map<String, dynamic>>[];
+        return List<Map<String, dynamic>>.from(response.data['team'] as List);
       });
 
   Future<void> invite({

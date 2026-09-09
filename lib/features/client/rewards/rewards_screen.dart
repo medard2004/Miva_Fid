@@ -653,7 +653,6 @@ class _HistoryRewardRow extends StatelessWidget {
             '${reward.restaurantName} · ${reward.title}',
             style: AppTextStyles.bodyMedium(color: AppColors.inkMuted(opacity: 0.8)),
             textAlign: TextAlign.end,
-            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),

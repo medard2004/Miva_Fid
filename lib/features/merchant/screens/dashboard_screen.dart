@@ -466,10 +466,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay))
-        .slideY(begin: 0.05, end: 0);
+    ).animate().fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay)).slideY(begin: 0.05, end: 0);
   }
 
   Widget _buildBar({
@@ -501,8 +498,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     alignment: Alignment.bottomCenter,
                     delay: Duration(milliseconds: delay),
                   )
-                  .fadeIn(
-                      duration: 400.ms, delay: Duration(milliseconds: delay)),
+                  .fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
             ),
           ),
         ),

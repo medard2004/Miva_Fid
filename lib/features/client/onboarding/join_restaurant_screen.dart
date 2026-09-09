@@ -279,9 +279,6 @@ class _CardRevealScreenState extends State<_CardRevealScreen>
                                 widget.card.restaurantName,
                                 style: AppTextStyles.bodyMedium(
                                     color: subtextColor),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               if (widget.referredBy != null) ...[
                                 const SizedBox(height: 4),

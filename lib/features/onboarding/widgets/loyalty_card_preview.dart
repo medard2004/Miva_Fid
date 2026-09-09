@@ -29,12 +29,11 @@ class LoyaltyCardPreview extends ConsumerWidget {
     final isStampsMode = state.loyaltyMode == 'stamps';
     // For stamps mode, calculate progress based on stampsRequired
     // For points mode, simulate 70% progress in preview
-    final safeTotal = state.stampsRequired > 0 ? state.stampsRequired : 10;
-    final currentPoints = (safeTotal * 0.7).round();
-    final remainingPoints = safeTotal - currentPoints;
+    final currentPoints = (state.stampsRequired * 0.7).round();
+    final remainingPoints = state.stampsRequired - currentPoints;
     final progress = isStampsMode
-        ? (previewStamps / safeTotal).clamp(0.0, 1.0)
-        : (currentPoints / safeTotal).clamp(0.0, 1.0);
+        ? previewStamps / state.stampsRequired
+        : currentPoints / state.stampsRequired;
 
     // Gradient configuration
     final gradient = state.cardGradientType == 'radial'

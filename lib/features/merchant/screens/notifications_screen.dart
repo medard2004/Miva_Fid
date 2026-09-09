@@ -9,28 +9,6 @@ import '../../client/models/app_notification.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/notifications_provider.dart';
 
-/// Catégorie visuelle d'une notification — la vraie couleur (fond teinté +
-/// icône) n'est résolue qu'au rendu via [NotificationKind.colors], pour
-/// rester à jour si le thème change pendant que l'écran est déjà monté.
-enum NotificationKind { client, reward, campaign, warning, report, users }
-
-(Color, Color) _kindColors(NotificationKind kind) {
-  switch (kind) {
-    case NotificationKind.client:
-      return (AppColors.primaryTint, const Color(0xFF6366F1));
-    case NotificationKind.reward:
-      return (AppColors.warningTint, AppColors.warningDark);
-    case NotificationKind.campaign:
-      return (AppColors.primaryTint, const Color(0xFF0284C7));
-    case NotificationKind.warning:
-      return (AppColors.dangerTint, AppColors.danger);
-    case NotificationKind.report:
-      return (AppColors.successTint, const Color(0xFF16A34A));
-    case NotificationKind.users:
-      return (AppColors.merchantTint, AppColors.merchant);
-  }
-}
-
 class NotificationItem {
   final String id;
   final String type;
@@ -40,7 +18,8 @@ class NotificationItem {
   final String time;
   final String section;
   final IconData icon;
-  final NotificationKind kind;
+  final Color iconBg;
+  final Color iconColor;
   final bool isUnread;
 
   const NotificationItem({
@@ -52,7 +31,8 @@ class NotificationItem {
     required this.time,
     required this.section,
     required this.icon,
-    required this.kind,
+    required this.iconBg,
+    required this.iconColor,
     this.isUnread = false,
   });
 }
