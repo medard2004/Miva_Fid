@@ -9,6 +9,7 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 
 /// Fond du chrome caméra — volontairement fixe (jamais [AppColors.ink],
 /// qui s'inverse en mode sombre) : cet écran plein cadre reste sombre
@@ -76,6 +77,13 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
     if (_handled || capture.barcodes.isEmpty) return;
     final value = capture.barcodes.first.rawValue;
     if (value == null || value.trim().isEmpty) return;
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion requise pour rejoindre un programme de fidélité.',
+    )) {
+      return;
+    }
     _handled = true;
     HapticFeedback.mediumImpact();
     _cameraController.stop();
@@ -129,6 +137,13 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
     );
 
     if (code != null && code.trim().isNotEmpty && mounted) {
+      if (!OfflineActionGuard.checkCanPerform(
+        context,
+        ref,
+        message: 'Connexion requise pour rejoindre un programme de fidélité.',
+      )) {
+        return;
+      }
       _handled = true;
       context.pushReplacement('/client/onboarding/join', extra: {'code': code});
     }

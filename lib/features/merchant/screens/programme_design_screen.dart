@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 import '../../../models/merchant_model.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
@@ -114,6 +115,13 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
   }
 
   Future<void> _save() async {
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour modifier le programme.',
+    )) {
+      return;
+    }
     final state = ref.read(onboardingNotifierProvider);
     final t = AppLocalizations.of(context)!;
 

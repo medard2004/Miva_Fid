@@ -268,7 +268,7 @@ class _CardRevealScreenState extends State<_CardRevealScreen>
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(LucideIcons.circleCheckBig,
+                              const Icon(LucideIcons.circleCheckBig,
                                   color: textColor, size: 34),
                               const SizedBox(height: 10),
                               Text(t.joinCardCreatedTitle,

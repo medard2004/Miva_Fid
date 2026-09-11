@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../router/app_router.dart';
 import '../notifications/notification_destination.dart';
@@ -116,7 +115,7 @@ class ToastService {
 
     if (notificationId != null && markSeen(notificationId)) return;
 
-    final onTap = () {
+    Null onTap() {
       hideCurrent();
       final ctx = rootNavigatorKey.currentContext;
       if (ctx == null) return;
@@ -130,7 +129,7 @@ class ToastService {
         body: body,
       );
       navigateToNotificationDestination(ctx, destination);
-    };
+    }
 
     final request = _ToastRequest(
       message: body,
@@ -492,7 +491,7 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                               fit: BoxFit.cover,
                               placeholder: (_, __) => Container(
                                 color: AppColors.surfaceMuted,
-                                child: Center(
+                                child: const Center(
                                   child: SizedBox(
                                     width: 18,
                                     height: 18,
@@ -539,7 +538,7 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                           children: [
                             Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   LucideIcons.sparkles,
                                   size: 13,
                                   color: AppColors.primary,
@@ -598,7 +597,7 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                                   ).copyWith(fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(width: 4),
-                                Icon(
+                                const Icon(
                                   LucideIcons.chevronRight,
                                   size: 14,
                                   color: AppColors.primary,

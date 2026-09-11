@@ -28,8 +28,9 @@ class LoyaltyProgramService {
   }
 
   String? _backendMessage(dynamic data) {
-    if (data is Map && data['message'] != null)
+    if (data is Map && data['message'] != null) {
       return data['message'].toString();
+    }
     return null;
   }
 

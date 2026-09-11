@@ -39,6 +39,16 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    // Erreur réseau (timeout, DNS, connexion refusée) → NE PAS toucher au token
+    if (err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        err.type == DioExceptionType.sendTimeout ||
+        err.type == DioExceptionType.connectionError ||
+        (err.response == null && err.type == DioExceptionType.unknown)) {
+      super.onError(err, handler);
+      return;
+    }
+
     // Un 401 signifie que le token stocké n'est plus accepté (révoqué,
     // expiré, ou mot de passe réinitialisé — `resetPassword` côté Laravel
     // supprime tous les tokens du client). Le garder en mémoire laisserait

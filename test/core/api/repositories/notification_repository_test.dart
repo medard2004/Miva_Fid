@@ -5,7 +5,7 @@ import 'package:miva_fid/core/api/services/notification_service.dart';
 import 'package:miva_fid/core/api/storage/token_storage.dart';
 
 class _FakeNotificationService extends NotificationService {
-  _FakeNotificationService(ApiClient apiClient) : super(apiClient);
+  _FakeNotificationService(super.apiClient);
 
   final List<String> markedRead = [];
   bool markedAllRead = false;

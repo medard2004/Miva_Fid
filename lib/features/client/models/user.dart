@@ -196,4 +196,28 @@ class AppUser {
       profileCompleted: profileCompleted ?? this.profileCompleted,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    final parts = fullName.trim().split(' ');
+    final firstName = parts.isNotEmpty ? parts.first : '';
+    final lastName = parts.length > 1 ? parts.skip(1).join(' ') : '';
+    return {
+      'uuid': id,
+      'id': backendId,
+      'first_name': firstName,
+      'last_name': lastName,
+      'phone': phoneNumber,
+      'birthdate': birthDate?.toIso8601String(),
+      'created_at': joinDate.toIso8601String(),
+      'email': email,
+      'avatar_url': photoUrl,
+      'city': city,
+      'country': country,
+      'neighborhood': neighborhood,
+      'oauth_provider':
+          authProvider == AuthProvider.phone ? null : authProvider.name,
+      'is_profile_complete': profileCompleted,
+    };
+  }
 }
+

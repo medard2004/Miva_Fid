@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/cache/offline_cache_service.dart';
 import 'merchant_auth_provider.dart';
 
 part 'dashboard_stats_provider.g.dart';
@@ -55,7 +56,19 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
         totalClients: 0, stampsToday: 0, activeRewards: 0, recentActivity: []);
   }
 
-  final data = await ref.read(merchantDashboardServiceProvider).stats();
+  final cache = ref.watch(offlineCacheServiceProvider);
+  Map<String, dynamic> data;
+  try {
+    data = await ref.read(merchantDashboardServiceProvider).stats();
+    await cache.saveMerchantStats(data);
+  } catch (e) {
+    final cached = await cache.getMerchantStats();
+    if (cached != null) {
+      data = cached;
+    } else {
+      rethrow;
+    }
+  }
 
   final activity = ((data['recent_activity'] as List?) ?? []).map((raw) {
     final entry = (raw as Map).cast<String, dynamic>();

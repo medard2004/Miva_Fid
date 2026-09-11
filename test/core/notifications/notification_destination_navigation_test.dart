@@ -64,7 +64,7 @@ GoRouter _router({String initialLocation = '/client/wallet'}) {
 }
 
 void main() {
-  Future<void> _openInbox(WidgetTester tester, GoRouter router) async {
+  Future<void> openInbox(WidgetTester tester, GoRouter router) async {
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
     router.push('/client/notifications');
@@ -78,7 +78,7 @@ void main() {
           (details) => fail('${details.exceptionAsString()}\n${details.stack}');
 
       final router = _router();
-      await _openInbox(tester, router);
+      await openInbox(tester, router);
 
       await tester.tap(find.text('open-reward-notif'));
       await tester.pumpAndSettle();
@@ -94,7 +94,7 @@ void main() {
           (details) => fail('${details.exceptionAsString()}\n${details.stack}');
 
       final router = _router();
-      await _openInbox(tester, router);
+      await openInbox(tester, router);
 
       await tester.tap(find.text('open-referral-notif'));
       await tester.pumpAndSettle();
@@ -107,7 +107,7 @@ void main() {
     'clic notif carte (hors coquille) continue d\'empiler la fiche',
     (tester) async {
       final router = _router();
-      await _openInbox(tester, router);
+      await openInbox(tester, router);
 
       final context = tester.element(find.text('open-reward-notif'));
       navigateToNotificationDestination(context, const CardDestination('7'));

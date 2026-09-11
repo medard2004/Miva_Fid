@@ -40,7 +40,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
           _isLoading = false;
         });
       }
-    } on DioException catch (e) {
+    } on DioException {
       ToastService.showError("Impossible de charger les avis.");
       if (mounted) {
         setState(() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miva_fid/core/widgets/offline_banner.dart';
 import 'package:miva_fid/features/client/core/router/tab_transition_direction.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
@@ -34,7 +35,15 @@ class AppShell extends ConsumerWidget {
 
     final scaffold = Scaffold(
       backgroundColor: AppColors.surface,
-      body: SafeArea(bottom: false, child: child),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(child: child),
+          ],
+        ),
+      ),
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: currentIndex,
         onTap: (i) {

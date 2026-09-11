@@ -44,7 +44,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppDetailBar(title: 'Offre'),
+      appBar: const AppDetailBar(title: 'Offre'),
       body: SafeArea(
         bottom: true,
         child: SingleChildScrollView(
@@ -294,7 +294,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                                 color: AppColors.primaryTint,
                                 border: Border.all(color: AppColors.surfaceCard, width: 1.5),
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 LucideIcons.star,
                                 color: AppColors.primary,
                                 size: 12,
@@ -310,7 +310,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                                   color: AppColors.successTint,
                                   border: Border.all(color: AppColors.surfaceCard, width: 1.5),
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   LucideIcons.gift,
                                   color: AppColors.success,
                                   size: 12,
@@ -339,9 +339,9 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                             style: AppTextStyles.bodyMedium(color: AppColors.ink)
                                 .copyWith(height: 1.45),
                             children: [
-                              TextSpan(
+                              const TextSpan(
                                 text: 'mivafid_officiel ',
-                                style: const TextStyle(fontWeight: FontWeight.w700),
+                                style: TextStyle(fontWeight: FontWeight.w700),
                               ),
                               TextSpan(
                                 text: widget.title,

@@ -1,4 +1,5 @@
 import '../services/loyalty_card_service.dart';
+import '../../cache/offline_cache_service.dart';
 import '../../../features/client/models/loyalty_card.dart';
 
 /// Résultat de `POST /loyalty-cards/join` — [isNew] distingue une carte tout
@@ -34,16 +35,48 @@ class JoinCardResult {
 
 class LoyaltyCardRepository {
   final LoyaltyCardService _service;
+  final OfflineCacheService? _cache;
 
-  LoyaltyCardRepository(this._service);
+  LoyaltyCardRepository(this._service, [this._cache]);
 
   /// Parse chaque carte individuellement : une seule carte malformée (champ
   /// legacy manquant, type inattendu) ne doit pas faire disparaître tout le
   /// wallet du client.
   Future<List<LoyaltyCard>> listMine() async {
-    final rows = await _service.listMine();
+    try {
+      final rows = await _service.listMine();
+      await _cache?.saveClientWallet(rows);
+      final cards = <LoyaltyCard>[];
+      for (final row in rows) {
+        try {
+          cards.add(LoyaltyCard.fromApi(row));
+        } catch (_) {}
+      }
+      return cards;
+    } catch (e) {
+      if (_cache != null) {
+        final cached = await _cache.getClientWallet();
+        if (cached != null && cached.isNotEmpty) {
+          final cards = <LoyaltyCard>[];
+          for (final row in cached) {
+            try {
+              cards.add(LoyaltyCard.fromApi(row));
+            } catch (_) {}
+          }
+          if (cards.isNotEmpty) return cards;
+        }
+      }
+      rethrow;
+    }
+  }
+
+  /// Récupère les cartes stockées localement dans le cache SQLite sans appel réseau
+  Future<List<LoyaltyCard>> listFromCache() async {
+    if (_cache == null) return [];
+    final cached = await _cache.getClientWallet();
+    if (cached == null || cached.isEmpty) return [];
     final cards = <LoyaltyCard>[];
-    for (final row in rows) {
+    for (final row in cached) {
       try {
         cards.add(LoyaltyCard.fromApi(row));
       } catch (_) {}

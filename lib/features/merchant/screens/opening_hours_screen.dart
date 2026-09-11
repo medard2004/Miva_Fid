@@ -60,8 +60,8 @@ class _OpeningHoursScreenState extends ConsumerState<OpeningHoursScreen> {
     if (!_initialized) {
       final account = ref.watch(merchantAuthProvider).restaurant;
       final saved = account?.openingHours ?? const {};
-      final defaultFrom = const TimeOfDay(hour: 8, minute: 0);
-      final defaultTo = const TimeOfDay(hour: 22, minute: 0);
+      const defaultFrom = TimeOfDay(hour: 8, minute: 0);
+      const defaultTo = TimeOfDay(hour: 22, minute: 0);
       _hours = {
         for (final (key, _) in _days)
           key: (() {
@@ -198,7 +198,7 @@ class _OpeningHoursScreenState extends ConsumerState<OpeningHoursScreen> {
         ),
         Switch(
           value: day.open,
-          activeColor: const Color(0xFF5B50EC),
+          activeThumbColor: const Color(0xFF5B50EC),
           onChanged: (v) => setState(() => day.open = v),
         ),
         const SizedBox(width: 6),

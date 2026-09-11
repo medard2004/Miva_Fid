@@ -280,7 +280,7 @@ class _SmsCampaignDetailScreenState
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Icon(LucideIcons.messageSquare, size: 15, color: const Color(0xFF5B50EC)),
+            const Icon(LucideIcons.messageSquare, size: 15, color: Color(0xFF5B50EC)),
             const SizedBox(width: 8),
             Text('Message envoyé', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           ]),

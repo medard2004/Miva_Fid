@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/api/storage/local_preferences.dart';
+import '../../../core/cache/offline_cache_service.dart';
+import '../../merchant/models/restaurant_account.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
+import '../models/user.dart';
 import 'app_providers.dart';
 import 'device_token_provider.dart';
 import 'wallet_provider.dart';
@@ -24,12 +27,15 @@ class AppStartupState {
 
 /// Restaure la session avant le premier rendu.
 ///
-/// Le token vit dans le stockage sécurisé, mais sa seule présence ne prouve
-/// rien : il a pu être révoqué côté serveur (déconnexion depuis un autre
-/// appareil, réinitialisation du mot de passe, expiration). On le confronte
-/// donc à `GET /auth/me`, et on ne repeuple la session que si le serveur
-/// l'accepte. En cas de refus, on nettoie pour éviter une session fantôme
-/// qui échouerait à chaque appel suivant.
+/// Approche « Cache-First, Network-Refresh » :
+/// 1. Si un token est présent, on restaure immédiatement les données du profil
+///    et du wallet depuis le cache local SQLite, afin de rendre l'application
+///    accessible instantanément (même totalement hors-ligne).
+/// 2. En arrière-plan ou parallèlement, on interroge `GET /auth/me` pour rafraîchir
+///    les données et valider le token.
+/// 3. Seul un rejet explicite du token (401 Unauthorized) déconnecte la session.
+///    Une erreur réseau (timeout, absence de connexion) préserve la session active
+///    avec les données locales.
 final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   final prefs = ref.read(localPreferencesProvider);
   final hasSeenOnboarding = await prefs.hasSeenOnboarding();
@@ -41,43 +47,74 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   ref.read(deviceTokenProvider);
 
   final authRepository = ref.read(authRepositoryProvider);
+  final merchantAuthRepository = ref.read(merchantAuthRepositoryProvider);
+  final cache = ref.read(offlineCacheServiceProvider);
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // CLIENT : Restauration Cache-First
+  // ───────────────────────────────────────────────────────────────────────────
   if (await authRepository.isLoggedIn()) {
+    // 1. Restauration immédiate depuis le cache local (si disponible)
+    final cachedUserJson = await cache.getClientUser();
+    if (cachedUserJson != null) {
+      try {
+        ref.read(authProvider.notifier).setAuthenticated(
+              AppUser.fromJson(cachedUserJson),
+            );
+        try {
+          await ref.read(walletProvider.notifier).loadFromCache();
+        } catch (_) {}
+      } catch (_) {}
+    }
+
+    // 2. Validation / rafraîchissement réseau
     try {
-      ref.read(authProvider.notifier).setAuthenticated(
-            await authRepository.getMe(),
-          );
-      // Repeuple le wallet avant que l'écran de démarrage ne route vers lui
-      // — sinon la pile affiche brièvement l'état "aucune carte" pendant
-      // l'appel réseau. Un échec ici (backend injoignable) ne doit pas
-      // empêcher l'accès au wallet : les cartes resteront simplement vides
-      // jusqu'au prochain chargement réussi.
+      final freshUser = await authRepository.getMe();
+      ref.read(authProvider.notifier).setAuthenticated(freshUser);
+
+      // Repeuple le wallet avec les données fraîches du serveur
       try {
         await ref.read(walletProvider.notifier).loadMine();
       } catch (_) {}
     } on UnauthorizedException {
-      // Token vraiment rejeté par le serveur : on repart déconnecté plutôt
-      // que de laisser l'utilisateur sur un écran bloqué. (L'intercepteur a
-      // déjà purgé le token sur le 401 — `signOut()` aligne juste l'état
-      // `authProvider` en mémoire dessus.)
+      // Token réellement rejeté par le serveur (401) : purge et déconnexion
+      await cache.clearClientData();
       await ref.read(authProvider.notifier).signOut();
     } catch (_) {
-      // Backend injoignable (réseau instable au démarrage à froid, timeout) :
-      // le token reste valide, on ne déconnecte pas. La session reste
-      // simplement non authentifiée pour cette ouverture ; le prochain
-      // lancement retentera avec le même token.
+      // Erreur réseau (hors-ligne, timeout) :
+      // On conserve la session restaurée depuis le cache !
+      if (ref.read(authProvider).isAuthenticated) {
+        try {
+          await ref.read(walletProvider.notifier).loadFromCache();
+        } catch (_) {}
+      }
     }
   }
 
-  final merchantAuthRepository = ref.read(merchantAuthRepositoryProvider);
-
+  // ───────────────────────────────────────────────────────────────────────────
+  // MARCHAND : Restauration Cache-First
+  // ───────────────────────────────────────────────────────────────────────────
   if (await merchantAuthRepository.isLoggedIn()) {
+    // 1. Restauration immédiate depuis le cache local (si disponible)
+    final cachedMerchantJson = await cache.getMerchantAccount();
+    if (cachedMerchantJson != null) {
+      try {
+        ref.read(merchantAuthProvider.notifier).setAuthenticated(
+              RestaurantAccount.fromJson(cachedMerchantJson),
+            );
+      } catch (_) {}
+    }
+
+    // 2. Validation / rafraîchissement réseau
     try {
-      ref.read(merchantAuthProvider.notifier).setAuthenticated(
-            await merchantAuthRepository.getMe(),
-          );
-    } catch (_) {
+      final freshMerchant = await merchantAuthRepository.getMe();
+      ref.read(merchantAuthProvider.notifier).setAuthenticated(freshMerchant);
+    } on UnauthorizedException {
+      // Token réellement rejeté (401)
+      await cache.clearMerchantData();
       await ref.read(merchantAuthProvider.notifier).signOut();
+    } catch (_) {
+      // Erreur réseau : on conserve la session restaurée depuis le cache !
     }
   }
 

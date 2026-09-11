@@ -3,6 +3,8 @@ import 'dart:io';
 
 import '../services/merchant_auth_service.dart';
 import '../storage/token_storage.dart' show TokenStorageBase;
+import '../core/api_exceptions.dart';
+import '../../cache/offline_cache_service.dart';
 import '../../../features/merchant/models/restaurant_account.dart';
 
 /// Normalise la charge `restaurant` de la réponse `staffLogin`.
@@ -28,8 +30,9 @@ Map<String, dynamic> mergeStaffLoginActor(Map<String, dynamic> response) {
 class MerchantAuthRepository {
   final MerchantAuthService _authService;
   final TokenStorageBase _tokenStorage;
+  final OfflineCacheService? _cache;
 
-  MerchantAuthRepository(this._authService, this._tokenStorage);
+  MerchantAuthRepository(this._authService, this._tokenStorage, [this._cache]);
 
   Future<RestaurantAccount> register(String email, String password) async {
     final response = await _authService.register(email, password);
@@ -37,7 +40,11 @@ class MerchantAuthRepository {
     if (token != null) {
       await _tokenStorage.saveToken(token);
     }
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> login(String email, String password) async {
@@ -46,7 +53,11 @@ class MerchantAuthRepository {
     if (token != null) {
       await _tokenStorage.saveToken(token);
     }
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> staffLogin(String email, String password) async {
@@ -55,7 +66,9 @@ class MerchantAuthRepository {
     if (token != null) {
       await _tokenStorage.saveToken(token);
     }
-    return RestaurantAccount.fromJson(mergeStaffLoginActor(response));
+    final merged = mergeStaffLoginActor(response);
+    await _cache?.saveMerchantAccount(merged);
+    return RestaurantAccount.fromJson(merged);
   }
 
   Future<RestaurantAccount> socialLogin(
@@ -69,22 +82,38 @@ class MerchantAuthRepository {
     if (token != null) {
       await _tokenStorage.saveToken(token);
     }
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> updateBusinessInfo(Map<String, dynamic> data) async {
     final response = await _authService.updateBusinessInfo(data);
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> uploadLogo(File file) async {
     final response = await _authService.uploadLogo(file);
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> deleteLogo() async {
     final response = await _authService.deleteLogo();
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> updateEmail(
@@ -92,7 +121,11 @@ class MerchantAuthRepository {
     String currentPassword,
   ) async {
     final response = await _authService.updateEmail(email, currentPassword);
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<void> deleteAccount(String currentPassword) =>
@@ -113,17 +146,39 @@ class MerchantAuthRepository {
   Future<RestaurantAccount> updateNotificationPreferences(
       Map<String, bool> patch) async {
     final response = await _authService.updateNotificationPreferences(patch);
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> updatePlan(String planSlug) async {
     final response = await _authService.updatePlan(planSlug);
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    final restaurantData = response['restaurant'] ?? {};
+    if (restaurantData is Map<String, dynamic>) {
+      await _cache?.saveMerchantAccount(restaurantData);
+    }
+    return RestaurantAccount.fromJson(restaurantData);
   }
 
   Future<RestaurantAccount> getMe() async {
-    final response = await _authService.getMe();
-    return RestaurantAccount.fromJson(response['restaurant'] ?? {});
+    try {
+      final response = await _authService.getMe();
+      final restaurantData = response['restaurant'] ?? {};
+      if (restaurantData is Map<String, dynamic>) {
+        await _cache?.saveMerchantAccount(restaurantData);
+      }
+      return RestaurantAccount.fromJson(restaurantData);
+    } catch (e) {
+      if (e is! UnauthorizedException && _cache != null) {
+        final cached = await _cache.getMerchantAccount();
+        if (cached != null) {
+          return RestaurantAccount.fromJson(cached);
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<void> logout() async {
@@ -134,10 +189,7 @@ class MerchantAuthRepository {
       }
     } finally {
       await _tokenStorage.deleteToken();
-      // Voir AuthRepository.logout (mirror client) : délai avant de
-      // réactiver le garde-fou, le temps qu'une requête déjà en vol au
-      // moment de la déconnexion reçoive son 401 sans déclencher à tort le
-      // toast "session expirée".
+      await _cache?.clearMerchantData();
       unawaited(Future.delayed(const Duration(seconds: 2), () {
         _authService.suppressUnauthorized = false;
       }));

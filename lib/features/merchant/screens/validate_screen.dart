@@ -18,6 +18,7 @@ import '../widgets/reward_redeem_sheet.dart';
 import '../widgets/validation_success_overlay.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../../core/constants/reward_qr.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 
 class ValidateScreen extends ConsumerStatefulWidget {
   const ValidateScreen({super.key});
@@ -75,6 +76,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   Future<void> _onQrDetected(BarcodeCapture capture) async {
     if (_processing) return;
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour scanner et valider un client.',
+    )) {
+      return;
+    }
     final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
     if (raw == null || raw.isEmpty) {
       ToastService.showError(AppLocalizations.of(context)!.merchantValidateQrInvalid);
@@ -182,6 +190,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   }
 
   Future<void> _confirmRewardRedeem(MerchantReward reward) async {
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour valider une récompense.',
+    )) {
+      return;
+    }
     final sheetNavigator = Navigator.of(context);
     try {
       await ref
@@ -257,6 +272,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   }
 
   Future<void> _validateStamp(LoyaltyCardModel card, [double? amount]) async {
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour valider.',
+    )) {
+      return;
+    }
     final sheetNavigator = Navigator.of(context);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     try {
@@ -344,6 +366,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   Future<void> _searchClientByIdentifier() async {
     final query = _identifierCtrl.text.trim();
     if (query.isEmpty) return;
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour rechercher un client.',
+    )) {
+      return;
+    }
     await _lookupAndShowSheet(query);
   }
 
@@ -357,7 +386,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     );
     if (!confirmed) return;
     await ref.read(merchantAuthProvider.notifier).signOut();
-    if (context.mounted) context.go('/auth/merchant/auth');
+    if (mounted) context.go('/auth/merchant/auth');
   }
 
   @override
@@ -436,7 +465,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                             enabled: false,
                             child: Row(
                               children: [
-                                Icon(LucideIcons.badgeCheck, size: 16, color: AppColors.merchant),
+                                const Icon(LucideIcons.badgeCheck, size: 16, color: AppColors.merchant),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -461,12 +490,12 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                             ],
                           ),
                         ),
-                        PopupMenuItem<String>(
+                        const PopupMenuItem<String>(
                           value: 'sign-out',
                           child: Row(
                             children: [
                               Icon(LucideIcons.logOut, size: 16, color: AppColors.danger),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text('Se déconnecter', style: TextStyle(color: AppColors.danger)),
                             ],
                           ),

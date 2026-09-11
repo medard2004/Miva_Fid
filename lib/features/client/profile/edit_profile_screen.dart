@@ -19,6 +19,7 @@ import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/user_avatar.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 
 /// Modification du profil : photo, puis chaque information (nom, date de
 /// naissance, email, ville, mot de passe) sur sa propre ligne — un tap
@@ -33,6 +34,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     with FormErrorHandler {
   Future<void> _pickAvatar() async {
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       // Le serveur refuse au-delà de 5 Mo : on redimensionne à la source
@@ -70,6 +72,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
   }
 
   Future<void> _removeAvatar() async {
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     try {
       await runGuarded(
         () => ref.read(authProvider.notifier).removeAvatar(),
@@ -92,7 +95,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(LucideIcons.image, color: AppColors.ink),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryTint,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(LucideIcons.image, color: AppColors.primary, size: 20),
+                ),
                 title: Text(t.editProfilePhotoChange,
                     style: AppTextStyles.bodyMedium()),
                 onTap: () {

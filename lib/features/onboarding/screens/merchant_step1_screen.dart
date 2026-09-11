@@ -378,15 +378,15 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
         borderRadius: Rd.input,
         borderSide: BorderSide(color: AppColors.border, width: 1.5),
       ),
-      focusedBorder: OutlineInputBorder(
+      focusedBorder: const OutlineInputBorder(
         borderRadius: Rd.input,
         borderSide: BorderSide(color: AppColors.merchant, width: 2),
       ),
-      errorBorder: OutlineInputBorder(
+      errorBorder: const OutlineInputBorder(
         borderRadius: Rd.input,
         borderSide: BorderSide(color: AppColors.danger, width: 1.5),
       ),
-      focusedErrorBorder: OutlineInputBorder(
+      focusedErrorBorder: const OutlineInputBorder(
         borderRadius: Rd.input,
         borderSide: BorderSide(color: AppColors.danger, width: 2),
       ),

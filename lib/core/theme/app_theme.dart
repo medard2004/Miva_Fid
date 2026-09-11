@@ -82,7 +82,7 @@ class AppTheme {
       listTileTheme: ListTileThemeData(
         iconColor: AppColors.gray500,
         textColor: AppColors.textPrimary,
-        contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 4),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.primary,
@@ -128,15 +128,15 @@ class AppTheme {
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
-        errorBorder: OutlineInputBorder(
+        errorBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.danger, width: 1.5),
         ),
-        focusedErrorBorder: OutlineInputBorder(
+        focusedErrorBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.danger, width: 2),
         ),
