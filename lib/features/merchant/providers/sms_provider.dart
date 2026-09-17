@@ -143,6 +143,22 @@ class SmsNotifier extends _$SmsNotifier {
       rethrow;
     }
   }
+
+  /// Supprime définitivement une campagne.
+  Future<void> deleteCampaign(String campaignId) async {
+    final previous = state;
+    state = AsyncData([
+      for (final c in state.value ?? const [])
+        if (c.id != campaignId) c,
+    ]);
+    try {
+      await ref.read(merchantDashboardServiceProvider).deleteCampaign(campaignId);
+      ref.invalidate(archivedCampaignsProvider);
+    } catch (e) {
+      state = previous;
+      rethrow;
+    }
+  }
 }
 
 @riverpod

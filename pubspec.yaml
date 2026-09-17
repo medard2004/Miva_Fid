@@ -81,6 +81,7 @@ dependencies:
 
   # Splash screen (runtime preserve/remove API, used in main.dart)
   flutter_native_splash: ^2.4.7
+  omni_datetime_picker: ^2.3.2
 
 dev_dependencies:
   flutter_test:

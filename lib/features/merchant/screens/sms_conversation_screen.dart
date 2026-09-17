@@ -84,55 +84,22 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── TOP HEADER ──────────────────────────────────────────────
+            // ── TOP HEADER (WHATSAPP-STYLE WITH AVATAR) ──────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
               child: Row(
                 children: [
                   IconButton(
                     icon: Icon(
-                      LucideIcons.chevronLeft,
+                      LucideIcons.arrowLeft,
                       color: AppColors.textPrimary,
                       size: 22,
                     ),
                     onPressed: () => context.pop(),
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.clientName,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          widget.clientPhone,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── TOP AVATAR & LABEL ───────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Column(
-                children: [
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 38,
+                    height: 38,
                     decoration: const BoxDecoration(
                       color: Color(0xFF6366F1),
                       shape: BoxShape.circle,
@@ -142,31 +109,49 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                         widget.clientInitials,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    t.merchantSmsConversationLabel,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.clientName,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          widget.clientPhone,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+            Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
 
             // ── MESSAGES LIST ────────────────────────────────────────────
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: _messages.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
                   if (msg.isMerchant) {
@@ -177,14 +162,14 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                           maxWidth: MediaQuery.of(context).size.width * 0.78,
                         ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                            horizontal: 14, vertical: 10),
                         decoration: const BoxDecoration(
                           color: Color(0xFF5B50EC),
                           borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(6),
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                            bottomLeft: Radius.circular(16),
+                            bottomRight: Radius.circular(4),
                           ),
                         ),
                         child: Column(
@@ -195,7 +180,7 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13.5,
-                                height: 1.4,
+                                height: 1.35,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -204,7 +189,7 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                               msg.time,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.75),
-                                fontSize: 10.5,
+                                fontSize: 10,
                               ),
                             ),
                           ],
@@ -219,23 +204,15 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                           maxWidth: MediaQuery.of(context).size.width * 0.78,
                         ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                            horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
                           borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                            bottomLeft: Radius.circular(6),
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                            bottomRight: Radius.circular(16),
+                            bottomLeft: Radius.circular(4),
                           ),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,7 +222,7 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                               style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 13.5,
-                                height: 1.4,
+                                height: 1.35,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -254,7 +231,7 @@ class _SmsConversationScreenState extends ConsumerState<SmsConversationScreen> {
                               msg.time,
                               style: TextStyle(
                                 color: AppColors.textSecondary,
-                                fontSize: 10.5,
+                                fontSize: 10,
                               ),
                             ),
                           ],
