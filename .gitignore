@@ -21,6 +21,7 @@ build/
 # Android
 android/local.properties
 android/.gradle/
+android/.kotlin/
 android/app/.gradle/
 android/captures/
 android/gradlew

@@ -76,11 +76,12 @@ class _SmsCampaignDetailScreenState
         _loading = false;
       });
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = '$e';
           _loading = false;
         });
+      }
     }
   }
 

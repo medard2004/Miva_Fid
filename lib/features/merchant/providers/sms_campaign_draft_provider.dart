@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../models/campaign_model.dart';
 import '../../../models/campaign_recipient_model.dart';
@@ -59,7 +61,6 @@ enum CampaignType {
     this.icon,
     this.color,
   );
-
   final String value;
   final String label;
   final String emoji;

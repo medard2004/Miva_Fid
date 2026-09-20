@@ -650,9 +650,9 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Row(
+                            const Row(
                               children: [
-                                const Text(
+                                Text(
                                   'Taper pour voir',
                                   style: TextStyle(
                                     color: Color(0xFF5B50EC),
@@ -660,8 +660,8 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                const SizedBox(width: 3),
-                                const Icon(
+                                SizedBox(width: 3),
+                                Icon(
                                   LucideIcons.chevronRight,
                                   size: 13,
                                   color: Color(0xFF5B50EC),
