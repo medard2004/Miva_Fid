@@ -32,7 +32,6 @@ class MerchantAuthScreen extends ConsumerStatefulWidget {
 class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = false; // false = Inscription, true = Connexion
-  bool _loginAsStaff = false; // uniquement pertinent quand _isLogin == true
   bool _loading = false;
   bool _acceptedTerms = false;
   bool _showTermsError = false;
@@ -139,10 +138,8 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
 
     try {
       if (_isLogin) {
-        // --- CONNEXION ---
-        final ok = _loginAsStaff
-            ? await ref.read(merchantAuthProvider.notifier).staffLogin(email, password)
-            : await ref.read(merchantAuthProvider.notifier).login(email, password);
+        // --- CONNEXION (Admin & Opérateur vérifiés dynamiquement) ---
+        final ok = await ref.read(merchantAuthProvider.notifier).login(email, password);
 
         if (!mounted) return;
 
@@ -341,38 +338,6 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   ),
                 ).animate().fadeIn(duration: 400.ms),
 
-                if (_isLogin) ...[
-                  const SizedBox(height: Sp.sm),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => setState(() => _loginAsStaff = false),
-                          style: TextButton.styleFrom(
-                            foregroundColor: !_loginAsStaff ? AppColors.merchant : AppColors.textSecondary,
-                          ),
-                          child: Text(
-                            'Administrateur',
-                            style: TextStyle(fontWeight: !_loginAsStaff ? FontWeight.bold : FontWeight.normal),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => setState(() => _loginAsStaff = true),
-                          style: TextButton.styleFrom(
-                            foregroundColor: _loginAsStaff ? AppColors.merchant : AppColors.textSecondary,
-                          ),
-                          child: Text(
-                            'Opérateur',
-                            style: TextStyle(fontWeight: _loginAsStaff ? FontWeight.bold : FontWeight.normal),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
                 const SizedBox(height: Sp.xl),
 
                 // 4. Form Fields
@@ -429,12 +394,8 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                 if (!_isLogin)
                   PasswordRulesChecklist(password: _passwordCtrl.text),
 
-                // "Mot de passe oublié" for login — le flux `/auth/forgot-password`
-                // réinitialise le mot de passe du compte Restaurant, pas celui
-                // d'un `StaffUser` : un opérateur qui l'emprunterait se
-                // retrouverait à réinitialiser un mot de passe qui n'est pas le
-                // sien. Un opérateur doit passer par son administrateur.
-                if (_isLogin && !_loginAsStaff) ...[
+                // "Mot de passe oublié" for login
+                if (_isLogin) ...[
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -590,7 +551,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                           fontSize: 11.5,
                         ),
                         children: [
-                          TextSpan(text: 'En continuant, vous acceptez les '),
+                          const TextSpan(text: 'En continuant, vous acceptez les '),
                           TextSpan(
                             text: 'CGU',
                             style: TextStyle(
@@ -600,7 +561,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                             ),
                             recognizer: _termsTap,
                           ),
-                          TextSpan(text: ' et la '),
+                          const TextSpan(text: ' et la '),
                           TextSpan(
                             text: 'politique de confidentialité',
                             style: TextStyle(
@@ -610,7 +571,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                             ),
                             recognizer: _privacyTap,
                           ),
-                          TextSpan(text: '.'),
+                          const TextSpan(text: '.'),
                         ],
                       ),
                     ),

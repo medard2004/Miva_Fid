@@ -315,7 +315,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(
+        const _SectionTitle(
           title: 'CONFIGURATION TAMPONS',
           badgeText: 'Simple & Populaire',
         ),
@@ -426,7 +426,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(
+        const _SectionTitle(
           title: 'CONFIGURATION ACHATS PAR POINTS',
           badgeText: 'Paniers variables',
         ),
@@ -559,7 +559,7 @@ class _MerchantStep2ScreenState extends ConsumerState<MerchantStep2Screen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(
+        const _SectionTitle(
           title: 'CONFIGURATION DU CASHBACK',
           badgeText: 'Cagnotte en %',
         ),
@@ -736,7 +736,7 @@ class _ExplanationCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.merchant,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,

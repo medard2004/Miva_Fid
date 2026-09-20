@@ -50,7 +50,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       if (mounted) {
         Navigator.of(context).pop();
       }
-    } on DioException catch (e) {
+    } on DioException {
       ToastService.showError("Erreur lors de l'envoi de l'avis.");
     } finally {
       if (mounted) {
@@ -71,7 +71,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppDetailBar(title: 'Noter cet établissement'),
+      appBar: const AppDetailBar(title: 'Noter cet établissement'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -89,7 +89,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     shape: BoxShape.circle,
                     color: AppColors.primaryTint,
                   ),
-                  child: Center(
+                  child: const Center(
                     child: Icon(
                       LucideIcons.star,
                       size: 40,
@@ -174,7 +174,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.input),
-                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
                   ),
                 ),
               ),

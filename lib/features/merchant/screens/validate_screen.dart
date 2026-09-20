@@ -18,6 +18,7 @@ import '../widgets/reward_redeem_sheet.dart';
 import '../widgets/validation_success_overlay.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../../core/constants/reward_qr.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 
 class ValidateScreen extends ConsumerStatefulWidget {
   const ValidateScreen({super.key});
@@ -75,6 +76,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   Future<void> _onQrDetected(BarcodeCapture capture) async {
     if (_processing) return;
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour scanner et valider un client.',
+    )) {
+      return;
+    }
     final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
     if (raw == null || raw.isEmpty) {
       ToastService.showError(AppLocalizations.of(context)!.merchantValidateQrInvalid);
@@ -182,6 +190,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   }
 
   Future<void> _confirmRewardRedeem(MerchantReward reward) async {
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour valider une récompense.',
+    )) {
+      return;
+    }
     final sheetNavigator = Navigator.of(context);
     try {
       await ref
@@ -257,6 +272,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   }
 
   Future<void> _validateStamp(LoyaltyCardModel card, [double? amount]) async {
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour valider.',
+    )) {
+      return;
+    }
     final sheetNavigator = Navigator.of(context);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     try {
@@ -344,6 +366,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   Future<void> _searchClientByIdentifier() async {
     final query = _identifierCtrl.text.trim();
     if (query.isEmpty) return;
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour rechercher un client.',
+    )) {
+      return;
+    }
     await _lookupAndShowSheet(query);
   }
 
@@ -357,7 +386,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     );
     if (!confirmed) return;
     await ref.read(merchantAuthProvider.notifier).signOut();
-    if (context.mounted) context.go('/auth/merchant/auth');
+    if (mounted) context.go('/auth/merchant/auth');
   }
 
   @override
@@ -404,18 +433,24 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                       ),
                     ),
                   ),
-                  if (!isAdmin)
+                  if (!isAdmin) ...[
                     PopupMenuButton<String>(
-                      icon: Icon(
-                        LucideIcons.userCircle,
-                        size: 20,
-                        color: AppColors.textPrimary,
+                      icon: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Icon(
+                          LucideIcons.user,
+                          size: 18,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                       onSelected: (value) {
                         switch (value) {
-                          case 'profile':
-                            context.push('/merchant/more/profile');
-                            break;
                           case 'change-password':
                             context.push('/merchant/more/change-password');
                             break;
@@ -428,63 +463,82 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                         if (staffName != null && staffName.isNotEmpty)
                           PopupMenuItem<String>(
                             enabled: false,
-                            child: Text(
-                              staffName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
+                            child: Row(
+                              children: [
+                                const Icon(LucideIcons.badgeCheck, size: 16, color: AppColors.merchant),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    staffName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        const PopupMenuItem<String>(
-                          value: 'profile',
-                          child: Text('Mon profil'),
-                        ),
-                        const PopupMenuItem<String>(
+                        PopupMenuItem<String>(
                           value: 'change-password',
-                          child: Text('Changer mon mot de passe'),
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.keyRound, size: 16, color: AppColors.textSecondary),
+                              const SizedBox(width: 8),
+                              const Text('Changer mon mot de passe'),
+                            ],
+                          ),
                         ),
                         const PopupMenuItem<String>(
                           value: 'sign-out',
-                          child: Text('Se déconnecter'),
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.logOut, size: 16, color: AppColors.danger),
+                              SizedBox(width: 8),
+                              Text('Se déconnecter', style: TextStyle(color: AppColors.danger)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  InkWell(
-                    onTap: () => context.push('/merchant/more/notifications'),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Icon(
-                            LucideIcons.bell,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: AppColors.warning,
-                              shape: BoxShape.circle,
+                  ],
+                  if (isAdmin)
+                    InkWell(
+                      onTap: () => context.push('/merchant/more/notifications'),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Icon(
+                              LucideIcons.bell,
+                              size: 18,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: AppColors.warning,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

@@ -4,7 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -93,10 +92,10 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                     ),
                     const SizedBox(height: Sp.lg),
                     const LoyaltyCardPreview(previewStamps: 4),
-                    const SizedBox(height: Sp.xl),
+                    const SizedBox(height: Sp.lg),
 
                     Center(child: _buildLogoPicker(state)),
-                    const SizedBox(height: Sp.xl),
+                    const SizedBox(height: Sp.lg),
 
                     Text('Style de la carte', style: AppTextStyles.h3()),
                     const SizedBox(height: Sp.md),
@@ -110,29 +109,42 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
 
                     Text('Motif de fond', style: AppTextStyles.labelBold()),
                     const SizedBox(height: Sp.sm),
-                    Wrap(
-                      spacing: Sp.xs,
-                      runSpacing: Sp.xs,
+                    Row(
                       children: [
-                        _buildSegmentButton(
-                          label: 'Aucun',
-                          isSelected: state.cardDecorationPattern == 'none',
-                          onTap: () => notifier.setCardDecorationPattern('none'),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Aucun',
+                            isSelected: state.cardDecorationPattern == 'none',
+                            onTap: () => notifier.setCardDecorationPattern('none'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: 'Traits',
-                          isSelected: state.cardDecorationPattern == 'lines',
-                          onTap: () => notifier.setCardDecorationPattern('lines'),
+                        const SizedBox(width: Sp.sm),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Traits',
+                            isSelected: state.cardDecorationPattern == 'lines',
+                            onTap: () => notifier.setCardDecorationPattern('lines'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: 'Vagues',
-                          isSelected: state.cardDecorationPattern == 'waves',
-                          onTap: () => notifier.setCardDecorationPattern('waves'),
+                      ],
+                    ),
+                    const SizedBox(height: Sp.xs),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Vagues',
+                            isSelected: state.cardDecorationPattern == 'waves',
+                            onTap: () => notifier.setCardDecorationPattern('waves'),
+                          ),
                         ),
-                        _buildSegmentButton(
-                          label: 'Points',
-                          isSelected: state.cardDecorationPattern == 'dots',
-                          onTap: () => notifier.setCardDecorationPattern('dots'),
+                        const SizedBox(width: Sp.sm),
+                        Expanded(
+                          child: _buildSegmentButton(
+                            label: 'Points',
+                            isSelected: state.cardDecorationPattern == 'dots',
+                            onTap: () => notifier.setCardDecorationPattern('dots'),
+                          ),
                         ),
                       ],
                     ),
@@ -233,26 +245,11 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                 Sp.md,
                 MediaQuery.of(context).padding.bottom + Sp.md,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: AppButton.ghost(
-                      'Retour',
-                      color: AppColors.merchant,
-                      onPressed: () => context.go('/auth/merchant/step2'),
-                    ),
-                  ),
-                  const SizedBox(width: Sp.sm),
-                  Expanded(
-                    flex: 2,
-                    child: AppButton.merchant(
-                      'Continuer',
-                      onPressed: () => context.go('/auth/merchant/review'),
-                      icon: LucideIcons.arrowRight,
-                      disabled: _uploadingLogo,
-                    ),
-                  ),
-                ],
+              child: AppButton.merchant(
+                'Continuer',
+                onPressed: () => context.go('/auth/merchant/review'),
+                icon: LucideIcons.arrowRight,
+                disabled: _uploadingLogo,
               ),
             ),
           ],
@@ -286,14 +283,26 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                       if (!hasLogo)
                         const Icon(LucideIcons.store, color: AppColors.merchant, size: 28)
                       else
-                        CachedNetworkImage(
-                          imageUrl: state.logoUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                          errorWidget: (context, url, error) => const Icon(Icons.error),
-                        ),
+                        Builder(builder: (_) {
+                          final url = state.logoUrl!;
+                          Widget fallback() => const Icon(LucideIcons.store, color: AppColors.merchant, size: 28);
+                          if (url.startsWith('http')) {
+                            return Image.network(
+                              url,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => fallback(),
+                            );
+                          }
+                          try {
+                            return Image.file(
+                              File(url),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => fallback(),
+                            );
+                          } catch (_) {
+                            return fallback();
+                          }
+                        }),
                       if (_uploadingLogo)
                         Container(
                           color: Colors.black.withValues(alpha: 0.35),
@@ -362,7 +371,7 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.merchant : Colors.white,
+          color: isSelected ? AppColors.merchant : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.merchant : AppColors.border,
@@ -405,47 +414,50 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Sp.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Choisir une icône', style: AppTextStyles.h3()),
-            const SizedBox(height: Sp.md),
-            Wrap(
-              spacing: Sp.sm,
-              runSpacing: Sp.sm,
-              children: _stampIconChoices.map((choice) {
-                final (name, icon) = choice;
-                final isSelected = name == currentIcon;
-                return GestureDetector(
-                  onTap: () {
-                    notifier.setStampIcon(name);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.merchant : AppColors.merchantTint,
-                      borderRadius: BorderRadius.circular(14),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Choisir une icône', style: AppTextStyles.h3()),
+              const SizedBox(height: Sp.md),
+              Wrap(
+                spacing: Sp.sm,
+                runSpacing: Sp.sm,
+                children: _stampIconChoices.map((choice) {
+                  final (name, icon) = choice;
+                  final isSelected = name == currentIcon;
+                  return GestureDetector(
+                    onTap: () {
+                      notifier.setStampIcon(name);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.merchant : AppColors.merchantTint,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: isSelected ? Colors.white : AppColors.merchant,
+                        size: 24,
+                      ),
                     ),
-                    child: Icon(
-                      icon,
-                      color: isSelected ? Colors.white : AppColors.merchant,
-                      size: 24,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
-          ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
+            ],
+          ),
         ),
       ),
     );
@@ -458,47 +470,50 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Sp.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Choisir un emoji', style: AppTextStyles.h3()),
-            const SizedBox(height: Sp.md),
-            Wrap(
-              spacing: Sp.sm,
-              runSpacing: Sp.sm,
-              children: _stampEmojiChoices.map((emoji) {
-                final isSelected = emoji == currentEmoji;
-                return GestureDetector(
-                  onTap: () {
-                    notifier.setStampEmoji(emoji);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.merchantTint : Colors.transparent,
-                      border: Border.all(
-                        color: isSelected ? AppColors.merchant : AppColors.border,
-                        width: 1.5,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Choisir un emoji', style: AppTextStyles.h3()),
+              const SizedBox(height: Sp.md),
+              Wrap(
+                spacing: Sp.sm,
+                runSpacing: Sp.sm,
+                children: _stampEmojiChoices.map((emoji) {
+                  final isSelected = emoji == currentEmoji;
+                  return GestureDetector(
+                    onTap: () {
+                      notifier.setStampEmoji(emoji);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.merchantTint : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected ? AppColors.merchant : AppColors.border,
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      borderRadius: BorderRadius.circular(14),
+                      child: Text(emoji, style: const TextStyle(fontSize: 24)),
                     ),
-                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
-                  ),
-                );
-              }).toList(),
-            ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
-          ],
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + Sp.sm),
+            ],
+          ),
         ),
       ),
     );

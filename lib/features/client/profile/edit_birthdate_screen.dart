@@ -11,6 +11,7 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 
 /// Édition de la date de naissance, atteinte en tapant sur la ligne
 /// correspondante dans [EditProfileScreen].
@@ -36,6 +37,7 @@ class _EditBirthDateScreenState extends ConsumerState<EditBirthDateScreen>
 
   Future<void> _save() async {
     clearAllFieldErrors();
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     final t = AppLocalizations.of(context)!;
     try {
       await runGuarded(

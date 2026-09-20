@@ -17,6 +17,7 @@ import '../repositories/loyalty_card_repository.dart';
 import '../repositories/loyalty_reward_repository.dart';
 import '../repositories/referral_repository.dart';
 import '../repositories/notification_repository.dart';
+import '../../cache/offline_cache_service.dart';
 
 /// Compteur incrémenté chaque fois que le serveur rejette le token (401).
 ///
@@ -81,13 +82,15 @@ final merchantAuthServiceProvider = Provider<MerchantAuthService>((ref) {
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final authService = ref.watch(authServiceProvider);
   final tokenStorage = ref.watch(tokenStorageProvider);
-  return AuthRepository(authService, tokenStorage);
+  final cache = ref.watch(offlineCacheServiceProvider);
+  return AuthRepository(authService, tokenStorage, cache);
 });
 
 final merchantAuthRepositoryProvider = Provider<MerchantAuthRepository>((ref) {
   final authService = ref.watch(merchantAuthServiceProvider);
   final tokenStorage = ref.watch(merchantTokenStorageProvider);
-  return MerchantAuthRepository(authService, tokenStorage);
+  final cache = ref.watch(offlineCacheServiceProvider);
+  return MerchantAuthRepository(authService, tokenStorage, cache);
 });
 
 final merchantDashboardServiceProvider =
@@ -108,7 +111,8 @@ final loyaltyCardServiceProvider = Provider<LoyaltyCardService>((ref) {
 
 final loyaltyCardRepositoryProvider = Provider<LoyaltyCardRepository>((ref) {
   final service = ref.watch(loyaltyCardServiceProvider);
-  return LoyaltyCardRepository(service);
+  final cache = ref.watch(offlineCacheServiceProvider);
+  return LoyaltyCardRepository(service, cache);
 });
 
 final loyaltyRewardServiceProvider = Provider<LoyaltyRewardService>((ref) {
@@ -118,7 +122,8 @@ final loyaltyRewardServiceProvider = Provider<LoyaltyRewardService>((ref) {
 
 final loyaltyRewardRepositoryProvider = Provider<LoyaltyRewardRepository>((ref) {
   final service = ref.watch(loyaltyRewardServiceProvider);
-  return LoyaltyRewardRepository(service);
+  final cache = ref.watch(offlineCacheServiceProvider);
+  return LoyaltyRewardRepository(service, cache);
 });
 
 final referralServiceProvider = Provider<ReferralService>((ref) {

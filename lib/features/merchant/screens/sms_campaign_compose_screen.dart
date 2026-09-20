@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../models/campaign_model.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 import '../providers/sms_campaign_draft_provider.dart';
 
 /// Étape 2 du wizard de campagne SMS : composer le message, programmer en
@@ -54,6 +55,13 @@ class _SmsCampaignComposeScreenState
   }
 
   Future<void> _send() async {
+    if (!OfflineActionGuard.checkCanPerform(
+      context,
+      ref,
+      message: 'Connexion Internet requise pour envoyer ou programmer une campagne SMS.',
+    )) {
+      return;
+    }
     final draft = ref.read(smsCampaignDraftProvider(widget.editingCampaign));
     final isEditing = widget.editingCampaign != null;
     if (draft.message.trim().isEmpty) {

@@ -112,7 +112,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding:
-                      const EdgeInsets.fromLTRB(20, 16, 20, 80),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

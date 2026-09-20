@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miva_fid/core/widgets/offline_banner.dart';
 import 'package:miva_fid/features/client/core/router/tab_transition_direction.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'bottom_nav_bar.dart';
 
-const _shellRoutes = [
-  '/client/wallet',
-  '/client/rewards',
-  '/client/referral',
-  '/client/settings',
-];
+const _shellRoutes = ['/client/wallet', '/client/rewards', '/client/referral', '/client/profile'];
 
 /// Coquille avec bottom tab bar. Le device frame desktop (fond neutre
 /// assombri) est appliqué ici pour détacher l'app du chrome du navigateur
@@ -39,24 +35,21 @@ class AppShell extends ConsumerWidget {
 
     final scaffold = Scaffold(
       backgroundColor: AppColors.surface,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: SafeArea(bottom: false, child: child),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: AppBottomNavBar(
-              currentIndex: currentIndex,
-              onTap: (i) {
-                tabSlideDirection = i >= currentIndex ? 1 : -1;
-                context.go(_shellRoutes[i]);
-              },
-            ),
-          ),
-        ],
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+      bottomNavigationBar: AppBottomNavBar(
+        currentIndex: currentIndex,
+        onTap: (i) {
+          tabSlideDirection = i >= currentIndex ? 1 : -1;
+          context.go(_shellRoutes[i]);
+        },
       ),
     );
 

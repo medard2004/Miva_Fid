@@ -150,4 +150,45 @@ class RestaurantAccount {
       staffRole: (json['actor'] as Map?)?['role'] as String? ?? 'admin',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'uuid': uuid,
+        'name': name,
+        'category': category,
+        'email': email,
+        'phone': phone,
+        'address': address,
+        'city': city,
+        'country': country,
+        'description': description,
+        'logo_url': logoUrl,
+        'whatsapp': whatsapp,
+        'instagram': instagram,
+        'facebook': facebook,
+        'tiktok': tiktok,
+        'qr_token': qrToken,
+        'short_code': shortCode,
+        'latitude': latitude,
+        'longitude': longitude,
+        'has_business_info': hasBusinessInfo,
+        'has_location': hasLocation,
+        'opening_hours': openingHours,
+        'has_loyalty_program': hasLoyaltyProgram,
+        'loyalty_program': loyaltyType != null
+            ? {
+                'type': loyaltyType,
+                'config': loyaltyConfig,
+              }
+            : null,
+        'plan': plan,
+        'sms_credits': smsCredits,
+        'notification_preferences': notificationPreferences,
+        'actor': {
+          'type': actorType,
+          'name': staffName,
+          'role': staffRole,
+        },
+      };
 }
+

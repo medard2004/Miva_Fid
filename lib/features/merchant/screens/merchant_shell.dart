@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/offline_banner.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_ui_provider.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -79,7 +80,15 @@ class MerchantShell extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: navigationShell,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(child: navigationShell),
+          ],
+        ),
+      ),
       bottomNavigationBar: (hideNav || !isAdmin)
           ? const SizedBox.shrink()
           : Container(

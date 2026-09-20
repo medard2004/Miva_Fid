@@ -29,7 +29,7 @@ void main() {
     tester.view.physicalSize = const Size(1200, 2600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    final account = const RestaurantAccount(
+    const account = RestaurantAccount(
       id: '1',
       uuid: 'u1',
       name: 'Chez Toto',

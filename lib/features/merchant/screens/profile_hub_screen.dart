@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
-import '../providers/merchant_provider.dart';
 
 class ProfileHubScreen extends ConsumerWidget {
   const ProfileHubScreen({super.key});
@@ -15,13 +14,6 @@ class ProfileHubScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
-    final merchant = ref.watch(merchantNotifierProvider).value;
-    final merchantName = merchant?.name.isNotEmpty == true
-        ? merchant!.name
-        : 'Restaurant La Saveur';
-    final city = merchant?.address?.isNotEmpty == true ? 'Lomé' : 'Lomé';
-    final category = 'Restaurant';
-    final initials = merchant?.initials ?? 'RL';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -141,11 +133,6 @@ class ProfileHubScreen extends ConsumerWidget {
                   icon: LucideIcons.qrCode,
                   label: t.merchantMoreMyQrCode,
                   onTap: () => context.push('/merchant/more/account/qrcode'),
-                ),
-                _buildMenuItem(
-                  icon: LucideIcons.globe,
-                  label: t.merchantMoreMyShowcase,
-                  onTap: () => context.push('/merchant/more/account/vitrine'),
                 ),
               ]),
             ],

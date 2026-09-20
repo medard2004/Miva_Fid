@@ -12,6 +12,7 @@ import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/country_picker_field.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 
 /// Champ du profil modifiable via [EditFieldScreen] — chacun redirige vers
 /// son propre écran plutôt que de partager un formulaire unique.
@@ -74,6 +75,7 @@ class _EditFieldScreenState extends ConsumerState<EditFieldScreen>
   Future<void> _save() async {
     FocusScope.of(context).unfocus();
     clearAllFieldErrors();
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final t = AppLocalizations.of(context)!;

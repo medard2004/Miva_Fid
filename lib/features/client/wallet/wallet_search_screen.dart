@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
-import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
@@ -64,90 +63,48 @@ class _WalletSearchScreenState extends ConsumerState<WalletSearchScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 16, 12),
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
               child: Row(
                 children: [
                   AppTapScale(
                     onTap: () => context.pop(),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted,
-                        borderRadius: BorderRadius.circular(11),
-                      ),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
                       child: Icon(LucideIcons.arrowLeft,
                           color: AppColors.ink, size: 20),
                     ),
                   ),
-                  const SizedBox(width: 12),
                   Expanded(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceCard,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: AppShadows.resting,
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          Icon(
-                            LucideIcons.search,
-                            size: 17,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              onChanged: (value) =>
-                                  setState(() => _query = value),
-                              textInputAction: TextInputAction.search,
-                              style: AppTextStyles.bodyLarge().copyWith(
-                                fontSize: 16,
-                                color: AppColors.ink,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: t.walletSearchHint,
-                                hintStyle: AppTextStyles.bodyMedium(
-                                  color: AppColors.inkMuted(opacity: 0.45),
-                                ).copyWith(fontSize: 15),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                focusedErrorBorder: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (_query.isNotEmpty)
-                            AppTapScale(
-                              onTap: () {
-                                _controller.clear();
-                                setState(() => _query = '');
-                                _focusNode.requestFocus();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(7),
-                                child: Icon(
-                                  LucideIcons.x,
-                                  color: AppColors.inkMuted(opacity: 0.7),
-                                  size: 16,
-                                ),
-                              ),
-                            )
-                          else
-                            const SizedBox(width: 9),
-                        ],
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      onChanged: (value) => setState(() => _query = value),
+                      textInputAction: TextInputAction.search,
+                      style: AppTextStyles.bodyLarge(),
+                      decoration: InputDecoration(
+                        hintText: t.walletSearchHint,
+                        hintStyle: AppTextStyles.bodyLarge(
+                            color: AppColors.inkMuted(opacity: 0.4)),
+                        border: InputBorder.none,
+                        isDense: true,
                       ),
                     ),
                   ),
+                  if (_query.isNotEmpty)
+                    AppTapScale(
+                      onTap: () {
+                        _controller.clear();
+                        setState(() => _query = '');
+                        _focusNode.requestFocus();
+                      },
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child:
+                            Icon(LucideIcons.x, color: AppColors.ink, size: 18),
+                      ),
+                    ),
                 ],
               ),
             ),

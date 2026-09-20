@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/api/repositories/auth_repository.dart';
+import 'package:miva_fid/core/services/connectivity_service.dart';
 import 'package:miva_fid/core/services/realtime_service.dart';
 import 'package:miva_fid/core/utils/toast_service.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
@@ -31,6 +32,15 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
     _reconnectSub = RealtimeService.instance.onReconnected.listen((_) {
       _loadMineWithRetry();
     });
+
+    // Reconnexion réseau : rafraîchissement transparent des récompenses
+    _ref.listen<ConnectivityStatus>(connectivityStatusProvider, (previous, next) {
+      if (previous == ConnectivityStatus.offline && next == ConnectivityStatus.online) {
+        if (_ref.read(authProvider).isAuthenticated) {
+          _loadMineWithRetry();
+        }
+      }
+    });
   }
 
   final Ref _ref;
@@ -39,9 +49,18 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
+      _loadFromCache();
       _loadMineWithRetry();
     } else if (previous?.isAuthenticated == true && !next.isAuthenticated) {
       state = const [];
+    }
+  }
+
+  Future<void> _loadFromCache() async {
+    final cached =
+        await _ref.read(loyaltyRewardRepositoryProvider).listFromCache();
+    if (cached.isNotEmpty && state.isEmpty) {
+      state = cached;
     }
   }
 

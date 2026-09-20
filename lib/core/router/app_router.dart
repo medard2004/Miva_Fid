@@ -22,7 +22,6 @@ import '../../features/client/wallet/wallet_dashboard_screen.dart';
 import '../../features/client/wallet/wallet_search_screen.dart';
 import '../../features/client/card_detail/card_detail_screen.dart';
 import '../../features/client/card_detail/card_unlocked_rewards_screen.dart';
-import '../../features/client/card_detail/merchant_map_screen.dart';
 import '../../features/client/rewards/rewards_screen.dart';
 import '../../features/client/campaign/campaign_detail_screen.dart';
 import '../../features/client/campaign/review_screen.dart';
@@ -244,11 +243,13 @@ GoRouter appRouter(AppRouterRef ref) {
         // sans eux, le menu compte de l'opérateur sur `/merchant/validate`
         // mènerait à des routes aussitôt renvoyées ici.
         final isAdmin = ref.read(isAdminProvider);
-        final isOperatorReachable = location.startsWith('/merchant/validate') ||
+        final isOperatorReachable = location == '/merchant' ||
+            location == '/merchant/validate' ||
+            location.startsWith('/merchant/validate') ||
             location == '/merchant/more/change-password' ||
             location == '/merchant/more/profile';
         if (!isAdmin && !isOperatorReachable) {
-          return '/merchant/validate';
+          return '/merchant';
         }
 
         return null;
@@ -302,8 +303,7 @@ GoRouter appRouter(AppRouterRef ref) {
       // passer la réinitialisation de mot de passe, légitime en session.
       if (isAuthOnlyEntryScreen &&
           location != '/client/reset-password' &&
-          location != '/client/otp' &&
-          location != '/client/forgot-password') {
+          location != '/client/otp') {
         return '/client/wallet';
       }
 
@@ -466,11 +466,6 @@ GoRouter appRouter(AppRouterRef ref) {
             path: '/client/profile',
             pageBuilder: (_, state) => _clientTabFadePage(state, const ProfileScreen()),
           ),
-          GoRoute(
-            path: '/client/settings',
-            pageBuilder: (_, state) =>
-                _clientTabFadePage(state, const client_settings.SettingsScreen()),
-          ),
         ],
       ),
 
@@ -508,20 +503,6 @@ GoRouter appRouter(AppRouterRef ref) {
         pageBuilder: (_, state) {
           final id = state.pathParameters['id']!;
           return _slide(CardUnlockedRewardsScreen(cardId: id));
-        },
-      ),
-
-      GoRoute(
-        path: '/client/card/:id/map',
-        builder: (_, state) {
-          final extra = state.extra;
-          final args = extra is MerchantMapArguments ? extra : null;
-          return MerchantMapScreen(
-            merchantName: args?.merchantName ?? 'Établissement',
-            address: args?.address ?? '',
-            latitude: args?.latitude,
-            longitude: args?.longitude,
-          );
         },
       ),
 
@@ -605,6 +586,11 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/client/notifications',
         builder: (_, __) => const NotificationsScreen(),
       ),
+      GoRoute(
+        path: '/client/settings',
+        builder: (_, __) => const client_settings.SettingsScreen(),
+      ),
+
       // Recherche du Wallet — glisse depuis le bas.
       GoRoute(
         path: '/client/wallet/search',

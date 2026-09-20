@@ -2,13 +2,16 @@ import 'dart:async';
 import 'dart:io';
 import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
+import '../core/api_exceptions.dart';
+import '../../cache/offline_cache_service.dart';
 import '../../../features/client/models/user.dart';
 
 class AuthRepository {
   final AuthService _authService;
   final TokenStorageBase _tokenStorage;
+  final OfflineCacheService? _cache;
 
-  AuthRepository(this._authService, this._tokenStorage);
+  AuthRepository(this._authService, this._tokenStorage, [this._cache]);
 
   Future<AppUser> login(String phone, String password) async {
     final response = await _authService.login(phone, password);
@@ -16,7 +19,11 @@ class AuthRepository {
     if (token != null) {
       await _tokenStorage.saveToken(token);
     }
-    return AppUser.fromJson(response['client'] ?? {});
+    final clientData = response['client'] ?? {};
+    if (clientData is Map<String, dynamic>) {
+      await _cache?.saveClientUser(clientData);
+    }
+    return AppUser.fromJson(clientData);
   }
 
   Future<AppUser> register(Map<String, dynamic> data) async {
@@ -25,7 +32,11 @@ class AuthRepository {
     if (token != null) {
       await _tokenStorage.saveToken(token);
     }
-    return AppUser.fromJson(response['client'] ?? {});
+    final clientData = response['client'] ?? {};
+    if (clientData is Map<String, dynamic>) {
+      await _cache?.saveClientUser(clientData);
+    }
+    return AppUser.fromJson(clientData);
   }
 
   Future<Map<String, dynamic>> socialLogin(String provider, String idToken,
@@ -36,16 +47,23 @@ class AuthRepository {
     if (token != null) {
       await _tokenStorage.saveToken(token);
     }
+    final clientData = response['client'] ?? {};
+    if (clientData is Map<String, dynamic>) {
+      await _cache?.saveClientUser(clientData);
+    }
     return {
-      'client': AppUser.fromJson(response['client'] ?? {}),
+      'client': AppUser.fromJson(clientData),
       'needs_profile_completion': response['needs_profile_completion'] ?? false,
     };
   }
 
   Future<AppUser> completeSocialProfile(Map<String, dynamic> data) async {
     final response = await _authService.completeSocialProfile(data);
-    // The backend might return a new token or just the updated client
-    return AppUser.fromJson(response['client'] ?? {});
+    final clientData = response['client'] ?? {};
+    if (clientData is Map<String, dynamic>) {
+      await _cache?.saveClientUser(clientData);
+    }
+    return AppUser.fromJson(clientData);
   }
 
   Future<bool> validateRegisterStep1(Map<String, dynamic> data) async {
@@ -54,8 +72,22 @@ class AuthRepository {
   }
 
   Future<AppUser> getMe() async {
-    final response = await _authService.getMe();
-    return AppUser.fromJson(response['client'] ?? {});
+    try {
+      final response = await _authService.getMe();
+      final clientData = response['client'] ?? {};
+      if (clientData is Map<String, dynamic>) {
+        await _cache?.saveClientUser(clientData);
+      }
+      return AppUser.fromJson(clientData);
+    } catch (e) {
+      if (e is! UnauthorizedException && _cache != null) {
+        final cached = await _cache.getClientUser();
+        if (cached != null) {
+          return AppUser.fromJson(cached);
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<void> logout() async {
@@ -66,14 +98,7 @@ class AuthRepository {
       }
     } finally {
       await _tokenStorage.deleteToken();
-      // Ne pas réactiver tout de suite : une requête déjà en vol au moment
-      // de la déconnexion (rafraîchissement wallet, heartbeat realtime...)
-      // peut recevoir son 401 quelques centaines de ms après que ce
-      // `logout()` a lui-même abouti — sans ce délai, `suppressUnauthorized`
-      // redevient `false` juste avant l'arrivée de ce 401 tardif, qui
-      // déclenche alors à tort le toast "session expirée" en pleine
-      // déconnexion volontaire. `unawaited` : ne fait pas attendre l'appelant
-      // (navigation vers l'écran de connexion immédiate).
+      await _cache?.clearClientData();
       unawaited(Future.delayed(const Duration(seconds: 2), () {
         _authService.suppressUnauthorized = false;
       }));
@@ -104,17 +129,29 @@ class AuthRepository {
 
   Future<AppUser> updateProfile(Map<String, dynamic> data) async {
     final response = await _authService.updateProfile(data);
-    return AppUser.fromJson(response['client'] ?? {});
+    final clientData = response['client'] ?? {};
+    if (clientData is Map<String, dynamic>) {
+      await _cache?.saveClientUser(clientData);
+    }
+    return AppUser.fromJson(clientData);
   }
 
   Future<AppUser> uploadAvatar(File file) async {
     final response = await _authService.uploadAvatar(file);
-    return AppUser.fromJson(response['client'] ?? {});
+    final clientData = response['client'] ?? {};
+    if (clientData is Map<String, dynamic>) {
+      await _cache?.saveClientUser(clientData);
+    }
+    return AppUser.fromJson(clientData);
   }
 
   Future<AppUser> deleteAvatar() async {
     final response = await _authService.deleteAvatar();
-    return AppUser.fromJson(response['client'] ?? {});
+    final clientData = response['client'] ?? {};
+    if (clientData is Map<String, dynamic>) {
+      await _cache?.saveClientUser(clientData);
+    }
+    return AppUser.fromJson(clientData);
   }
 
   Future<bool> verifyPassword(String currentPassword) async {

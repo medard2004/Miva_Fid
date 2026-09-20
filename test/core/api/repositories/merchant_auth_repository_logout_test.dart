@@ -8,7 +8,7 @@ import 'package:miva_fid/core/api/storage/token_storage.dart';
 /// (ApiClient -> AuthInterceptor) doit être exercée par ce test. Mirror de
 /// `test/core/api/repositories/auth_repository_test.dart` (client).
 class _FakeMerchantAuthService extends MerchantAuthService {
-  _FakeMerchantAuthService(ApiClient apiClient) : super(apiClient);
+  _FakeMerchantAuthService(super.apiClient);
 
   @override
   Future<void> logout() async {}

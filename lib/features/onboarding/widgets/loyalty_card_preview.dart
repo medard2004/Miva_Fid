@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,9 +14,14 @@ import 'premium_card_surface.dart';
 import 'stamp_grid_widget_preview.dart';
 
 class LoyaltyCardPreview extends ConsumerWidget {
-  const LoyaltyCardPreview({super.key, this.previewStamps = 7});
+  const LoyaltyCardPreview({
+    super.key,
+    this.previewStamps = 7,
+    this.height = 148,
+  });
 
   final int previewStamps;
+  final double? height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,11 +33,15 @@ class LoyaltyCardPreview extends ConsumerWidget {
     final isStampsMode = state.loyaltyMode == 'stamps';
     // For stamps mode, calculate progress based on stampsRequired
     // For points mode, simulate 70% progress in preview
-    final currentPoints = (state.stampsRequired * 0.7).round();
-    final remainingPoints = state.stampsRequired - currentPoints;
-    final progress = isStampsMode
-        ? previewStamps / state.stampsRequired
-        : currentPoints / state.stampsRequired;
+    final totalStamps = state.stampsRequired > 0 ? state.stampsRequired : 10;
+    final currentPoints = (totalStamps * 0.7).round();
+    final remainingPoints = (totalStamps - currentPoints).clamp(0, totalStamps);
+    final double rawProgress = isStampsMode
+        ? previewStamps / totalStamps
+        : currentPoints / totalStamps;
+    final progress = (rawProgress.isNaN || rawProgress.isInfinite)
+        ? 0.0
+        : rawProgress.clamp(0.0, 1.0);
 
     // Gradient configuration
     final gradient = state.cardGradientType == 'radial'
@@ -49,7 +57,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
           );
 
     return PremiumCardSurface(
-      height: 148,
+      height: height,
       gradient: gradient,
       shadowColor: primary,
       child: Stack(
@@ -104,11 +112,7 @@ class LoyaltyCardPreview extends ConsumerWidget {
           ),
         ],
       ),
-    ).animate().scale(
-          begin: const Offset(0.98, 0.98),
-          end: const Offset(1.0, 1.0),
-          duration: 150.ms,
-        );
+    );
   }
 }
 
@@ -391,7 +395,7 @@ class _CardBottomGroup extends StatelessWidget {
           ClipRRect(
             borderRadius: Rd.pill,
             child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
+              value: progress.isNaN ? 0.0 : progress.clamp(0.0, 1.0),
               color: Colors.white,
               backgroundColor: Colors.white.withValues(alpha: 0.3),
               minHeight: 3,
@@ -418,7 +422,7 @@ class _CardPatternPainter extends CustomPainter {
 
     if (pattern == 'lines') {
       const step = 24.0;
-      for (double i = -size.height; i < size.width; i += step) {
+      for (double i = -size.height; i <= size.width + size.height; i += step) {
         canvas.drawLine(
           Offset(i, 0),
           Offset(i + size.height, size.height),
@@ -426,11 +430,12 @@ class _CardPatternPainter extends CustomPainter {
         );
       }
     } else if (pattern == 'waves') {
-      const step = 32.0;
-      for (double y = 8; y < size.height; y += step) {
+      const step = 28.0;
+      final yStart = (size.height % step) / 2;
+      for (double y = yStart; y <= size.height + step; y += step) {
         final path = Path()..moveTo(0, y);
-        for (double x = 0; x < size.width; x += 8) {
-          final dy = 5.0 * math.sin(x * 0.04);
+        for (double x = 0; x <= size.width + 16; x += 4) {
+          final dy = 4.5 * math.sin(x * 0.045);
           path.lineTo(x, y + dy);
         }
         canvas.drawPath(path, paint);
@@ -440,8 +445,10 @@ class _CardPatternPainter extends CustomPainter {
         ..color = color
         ..style = PaintingStyle.fill;
       const step = 14.0;
-      for (double x = step / 2; x < size.width; x += step) {
-        for (double y = step / 2; y < size.height; y += step) {
+      final xOffset = (size.width % step) / 2;
+      final yOffset = (size.height % step) / 2;
+      for (double x = xOffset; x <= size.width; x += step) {
+        for (double y = yOffset; y <= size.height; y += step) {
           canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
         }
       }

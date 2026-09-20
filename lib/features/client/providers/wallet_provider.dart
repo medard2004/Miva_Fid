@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/api/repositories/loyalty_card_repository.dart'
     show JoinCardResult;
+import 'package:miva_fid/core/services/connectivity_service.dart';
 import 'package:miva_fid/core/services/realtime_service.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
@@ -20,6 +21,15 @@ class WalletNotifier extends StateNotifier<List<LoyaltyCard>> {
     // tout le wallet (même principe que `RewardsNotifier`).
     _reconnectSub = RealtimeService.instance.onReconnected.listen((_) {
       loadMine().catchError((_) {});
+    });
+
+    // Reconnexion réseau : rafraîchissement transparent du wallet
+    _ref.listen<ConnectivityStatus>(connectivityStatusProvider, (previous, next) {
+      if (previous == ConnectivityStatus.offline && next == ConnectivityStatus.online) {
+        if (_ref.read(authProvider).isAuthenticated) {
+          loadMine().catchError((_) {});
+        }
+      }
     });
   }
 
@@ -57,6 +67,15 @@ class WalletNotifier extends StateNotifier<List<LoyaltyCard>> {
     _reconnectSub?.cancel();
     RealtimeService.instance.disconnect();
     super.dispose();
+  }
+
+  /// Charge immédiatement les cartes du cache local SQLite
+  Future<void> loadFromCache() async {
+    final cachedCards =
+        await _ref.read(loyaltyCardRepositoryProvider).listFromCache();
+    if (cachedCards.isNotEmpty && state.isEmpty) {
+      state = cachedCards;
+    }
   }
 
   /// Recharge le wallet depuis `GET /loyalty-cards` — appelé par

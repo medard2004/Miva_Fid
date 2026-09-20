@@ -134,7 +134,7 @@ class _CardPatternPainter extends CustomPainter {
 
     if (pattern == 'lines') {
       const step = 24.0;
-      for (double i = -size.height; i < size.width; i += step) {
+      for (double i = -size.height; i <= size.width + size.height; i += step) {
         canvas.drawLine(
           Offset(i, 0),
           Offset(i + size.height, size.height),
@@ -142,11 +142,12 @@ class _CardPatternPainter extends CustomPainter {
         );
       }
     } else if (pattern == 'waves') {
-      const step = 32.0;
-      for (double y = 8; y < size.height; y += step) {
+      const step = 28.0;
+      final yStart = (size.height % step) / 2;
+      for (double y = yStart; y <= size.height + step; y += step) {
         final path = Path()..moveTo(0, y);
-        for (double x = 0; x < size.width; x += 8) {
-          final dy = 5.0 * math.sin(x * 0.04);
+        for (double x = 0; x <= size.width + 16; x += 4) {
+          final dy = 4.5 * math.sin(x * 0.045);
           path.lineTo(x, y + dy);
         }
         canvas.drawPath(path, paint);
@@ -156,8 +157,10 @@ class _CardPatternPainter extends CustomPainter {
         ..color = color
         ..style = PaintingStyle.fill;
       const step = 14.0;
-      for (double x = step / 2; x < size.width; x += step) {
-        for (double y = step / 2; y < size.height; y += step) {
+      final xOffset = (size.width % step) / 2;
+      final yOffset = (size.height % step) / 2;
+      for (double x = xOffset; x <= size.width; x += step) {
+        for (double y = yOffset; y <= size.height; y += step) {
           canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
         }
       }

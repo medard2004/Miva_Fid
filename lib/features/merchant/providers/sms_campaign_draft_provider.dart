@@ -6,9 +6,6 @@ import '../../../models/campaign_model.dart';
 import '../../../models/campaign_recipient_model.dart';
 import 'sms_provider.dart';
 
-import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-
 /// Types de campagne supportés par le wizard.
 enum CampaignType {
   promotion(

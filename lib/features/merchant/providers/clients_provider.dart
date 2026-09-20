@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/cache/offline_cache_service.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../models/loyalty_card_model.dart';
 import 'dashboard_stats_provider.dart' show dashboardStatsProvider;
@@ -161,19 +162,48 @@ class ClientsNotifier extends _$ClientsNotifier {
       rewardSub.cancel();
     });
 
-    final page = await ref.read(merchantDashboardServiceProvider).clients(
-          search: _filter.search.isEmpty ? null : _filter.search,
-          inactiveDays: _filter.inactiveDays,
-          levelKey: _filter.levelKey,
-          minCycles: _filter.minCycles,
-          sort: _filter.sort.apiValue,
+    final cache = ref.read(offlineCacheServiceProvider);
+    try {
+      final page = await ref.read(merchantDashboardServiceProvider).clients(
+            search: _filter.search.isEmpty ? null : _filter.search,
+            inactiveDays: _filter.inactiveDays,
+            levelKey: _filter.levelKey,
+            minCycles: _filter.minCycles,
+            sort: _filter.sort.apiValue,
+          );
+      if (_filter.search.isEmpty &&
+          _filter.inactiveDays == null &&
+          _filter.levelKey == null &&
+          _filter.minCycles == null) {
+        await cache.saveMerchantClients({
+          'items': page.items,
+          'total': page.total,
+          'current_page': page.currentPage,
+          'last_page': page.lastPage,
+        });
+      }
+      return ClientsListState(
+        clients: page.items.map(LoyaltyCardModel.fromJson).toList(),
+        total: page.total,
+        currentPage: page.currentPage,
+        lastPage: page.lastPage,
+      );
+    } catch (e) {
+      final cached = await cache.getMerchantClients();
+      if (cached != null) {
+        final items = (cached['items'] as List?)
+                ?.map((i) => Map<String, dynamic>.from(i as Map))
+                .toList() ??
+            [];
+        return ClientsListState(
+          clients: items.map(LoyaltyCardModel.fromJson).toList(),
+          total: (cached['total'] as num?)?.toInt() ?? items.length,
+          currentPage: 1,
+          lastPage: 1,
         );
-    return ClientsListState(
-      clients: page.items.map(LoyaltyCardModel.fromJson).toList(),
-      total: page.total,
-      currentPage: page.currentPage,
-      lastPage: page.lastPage,
-    );
+      }
+      rethrow;
+    }
   }
 
   /// Applique un filtre complet construit par l'UI (bottom sheet, pills).

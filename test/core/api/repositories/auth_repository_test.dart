@@ -7,7 +7,7 @@ import 'package:miva_fid/core/api/storage/token_storage.dart';
 /// N'appelle jamais le réseau : seule la mécanique `suppressUnauthorized`
 /// (ApiClient -> AuthInterceptor) doit être exercée par ce test.
 class _FakeAuthService extends AuthService {
-  _FakeAuthService(ApiClient apiClient) : super(apiClient);
+  _FakeAuthService(super.apiClient);
 
   @override
   Future<void> logout() async {}

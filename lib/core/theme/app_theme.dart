@@ -58,7 +58,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(64, 48),
           padding: const EdgeInsets.symmetric(horizontal: Sp.md),
           shape: const RoundedRectangleBorder(borderRadius: Rd.button),
           side: BorderSide(color: AppColors.border, width: 1.5),
@@ -82,7 +82,7 @@ class AppTheme {
       listTileTheme: ListTileThemeData(
         iconColor: AppColors.gray500,
         textColor: AppColors.textPrimary,
-        contentPadding: EdgeInsets.symmetric(horizontal: Sp.md, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: Sp.md, vertical: 4),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.primary,
@@ -128,15 +128,15 @@ class AppTheme {
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
-        errorBorder: OutlineInputBorder(
+        errorBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.danger, width: 1.5),
         ),
-        focusedErrorBorder: OutlineInputBorder(
+        focusedErrorBorder: const OutlineInputBorder(
           borderRadius: Rd.input,
           borderSide: BorderSide(color: AppColors.danger, width: 2),
         ),
@@ -239,7 +239,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(64, 48),
           padding: const EdgeInsets.symmetric(horizontal: Sp.md),
           shape: const RoundedRectangleBorder(borderRadius: Rd.button),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
