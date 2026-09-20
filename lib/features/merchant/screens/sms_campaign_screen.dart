@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/services/realtime_service.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/campaign_model.dart';
 import '../../client/providers/settings_provider.dart';
@@ -42,6 +43,7 @@ class SmsCampaignScreen extends ConsumerStatefulWidget {
 
 class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
   bool _showArchived = false;
+  int _visibleLimit = 15;
   StreamSubscription? _campaignSub;
 
   @override
@@ -206,62 +208,82 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                 const SizedBox(height: 16),
                 
                 // Toggle Actives / Archivées
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _showArchived = false),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: !_showArchived ? const Color(0xFF5B50EC) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => setState(() {
+                        _showArchived = false;
+                        _visibleLimit = 15;
+                      }),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: !_showArchived
+                              ? const Color(0xFF5B50EC)
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.send,
+                              size: 13,
+                              color: !_showArchived ? Colors.white : AppColors.textSecondary,
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
+                            const SizedBox(width: 6),
+                            Text(
                               'Actives',
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
                                 color: !_showArchived ? Colors.white : AppColors.textSecondary,
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _showArchived = true),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: _showArchived ? const Color(0xFF5B50EC) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => setState(() {
+                        _showArchived = true;
+                        _visibleLimit = 15;
+                      }),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: _showArchived
+                              ? const Color(0xFF5B50EC)
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.archive,
+                              size: 13,
+                              color: _showArchived ? Colors.white : AppColors.textSecondary,
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
+                            const SizedBox(width: 6),
+                            Text(
                               'Archivées',
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
                                 color: _showArchived ? Colors.white : AppColors.textSecondary,
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Campaign Cards
                 smsAsync.when(
@@ -290,7 +312,7 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     if (campaigns.isEmpty) {
                       return const Center(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: EdgeInsets.all(32),
                           child: Column(
                             children: [
                               Icon(
@@ -311,42 +333,197 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                         ),
                       );
                     }
+
+                    final visibleCampaigns = campaigns.take(_visibleLimit).toList();
+
                     return Column(
                       children: [
-                        for (final camp in campaigns)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _showArchived
-                                ? _buildCampaignCard(camp) // On ne permet pas de ré-archiver/désarchiver pour l'instant
-                                : Dismissible(
-                                    key: ValueKey(camp.id),
-                                    direction: DismissDirection.endToStart,
-                                    background: Container(
-                                      alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.only(right: 20),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.textSecondary
-                                            .withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Icon(
-                                        LucideIcons.archive,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                    onDismissed: (_) async {
+                        for (int i = 0; i < visibleCampaigns.length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              thickness: 0.5,
+                              color: AppColors.border.withValues(alpha: 0.6),
+                            ),
+                          _showArchived
+                              ? Dismissible(
+                                  key: ValueKey('archived_${visibleCampaigns[i].id}'),
+                                  direction: DismissDirection.endToStart,
+                                  confirmDismiss: (direction) async {
+                                    final confirmed = await AppDialog.confirm(
+                                      context,
+                                      title: 'Supprimer la campagne',
+                                      message:
+                                          'Êtes-vous sûr de vouloir supprimer définitivement cette campagne archivée ?',
+                                      confirmLabel: 'Supprimer',
+                                      destructive: true,
+                                    );
+                                    if (confirmed == true) {
                                       try {
                                         await ref
                                             .read(smsNotifierProvider.notifier)
-                                            .archive(camp.id);
-                                        ToastService.showSuccess(
-                                            'Campagne archivée');
+                                            .deleteCampaign(visibleCampaigns[i].id);
+                                        ToastService.showSuccess('Campagne supprimée');
+                                        return true;
                                       } catch (e) {
                                         ToastService.showError('Erreur: $e');
+                                        return false;
                                       }
-                                    },
-                                    child: _buildCampaignCard(camp),
+                                    }
+                                    return false;
+                                  },
+                                  background: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 20),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDC2626)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          'Supprimer',
+                                          style: TextStyle(
+                                            color: Color(0xFFDC2626),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(LucideIcons.trash2,
+                                            color: Color(0xFFDC2626), size: 18),
+                                      ],
+                                    ),
                                   ),
+                                  child: _buildCampaignCard(visibleCampaigns[i]),
+                                )
+                              : Dismissible(
+                                  key: ValueKey('active_${visibleCampaigns[i].id}'),
+                                  direction: DismissDirection.horizontal,
+                                  confirmDismiss: (direction) async {
+                                    if (direction == DismissDirection.startToEnd) {
+                                      try {
+                                        await ref
+                                            .read(smsNotifierProvider.notifier)
+                                            .archive(visibleCampaigns[i].id);
+                                        ToastService.showSuccess('Campagne archivée');
+                                        return true;
+                                      } catch (e) {
+                                        ToastService.showError('Erreur: $e');
+                                        return false;
+                                      }
+                                    } else {
+                                      final confirmed = await AppDialog.confirm(
+                                        context,
+                                        title: 'Supprimer la campagne',
+                                        message:
+                                            'Êtes-vous sûr de vouloir supprimer définitivement cette campagne ?',
+                                        confirmLabel: 'Supprimer',
+                                        destructive: true,
+                                      );
+                                      if (confirmed == true) {
+                                        try {
+                                          await ref
+                                              .read(smsNotifierProvider.notifier)
+                                              .deleteCampaign(visibleCampaigns[i].id);
+                                          ToastService.showSuccess('Campagne supprimée');
+                                          return true;
+                                        } catch (e) {
+                                          ToastService.showError('Erreur: $e');
+                                          return false;
+                                        }
+                                      }
+                                      return false;
+                                    }
+                                  },
+                                  background: Container(
+                                    alignment: Alignment.centerLeft,
+                                    padding: const EdgeInsets.only(left: 20),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5B50EC)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Row(
+                                      children: [
+                                        Icon(LucideIcons.archive,
+                                            color: Color(0xFF5B50EC), size: 18),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Archiver',
+                                          style: TextStyle(
+                                            color: Color(0xFF5B50EC),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  secondaryBackground: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 20),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDC2626)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          'Supprimer',
+                                          style: TextStyle(
+                                            color: Color(0xFFDC2626),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(LucideIcons.trash2,
+                                            color: Color(0xFFDC2626), size: 18),
+                                      ],
+                                    ),
+                                  ),
+                                  child: _buildCampaignCard(visibleCampaigns[i]),
+                                ),
+                        ],
+                        if (campaigns.length > _visibleLimit)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 14, bottom: 6),
+                            child: Center(
+                              child: InkWell(
+                                onTap: () => setState(() => _visibleLimit += 15),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 18, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(LucideIcons.chevronDown,
+                                          size: 15, color: Color(0xFF5B50EC)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Voir plus (${campaigns.length - _visibleLimit} restante${campaigns.length - _visibleLimit > 1 ? 's' : ''})',
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF5B50EC),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                       ],
                     );
@@ -374,11 +551,11 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
         Expanded(
           child: _buildKpiBox(value: '$sentCount', label: 'Envoyées'),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _buildKpiBox(value: '$reached', label: 'Atteints'),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _buildKpiBox(
             value: '${smsRemaining ?? 0}',
@@ -400,123 +577,102 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
         ? 'Prévue ${DateFormatter.short(camp.scheduledAt!)}'
         : DateFormatter.relative(date);
     final displayTitle = camp.title.isNotEmpty ? camp.title : camp.message;
-    final title = displayTitle.length > 24
-        ? '${displayTitle.substring(0, 24)}...'
+    final title = displayTitle.length > 28
+        ? '${displayTitle.substring(0, 28)}...'
         : displayTitle;
-    final typeEmoji = _typeEmoji(camp.type);
+    final visual = _typeVisual(camp.type);
 
     return InkWell(
       onTap: () {
         if (camp.isDraft) {
-          String route = '/merchant/campaigns/new';
-          if (camp.draftStep == 2) {
-            route += '/content';
-          } else if (camp.draftStep == 3) {
-            route += '/recipients';
-          } else if (camp.draftStep == 4) {
-            route += '/summary';
-          }
-          context.push(route, extra: camp);
+          context.push('/merchant/campaigns/new', extra: camp);
         } else {
           context.push('/merchant/sms/campaign/${camp.id}');
         }
       },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Text(typeEmoji, style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isDraft 
-                        ? AppColors.border // grey tint for draft
-                        : (isPlanned ? AppColors.warningTint : AppColors.successTint),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: isDraft 
-                          ? AppColors.textSecondary.withValues(alpha: 0.3)
-                          : (isPlanned
-                              ? (AppColors.isDark ? const Color(0xFF4A3A14) : const Color(0xFFFDE68A))
-                              : (AppColors.isDark ? const Color(0xFF1F4A38) : const Color(0xFFBBF7D0))),
-                    ),
-                  ),
-                  child: Row(
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: visual.bg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Icon(visual.icon, size: 18, color: visual.color),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Icon(
-                        isDraft 
-                            ? LucideIcons.fileEdit
-                            : (isPlanned ? LucideIcons.clock : LucideIcons.circleCheck),
-                        size: 11,
-                        color: isDraft
-                            ? AppColors.textSecondary
-                            : (isPlanned ? const Color(0xFFD97706) : const Color(0xFF16A34A)),
+                      Expanded(
+                        child: Text(
+                          title,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       Text(
                         status,
                         style: TextStyle(
-                          color: isPlanned
-                              ? const Color(0xFFD97706)
-                              : const Color(0xFF16A34A),
-                          fontSize: 10.5,
+                          color: isDraft
+                              ? AppColors.textSecondary
+                              : (isPlanned
+                                  ? const Color(0xFFD97706)
+                                  : const Color(0xFF16A34A)),
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  LucideIcons.chevronRight,
-                  size: 16,
-                  color: AppColors.textSecondary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${_targetLabel(camp.recipientType)} • $time',
-              style: TextStyle(
-                fontSize: 11.5,
-                color: AppColors.textSecondary,
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${_targetLabel(camp.recipientType)} • $time',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${camp.recipientsCount} destinataire${camp.recipientsCount > 1 ? 's' : ''}',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  '${camp.recipientsCount}/${camp.recipientsCount} envoyés',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 4),
+            Icon(
+              LucideIcons.chevronRight,
+              size: 16,
+              color: AppColors.textSecondary.withValues(alpha: 0.6),
             ),
           ],
         ),
@@ -526,34 +682,69 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
 
   String _targetLabel(String? recipientType) => targetLabel(recipientType);
 
-  String _typeEmoji(String type) {
+  ({IconData icon, Color color, Color bg}) _typeVisual(String type) {
     return switch (type) {
-      'promotion' => '🏷️',
-      'reminder' => '🔔',
-      'review' => '⭐',
-      'reward' => '🎁',
-      'progress' => '📈',
-      'cashback' => '💰',
-      'referral' => '🤝',
-      'announcement' => '📢',
-      _ => '📋',
+      'promotion' => (
+          icon: LucideIcons.tag,
+          color: const Color(0xFF5B50EC),
+          bg: const Color(0xFF5B50EC).withValues(alpha: 0.12),
+        ),
+      'reminder' => (
+          icon: LucideIcons.bellRing,
+          color: const Color(0xFFF59E0B),
+          bg: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        ),
+      'review' => (
+          icon: LucideIcons.star,
+          color: const Color(0xFFEC4899),
+          bg: const Color(0xFFEC4899).withValues(alpha: 0.12),
+        ),
+      'reward' => (
+          icon: LucideIcons.gift,
+          color: const Color(0xFF10B981),
+          bg: const Color(0xFF10B981).withValues(alpha: 0.12),
+        ),
+      'progress' => (
+          icon: LucideIcons.trendingUp,
+          color: const Color(0xFF3B82F6),
+          bg: const Color(0xFF3B82F6).withValues(alpha: 0.12),
+        ),
+      'referral' => (
+          icon: LucideIcons.userPlus,
+          color: const Color(0xFF14B8A6),
+          bg: const Color(0xFF14B8A6).withValues(alpha: 0.12),
+        ),
+      'cashback' => (
+          icon: LucideIcons.coins,
+          color: const Color(0xFFF59E0B),
+          bg: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        ),
+      'announcement' => (
+          icon: LucideIcons.megaphone,
+          color: const Color(0xFF6366F1),
+          bg: const Color(0xFF6366F1).withValues(alpha: 0.12),
+        ),
+      _ => (
+          icon: LucideIcons.messageSquare,
+          color: const Color(0xFF5B50EC),
+          bg: const Color(0xFF5B50EC).withValues(alpha: 0.12),
+        ),
     };
   }
 
   Widget _buildKpiBox({required String value, required String label}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Text(
             value,
             style: TextStyle(
-              fontSize: 19,
+              fontSize: 18,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),

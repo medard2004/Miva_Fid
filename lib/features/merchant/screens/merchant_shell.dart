@@ -38,7 +38,7 @@ class MerchantShell extends ConsumerWidget {
         },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 3),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -46,18 +46,20 @@ class MerchantShell extends ConsumerWidget {
               Icon(
                 isActive ? activeIcon : icon,
                 color: isActive ? activeColor : inactiveColor,
-                size: 22,
+                size: 19,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
                   label,
                   maxLines: 1,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 8.5,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     color: isActive ? activeColor : inactiveColor,
+                    letterSpacing: 0.1,
+                    height: 1.1,
                   ),
                 ),
               ),
@@ -93,12 +95,17 @@ class MerchantShell extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 border: Border(
-                  top: BorderSide(color: AppColors.border, width: 1),
+                  top: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.6),
+                    width: 0.5,
+                  ),
                 ),
               ),
               padding: EdgeInsets.only(
-                top: 4,
-                bottom: MediaQuery.of(context).padding.bottom + 4,
+                top: 2,
+                bottom: MediaQuery.of(context).padding.bottom > 0
+                    ? MediaQuery.of(context).padding.bottom
+                    : 4,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,

@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../router/app_router.dart';
 import '../notifications/notification_destination.dart';
-import '../../features/client/core/theme/app_colors.dart';
-import '../../features/client/core/theme/app_radius.dart';
-import '../../features/client/core/theme/app_text_styles.dart';
+import '../theme/app_colors.dart';
 import '../../features/client/widgets/components/app_tap_scale.dart';
 
 enum ToastType { success, error, warning, info }
@@ -115,7 +113,7 @@ class ToastService {
 
     if (notificationId != null && markSeen(notificationId)) return;
 
-    Null onTap() {
+    void onTap() {
       hideCurrent();
       final ctx = rootNavigatorKey.currentContext;
       if (ctx == null) return;
@@ -189,22 +187,22 @@ class ToastService {
         case ToastType.success:
           backgroundColor = AppColors.successTint;
           accentColor = AppColors.success;
-          iconData = Icons.check_circle_rounded;
+          iconData = LucideIcons.check;
           break;
         case ToastType.error:
-          backgroundColor = AppColors.errorTint;
-          accentColor = AppColors.error;
-          iconData = Icons.error_rounded;
+          backgroundColor = AppColors.dangerTint;
+          accentColor = AppColors.danger;
+          iconData = LucideIcons.circleAlert;
           break;
         case ToastType.warning:
           backgroundColor = AppColors.warningTint;
           accentColor = AppColors.warning;
-          iconData = Icons.warning_rounded;
+          iconData = LucideIcons.triangleAlert;
           break;
         case ToastType.info:
           backgroundColor = AppColors.primaryTint;
-          accentColor = AppColors.primary;
-          iconData = Icons.info_rounded;
+          accentColor = const Color(0xFF5B50EC);
+          iconData = LucideIcons.info;
           break;
       }
 
@@ -289,28 +287,30 @@ class _ToastWidgetState extends State<_ToastWidget>
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 380),
     );
 
     _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, -1.5),
+      begin: const Offset(0, -1.2),
       end: const Offset(0, 0),
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutBack,
+      curve: Curves.easeOutCubic,
     ));
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeIn,
-      ),
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
     _controller.forward();
@@ -328,55 +328,96 @@ class _ToastWidgetState extends State<_ToastWidget>
       position: _offsetAnimation,
       child: FadeTransition(
         opacity: _opacityAnimation,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: widget.backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: widget.accentColor.withValues(alpha: 0.22),
-              width: 1,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          alignment: Alignment.topCenter,
+          child: Dismissible(
+            key: const ValueKey('toast_floating_msg'),
+            direction: DismissDirection.up,
+            onDismissed: (_) => widget.onDismiss(),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: widget.accentColor.withValues(alpha: 0.25),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.accentColor.withValues(alpha: 0.12),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      // Left vertical color accent indicator
+                      Container(
+                        width: 4,
+                        color: widget.accentColor,
+                      ),
+                      const SizedBox(width: 12),
+                      // Icon badge
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: widget.accentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          widget.iconData,
+                          color: widget.accentColor,
+                          size: 17,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Text content
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            widget.message,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Dismiss button
+                      GestureDetector(
+                        onTap: widget.onDismiss,
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(6, 12, 12, 12),
+                          child: Icon(
+                            LucideIcons.x,
+                            color: AppColors.textSecondary.withValues(alpha: 0.6),
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(widget.iconData, color: widget.accentColor, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Text(
-                    widget.message,
-                    style: AppTextStyles.bodyMedium(
-                            color: widget.accentColor)
-                        .copyWith(
-                      height: 1.3,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: widget.onDismiss,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Icon(
-                    Icons.close_rounded,
-                    color: widget.accentColor.withValues(alpha: 0.5),
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -385,7 +426,7 @@ class _ToastWidgetState extends State<_ToastWidget>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Toast "campagne promo" façon vignette Instagram
+// Toast "campagne promo" façon vignette moderne
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CampaignToastWidget extends StatefulWidget {
@@ -419,22 +460,22 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 450),
+      duration: const Duration(milliseconds: 400),
     );
 
     _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, -1.8),
+      begin: const Offset(0, -1.4),
       end: const Offset(0, 0),
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutBack,
+      curve: Curves.easeOutCubic,
     ));
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.96, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
@@ -462,13 +503,22 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
             scaleDown: 0.985,
             onTap: widget.onTap,
             child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: AppColors.surfaceCard,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.border),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFF5B50EC).withValues(alpha: 0.2),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.14),
+                    color: const Color(0xFF5B50EC).withValues(alpha: 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 24,
                     offset: const Offset(0, 10),
                   ),
@@ -479,91 +529,99 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Vignette image 1:1 façon Insta
+                    // Vignette image
                     Container(
-                      width: 92,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted,
-                      ),
+                      width: 84,
+                      color: AppColors.background,
                       child: hasImage
                           ? CachedNetworkImage(
                               imageUrl: widget.imageUrl!,
                               fit: BoxFit.cover,
                               placeholder: (_, __) => Container(
-                                color: AppColors.surfaceMuted,
+                                color: AppColors.background,
                                 child: const Center(
                                   child: SizedBox(
                                     width: 18,
                                     height: 18,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: AppColors.primary,
+                                      color: Color(0xFF5B50EC),
                                     ),
                                   ),
                                 ),
                               ),
                               errorWidget: (_, __, ___) => Container(
-                                color: AppColors.surfaceMuted,
+                                color: AppColors.background,
                                 child: Icon(
                                   LucideIcons.imageOff,
-                                  color: AppColors.inkMuted(opacity: 0.4),
+                                  color: AppColors.textSecondary.withValues(alpha: 0.4),
                                   size: 22,
                                 ),
                               ),
                             )
                           : Container(
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    AppColors.primary.withValues(alpha: 0.9),
-                                    AppColors.liningPlum,
+                                    Color(0xFF5B50EC),
+                                    Color(0xFF7C3AED),
                                   ],
                                 ),
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 LucideIcons.megaphone,
-                                color: Colors.white.withValues(alpha: 0.92),
-                                size: 30,
+                                color: Colors.white,
+                                size: 26,
                               ),
                             ),
                     ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 11, 6, 11),
+                        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Row(
                               children: [
-                                const Icon(
-                                  LucideIcons.sparkles,
-                                  size: 13,
-                                  color: AppColors.primary,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    'Nouvelle offre',
-                                    style: AppTextStyles.eyebrow(
-                                      color: AppColors.primary,
-                                    ).copyWith(letterSpacing: 0.6),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF5B50EC).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        LucideIcons.sparkles,
+                                        size: 11,
+                                        color: Color(0xFF5B50EC),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Nouvelle offre',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF5B50EC),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                                const Spacer(),
                                 GestureDetector(
                                   onTap: widget.onDismiss,
                                   behavior: HitTestBehavior.opaque,
                                   child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: 6, left: 4, top: 2, bottom: 2),
+                                    padding: const EdgeInsets.all(4),
                                     child: Icon(
-                                      Icons.close_rounded,
-                                      size: 16,
-                                      color: AppColors.inkMuted(opacity: 0.45),
+                                      LucideIcons.x,
+                                      size: 15,
+                                      color: AppColors.textSecondary.withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ),
@@ -574,33 +632,39 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                               widget.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.bodyMedium(
-                                color: AppColors.ink,
-                              ).copyWith(fontWeight: FontWeight.w700),
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               widget.body,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.bodySmall(
-                                color: AppColors.inkMuted(opacity: 0.72),
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11.5,
+                                height: 1.3,
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Row(
+                            const Row(
                               children: [
                                 Text(
                                   'Taper pour voir',
-                                  style: AppTextStyles.bodySmall(
-                                    color: AppColors.primary,
-                                  ).copyWith(fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                    color: Color(0xFF5B50EC),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
-                                const Icon(
+                                SizedBox(width: 3),
+                                Icon(
                                   LucideIcons.chevronRight,
-                                  size: 14,
-                                  color: AppColors.primary,
+                                  size: 13,
+                                  color: Color(0xFF5B50EC),
                                 ),
                               ],
                             ),

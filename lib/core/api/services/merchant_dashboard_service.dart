@@ -258,6 +258,11 @@ class MerchantDashboardService {
         await _apiClient.dio.post('/merchant/campaigns/$campaignId/archive');
       });
 
+  /// Supprime définitivement une campagne — `DELETE /merchant/campaigns/{id}`.
+  Future<void> deleteCampaign(String campaignId) => _guard(() async {
+        await _apiClient.dio.delete('/merchant/campaigns/$campaignId');
+      });
+
   /// Détail complet d'une campagne avec la liste des destinataires et leur
   /// statut de livraison — `GET /merchant/campaigns/{id}`.
   Future<Map<String, dynamic>> campaignDetail(String campaignId) =>

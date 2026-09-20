@@ -1,19 +1,20 @@
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../client/providers/settings_provider.dart';
 import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
-import '../../client/providers/settings_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -148,11 +149,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         'address': _addressController.text.trim(),
       });
       if (mounted) {
-        ToastService.showSuccess(AppLocalizations.of(context)!.merchantProfileSaveSuccess);
+        ToastService.showSuccess(
+            AppLocalizations.of(context)!.merchantProfileSaveSuccess);
       }
     } catch (_) {
       if (mounted) {
-        ToastService.showError(AppLocalizations.of(context)!.errProfileSaveFailed);
+        ToastService.showError(
+            AppLocalizations.of(context)!.errProfileSaveFailed);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -192,8 +195,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 TextFormField(
                   controller: passwordCtrl,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                      labelText: 'Mot de passe actuel'),
+                  decoration:
+                      const InputDecoration(labelText: 'Mot de passe actuel'),
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Mot de passe requis.' : null,
                 ),
@@ -271,281 +274,222 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     final logoUrl = account?.logoUrl;
+    final initials = (account?.name?.isNotEmpty == true)
+        ? account!.name!.substring(0, 1).toUpperCase()
+        : 'M';
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(LucideIcons.arrowLeft,
+              color: AppColors.textPrimary, size: 22),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/merchant/more');
+            }
+          },
+        ),
+        title: Text(
+          t.merchantMoreBusinessProfile,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(LucideIcons.bell,
+                size: 20, color: AppColors.textPrimary),
+            onPressed: () => context.push('/merchant/more/notifications'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // ── TOP HEADER ──────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      LucideIcons.chevronLeft,
-                      color: AppColors.textPrimary,
-                      size: 22,
-                    ),
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/merchant/more');
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      t.merchantMoreBusinessProfile,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () => context.push('/merchant/more/notifications'),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Icon(
-                            LucideIcons.bell,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── FORM CONTENT ─────────────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 1. LOGO CARD
+                      // ── 1. HERO AVATAR & HEADER CARD ──────────────────────
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 20),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: AppColors.border),
                         ),
-                        child: Row(
+                        child: Column(
                           children: [
-                            Stack(
-                              children: [
-                                Container(
-                                  width: 52,
-                                  height: 52,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryTint,
-                                    shape: BoxShape.circle,
-                                    image: (logoUrl != null &&
-                                            logoUrl.isNotEmpty)
-                                        ? DecorationImage(
-                                            image: CachedNetworkImageProvider(logoUrl),
-                                            fit: BoxFit.cover,
+                            GestureDetector(
+                              onTap: _uploadingLogo ? null : _pickLogo,
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: 84,
+                                    height: 84,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5B50EC)
+                                          .withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xFF5B50EC)
+                                            .withValues(alpha: 0.25),
+                                        width: 2,
+                                      ),
+                                      image: (logoUrl != null &&
+                                              logoUrl.isNotEmpty)
+                                          ? DecorationImage(
+                                              image: CachedNetworkImageProvider(
+                                                  logoUrl),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: (logoUrl == null ||
+                                            logoUrl.isEmpty)
+                                        ? Center(
+                                            child: Text(
+                                              initials,
+                                              style: const TextStyle(
+                                                fontSize: 28,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF5B50EC),
+                                              ),
+                                            ),
                                           )
                                         : null,
                                   ),
-                                  child: (logoUrl == null || logoUrl.isEmpty)
-                                      ? Center(
-                                          child: Icon(
-                                            LucideIcons.camera,
-                                            color: AppColors.textSecondary,
-                                            size: 22,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF5B50EC),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      LucideIcons.pencil,
-                                      color: Colors.white,
-                                      size: 11,
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF5B50EC),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: Colors.white, width: 2),
+                                      ),
+                                      child: const Icon(
+                                        LucideIcons.camera,
+                                        color: Colors.white,
+                                        size: 13,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                if (_uploadingLogo)
-                                  const Positioned.fill(
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    t.merchantMoreLogoBusiness,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    t.merchantProfileLogoHint,
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      GestureDetector(
-                                        onTap:
-                                            _uploadingLogo ? null : _pickLogo,
-                                        child: Text(
-                                          _uploadingLogo
-                                              ? t.merchantProfileLoadingEllipsis
-                                              : (logoUrl != null &&
-                                                      logoUrl.isNotEmpty
-                                                  ? t.merchantProfileChangeLink
-                                                  : 'Ajouter un logo'),
-                                          style: const TextStyle(
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: Color(0xFF5B50EC),
+                                  if (_uploadingLogo)
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.4),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ),
-                                      if (logoUrl != null &&
-                                          logoUrl.isNotEmpty) ...[
-                                        const SizedBox(width: 12),
-                                        GestureDetector(
-                                          onTap: _uploadingLogo
-                                              ? null
-                                              : _removeLogo,
-                                          child: const Text(
-                                            'Supprimer',
-                                            style: TextStyle(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFFDC2626),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
+                                    ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // 2. INFORMATIONS
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionHeader(t.merchantProfileSectionInfo),
                             const SizedBox(height: 12),
-                            _buildField(
-                              label: t.merchantProfileBusinessNameLabel,
-                              controller: _nameController,
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? 'Le nom du commerce est obligatoire.'
-                                      : null,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildField(
-                              label: t.merchantProfileCategoryLabel,
-                              controller: _categoryController,
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? 'La catégorie est obligatoire.'
-                                      : null,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildField(
-                              label: t.merchantProfileDescriptionLabel,
-                              controller: _descriptionController,
-                              maxLines: 3,
-                              maxLength: 200,
-                            ),
-                            const SizedBox(height: 4),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                t.merchantProfileCharCount(_descriptionController.text.length.toString()),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: _descriptionController
-                                          .text.length >
-                                      200
-                                      ? FontWeight.w700
-                                      : FontWeight.w400,
-                                  color: _descriptionController.text.length > 200
-                                      ? const Color(0xFFDC2626)
-                                      : AppColors.textSecondary,
-                                ),
+                            Text(
+                              account?.name ?? 'Mon Commerce',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
                               ),
                             ),
+                            if (account?.category?.isNotEmpty == true) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF5B50EC)
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  account!.category!,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF5B50EC),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _uploadingLogo ? null : _pickLogo,
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(0, 34),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    side: BorderSide(
+                                        color: AppColors.border),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  icon: const Icon(LucideIcons.image, size: 14),
+                                  label: Text(
+                                    logoUrl != null && logoUrl.isNotEmpty
+                                        ? 'Changer le logo'
+                                        : 'Ajouter un logo',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                if (logoUrl != null && logoUrl.isNotEmpty) ...[
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    onPressed:
+                                        _uploadingLogo ? null : _removeLogo,
+                                    tooltip: 'Supprimer le logo',
+                                    icon: const Icon(LucideIcons.trash2,
+                                        size: 16, color: Color(0xFFEF4444)),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                      // 3. CONTACT
+                      // ── 2. SECTION INFORMATIONS ───────────────────────────
+                      _buildSectionHeader(
+                        title: 'Établissement',
+                        icon: LucideIcons.store,
+                      ),
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -554,45 +498,95 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionHeader(t.merchantProfileSectionContact),
-                            const SizedBox(height: 12),
-                            _buildField(
+                            _buildModernField(
+                              label: t.merchantProfileBusinessNameLabel,
+                              controller: _nameController,
+                              icon: LucideIcons.building2,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Le nom du commerce est obligatoire.'
+                                  : null,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildModernField(
+                              label: t.merchantProfileCategoryLabel,
+                              controller: _categoryController,
+                              icon: LucideIcons.tag,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'La catégorie est obligatoire.'
+                                  : null,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildModernField(
+                              label: t.merchantProfileDescriptionLabel,
+                              controller: _descriptionController,
+                              icon: LucideIcons.alignLeft,
+                              maxLines: 3,
+                              maxLength: 200,
+                              helperText:
+                                  '${_descriptionController.text.length}/200 caractères',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── 3. SECTION CONTACT ────────────────────────────────
+                      _buildSectionHeader(
+                        title: 'Coordonnées & Contact',
+                        icon: LucideIcons.phoneCall,
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildModernField(
                               label: t.merchantProfileEmailLabel,
-                              initialText:
-                                  account?.email.isNotEmpty == true
-                                      ? account!.email
-                                      : null,
-                              keyboardType: TextInputType.emailAddress,
+                              initialText: account?.email.isNotEmpty == true
+                                  ? account!.email
+                                  : '',
+                              icon: LucideIcons.mail,
                               enabled: false,
                               onTap: account != null
                                   ? () => _changeEmail(account.email)
                                   : null,
-                              hint: 'Toucher pour modifier',
+                              trailing: const Icon(LucideIcons.pencil,
+                                  size: 14, color: Color(0xFF5B50EC)),
                             ),
-                            const SizedBox(height: 12),
-                            _buildField(
+                            const SizedBox(height: 14),
+                            _buildModernField(
                               label: t.merchantProfilePhoneLabel,
                               controller: _phoneController,
+                              icon: LucideIcons.phone,
                               keyboardType: TextInputType.phone,
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? 'Le téléphone est obligatoire.'
-                                      : null,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Le téléphone est obligatoire.'
+                                  : null,
                             ),
-                            const SizedBox(height: 12),
-                            _buildField(
+                            const SizedBox(height: 14),
+                            _buildModernField(
                               label: t.merchantProfileWhatsappLabel,
                               controller: _whatsappController,
+                              icon: LucideIcons.messageCircle,
                               keyboardType: TextInputType.phone,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                      // 4. ADRESSE
+                      // ── 4. SECTION EMPLACEMENT ────────────────────────────
+                      _buildSectionHeader(
+                        title: 'Emplacement',
+                        icon: LucideIcons.mapPin,
+                      ),
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -601,70 +595,76 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  LucideIcons.mapPin,
-                                  size: 13,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 6),
-                                _buildSectionHeader(t.merchantProfileSectionAddress),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildField(
+                            _buildModernField(
                               label: t.merchantProfileCityLabel,
                               controller: _cityController,
+                              icon: LucideIcons.mapPin,
                             ),
-                            const SizedBox(height: 12),
-                            _buildField(
+                            const SizedBox(height: 14),
+                            _buildModernField(
                               label: t.merchantProfileAddressLabel,
                               controller: _addressController,
+                              icon: LucideIcons.navigation,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-
-                      // 5. ENREGISTRER BUTTON
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _isSaving ? null : _saveProfile,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF5B50EC),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  t.merchantProfileSaveButton,
-                                  style: const TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
                     ],
                   ),
+                ),
+              ),
+            ),
+
+            // ── 5. BOTTOM SAVE ACTION BAR ─────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.6),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: _isSaving ? null : _saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5B50EC),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(LucideIcons.check,
+                                size: 16, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Text(
+                              t.merchantProfileSaveButton,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -674,82 +674,109 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        color: AppColors.textSecondary,
-        letterSpacing: 0.5,
-      ),
+  Widget _buildSectionHeader({
+    required String title,
+    required IconData icon,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 15, color: const Color(0xFF5B50EC)),
+        const SizedBox(width: 6),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildField({
+  Widget _buildModernField({
     required String label,
     TextEditingController? controller,
     String? initialText,
-    String? hint,
+    required IconData icon,
     int maxLines = 1,
     int? maxLength,
+    String? helperText,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     bool enabled = true,
     VoidCallback? onTap,
+    Widget? trailing,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            if (helperText != null)
+              Text(
+                helperText,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: enabled ? AppColors.background : AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+        TextFormField(
+          controller: controller,
+          initialValue: initialText,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          keyboardType: keyboardType,
+          validator: validator,
+          enabled: enabled,
+          onTap: onTap,
+          buildCounter: (_,
+                  {required currentLength,
+                  required isFocused,
+                  maxLength}) =>
+              null,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
           ),
-          child: TextFormField(
-            controller: controller,
-            initialValue: initialText,
-            maxLines: maxLines,
-            maxLength: maxLength,
-            keyboardType: keyboardType,
-            validator: validator,
-            enabled: enabled,
-            onTap: onTap,
-            buildCounter: (_,
-                    {required currentLength,
-                    required isFocused,
-                    maxLength}) =>
-                null,
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+          decoration: InputDecoration(
+            isDense: true,
+            filled: true,
+            fillColor: AppColors.background,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            prefixIcon: Icon(icon, size: 16, color: AppColors.textSecondary),
+            suffixIcon: trailing,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
             ),
-            decoration: InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              hintText: onTap != null ? hint : null,
-              hintStyle: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF94A3B8),
-              ),
-              suffixIcon: onTap != null
-                  ? const Icon(LucideIcons.pencil, size: 14, color: Color(0xFF94A3B8))
-                  : null,
-              suffixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 0),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: Color(0xFF5B50EC), width: 1.5),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border.withValues(alpha: 0.6)),
             ),
           ),
         ),

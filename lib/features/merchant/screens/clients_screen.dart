@@ -121,61 +121,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     ref.read(clientsNotifierProvider.notifier).applyFilter(applied);
   }
 
-  Future<void> _openSortSheet(ClientSort current) async {
-    final chosen = await showModalBottomSheet<ClientSort>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Trier par',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary),
-                ),
-              ),
-            ),
-            for (final sort in ClientSort.values)
-              ListTile(
-                title: Text(
-                  switch (sort) {
-                    ClientSort.activity => 'Activité récente',
-                    ClientSort.recent => 'Plus récents',
-                    ClientSort.oldest => 'Plus anciens',
-                  },
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight:
-                        sort == current ? FontWeight.w700 : FontWeight.w500,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                trailing: sort == current
-                    ? const Icon(LucideIcons.check,
-                        size: 16, color: AppColors.primary)
-                    : null,
-                onTap: () => Navigator.pop(context, sort),
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (chosen == null || chosen == current) return;
-    final notifier = ref.read(clientsNotifierProvider.notifier);
-    notifier.applyFilter(notifier.currentFilter.copyWith(sort: chosen));
-  }
-
   void _showAddClientModal(BuildContext context) {
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController(text: '+228 ');
@@ -232,26 +177,13 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Ajouter un client',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Enregistrez un nouveau client manuellement',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          'Ajouter un client',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -372,6 +304,12 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddClientModal(context),
+        backgroundColor: const Color(0xFF5B50EC),
+        elevation: 3,
+        child: const Icon(LucideIcons.userPlus, color: Colors.white, size: 22),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -382,14 +320,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   ? Row(
                       children: [
                         Expanded(
-                          child: Container(
+                          child: SizedBox(
                             height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                  color: const Color(0xFF5B50EC), width: 1.5),
-                            ),
                             child: TextField(
                               controller: _searchCtrl,
                               autofocus: true,
@@ -397,15 +329,17 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                   .read(clientsNotifierProvider.notifier)
                                   .search(q),
                               style: TextStyle(
-                                  fontSize: 13.5,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.textPrimary),
                               decoration: InputDecoration(
                                 isDense: true,
+                                filled: true,
+                                fillColor: AppColors.surface,
                                 hintText: t.merchantClientsSearchHint,
                                 hintStyle: TextStyle(
                                     color: AppColors.textSecondary,
-                                    fontSize: 13),
+                                    fontSize: 12.5),
                                 prefixIcon: const Icon(
                                   LucideIcons.search,
                                   size: 16,
@@ -413,6 +347,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                 ),
                                 suffixIcon: _searchCtrl.text.isNotEmpty
                                     ? IconButton(
+                                        padding: EdgeInsets.zero,
                                         icon: const Icon(LucideIcons.x,
                                             size: 15),
                                         onPressed: () {
@@ -424,11 +359,29 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                         },
                                       )
                                     : null,
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: const Color(0xFF5B50EC).withValues(alpha: 0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: const Color(0xFF5B50EC).withValues(alpha: 0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF5B50EC),
+                                    width: 1.5,
+                                  ),
+                                ),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 10),
+                                    horizontal: 14, vertical: 0),
                               ),
                             ),
                           ),
@@ -476,7 +429,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         // Search Button in TopBar
                         InkWell(
                           onTap: () => setState(() => _isSearchOpen = true),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(12),
                           child: Container(
                             width: 36,
                             height: 36,
@@ -493,30 +446,58 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Add Button in TopBar
-                        InkWell(
-                          onTap: () => _showAddClientModal(context),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF5B50EC),
-                              shape: BoxShape.circle,
+                        // Filter Button in TopBar
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            InkWell(
+                              onTap: () =>
+                                  _openFilterSheet(currentFilter, displayTiers),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: currentFilter.activeFilterCount > 0
+                                      ? AppColors.primaryTint
+                                      : AppColors.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: currentFilter.activeFilterCount > 0
+                                        ? const Color(0xFF5B50EC)
+                                        : AppColors.border,
+                                  ),
+                                ),
+                                child: Icon(
+                                  LucideIcons.slidersHorizontal,
+                                  size: 17,
+                                  color: currentFilter.activeFilterCount > 0
+                                      ? const Color(0xFF5B50EC)
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
                             ),
-                            child: const Icon(
-                              LucideIcons.userPlus,
-                              size: 17,
-                              color: Colors.white,
-                            ),
-                          ),
+                            if (currentFilter.activeFilterCount > 0)
+                              Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF5B50EC),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(width: 8),
                         // Notifications Button in TopBar
                         InkWell(
                           onTap: () =>
                               context.push('/merchant/more/notifications'),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(12),
                           child: Stack(
                             clipBehavior: Clip.none,
                             children: [
@@ -552,219 +533,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       ],
                     ),
             ),
-
-            // ── EXPORT BUTTON ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: InkWell(
-                onTap: () => ToastService.showInfo(
-                    t.merchantClientsExportToast),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        LucideIcons.download,
-                        size: 16,
-                        color: AppColors.textPrimary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        t.merchantClientsExportButton,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // ── QUICK PILLS BAR ──────────────────────────────────────────
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  // 'Tous' pill
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: GestureDetector(
-                      onTap: () {
-                        ref.read(clientsNotifierProvider.notifier).applyFilter(
-                              currentFilter.copyWith(
-                                levelKey: null,
-                                inactiveDays: null,
-                              ),
-                            );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: (currentFilter.levelKey == null &&
-                                  currentFilter.inactiveDays == null)
-                              ? AppColors.surface
-                              : AppColors.border,
-                          borderRadius: BorderRadius.circular(20),
-                          border: (currentFilter.levelKey == null &&
-                                  currentFilter.inactiveDays == null)
-                              ? Border.all(
-                                  color: AppColors.textPrimary,
-                                  width: 1.2)
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.alignLeft,
-                              size: 12,
-                              color: (currentFilter.levelKey == null &&
-                                      currentFilter.inactiveDays == null)
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              t.merchantClientsFilterAll,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: (currentFilter.levelKey == null &&
-                                        currentFilter.inactiveDays == null)
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: (currentFilter.levelKey == null &&
-                                        currentFilter.inactiveDays == null)
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (displayTiers.length > 1)
-                    for (final tier in displayTiers)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: GestureDetector(
-                          onTap: () {
-                            final newKey = currentFilter.levelKey == tier.key
-                                ? null
-                                : tier.key;
-                            ref.read(clientsNotifierProvider.notifier).applyFilter(
-                                  currentFilter.copyWith(
-                                    levelKey: newKey,
-                                    inactiveDays: null,
-                                  ),
-                                );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: currentFilter.levelKey == tier.key
-                                  ? AppColors.surface
-                                  : AppColors.border,
-                              borderRadius: BorderRadius.circular(20),
-                              border: currentFilter.levelKey == tier.key
-                                  ? Border.all(
-                                      color: AppColors.textPrimary,
-                                      width: 1.2)
-                                  : null,
-                            ),
-                            child: Text(
-                              tier.label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: currentFilter.levelKey == tier.key
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: currentFilter.levelKey == tier.key
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  // Inactive 30d pill
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: GestureDetector(
-                      onTap: () {
-                        final newDays = currentFilter.inactiveDays == 30
-                            ? null
-                            : 30;
-                        ref.read(clientsNotifierProvider.notifier).applyFilter(
-                              currentFilter.copyWith(
-                                inactiveDays: newDays,
-                                levelKey: null,
-                              ),
-                            );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: currentFilter.inactiveDays == 30
-                              ? AppColors.surface
-                              : AppColors.border,
-                          borderRadius: BorderRadius.circular(20),
-                          border: currentFilter.inactiveDays == 30
-                              ? Border.all(
-                                  color: AppColors.textPrimary,
-                                  width: 1.2)
-                              : null,
-                        ),
-                        child: Text(
-                          t.merchantClientsFilterInactive30d,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: currentFilter.inactiveDays == 30
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: currentFilter.inactiveDays == 30
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  _FilterButton(
-                    activeCount: currentFilter.activeFilterCount,
-                    onTap: () => _openFilterSheet(currentFilter, displayTiers),
-                  ),
-                  const SizedBox(width: 6),
-                  _QuickPill(
-                    label: switch (currentFilter.sort) {
-                      ClientSort.activity => 'Activité',
-                      ClientSort.recent => 'Récents',
-                      ClientSort.oldest => 'Anciens',
-                    },
-                    icon: LucideIcons.arrowUpDown,
-                    isSelected: currentFilter.sort != ClientSort.activity,
-                    onTap: () => _openSortSheet(currentFilter.sort),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
 
             // ── CLIENTS LIST ────────────────────────────────────────────
             Expanded(
@@ -773,15 +542,44 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                 loading: () => ListView.separated(
                   physics: const NeverScrollableScrollPhysics(),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  itemCount: 6,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, __) => Container(
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: 8,
+                  separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      indent: 72,
+                      color: AppColors.border.withValues(alpha: 0.5)),
+                  itemBuilder: (_, __) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 120,
+                                height: 14,
+                                color: AppColors.surface,
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                width: 80,
+                                height: 11,
+                                color: AppColors.surface,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -832,120 +630,62 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   ),
                 ),
                 data: (state) {
-                  final listBody = state.clients.isEmpty
-                      ? _buildEmptyState()
-                      : RefreshIndicator(
-                          onRefresh: _refresh,
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: ListView.separated(
-                                  controller: _scrollCtrl,
-                                  physics: const AlwaysScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 4),
-                                  itemCount: state.clients.length +
-                                      (state.hasMore || state.isLoadingMore
-                                          ? 1
-                                          : 0),
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 8),
-                                  itemBuilder: (context, index) {
-                                    if (index >= state.clients.length) {
-                                      return const Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 14),
-                                        child: Center(
-                                          child: SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2.4),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    final client = state.clients[index];
-                                    return _ClientCard(
-                                      client: client,
-                                      stampsRequired: stampsRequired,
-                                      onTap: () => context
-                                          .push('/merchant/clients/${client.id}'),
-                                      onSms: () {
-                                        final cName = client.client?.name ?? 'Client';
-                                        final cPhone = client.client?.phone ?? '';
-                                        final cInitials = client.client?.initials ??
-                                            (cName.isNotEmpty ? cName[0].toUpperCase() : 'C');
-                                        context.push(
-                                          '/merchant/sms/conversation',
-                                          extra: {
-                                            'clientName': cName,
-                                            'clientPhone': cPhone,
-                                            'clientInitials': cInitials,
-                                          },
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
+                  if (state.clients.isEmpty) {
+                    return _buildEmptyState();
+                  }
+                  return RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: ListView.separated(
+                      controller: _scrollCtrl,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 80),
+                      itemCount: state.clients.length +
+                          (state.hasMore || state.isLoadingMore
+                              ? 1
+                              : 0),
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        indent: 72,
+                        color: AppColors.border.withValues(alpha: 0.5),
+                      ),
+                      itemBuilder: (context, index) {
+                        if (index >= state.clients.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            child: Center(
+                              child: SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2.4),
                               ),
-                              // ── PAGINATION FOOTER ──────────────────────
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        t.merchantClientsPaginationInfo(
-                                            '1',
-                                            state.clients.length.toString(),
-                                            state.total.toString()),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          t.merchantClientsPrevious,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.textSecondary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.surface,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: AppColors.border),
-                                          ),
-                                          child: Text(
-                                            t.merchantClientsNext,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textPrimary,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          );
+                        }
+                        final client = state.clients[index];
+                        return _ClientListItem(
+                          client: client,
+                          stampsRequired: stampsRequired,
+                          onTap: () => context
+                              .push('/merchant/clients/${client.id}'),
+                          onSms: () {
+                            final cName = client.client?.name ?? 'Client';
+                            final cPhone = client.client?.phone ?? '';
+                            final cInitials = client.client?.initials ??
+                                (cName.isNotEmpty ? cName[0].toUpperCase() : 'C');
+                            context.push(
+                              '/merchant/sms/conversation',
+                              extra: {
+                                'clientName': cName,
+                                'clientPhone': cPhone,
+                                'clientInitials': cInitials,
+                              },
+                            );
+                          },
                         );
-                  return listBody;
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -1000,123 +740,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   }
 }
 
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({required this.activeCount, required this.onTap});
-
-  final int activeCount;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          color: activeCount > 0 ? AppColors.primaryTint : AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: activeCount > 0 ? AppColors.primary : AppColors.border,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              LucideIcons.slidersHorizontal,
-              size: 13,
-              color:
-                  activeCount > 0 ? AppColors.primary : AppColors.textPrimary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'Filtres',
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: activeCount > 0
-                    ? AppColors.primary
-                    : AppColors.textPrimary,
-              ),
-            ),
-            if (activeCount > 0) ...[
-              const SizedBox(width: 4),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Text(
-                  '$activeCount',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickPill extends StatelessWidget {
-  const _QuickPill({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryTint : AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 1.2 : 1.0,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 12,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color:
-                    isSelected ? AppColors.primary : AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ClientsFilterSheet extends StatefulWidget {
   const _ClientsFilterSheet({
     required this.initial,
@@ -1136,6 +759,7 @@ class _ClientsFilterSheetState extends State<_ClientsFilterSheet> {
   late int? _inactiveDays = widget.initial.inactiveDays;
   late String? _levelKey = widget.initial.levelKey;
   late int? _minCycles = widget.initial.minCycles;
+  late ClientSort _sort = widget.initial.sort;
   final _customDaysCtrl = TextEditingController();
   bool _showCustomDays = false;
 
@@ -1166,179 +790,201 @@ class _ClientsFilterSheetState extends State<_ClientsFilterSheet> {
       child: Padding(
         padding:
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Filtres',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Filtres & Tri',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => setState(() {
+                        _inactiveDays = null;
+                        _levelKey = null;
+                        _minCycles = null;
+                        _sort = ClientSort.activity;
+                        _customDaysCtrl.clear();
+                        _showCustomDays = false;
+                      }),
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Text(
+                          'Réinitialiser',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              _sectionTitle('Trier par'),
+              _chipWrap([
+                _FilterChip(
+                  label: 'Activité récente',
+                  isSelected: _sort == ClientSort.activity,
+                  onTap: () => setState(() => _sort = ClientSort.activity),
+                ),
+                _FilterChip(
+                  label: 'Plus récents',
+                  isSelected: _sort == ClientSort.recent,
+                  onTap: () => setState(() => _sort = ClientSort.recent),
+                ),
+                _FilterChip(
+                  label: 'Plus anciens',
+                  isSelected: _sort == ClientSort.oldest,
+                  onTap: () => setState(() => _sort = ClientSort.oldest),
+                ),
+              ]),
+
+              _sectionTitle('Inactivité'),
+              _chipWrap([
+                for (final days in _inactivityPresets)
+                  _FilterChip(
+                    label: '${days}j',
+                    isSelected: !_showCustomDays && _inactiveDays == days,
+                    onTap: () => setState(() {
+                      _showCustomDays = false;
+                      _inactiveDays = _inactiveDays == days ? null : days;
+                    }),
+                  ),
+                _FilterChip(
+                  label: 'Autre',
+                  isSelected: _showCustomDays,
+                  onTap: () => setState(() {
+                    if (_showCustomDays) {
+                      _showCustomDays = false;
+                      _customDaysCtrl.clear();
+                    } else {
+                      _showCustomDays = true;
+                      _inactiveDays = null;
+                    }
+                  }),
+                ),
+              ]),
+              if (_showCustomDays)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  child: SizedBox(
+                    width: 160,
+                    child: TextField(
+                      controller: _customDaysCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      autofocus: true,
+                      style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        suffixText: 'jours',
+                        suffixStyle:
+                            TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        border: const OutlineInputBorder(),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
                   ),
-                  InkWell(
-                    onTap: () => setState(() {
-                      _inactiveDays = null;
-                      _levelKey = null;
-                      _minCycles = null;
-                      _customDaysCtrl.clear();
-                      _showCustomDays = false;
-                    }),
-                    borderRadius: BorderRadius.circular(12),
-                    child: const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: Text(
-                        'Réinitialiser',
+                ),
+
+              _sectionTitle('Niveau de fidélité'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final tier in widget.displayTiers)
+                      _LevelChip(
+                        tier: tier,
+                        isSelected: _levelKey == tier.key,
+                        onTap: () => setState(() {
+                          _levelKey = _levelKey == tier.key ? null : tier.key;
+                        }),
+                      ),
+                  ],
+                ),
+              ),
+
+              _sectionTitle('Programme terminé'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _FilterChip(
+                      label: 'Peu importe',
+                      isSelected: _minCycles == null,
+                      onTap: () => setState(() => _minCycles = null),
+                    ),
+                    _FilterChip(
+                      label: 'Au moins 1 fois',
+                      isSelected: _minCycles == 1,
+                      onTap: () => setState(() => _minCycles = 1),
+                    ),
+                    _FilterChip(
+                      label: '3 fois ou +',
+                      isSelected: _minCycles == 3,
+                      onTap: () => setState(
+                          () => _minCycles = _minCycles == 3 ? null : 3),
+                    ),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: InkWell(
+                    onTap: () {
+                      final filter = ClientsFilter(
+                        search: widget.initial.search,
+                        inactiveDays: _effectiveInactiveDays,
+                        levelKey: _levelKey,
+                        minCycles: _minCycles,
+                        sort: _sort,
+                      );
+                      Navigator.pop(context, filter);
+                    },
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Text(
+                        'Appliquer',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary),
+                            color: Colors.white),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            _sectionTitle('Inactivité'),
-            _chipWrap([
-              for (final days in _inactivityPresets)
-                _FilterChip(
-                  label: '${days}j',
-                  isSelected: !_showCustomDays && _inactiveDays == days,
-                  onTap: () => setState(() {
-                    _showCustomDays = false;
-                    _inactiveDays = _inactiveDays == days ? null : days;
-                  }),
-                ),
-              _FilterChip(
-                label: 'Autre',
-                isSelected: _showCustomDays,
-                onTap: () => setState(() {
-                  if (_showCustomDays) {
-                    _showCustomDays = false;
-                    _customDaysCtrl.clear();
-                  } else {
-                    _showCustomDays = true;
-                    _inactiveDays = null;
-                  }
-                }),
-              ),
-            ]),
-            if (_showCustomDays)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: SizedBox(
-                  width: 160,
-                  child: TextField(
-                    controller: _customDaysCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    autofocus: true,
-                    style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      suffixText: 'jours',
-                      suffixStyle:
-                          TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
                 ),
               ),
-
-            _sectionTitle('Niveau de fidélité'),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final tier in widget.displayTiers)
-                    _LevelChip(
-                      tier: tier,
-                      isSelected: _levelKey == tier.key,
-                      onTap: () => setState(() {
-                        _levelKey = _levelKey == tier.key ? null : tier.key;
-                      }),
-                    ),
-                ],
-              ),
-            ),
-
-            _sectionTitle('Programme terminé'),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _FilterChip(
-                    label: 'Peu importe',
-                    isSelected: _minCycles == null,
-                    onTap: () => setState(() => _minCycles = null),
-                  ),
-                  _FilterChip(
-                    label: 'Au moins 1 fois',
-                    isSelected: _minCycles == 1,
-                    onTap: () => setState(() => _minCycles = 1),
-                  ),
-                  _FilterChip(
-                    label: '3 fois ou +',
-                    isSelected: _minCycles == 3,
-                    onTap: () => setState(
-                        () => _minCycles = _minCycles == 3 ? null : 3),
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: InkWell(
-                  onTap: () {
-                    final filter = ClientsFilter(
-                      search: widget.initial.search,
-                      inactiveDays: _effectiveInactiveDays,
-                      levelKey: _levelKey,
-                      minCycles: _minCycles,
-                      sort: widget.initial.sort,
-                    );
-                    Navigator.pop(context, filter);
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Text(
-                      'Appliquer',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1454,8 +1100,8 @@ class _LevelChip extends StatelessWidget {
   }
 }
 
-class _ClientCard extends StatelessWidget {
-  const _ClientCard({
+class _ClientListItem extends StatelessWidget {
+  const _ClientListItem({
     required this.client,
     required this.stampsRequired,
     required this.onTap,
@@ -1491,156 +1137,125 @@ class _ClientCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: avatarColor,
-                    shape: BoxShape.circle,
-                    image: (avatarUrl != null && avatarUrl.isNotEmpty)
-                        ? DecorationImage(
-                            image: NetworkImage(avatarUrl),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                      ? null
-                      : Center(
-                          child: Text(
-                            initials,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13.5,
-                            ),
-                          ),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: avatarColor,
+                shape: BoxShape.circle,
+                image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                    ? DecorationImage(
+                        image: NetworkImage(avatarUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                  ? null
+                  : Center(
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
                         ),
-                ),
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      Flexible(
+                        child: Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
                           ),
-                          if (client.levelName != null) ...[
-                            const SizedBox(width: 6),
-                            _LevelBadge(
-                              name: client.levelName!,
-                              position: client.levelPosition,
-                              iconKey: client.levelIconKey,
-                            ),
-                          ],
-                          if (client.cyclesCompleted > 0) ...[
-                            const SizedBox(width: 4),
-                            Tooltip(
-                              message:
-                                  'Programme terminé ${client.cyclesCompleted} fois',
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: AppColors.successTint,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.repeat_rounded,
-                                        size: 10, color: AppColors.success),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      '${client.cyclesCompleted}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.success,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        lastActivity == null
-                            ? phone
-                            : '$phone • $lastActivity',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (client.levelName != null) ...[
+                        const SizedBox(width: 6),
+                        _LevelBadge(
+                          name: client.levelName!,
+                          position: client.levelPosition,
+                          iconKey: client.levelIconKey,
+                        ),
+                      ],
+                      if (client.cyclesCompleted > 0) ...[
+                        const SizedBox(width: 4),
+                        Tooltip(
+                          message:
+                              'Programme terminé ${client.cyclesCompleted} fois',
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.successTint,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.repeat_rounded,
+                                    size: 10, color: AppColors.success),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${client.cyclesCompleted}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                ),
-
-                InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Icon(
-                      LucideIcons.eye,
-                      size: 14,
+                  const SizedBox(height: 3),
+                  Text(
+                    lastActivity == null
+                        ? phone
+                        : '$phone • $lastActivity',
+                    style: TextStyle(
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onSms,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryTint,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 6),
-                InkWell(
-                  onTap: onSms,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Icon(
-                      LucideIcons.messageSquare,
-                      size: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                child: const Icon(
+                  LucideIcons.messageSquare,
+                  size: 16,
+                  color: Color(0xFF5B50EC),
                 ),
-              ],
+              ),
             ),
           ],
         ),

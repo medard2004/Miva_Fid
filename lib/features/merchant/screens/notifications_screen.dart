@@ -167,51 +167,25 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
           icon: Icon(LucideIcons.arrowLeft,
               color: AppColors.textPrimary, size: 22),
-          onPressed: () => context.pop(),
-        ),
-        title: notificationsAsync.when(
-          data: (notifications) {
-            final unreadCount = notifications.where((n) => !n.isRead).length;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Notifications',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  '$unreadCount non lues',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            );
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/merchant/more');
+            }
           },
-          loading: () => Text(
-            'Notifications',
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary),
-          ),
-          error: (_, __) => Text(
-            'Notifications',
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary),
+        ),
+        title: Text(
+          'Notifications',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: AppColors.textPrimary,
           ),
         ),
         actions: [
@@ -220,6 +194,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 color: AppColors.textSecondary, size: 20),
             onPressed: () => context.push('/merchant/more/preferences'),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: notificationsAsync.when(
@@ -288,7 +263,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 ),
               ),
 
-              // ── LIST OF NOTIFICATIONS BY SECTION ──
+              // ── LIST OF NOTIFICATIONS BY SECTION (FRAMELESS & MODERN) ──
               Expanded(
                 child: items.isEmpty
                     ? Center(
@@ -300,12 +275,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       )
                     : ListView(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                            horizontal: 16, vertical: 4),
                         children: [
                           for (final section in sections.keys) ...[
                             Padding(
                               padding: const EdgeInsets.only(
-                                  left: 4, top: 12, bottom: 8),
+                                  left: 4, top: 12, bottom: 6),
                               child: Text(
                                 section,
                                 style: TextStyle(
@@ -316,29 +291,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                 ),
                               ),
                             ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(16),
-                                border:
-                                    Border.all(color: AppColors.border),
-                              ),
-                              child: Column(
-                                children: [
-                                  for (var i = 0;
-                                      i < sections[section]!.length;
-                                      i++) ...[
-                                    _buildNotificationTile(
-                                        sections[section]![i]),
-                                    if (i < sections[section]!.length - 1)
-                                      Divider(
-                                          height: 1,
-                                          indent: 64,
-                                          color: AppColors.border),
-                                  ],
-                                ],
-                              ),
-                            ),
+                            for (var i = 0;
+                                i < sections[section]!.length;
+                                i++) ...[
+                              _buildNotificationTile(
+                                  sections[section]![i]),
+                              if (i < sections[section]!.length - 1)
+                                Divider(
+                                    height: 1,
+                                    indent: 56,
+                                    color: AppColors.border
+                                        .withValues(alpha: 0.5)),
+                            ],
                           ],
                           const SizedBox(height: 24),
                           if (items.isNotEmpty)
@@ -473,20 +437,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ref
             .read(merchantNotificationsNotifierProvider.notifier)
             .markRead(item.id);
-        final destination = resolveNotificationDestination(
-          type: item.type,
-          data: item.data,
-          title: item.title,
-          body: item.subtitle,
-        );
-        navigateToNotificationDestination(
-          context,
-          destination,
-          inboxPath: '/merchant/more/notifications',
-        );
+        _showNotificationDetail(context, item);
       },
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -495,9 +450,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               height: 40,
               decoration: BoxDecoration(
                 color: item.iconBg,
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(item.icon, size: 20, color: item.iconColor),
+              child: Icon(item.icon, size: 19, color: item.iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -510,16 +465,27 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         child: Text(
                           item.title,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        item.time,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       if (item.isUnread)
                         Container(
-                          width: 8,
-                          height: 8,
+                          width: 7,
+                          height: 7,
                           margin: const EdgeInsets.only(left: 6),
                           decoration: const BoxDecoration(
                             color: Color(0xFF5B50EC),
@@ -528,23 +494,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     item.subtitle,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                       height: 1.3,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.time,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -552,6 +511,156 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showNotificationDetail(BuildContext context, NotificationItem item) {
+    final destination = resolveNotificationDestination(
+      type: item.type,
+      data: item.data,
+      title: item.title,
+      body: item.subtitle,
+    );
+    final hasAction = destination is! InboxDestination &&
+        destination is! MerchantInboxDestination;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: item.iconBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(item.icon, size: 20, color: item.iconColor),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.time,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Divider(
+                    height: 1,
+                    color: AppColors.border.withValues(alpha: 0.5)),
+                const SizedBox(height: 14),
+                Text(
+                  item.subtitle,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.45,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Fermer',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (hasAction) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            navigateToNotificationDestination(
+                              context,
+                              destination,
+                              inboxPath: '/merchant/more/notifications',
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5B50EC),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Voir les détails',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

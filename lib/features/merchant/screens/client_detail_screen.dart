@@ -41,6 +41,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   List<Map<String, dynamic>> _historyItems = [];
   int _historyCurrentPage = 1;
   int _historyLastPage = 1;
+  int _visibleHistoryLimit = 5;
   bool _isHistoryInitialLoading = false;
   bool _isHistoryLoadingMore = false;
   bool _historyHasError = false;
@@ -87,6 +88,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
       _historyItems = [];
       _historyCurrentPage = 1;
       _historyLastPage = 1;
+      _visibleHistoryLimit = 5;
       _loadedHistoryCardId = null;
       _historyHasError = false;
     });
@@ -113,6 +115,15 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
       AppToast.error(context, 'Ce client n\'a aucun tampon à retirer');
       return;
     }
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Retirer un tampon',
+      message: 'Êtes-vous sûr de vouloir retirer un tampon à ce client ?',
+      confirmLabel: 'Retirer',
+      destructive: true,
+    );
+    if (!confirmed) return;
+
     try {
       await ref
           .read(clientsNotifierProvider.notifier)
@@ -146,7 +157,6 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
     // une bascule clair/sombre.
     ref.watch(appBrightnessProvider);
     final merchantAsync = ref.watch(merchantNotifierProvider);
-    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -208,7 +218,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                     children: [
                       IconButton(
                         icon: Icon(
-                          LucideIcons.chevronLeft,
+                          LucideIcons.arrowLeft,
                           color: AppColors.textPrimary,
                           size: 22,
                         ),
@@ -216,28 +226,15 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                       ),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              clientName,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 1),
-                            Text(
-                              t.merchantClientDetailSubtitle,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          clientName,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -251,15 +248,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 1. TOP PROFILE CARD
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.border),
-                          ),
+                        // 1. TOP PROFILE SECTION (CLEAN / NO CARD BORDER)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Column(
                             children: [
                               Container(
@@ -280,16 +271,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                clientName,
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 10),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -297,11 +279,13 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                                     Text(
                                       clientPhone,
                                       style: TextStyle(
-                                        fontSize: 12.5,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
                                         color: AppColors.textSecondary,
                                       ),
                                     ),
-                                  if (clientPhone.isNotEmpty) const SizedBox(width: 8),
+                                  if (clientPhone.isNotEmpty && clientTier != null)
+                                    const SizedBox(width: 8),
                                   if (clientTier != null)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
@@ -333,51 +317,51 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
                                     ),
                                 ],
                               ),
-const SizedBox(height: 16),
-                               Row(
-                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                 children: [
-                                   Text(
-                                     _display.progressLabel,
-                                     style: TextStyle(
-                                       fontSize: 12.5,
-                                       color: AppColors.textSecondary,
-                                       fontWeight: FontWeight.w500,
-                                     ),
-                                   ),
-                                   const Spacer(),
-                                   Text(
-                                     _display.isCashback
-                                         ? '$stamps FCFA'
-                                         : '$stamps / $globalGoal',
-                                     style: TextStyle(
-                                       fontSize: 13,
-                                       fontWeight: FontWeight.w800,
-                                       color: AppColors.textPrimary,
-                                     ),
-                                   ),
-                                 ],
-                               ),
-                               if (!_display.isCashback) ...[
-                                 const SizedBox(height: 8),
-                                 ClipRRect(
-                                   borderRadius: BorderRadius.circular(4),
-                                   child: Container(
-                                     height: 6,
-                                     width: double.infinity,
-                                     color: AppColors.border,
-                                     child: FractionallySizedBox(
-                                       alignment: Alignment.centerLeft,
-                                       widthFactor: (stamps / globalGoal).clamp(0.0, 1.0),
-                                       child: Container(color: AppColors.primary),
-                                     ),
-                                   ),
-                                 ),
-                               ],
-                             ],
-                           ),
-                         ),
-                         const SizedBox(height: 12),
+                              const SizedBox(height: 14),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _display.progressLabel,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    _display.isCashback
+                                        ? '$stamps FCFA'
+                                        : '$stamps / $globalGoal',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (!_display.isCashback) ...[
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Container(
+                                    height: 6,
+                                    width: double.infinity,
+                                    color: AppColors.border,
+                                    child: FractionallySizedBox(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: (stamps / globalGoal).clamp(0.0, 1.0),
+                                      child: Container(color: AppColors.primary),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
 
                         // 2. ACTION BUTTONS ROW
                         Row(
@@ -412,7 +396,7 @@ const SizedBox(height: 16),
                                   icon: const Icon(LucideIcons.messageSquare,
                                       size: 16, color: Colors.white),
                                   label: const Text(
-                                    'Envoyer un SMS',
+                                    'SMS',
                                     style: TextStyle(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w700,
@@ -666,6 +650,7 @@ const SizedBox(height: 16),
           _historyItems.addAll(page.items);
           _historyCurrentPage = page.currentPage;
           _historyLastPage = page.lastPage;
+          _visibleHistoryLimit += 5;
           _isHistoryLoadingMore = false;
         });
       }
@@ -684,85 +669,97 @@ const SizedBox(height: 16),
       Future.microtask(() => _fetchInitialHistory(cardId));
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Builder(
-        builder: (context) {
-          if (_isHistoryInitialLoading) {
-            return const Padding(
-              padding: EdgeInsets.all(Sp.lg),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (_historyHasError) {
-            return Padding(
-              padding: const EdgeInsets.all(Sp.lg),
-              child: Center(
-                child: Column(
-                  children: [
-                    Text(
-                      "Impossible de charger l'historique.",
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => _fetchInitialHistory(cardId),
-                      child: const Text('Réessayer'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          if (_historyItems.isEmpty) {
-            return Padding(
-              padding: const EdgeInsets.all(Sp.lg),
-              child: Center(
-                child: Text(
-                  'Aucune opération enregistrée pour ce client.',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-              ),
-            );
-          }
-          final hasMore = _historyCurrentPage < _historyLastPage;
-
-          return Column(
-            children: [
-              for (var i = 0; i < _historyItems.length; i++) ...[
-                if (i > 0) Divider(height: 1, color: AppColors.border),
-                _buildHistoryItem(_historyItems[i]),
-              ],
-              if (hasMore) ...[
-                Divider(height: 1, color: AppColors.border),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Center(
-                    child: _isHistoryLoadingMore
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : TextButton.icon(
-                            onPressed: () => _loadMoreHistory(cardId),
-                            icon: const Icon(LucideIcons.chevronDown, size: 16),
-                            label: const Text(
-                              'Voir plus',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ],
+    return Builder(
+      builder: (context) {
+        if (_isHistoryInitialLoading) {
+          return const Padding(
+            padding: EdgeInsets.all(Sp.lg),
+            child: Center(child: CircularProgressIndicator()),
           );
-        },
-      ),
+        }
+        if (_historyHasError) {
+          return Padding(
+            padding: const EdgeInsets.all(Sp.lg),
+            child: Center(
+              child: Column(
+                children: [
+                  Text(
+                    "Impossible de charger l'historique.",
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => _fetchInitialHistory(cardId),
+                    child: const Text('Réessayer'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        if (_historyItems.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(Sp.lg),
+            child: Center(
+              child: Text(
+                'Aucune opération enregistrée pour ce client.',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+            ),
+          );
+        }
+
+        final visibleItems = _historyItems.take(_visibleHistoryLimit).toList();
+        final canShowMoreLocally = _visibleHistoryLimit < _historyItems.length;
+        final canFetchMoreBackend = _historyCurrentPage < _historyLastPage;
+        final hasMore = canShowMoreLocally || canFetchMoreBackend;
+
+        return Column(
+          children: [
+            for (var i = 0; i < visibleItems.length; i++) ...[
+              if (i > 0)
+                Divider(
+                  height: 1,
+                  color: AppColors.border.withValues(alpha: 0.5),
+                ),
+              _buildHistoryItem(visibleItems[i]),
+            ],
+            if (hasMore) ...[
+              Divider(
+                height: 1,
+                color: AppColors.border.withValues(alpha: 0.5),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Center(
+                  child: _isHistoryLoadingMore
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : TextButton.icon(
+                          onPressed: () {
+                            if (canShowMoreLocally) {
+                              setState(() {
+                                _visibleHistoryLimit += 5;
+                              });
+                            } else if (canFetchMoreBackend) {
+                              _loadMoreHistory(cardId);
+                            }
+                          },
+                          icon: const Icon(LucideIcons.chevronDown, size: 16),
+                          label: const Text(
+                            'Voir plus',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 

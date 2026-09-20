@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../models/campaign_model.dart';
 import '../../../models/campaign_recipient_model.dart';
@@ -6,20 +8,64 @@ import 'sms_provider.dart';
 
 /// Types de campagne supportés par le wizard.
 enum CampaignType {
-  promotion('promotion', 'Promotion / Annonce', '🏷️'),
-  reminder('reminder', 'Rappel d\'inactivité', '🔔'),
-  review('review', 'Notation / Avis', '⭐'),
-  reward('reward', 'Récompense', '🎁'),
-  progress('progress', 'Progression fidélité', '📈'),
-  referral('referral', 'Parrainage', '🤝');
+  promotion(
+    'promotion',
+    'Promotion / Annonce',
+    '🏷️',
+    LucideIcons.tag,
+    Color(0xFF5B50EC),
+  ),
+  reminder(
+    'reminder',
+    'Rappel d\'inactivité',
+    '🔔',
+    LucideIcons.bellRing,
+    Color(0xFFF59E0B),
+  ),
+  review(
+    'review',
+    'Notation / Avis',
+    '⭐',
+    LucideIcons.star,
+    Color(0xFFEC4899),
+  ),
+  reward(
+    'reward',
+    'Récompense',
+    '🎁',
+    LucideIcons.gift,
+    Color(0xFF10B981),
+  ),
+  progress(
+    'progress',
+    'Progression fidélité',
+    '📈',
+    LucideIcons.trendingUp,
+    Color(0xFF3B82F6),
+  ),
+  referral(
+    'referral',
+    'Parrainage',
+    '🤝',
+    LucideIcons.userPlus,
+    Color(0xFF14B8A6),
+  );
 
-  const CampaignType(this.value, this.label, this.emoji);
+  const CampaignType(
+    this.value,
+    this.label,
+    this.emoji,
+    this.icon,
+    this.color,
+  );
   final String value;
   final String label;
   final String emoji;
+  final IconData icon;
+  final Color color;
 
-  /// Indique si ce type nécessite un champ image.
-  bool get hasImage => this == promotion;
+  /// Indique si ce type nécessite un champ image (seules Promotion et Récompense en ont besoin).
+  bool get hasImage => this == promotion || this == reward;
 
   /// Indique si ce type nécessite un titre.
   bool get hasTitle => true;
