@@ -7,28 +7,19 @@ Plateforme de fidélité digitale pour commerces locaux — Lomé, Togo
 - Flutter 3.22+ / Dart 3.4+
 - Riverpod 2.x (state management)
 - GoRouter 13.x (navigation)
-- Supabase (auth + base de données + storage)
 - Hive (cache offline)
 
 ## Configuration
 
-### 1. Supabase
-
-1. Créez un projet sur [supabase.com](https://supabase.com)
-2. Dans le SQL Editor, exécutez le fichier `supabase/schema.sql`
-3. Activez l'authentification par email/mot de passe
-4. Créez un bucket Storage nommé `merchant-assets`
-
-### 2. Variables d'environnement
+### Variables d'environnement
 
 Copiez `.env.example` en `.env` et remplissez vos clés :
 
 ```
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+API_BASE_URL=http://192.168.1.83:8000/api
 ```
 
-### 3. Lancer l'app
+### Lancer l'app
 
 ```bash
 # Installer les dépendances
@@ -38,7 +29,7 @@ flutter pub get
 flutter pub run build_runner build --delete-conflicting-outputs
 
 # Lancer sur Android
-flutter run --dart-define=SUPABASE_URL=https://xxx.supabase.co --dart-define=SUPABASE_ANON_KEY=eyJ...
+flutter run
 
 # Ou avec un fichier .env via flutter_dotenv (optionnel)
 flutter run

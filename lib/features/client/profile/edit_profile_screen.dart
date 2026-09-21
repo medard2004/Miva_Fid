@@ -11,6 +11,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
+import 'package:miva_fid/core/widgets/offline_action_guard.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
@@ -32,6 +33,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     with FormErrorHandler {
   Future<void> _pickAvatar() async {
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       maxWidth: 1024,
@@ -61,6 +63,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
   }
 
   Future<void> _removeAvatar() async {
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     try {
       await runGuarded(
         () => ref.read(authProvider.notifier).removeAvatar(),

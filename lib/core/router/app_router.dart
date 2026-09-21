@@ -76,6 +76,7 @@ import '../../features/merchant/screens/welcome_reward_screen.dart';
 import '../../features/merchant/screens/cashback_settings_screen.dart';
 import '../../features/merchant/screens/change_password_screen.dart';
 import '../../features/merchant/screens/reviews_screen.dart';
+import '../../features/merchant/screens/proximity_notification_screen.dart';
 import '../../features/onboarding/screens/forgot_password_screen.dart';
 import '../../features/onboarding/screens/merchant_auth_screen.dart';
 import '../../features/onboarding/screens/merchant_location_map_screen.dart';
@@ -806,6 +807,10 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/merchant/more/welcome-reward',
         pageBuilder: (_, __) => _slide(const WelcomeRewardScreen()),
+      ),
+      GoRoute(
+        path: '/merchant/more/proximity-notification',
+        pageBuilder: (_, __) => _slide(const ProximityNotificationScreen()),
       ),
       GoRoute(
         path: '/merchant/more/referrals',

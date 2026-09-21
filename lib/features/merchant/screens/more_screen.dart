@@ -10,8 +10,10 @@ import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
+import '../models/merchant_display.dart';
 import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
+import '../providers/proximity_settings_provider.dart';
 import '../providers/team_provider.dart';
 
 class MoreScreen extends ConsumerWidget {
@@ -125,7 +127,10 @@ class MoreScreen extends ConsumerWidget {
     final t = AppLocalizations.of(context)!;
     final locale = ref.watch(localeProvider);
     final account = ref.watch(merchantAuthProvider.select((s) => s.restaurant));
+    final display = MerchantDisplay.fromType(account?.loyaltyType);
     final teamAsync = ref.watch(teamNotifierProvider);
+    final proximitySettingsAsync = ref.watch(proximitySettingsProvider);
+    final proximityActive = proximitySettingsAsync.value?.enabled ?? false;
 
     final merchantName =
         (account?.name?.isNotEmpty ?? false) ? account!.name! : 'Votre Commerce';
@@ -423,25 +428,34 @@ class MoreScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               _buildGroupCard([
                 _buildMenuItem(
-                  icon: LucideIcons.award,
-                  label: 'Options du programme',
-                  onTap: () => context.push('/merchant/more/programme'),
-                ),
-                _buildMenuItem(
                   icon: LucideIcons.creditCard,
                   label: t.merchantMoreCustomizeCard,
                   onTap: () => context.push('/merchant/more/programme/design'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.radar,
+                  label: 'Notifications de proximité',
+                  tag: proximityActive ? 'Activée' : 'Désactivée',
+                  tagDone: proximityActive,
+                  onTap: () => context.push('/merchant/more/proximity-notification'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.gift,
                   label: t.merchantMoreGoalReward,
                   onTap: () => context.push('/merchant/more/programme/tiers'),
                 ),
-                _buildMenuItem(
-                  icon: LucideIcons.sparkles,
-                  label: t.merchantMoreLoyaltyProgram,
-                  onTap: () => context.push('/merchant/more/programme/rules'),
-                ),
+                if (display.isAchats)
+                  _buildMenuItem(
+                    icon: LucideIcons.calculator,
+                    label: t.merchantProgrammeRulesTitle,
+                    onTap: () => context.push('/merchant/more/programme/rules'),
+                  ),
+                if (display.isCashback)
+                  _buildMenuItem(
+                    icon: LucideIcons.percent,
+                    label: 'Paramètres cashback',
+                    onTap: () => context.push('/merchant/more/programme/cashback'),
+                  ),
                 _buildMenuItem(
                   icon: LucideIcons.cake,
                   label: 'Récompense anniversaire',
@@ -471,11 +485,6 @@ class MoreScreen extends ConsumerWidget {
                   icon: LucideIcons.star,
                   label: 'Avis clients',
                   onTap: () => context.push('/merchant/more/reviews'),
-                ),
-                _buildMenuItem(
-                  icon: LucideIcons.globe,
-                  label: t.merchantMoreMyShowcase,
-                  onTap: () => context.push('/merchant/more/account/vitrine'),
                 ),
               ]),
               const SizedBox(height: 20),
