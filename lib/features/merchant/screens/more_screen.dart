@@ -428,6 +428,21 @@ class MoreScreen extends ConsumerWidget {
                   onTap: () => context.push('/merchant/more/programme'),
                 ),
                 _buildMenuItem(
+                  icon: LucideIcons.creditCard,
+                  label: t.merchantMoreCustomizeCard,
+                  onTap: () => context.push('/merchant/more/programme/design'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.gift,
+                  label: t.merchantMoreGoalReward,
+                  onTap: () => context.push('/merchant/more/programme/tiers'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.sparkles,
+                  label: t.merchantMoreLoyaltyProgram,
+                  onTap: () => context.push('/merchant/more/programme/rules'),
+                ),
+                _buildMenuItem(
                   icon: LucideIcons.cake,
                   label: 'Récompense anniversaire',
                   onTap: () => context.push('/merchant/more/birthday-reward'),
@@ -456,6 +471,11 @@ class MoreScreen extends ConsumerWidget {
                   icon: LucideIcons.star,
                   label: 'Avis clients',
                   onTap: () => context.push('/merchant/more/reviews'),
+                ),
+                _buildMenuItem(
+                  icon: LucideIcons.globe,
+                  label: t.merchantMoreMyShowcase,
+                  onTap: () => context.push('/merchant/more/account/vitrine'),
                 ),
               ]),
               const SizedBox(height: 20),
