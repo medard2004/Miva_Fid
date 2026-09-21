@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/api/providers/api_providers.dart';
 import 'core/errors/error_messages.dart';
 import 'core/router/app_router.dart';
+import 'core/services/proximity_client_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
 import 'features/client/providers/app_providers.dart';
@@ -20,6 +21,9 @@ class MivaFidApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+
+    // Initialise le service de géolocalisation de proximité client (économique et automatique)
+    ref.watch(proximityClientServiceProvider);
 
     // Le module client a son propre design system sensible au mode sombre
     // (lib/features/client/core/theme/app_colors.dart), piloté à la main

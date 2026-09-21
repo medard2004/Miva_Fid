@@ -43,6 +43,13 @@ class AccountCategoryScreen extends ConsumerWidget {
               const Divider(height: 0, indent: Sp.md),
               _buildCommonTile(
                 context,
+                icon: LucideIcons.store,
+                label: t.merchantMoreMyShowcase,
+                route: '/merchant/more/account/vitrine',
+              ),
+              const Divider(height: 0, indent: Sp.md),
+              _buildCommonTile(
+                context,
                 icon: LucideIcons.qrCode,
                 label: t.merchantMoreMyQrCode,
                 route: '/merchant/more/account/qrcode',

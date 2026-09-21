@@ -13,6 +13,7 @@ import '../../../core/widgets/offline_action_guard.dart';
 import '../../../models/merchant_model.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/providers/onboarding_provider.dart';
+import '../../onboarding/utils/card_colors.dart';
 import '../../onboarding/widgets/color_palette_picker.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -128,10 +129,13 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
     setState(() => _saving = true);
 
     final hexColor = '#${state.colorPrimary.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+    final secondaryColor = deriveSecondaryColor(state.colorPrimary);
+    final hexSecondary = '#${secondaryColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
 
     try {
       await ref.read(merchantNotifierProvider.notifier).updateProgramme({
         'color_primary': hexColor,
+        'color_secondary': hexSecondary,
         'card_decoration_pattern': state.cardDecorationPattern,
         'stamp_design_type': state.stampDesignType,
         'stamp_icon': state.stampIcon,

@@ -1,7 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:simple_icons/simple_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:miva_fid/core/notifications/content_unavailable_view.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -20,6 +23,7 @@ import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 import 'package:miva_fid/features/client/widgets/shared/reward_detail_sheet.dart';
 import '../wallet/widgets/card_face_content.dart';
 import 'card_export_service.dart';
+import 'merchant_map_screen.dart';
 import '../../../core/widgets/tier_level_icon.dart';
 
 class CardDetailScreen extends ConsumerWidget {
@@ -215,6 +219,10 @@ class CardDetailScreen extends ConsumerWidget {
                     _HistoryAccordionBar(card: card, t: t),
 
                     const SizedBox(height: 16),
+
+                    _MerchantShowcaseCard(card: card),
+
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -1079,6 +1087,688 @@ class _CardQr extends StatelessWidget {
       dataModuleStyle: const QrDataModuleStyle(
         dataModuleShape: QrDataModuleShape.square,
         color: AppColors.inkSolid,
+      ),
+    );
+  }
+}
+
+/// Carte de présentation et vitrine du commerce.
+class _MerchantShowcaseCard extends StatelessWidget {
+  final LoyaltyCard card;
+  const _MerchantShowcaseCard({required this.card});
+
+  Future<void> _launch(String urlString) async {
+    final uri = Uri.parse(urlString);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+
+  void _openMap(BuildContext context) {
+    final fullAddress = [
+      if (card.restaurantAddress?.isNotEmpty ?? false) card.restaurantAddress!,
+      if (card.restaurantCity?.isNotEmpty ?? false) card.restaurantCity!,
+    ].join(', ');
+    context.push(
+      '/client/card/${card.id}/map',
+      extra: MerchantMapArguments(
+        merchantName: card.restaurantName,
+        address: fullAddress,
+        latitude: card.restaurantLatitude,
+        longitude: card.restaurantLongitude,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAddress = (card.restaurantAddress?.isNotEmpty ?? false) ||
+        (card.restaurantCity?.isNotEmpty ?? false);
+    final fullAddress = [
+      if (card.restaurantAddress?.isNotEmpty ?? false) card.restaurantAddress!,
+      if (card.restaurantCity?.isNotEmpty ?? false) card.restaurantCity!,
+    ].join(', ');
+
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  gradient: AppColors.cardGradient(card.liningColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: card.logoUrl != null && card.logoUrl!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
+                            imageUrl: card.logoUrl!,
+                            width: 42,
+                            height: 42,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => const Icon(
+                              LucideIcons.store,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          LucideIcons.store,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      card.restaurantName,
+                      style: AppTextStyles.titleMedium()
+                          .copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (card.restaurantCategory.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        card.restaurantCategory,
+                        style: AppTextStyles.bodySmall(
+                          color: AppColors.inkMuted(opacity: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              AppTapScale(
+                onTap: () => _showMerchantVitrineSheet(context, card),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Vitrine',
+                        style: AppTextStyles.label(color: AppColors.primary).copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(LucideIcons.arrowUpRight,
+                          size: 14, color: AppColors.primary),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (hasAddress) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(LucideIcons.mapPin,
+                    size: 14, color: AppColors.inkMuted(opacity: 0.6)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    fullAddress,
+                    style: AppTextStyles.bodySmall(
+                      color: AppColors.inkMuted(opacity: 0.75),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 14),
+          // Actions rapides de contact
+          Row(
+            children: [
+              if (card.restaurantPhone?.isNotEmpty ?? false)
+                Expanded(
+                  child: _ContactActionButton(
+                    icon: LucideIcons.phone,
+                    label: 'Appeler',
+                    color: const Color(0xFF2563EB),
+                    onTap: () => _launch('tel:${card.restaurantPhone}'),
+                  ),
+                ),
+              if (card.restaurantWhatsapp?.isNotEmpty ?? false) ...[
+                if (card.restaurantPhone?.isNotEmpty ?? false)
+                  const SizedBox(width: 8),
+                Expanded(
+                  child: _ContactActionButton(
+                    icon: LucideIcons.messageSquare,
+                    label: 'WhatsApp',
+                    color: const Color(0xFF16A34A),
+                    onTap: () {
+                      final clean = card.restaurantWhatsapp!
+                          .replaceAll(RegExp(r'[^0-9+]'), '');
+                      _launch('https://wa.me/$clean');
+                    },
+                  ),
+                ),
+              ],
+              if (card.restaurantInstagram?.isNotEmpty ?? false) ...[
+                if ((card.restaurantPhone?.isNotEmpty ?? false) ||
+                    (card.restaurantWhatsapp?.isNotEmpty ?? false))
+                  const SizedBox(width: 8),
+                Expanded(
+                  child: _ContactActionButton(
+                    icon: SimpleIcons.instagram,
+                    label: 'Instagram',
+                    color: const Color(0xFFE1306C),
+                    onTap: () {
+                      final handle =
+                          card.restaurantInstagram!.replaceAll('@', '').trim();
+                      _launch('https://instagram.com/$handle');
+                    },
+                  ),
+                ),
+              ],
+              if ((card.restaurantLatitude != null &&
+                      card.restaurantLongitude != null) ||
+                  hasAddress) ...[
+                if ((card.restaurantPhone?.isNotEmpty ?? false) ||
+                    (card.restaurantWhatsapp?.isNotEmpty ?? false) ||
+                    (card.restaurantInstagram?.isNotEmpty ?? false))
+                  const SizedBox(width: 8),
+                Expanded(
+                  child: _ContactActionButton(
+                    icon: LucideIcons.map,
+                    label: 'Plan',
+                    color: AppColors.primary,
+                    onTap: () => _openMap(context),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContactActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ContactActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppTapScale(
+      onTap: onTap,
+      scaleDown: 0.96,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Modal de la vitrine complète de l'établissement
+void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
+  final hasAddress = (card.restaurantAddress?.isNotEmpty ?? false) ||
+      (card.restaurantCity?.isNotEmpty ?? false);
+  final fullAddress = [
+    if (card.restaurantAddress?.isNotEmpty ?? false) card.restaurantAddress!,
+    if (card.restaurantCity?.isNotEmpty ?? false) card.restaurantCity!,
+  ].join(', ');
+
+  final dayLabels = {
+    'mon': 'Lundi',
+    'tue': 'Mardi',
+    'wed': 'Mercredi',
+    'thu': 'Jeudi',
+    'fri': 'Vendredi',
+    'sat': 'Samedi',
+    'sun': 'Dimanche',
+  };
+
+  showModalBottomSheet(
+    context: context,
+    useRootNavigator: true,
+    isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (ctx) {
+      return SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 18),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+
+              // Header commerce
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.cardGradient(card.liningColor),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Center(
+                      child: card.logoUrl != null && card.logoUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: CachedNetworkImage(
+                                imageUrl: card.logoUrl!,
+                                width: 52,
+                                height: 52,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => const Icon(
+                                  LucideIcons.store,
+                                  color: Colors.white,
+                                  size: 26,
+                                ),
+                              ),
+                            )
+                          : const Icon(
+                              LucideIcons.store,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          card.restaurantName,
+                          style: AppTextStyles.displayMedium()
+                              .copyWith(fontSize: 18),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            card.restaurantCategory.isNotEmpty
+                                ? card.restaurantCategory
+                                : 'Établissement partenaire',
+                            style: AppTextStyles.eyebrow(
+                              color: AppColors.inkMuted(opacity: 0.8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              if (card.restaurantDescription?.isNotEmpty ?? false) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    card.restaurantDescription!,
+                    style: AppTextStyles.bodyMedium(
+                      color: AppColors.ink.withValues(alpha: 0.85),
+                    ).copyWith(height: 1.45),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 18),
+
+              // Coordonnées & localisation
+              if (hasAddress) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.mapPin,
+                          size: 20, color: AppColors.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Adresse',
+                              style: AppTextStyles.label().copyWith(fontSize: 12),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              fullAddress,
+                              style: AppTextStyles.bodySmall(
+                                color: AppColors.inkMuted(opacity: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AppTapScale(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          context.push(
+                            '/client/card/${card.id}/map',
+                            extra: MerchantMapArguments(
+                              merchantName: card.restaurantName,
+                              address: fullAddress,
+                              latitude: card.restaurantLatitude,
+                              longitude: card.restaurantLongitude,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            children: [
+                              Text(
+                                'Itinéraire',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              SizedBox(width: 3),
+                              Icon(LucideIcons.externalLink,
+                                  size: 12, color: AppColors.primary),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              // Horaires d'ouverture
+              if (card.restaurantOpeningHours.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(LucideIcons.clock,
+                              size: 16, color: AppColors.inkMuted()),
+                          const SizedBox(width: 8),
+                          Text('Horaires d\'ouverture',
+                              style: AppTextStyles.titleMedium()
+                                  .copyWith(fontSize: 14)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ...dayLabels.entries.map((e) {
+                        final info = card.restaurantOpeningHours[e.key] as Map?;
+                        final isOpen = info?['open'] == true;
+                        final from = info?['from']?.toString() ?? '';
+                        final to = info?['to']?.toString() ?? '';
+                        final timeStr = isOpen
+                            ? (from.isNotEmpty && to.isNotEmpty
+                                ? '$from - $to'
+                                : 'Ouvert')
+                            : 'Fermé';
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                e.value,
+                                style: AppTextStyles.bodySmall(
+                                  color: AppColors.inkMuted(opacity: 0.8),
+                                ),
+                              ),
+                              Text(
+                                timeStr,
+                                style: AppTextStyles.bodySmall(
+                                  color: isOpen
+                                      ? AppColors.ink
+                                      : AppColors.error.withValues(alpha: 0.8),
+                                ).copyWith(
+                                    fontWeight: isOpen
+                                        ? FontWeight.w600
+                                        : FontWeight.w400),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              // Réseaux sociaux & contact direct
+              if (card.hasRestaurantContact) ...[
+                Text(
+                  'Contact & Réseaux',
+                  style: AppTextStyles.eyebrow(color: AppColors.inkMuted()),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    if (card.restaurantPhone?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: LucideIcons.phone,
+                        label: card.restaurantPhone!,
+                        color: const Color(0xFF2563EB),
+                        onTap: () => launchUrl(
+                            Uri.parse('tel:${card.restaurantPhone}'),
+                            mode: LaunchMode.externalApplication),
+                      ),
+                    if (card.restaurantWhatsapp?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.whatsapp,
+                        label: 'WhatsApp',
+                        color: const Color(0xFF16A34A),
+                        onTap: () {
+                          final clean = card.restaurantWhatsapp!
+                              .replaceAll(RegExp(r'[^0-9+]'), '');
+                          launchUrl(Uri.parse('https://wa.me/$clean'),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.restaurantInstagram?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.instagram,
+                        label: card.restaurantInstagram!,
+                        color: const Color(0xFFE1306C),
+                        onTap: () {
+                          final handle = card.restaurantInstagram!
+                              .replaceAll('@', '')
+                              .trim();
+                          launchUrl(Uri.parse('https://instagram.com/$handle'),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.restaurantFacebook?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.facebook,
+                        label: 'Facebook',
+                        color: const Color(0xFF1877F2),
+                        onTap: () {
+                          final fb = card.restaurantFacebook!.trim();
+                          final url = fb.startsWith('http')
+                              ? fb
+                              : 'https://facebook.com/$fb';
+                          launchUrl(Uri.parse(url),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.restaurantTiktok?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.tiktok,
+                        label: 'TikTok',
+                        color: const Color(0xFF000000),
+                        onTap: () {
+                          final tt = card.restaurantTiktok!
+                              .replaceAll('@', '')
+                              .trim();
+                          launchUrl(Uri.parse('https://tiktok.com/@$tt'),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                    if (card.googleReviewUrl?.isNotEmpty ?? false)
+                      _SocialPill(
+                        icon: SimpleIcons.google,
+                        label: 'Avis Google',
+                        color: const Color(0xFFEA4335),
+                        onTap: () {
+                          final url = card.googleReviewUrl!.trim();
+                          final full = url.startsWith('http') ? url : 'https://$url';
+                          launchUrl(Uri.parse(full),
+                              mode: LaunchMode.externalApplication);
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _SocialPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _SocialPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppTapScale(
+      onTap: onTap,
+      scaleDown: 0.95,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

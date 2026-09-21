@@ -35,7 +35,7 @@
 	<key>NFCReaderUsageDescription</key>
 	<string>Miva-Fid utilise le NFC pour scanner les badges de fidélité.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Miva-Fid utilise votre position pour localiser votre commerce sur la carte.</string>
+	<string>Miva-Fid utilise votre position pour localiser les commerces et vous notifier des offres exclusives à proximité.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

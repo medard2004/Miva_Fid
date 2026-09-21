@@ -102,6 +102,11 @@ NotificationDestination resolveNotificationDestination({
       if (rewardId != null) return RewardDestination(rewardId);
       return const InboxDestination();
 
+    case 'proximity_alert':
+      final cardId = data['card_id']?.toString();
+      if (cardId != null) return CardDestination(cardId);
+      return const InboxDestination();
+
     case 'campaign':
     case 'promotion':
     case 'reminder':

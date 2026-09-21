@@ -134,6 +134,11 @@ class ProfileHubScreen extends ConsumerWidget {
                   label: t.merchantMoreMyQrCode,
                   onTap: () => context.push('/merchant/more/account/qrcode'),
                 ),
+                _buildMenuItem(
+                  icon: LucideIcons.globe,
+                  label: t.merchantMoreMyShowcase,
+                  onTap: () => context.push('/merchant/more/account/vitrine'),
+                ),
               ]),
             ],
           ),
