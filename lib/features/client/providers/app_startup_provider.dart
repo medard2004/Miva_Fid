@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
@@ -63,8 +64,12 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
             );
         try {
           await ref.read(walletProvider.notifier).loadFromCache();
-        } catch (_) {}
-      } catch (_) {}
+        } catch (e) {
+          debugPrint('[app_startup_provider] Erreur chargement wallet cache: $e');
+        }
+      } catch (e) {
+        debugPrint('[app_startup_provider] Erreur parsing client user cache: $e');
+      }
     }
 
     // 2. Validation / rafraîchissement réseau
@@ -75,18 +80,23 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
       // Repeuple le wallet avec les données fraîches du serveur
       try {
         await ref.read(walletProvider.notifier).loadMine();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[app_startup_provider] Erreur rafraîchissement wallet réseau: $e');
+      }
     } on UnauthorizedException {
       // Token réellement rejeté par le serveur (401) : purge et déconnexion
       await cache.clearClientData();
       await ref.read(authProvider.notifier).signOut();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[app_startup_provider] Erreur validation réseau client: $e');
       // Erreur réseau (hors-ligne, timeout) :
       // On conserve la session restaurée depuis le cache !
       if (ref.read(authProvider).isAuthenticated) {
         try {
           await ref.read(walletProvider.notifier).loadFromCache();
-        } catch (_) {}
+        } catch (e2) {
+          debugPrint('[app_startup_provider] Erreur fallback wallet cache: $e2');
+        }
       }
     }
   }
@@ -102,7 +112,9 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
         ref.read(merchantAuthProvider.notifier).setAuthenticated(
               RestaurantAccount.fromJson(cachedMerchantJson),
             );
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[app_startup_provider] Erreur parsing merchant account cache: $e');
+      }
     }
 
     // 2. Validation / rafraîchissement réseau
@@ -113,7 +125,8 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
       // Token réellement rejeté (401)
       await cache.clearMerchantData();
       await ref.read(merchantAuthProvider.notifier).signOut();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[app_startup_provider] Erreur validation réseau merchant: $e');
       // Erreur réseau : on conserve la session restaurée depuis le cache !
     }
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/api/repositories/auth_repository.dart';
@@ -86,7 +87,8 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
       try {
         await loadMine();
         return;
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[app_providers] Retry loadMine échoué (tentative $attempt): $e');
         if (attempt >= delays.length) return;
         await Future.delayed(delays[attempt]);
       }
@@ -213,7 +215,8 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
     state = [for (final n in state) n.copyWith(isRead: true)];
     try {
       await _ref.read(notificationRepositoryProvider).markAllRead();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[app_providers] Erreur markAllRead: $e');
       // En cas d'échec réseau, le prochain `load()` ré-alignera l'état.
     }
   }
@@ -227,7 +230,8 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
     ];
     try {
       await _ref.read(notificationRepositoryProvider).markRead(id);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[app_providers] Erreur markRead: $e');
       // En cas d'échec réseau, le prochain `load()` ré-alignera l'état.
     }
   }
@@ -715,7 +719,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(clearError: true);
     try {
       await _authRepository.logout();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[app_providers] Erreur logout API: $e');
       // Un échec réseau ou un token déjà invalide ne doit pas empêcher la
       // déconnexion : le token local est purgé dans tous les cas.
     } finally {

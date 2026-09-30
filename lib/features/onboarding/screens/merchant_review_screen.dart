@@ -214,14 +214,6 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                             label: 'Mécanique',
                             value: _modeLabel(state.loyaltyMode),
                           ),
-                          const Divider(height: 1),
-                          _buildSummaryRow(
-                            label: 'Avis Google',
-                            value: state.showReviewButton &&
-                                    state.googleReviewUrl.isNotEmpty
-                                ? 'Activé'
-                                : 'Désactivé',
-                          ),
                         ],
                       ),
                     ).animate(delay: 150.ms).fadeIn(duration: 300.ms),

@@ -41,6 +41,16 @@ class AppNotification {
     return 'il y a ${diff.inDays}j';
   }
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'title': title,
+        'body': message,
+        'created_at': timestamp.toIso8601String(),
+        'read_at': isRead ? DateTime.now().toIso8601String() : null,
+        'data': data,
+      };
+
   AppNotification copyWith({bool? isRead}) => AppNotification(
         id: id,
         type: type,

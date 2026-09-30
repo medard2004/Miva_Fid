@@ -23,6 +23,7 @@ class ValidationSuccessOverlay extends StatefulWidget {
     required this.pointsEarned,
     required this.rewardUnlocked,
     this.cashbackEarned,
+    this.isOfflineSaved = false,
   });
 
   final String clientName;
@@ -34,6 +35,7 @@ class ValidationSuccessOverlay extends StatefulWidget {
   final int pointsEarned;
   final bool rewardUnlocked;
   final double? cashbackEarned;
+  final bool isOfflineSaved;
 
   @override
   State<ValidationSuccessOverlay> createState() => _ValidationSuccessOverlayState();
@@ -136,6 +138,31 @@ class _ValidationSuccessOverlayState extends State<ValidationSuccessOverlay> {
                           style: AppTextStyles.bodyMd().copyWith(color: Colors.white.withValues(alpha: 0.85)),
                           textAlign: TextAlign.center,
                         ),
+                        if (widget.isOfflineSaved) ...[
+                          const SizedBox(height: Sp.md),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(LucideIcons.wifiOff, color: Colors.white, size: 14),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Enregistré hors ligne — synchro auto',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

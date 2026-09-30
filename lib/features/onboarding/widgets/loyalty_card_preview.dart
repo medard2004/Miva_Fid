@@ -194,7 +194,8 @@ class _CardTopGroup extends StatelessWidget {
                     try {
                       return Image.file(File(url),
                           width: 22, height: 22, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback());
-                    } catch (_) {
+                    } catch (e) {
+                      debugPrint('[loyalty_card_preview] Erreur chargement image locale: $e');
                       return fallback();
                     }
                   }),

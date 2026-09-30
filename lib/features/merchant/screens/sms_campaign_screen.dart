@@ -10,9 +10,11 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/merchant_offline_error_widget.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/campaign_model.dart';
 import '../../client/providers/settings_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/sms_provider.dart';
 
@@ -64,6 +66,10 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final restaurant = ref.watch(merchantAuthProvider).restaurant;
+    final isFcmSuspended = restaurant?.isFcmSuspended ?? false;
+    final fcmSuspensionReason = restaurant?.fcmSuspensionReason;
+
     final merchant = ref.watch(merchantNotifierProvider).value;
     final smsAsync = _showArchived
         ? ref.watch(archivedCampaignsProvider)
@@ -106,19 +112,29 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                     ),
                   ),
                   InkWell(
-                    onTap: () => context.push('/merchant/campaigns/new'),
+                    onTap: isFcmSuspended
+                        ? () {
+                            ToastService.showError(
+                              fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                  ? 'Service suspendu : $fcmSuspensionReason'
+                                  : 'Le service de notifications FCM est temporairement indisponible.',
+                            );
+                          }
+                        : () => context.push('/merchant/campaigns/new'),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 36,
                       height: 36,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF5B50EC),
+                      decoration: BoxDecoration(
+                        color: isFcmSuspended
+                            ? AppColors.textSecondary.withValues(alpha: 0.25)
+                            : const Color(0xFF5B50EC),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.plus,
                         size: 19,
-                        color: Colors.white,
+                        color: isFcmSuspended ? AppColors.textSecondary : Colors.white,
                       ),
                     ),
                   ),
@@ -176,6 +192,66 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ── BANNIÈRE SUSPENSION DU SERVICE FCM ─────────────────────────
+                      if (isFcmSuspended) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFFFCA5A5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEE2E2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  LucideIcons.bellOff,
+                                  size: 18,
+                                  color: Color(0xFFDC2626),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Notifications temporairement indisponibles',
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF991B1B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                          ? 'Raison : $fcmSuspensionReason\nLes envois et programmations sont temporairement suspendus. L\'historique et les autres fonctionnalités restent accessibles.'
+                                          : 'Le service de notifications FCM est temporairement suspendu pour votre établissement par l\'administrateur. Les autres fonctionnalités restent pleinement accessibles.',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFFB91C1C),
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
                       // ── 3 KPI STAT CARDS ROW ─────────────────────────────────────
                       _buildKpiRow(smsAsync, merchant?.smsRemaining),
                 const SizedBox(height: 20),
@@ -295,18 +371,10 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                       ),
                     ),
                   ),
-                  error: (err, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Erreur: $err',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ),
+                  error: (err, _) => MerchantOfflineErrorWidget(
+                    error: err,
+                    title: 'Campagnes indisponibles',
+                    onRetry: () => ref.invalidate(smsNotifierProvider),
                   ),
                   data: (campaigns) {
                     if (campaigns.isEmpty) {

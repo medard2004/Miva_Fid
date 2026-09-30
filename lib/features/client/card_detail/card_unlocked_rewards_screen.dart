@@ -30,13 +30,8 @@ class CardUnlockedRewardsScreen extends ConsumerWidget {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
 
-    final card = ref.watch(walletProvider.select((cards) {
-      try {
-        return cards.firstWhere((c) => c.id == cardId || c.fallbackId == cardId);
-      } catch (_) {
-        return null;
-      }
-    }));
+    final card = ref.watch(walletProvider.select((cards) =>
+        cards.where((c) => c.id == cardId || c.fallbackId == cardId).firstOrNull));
 
     final rewards = card == null
         ? const <Reward>[]

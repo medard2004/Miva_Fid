@@ -38,14 +38,8 @@ class CardDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
-    final card = ref.watch(walletProvider.select((cards) {
-      try {
-        return cards
-            .firstWhere((c) => c.id == cardId || c.fallbackId == cardId);
-      } catch (_) {
-        return null;
-      }
-    }));
+    final card = ref.watch(walletProvider.select((cards) =>
+        cards.where((c) => c.id == cardId || c.fallbackId == cardId).firstOrNull));
     final rewards = card == null
         ? const <Reward>[]
         : ref.watch(rewardsProvider).where((r) => r.cardId == card.id).toList();
@@ -1101,7 +1095,29 @@ class _MerchantShowcaseCard extends StatelessWidget {
     final uri = Uri.parse(urlString);
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[_MerchantShowcaseCard] Erreur ouverture url $urlString: $e');
+    }
+  }
+
+  void _openGoogleMaps() {
+    final lat = card.restaurantLatitude;
+    final lng = card.restaurantLongitude;
+    final name = card.restaurantName;
+    final fullAddress = [
+      if (card.restaurantAddress?.isNotEmpty ?? false) card.restaurantAddress!,
+      if (card.restaurantCity?.isNotEmpty ?? false) card.restaurantCity!,
+    ].join(', ');
+
+    Uri url;
+    if (lat != null && lng != null) {
+      url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+    } else if (fullAddress.isNotEmpty) {
+      url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$name, $fullAddress')}');
+    } else {
+      url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(name)}');
+    }
+    launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
   void _openMap(BuildContext context) {
@@ -1240,72 +1256,120 @@ class _MerchantShowcaseCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 14),
-          // Actions rapides de contact
-          Row(
-            children: [
-              if (card.restaurantPhone?.isNotEmpty ?? false)
-                Expanded(
-                  child: _ContactActionButton(
+          // Actions rapides de contact & itinéraire & réseaux sociaux
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                if (card.restaurantPhone?.isNotEmpty ?? false) ...[
+                  _ContactActionButton(
                     icon: LucideIcons.phone,
                     label: 'Appeler',
                     color: const Color(0xFF2563EB),
                     onTap: () => _launch('tel:${card.restaurantPhone}'),
                   ),
-                ),
-              if (card.restaurantWhatsapp?.isNotEmpty ?? false) ...[
-                if (card.restaurantPhone?.isNotEmpty ?? false)
                   const SizedBox(width: 8),
-                Expanded(
-                  child: _ContactActionButton(
-                    icon: LucideIcons.messageSquare,
-                    label: 'WhatsApp',
+                ],
+                if (card.restaurantWhatsapp?.isNotEmpty ?? false) ...[
+                  _ContactActionButton(
+                    icon: SimpleIcons.whatsapp,
+                    label: card.restaurantWhatsappName?.isNotEmpty == true
+                        ? card.restaurantWhatsappName!
+                        : 'WhatsApp',
                     color: const Color(0xFF16A34A),
-                    onTap: () {
-                      final clean = card.restaurantWhatsapp!
-                          .replaceAll(RegExp(r'[^0-9+]'), '');
-                      _launch('https://wa.me/$clean');
-                    },
+                    onTap: () => _launch(
+                        _formatSocialUrl('whatsapp', card.restaurantWhatsapp!)),
                   ),
-                ),
-              ],
-              if (card.restaurantInstagram?.isNotEmpty ?? false) ...[
-                if ((card.restaurantPhone?.isNotEmpty ?? false) ||
-                    (card.restaurantWhatsapp?.isNotEmpty ?? false))
                   const SizedBox(width: 8),
-                Expanded(
-                  child: _ContactActionButton(
-                    icon: SimpleIcons.instagram,
-                    label: 'Instagram',
-                    color: const Color(0xFFE1306C),
-                    onTap: () {
-                      final handle =
-                          card.restaurantInstagram!.replaceAll('@', '').trim();
-                      _launch('https://instagram.com/$handle');
-                    },
+                ],
+                if ((card.restaurantLatitude != null &&
+                        card.restaurantLongitude != null) ||
+                    hasAddress) ...[
+                  _ContactActionButton(
+                    icon: LucideIcons.navigation,
+                    label: 'Google Maps',
+                    color: const Color(0xFFEA4335),
+                    onTap: _openGoogleMaps,
                   ),
-                ),
-              ],
-              if ((card.restaurantLatitude != null &&
-                      card.restaurantLongitude != null) ||
-                  hasAddress) ...[
-                if ((card.restaurantPhone?.isNotEmpty ?? false) ||
-                    (card.restaurantWhatsapp?.isNotEmpty ?? false) ||
-                    (card.restaurantInstagram?.isNotEmpty ?? false))
                   const SizedBox(width: 8),
-                Expanded(
-                  child: _ContactActionButton(
+                  _ContactActionButton(
                     icon: LucideIcons.map,
                     label: 'Plan',
                     color: AppColors.primary,
                     onTap: () => _openMap(context),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                ],
+                if (card.restaurantInstagram?.isNotEmpty ?? false) ...[
+                  _ContactActionButton(
+                    icon: SimpleIcons.instagram,
+                    label: card.restaurantInstagramName?.isNotEmpty == true
+                        ? card.restaurantInstagramName!
+                        : (card.restaurantName.isNotEmpty
+                            ? card.restaurantName
+                            : 'Instagram'),
+                    color: const Color(0xFFE1306C),
+                    onTap: () => _launch(
+                        _formatSocialUrl('instagram', card.restaurantInstagram!)),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (card.restaurantFacebook?.isNotEmpty ?? false) ...[
+                  _ContactActionButton(
+                    icon: SimpleIcons.facebook,
+                    label: card.restaurantFacebookName?.isNotEmpty == true
+                        ? card.restaurantFacebookName!
+                        : (card.restaurantName.isNotEmpty
+                            ? card.restaurantName
+                            : 'Facebook'),
+                    color: const Color(0xFF1877F2),
+                    onTap: () => _launch(
+                        _formatSocialUrl('facebook', card.restaurantFacebook!)),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (card.restaurantTiktok?.isNotEmpty ?? false) ...[
+                  _ContactActionButton(
+                    icon: SimpleIcons.tiktok,
+                    label: card.restaurantTiktokName?.isNotEmpty == true
+                        ? card.restaurantTiktokName!
+                        : (card.restaurantName.isNotEmpty
+                            ? card.restaurantName
+                            : 'TikTok'),
+                    color: AppColors.ink,
+                    onTap: () => _launch(
+                        _formatSocialUrl('tiktok', card.restaurantTiktok!)),
+                  ),
+                  const SizedBox(width: 8),
+                ],
               ],
-            ],
+            ),
           ),
         ],
       ),
     );
+  }
+}
+
+String _formatSocialUrl(String platform, String raw) {
+  final val = raw.trim();
+  if (val.isEmpty) return '';
+  if (val.startsWith('http://') || val.startsWith('https://')) return val;
+  switch (platform) {
+    case 'whatsapp':
+      final clean = val.replaceAll(RegExp(r'[^0-9+]'), '');
+      return 'https://wa.me/$clean';
+    case 'instagram':
+      final handle = val.replaceAll('@', '').trim();
+      return 'https://instagram.com/$handle';
+    case 'facebook':
+      final clean = val.replaceAll('@', '').trim();
+      return 'https://facebook.com/$clean';
+    case 'tiktok':
+      final clean = val.replaceAll('@', '').trim();
+      return 'https://tiktok.com/@$clean';
+    default:
+      return 'https://$val';
   }
 }
 
@@ -1328,28 +1392,27 @@ class _ContactActionButton extends StatelessWidget {
       onTap: onTap,
       scaleDown: 0.96,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
+          border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 14, color: color),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: color,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -1525,42 +1588,85 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                           ],
                         ),
                       ),
-                      AppTapScale(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          context.push(
-                            '/client/card/${card.id}/map',
-                            extra: MerchantMapArguments(
-                              merchantName: card.restaurantName,
-                              address: fullAddress,
-                              latitude: card.restaurantLatitude,
-                              longitude: card.restaurantLongitude,
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            children: [
-                              Text(
-                                'Itinéraire',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppTapScale(
+                            onTap: () {
+                              final lat = card.restaurantLatitude;
+                              final lng = card.restaurantLongitude;
+                              final name = card.restaurantName;
+                              Uri url;
+                              if (lat != null && lng != null) {
+                                url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                              } else if (fullAddress.isNotEmpty) {
+                                url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$name, $fullAddress')}');
+                              } else {
+                                url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(name)}');
+                              }
+                              launchUrl(url, mode: LaunchMode.externalApplication);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEA4335).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFEA4335).withValues(alpha: 0.25), width: 0.8),
                               ),
-                              SizedBox(width: 3),
-                              Icon(LucideIcons.externalLink,
-                                  size: 12, color: AppColors.primary),
-                            ],
+                              child: const Row(
+                                children: [
+                                  Icon(LucideIcons.navigation, size: 12, color: Color(0xFFEA4335)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Maps',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFEA4335),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 6),
+                          AppTapScale(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              context.push(
+                                '/client/card/${card.id}/map',
+                                extra: MerchantMapArguments(
+                                  merchantName: card.restaurantName,
+                                  address: fullAddress,
+                                  latitude: card.restaurantLatitude,
+                                  longitude: card.restaurantLongitude,
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.25), width: 0.8),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(LucideIcons.map, size: 12, color: AppColors.primary),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Plan',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1657,66 +1763,88 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                     if (card.restaurantWhatsapp?.isNotEmpty ?? false)
                       _SocialPill(
                         icon: SimpleIcons.whatsapp,
-                        label: 'WhatsApp',
+                        label: card.restaurantWhatsappName?.isNotEmpty == true
+                            ? card.restaurantWhatsappName!
+                            : 'WhatsApp',
                         color: const Color(0xFF16A34A),
+                        onTap: () => launchUrl(
+                            Uri.parse(_formatSocialUrl(
+                                'whatsapp', card.restaurantWhatsapp!)),
+                            mode: LaunchMode.externalApplication),
+                      ),
+                    if ((card.restaurantLatitude != null &&
+                            card.restaurantLongitude != null) ||
+                        (card.restaurantAddress?.isNotEmpty ?? false))
+                      _SocialPill(
+                        icon: LucideIcons.navigation,
+                        label: 'Google Maps',
+                        color: const Color(0xFFEA4335),
                         onTap: () {
-                          final clean = card.restaurantWhatsapp!
-                              .replaceAll(RegExp(r'[^0-9+]'), '');
-                          launchUrl(Uri.parse('https://wa.me/$clean'),
+                          final lat = card.restaurantLatitude;
+                          final lng = card.restaurantLongitude;
+                          final name = card.restaurantName;
+                          final addr = [
+                            if (card.restaurantAddress?.isNotEmpty ?? false)
+                              card.restaurantAddress!,
+                            if (card.restaurantCity?.isNotEmpty ?? false)
+                              card.restaurantCity!,
+                          ].join(', ');
+                          Uri url;
+                          if (lat != null && lng != null) {
+                            url = Uri.parse(
+                                'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                          } else if (addr.isNotEmpty) {
+                            url = Uri.parse(
+                                'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$name, $addr')}');
+                          } else {
+                            url = Uri.parse(
+                                'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(name)}');
+                          }
+                          launchUrl(url,
                               mode: LaunchMode.externalApplication);
                         },
                       ),
                     if (card.restaurantInstagram?.isNotEmpty ?? false)
                       _SocialPill(
                         icon: SimpleIcons.instagram,
-                        label: card.restaurantInstagram!,
+                        label: card.restaurantInstagramName?.isNotEmpty == true
+                            ? card.restaurantInstagramName!
+                            : (card.restaurantName.isNotEmpty
+                                ? card.restaurantName
+                                : 'Instagram'),
                         color: const Color(0xFFE1306C),
-                        onTap: () {
-                          final handle = card.restaurantInstagram!
-                              .replaceAll('@', '')
-                              .trim();
-                          launchUrl(Uri.parse('https://instagram.com/$handle'),
-                              mode: LaunchMode.externalApplication);
-                        },
+                        onTap: () => launchUrl(
+                            Uri.parse(_formatSocialUrl(
+                                'instagram', card.restaurantInstagram!)),
+                            mode: LaunchMode.externalApplication),
                       ),
                     if (card.restaurantFacebook?.isNotEmpty ?? false)
                       _SocialPill(
                         icon: SimpleIcons.facebook,
-                        label: 'Facebook',
+                        label: card.restaurantFacebookName?.isNotEmpty == true
+                            ? card.restaurantFacebookName!
+                            : (card.restaurantName.isNotEmpty
+                                ? card.restaurantName
+                                : 'Facebook'),
                         color: const Color(0xFF1877F2),
-                        onTap: () {
-                          final fb = card.restaurantFacebook!.trim();
-                          final url = fb.startsWith('http')
-                              ? fb
-                              : 'https://facebook.com/$fb';
-                          launchUrl(Uri.parse(url),
-                              mode: LaunchMode.externalApplication);
-                        },
+                        onTap: () => launchUrl(
+                            Uri.parse(_formatSocialUrl(
+                                'facebook', card.restaurantFacebook!)),
+                            mode: LaunchMode.externalApplication),
                       ),
                     if (card.restaurantTiktok?.isNotEmpty ?? false)
                       _SocialPill(
                         icon: SimpleIcons.tiktok,
-                        label: 'TikTok',
-                        color: const Color(0xFF000000),
-                        onTap: () {
-                          final tt = card.restaurantTiktok!
-                              .replaceAll('@', '')
-                              .trim();
-                          launchUrl(Uri.parse('https://tiktok.com/@$tt'),
-                              mode: LaunchMode.externalApplication);
-                        },
-                      ),
-                    if (card.googleReviewUrl?.isNotEmpty ?? false)
-                      _SocialPill(
-                        icon: SimpleIcons.google,
-                        label: 'Avis Google',
-                        color: const Color(0xFFEA4335),
-                        onTap: () {
-                          final url = card.googleReviewUrl!.trim();
-                          final full = url.startsWith('http') ? url : 'https://$url';
-                          launchUrl(Uri.parse(full),
-                              mode: LaunchMode.externalApplication);
-                        },
+                        label: card.restaurantTiktokName?.isNotEmpty == true
+                            ? card.restaurantTiktokName!
+                            : (card.restaurantName.isNotEmpty
+                                ? card.restaurantName
+                                : 'TikTok'),
+                        color: AppColors.ink,
+                        onTap: () => launchUrl(
+                            Uri.parse(_formatSocialUrl(
+                                'tiktok', card.restaurantTiktok!)),
+                            mode: LaunchMode.externalApplication),
                       ),
                   ],
                 ),
@@ -1759,12 +1887,17 @@ class _SocialPill extends StatelessWidget {
           children: [
             Icon(icon, size: 14, color: color),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: color,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

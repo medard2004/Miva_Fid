@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/notifications/notification_destination.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/merchant_offline_error_widget.dart';
 import '../../client/models/app_notification.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/notifications_provider.dart';
@@ -201,11 +202,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         loading: () => const Center(
           child: CircularProgressIndicator(color: Color(0xFF5B50EC)),
         ),
-        error: (error, _) => Center(
-          child: Text(
-            'Impossible de charger les notifications.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-          ),
+        error: (error, _) => MerchantOfflineErrorWidget(
+          error: error,
+          title: 'Notifications indisponibles',
+          onRetry: () => ref.invalidate(merchantNotificationsNotifierProvider),
         ),
         data: (notifications) {
           final items = _toItems(notifications);

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
+import 'package:miva_fid/features/client/widgets/components/app_tap_scale.dart';
 
 const _fallbackCenter = LatLng(6.1319, 1.2228);
 
@@ -158,6 +160,49 @@ class MerchantMapScreen extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    AppTapScale(
+                      onTap: () {
+                        Uri url;
+                        if (latitude != null && longitude != null) {
+                          url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$latitude,$longitude');
+                        } else if (address.isNotEmpty) {
+                          url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$merchantName, $address')}');
+                        } else {
+                          url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(merchantName)}');
+                        }
+                        launchUrl(url, mode: LaunchMode.externalApplication);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEA4335),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFEA4335).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.navigation, color: Colors.white, size: 14),
+                            SizedBox(width: 5),
+                            Text(
+                              'Maps',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

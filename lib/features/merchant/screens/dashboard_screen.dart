@@ -6,11 +6,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/loyalty_level.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/merchant_offline_error_widget.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
+import '../../client/providers/device_token_provider.dart';
 import '../../client/providers/settings_provider.dart';
 import '../providers/clients_provider.dart';
 import '../providers/dashboard_stats_provider.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
 
 import 'merchant_shell.dart';
@@ -117,15 +120,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: Color(0xFF5B50EC)),
                 ),
-                error: (err, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      'Erreur : $err',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                    ),
-                  ),
+                error: (err, _) => MerchantOfflineErrorWidget(
+                  error: err,
+                  title: 'Statistiques indisponibles',
+                  onRetry: () => ref.invalidate(dashboardStatsProvider),
                 ),
                 data: (stats) {
                   final cards = ref.watch(clientsNotifierProvider).valueOrNull?.clients ??
@@ -137,6 +135,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ref.invalidate(merchantNotifierProvider);
                       ref.invalidate(dashboardStatsProvider);
                       ref.invalidate(clientsNotifierProvider);
+                      await ref.read(merchantAuthProvider.notifier).refreshFromApi();
+                      await ref.read(deviceTokenProvider).registerCurrentToken();
                     },
                     child: SingleChildScrollView(
                       key: ValueKey('stats_body_$_animVersion'),
@@ -162,7 +162,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           icon: LucideIcons.circleCheck,
                           value: stats.stampsToday.toString(),
                           label: t.merchantDashboardStampsLabel,
-                          sublabel: t.merchantDashboardThisMonthLabel,
+                          sublabel: "aujourd'hui",
+                          badge: stats.stampsThisMonth > 0 ? '${stats.stampsThisMonth} ce mois' : null,
+                          badgeColor: const Color(0xFF5B50EC),
                           delay: 100,
                         ),
                       ),
@@ -218,62 +220,93 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         const SizedBox(height: 20),
 
                         // Chart with animation
-                        SizedBox(
-                          height: 170,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              // Y-Axis markers
-                              SizedBox(
-                                width: 24,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('60', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                    Text('45', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                    Text('30', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                    Text('15', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                    Text('0', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
+                        Builder(
+                          builder: (context) {
+                            final weekly = stats.weeklyActivity;
+                            final maxVal = weekly.fold<int>(0, (prev, curr) => curr > prev ? curr : prev);
+                            final yMax = maxVal > 0 ? ((maxVal <= 10) ? 10 : ((maxVal + 9) ~/ 10) * 10) : 10;
+                            final y3 = (yMax * 0.75).round();
+                            final y2 = (yMax * 0.5).round();
+                            final y1 = (yMax * 0.25).round();
 
-                              // Bars Area
-                              Expanded(
-                                child: Stack(
-                                  children: [
-                                    // Dashed Grid Lines
-                                    Column(
+                            return SizedBox(
+                              height: 170,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  // Y-Axis markers
+                                  SizedBox(
+                                    width: 24,
+                                    child: Column(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: List.generate(
-                                        5,
-                                        (index) => Container(
-                                          height: 1,
-                                          color: AppColors.border,
-                                        ),
-                                      ),
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('$yMax', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                        Text('$y3', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                        Text('$y2', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                        Text('$y1', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                        Text('0', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                      ],
                                     ),
+                                  ),
+                                  const SizedBox(width: 8),
 
-                                    // Vertical Bars
-                                    Positioned.fill(
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          _buildBar(heightFactor: 35 / 60, label: t.merchantDashboardWeekLabel('1'), delay: 200),
-                                          _buildBar(heightFactor: 47 / 60, label: t.merchantDashboardWeekLabel('2'), delay: 300),
-                                          _buildBar(heightFactor: 56 / 60, label: t.merchantDashboardWeekLabel('3'), delay: 400),
-                                          _buildBar(heightFactor: 44 / 60, label: t.merchantDashboardWeekLabel('4'), delay: 500),
-                                        ],
-                                      ),
+                                  // Bars Area
+                                  Expanded(
+                                    child: Stack(
+                                      children: [
+                                        // Dashed Grid Lines
+                                        Column(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: List.generate(
+                                            5,
+                                            (index) => Container(
+                                              height: 1,
+                                              color: AppColors.border,
+                                            ),
+                                          ),
+                                        ),
+
+                                        // Vertical Bars
+                                        Positioned.fill(
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              _buildBar(
+                                                heightFactor: yMax > 0 ? (weekly[0] / yMax).clamp(0.04, 1.0) : 0.04,
+                                                label: t.merchantDashboardWeekLabel('1'),
+                                                value: weekly[0],
+                                                delay: 200,
+                                              ),
+                                              _buildBar(
+                                                heightFactor: yMax > 0 ? (weekly[1] / yMax).clamp(0.04, 1.0) : 0.04,
+                                                label: t.merchantDashboardWeekLabel('2'),
+                                                value: weekly[1],
+                                                delay: 300,
+                                              ),
+                                              _buildBar(
+                                                heightFactor: yMax > 0 ? (weekly[2] / yMax).clamp(0.04, 1.0) : 0.04,
+                                                label: t.merchantDashboardWeekLabel('3'),
+                                                value: weekly[2],
+                                                delay: 400,
+                                              ),
+                                              _buildBar(
+                                                heightFactor: yMax > 0 ? (weekly[3] / yMax).clamp(0.04, 1.0) : 0.04,
+                                                label: t.merchantDashboardWeekLabel('4'),
+                                                value: weekly[3],
+                                                delay: 500,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -472,11 +505,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildBar({
     required double heightFactor,
     required String label,
+    int? value,
     required int delay,
   }) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
+        if (value != null && value > 0)
+          Text(
+            '$value',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF5B50EC),
+            ),
+          )
+        else
+          const SizedBox(height: 12),
+        const SizedBox(height: 2),
         Expanded(
           child: Align(
             alignment: Alignment.bottomCenter,

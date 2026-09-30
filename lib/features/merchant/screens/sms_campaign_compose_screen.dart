@@ -49,9 +49,14 @@ class _SmsCampaignComposeScreenState
     if (date == null || !mounted) return;
     final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (time == null) return;
-    notifier.setScheduledAt(
-      DateTime(date.year, date.month, date.day, time.hour, time.minute),
-    );
+    final scheduled = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    if (scheduled.isBefore(DateTime.now().add(const Duration(minutes: 2)))) {
+      ToastService.showError(
+        'La date de programmation doit être au moins 5 minutes dans le futur.',
+      );
+      return;
+    }
+    notifier.setScheduledAt(scheduled);
   }
 
   Future<void> _send() async {
@@ -70,6 +75,13 @@ class _SmsCampaignComposeScreenState
     }
     if (isEditing && draft.scheduledAt == null) {
       ToastService.showError('Une date de programmation est requise.');
+      return;
+    }
+    if (draft.scheduledAt != null &&
+        draft.scheduledAt!.isBefore(DateTime.now().add(const Duration(minutes: 1)))) {
+      ToastService.showError(
+        'La date de programmation est déjà passée. Veuillez choisir une date future.',
+      );
       return;
     }
 

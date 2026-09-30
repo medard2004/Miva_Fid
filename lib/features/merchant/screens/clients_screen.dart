@@ -8,6 +8,7 @@ import '../../../core/domain/loyalty_level.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/merchant_offline_error_widget.dart';
 import '../../../core/widgets/tier_level_icon.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
@@ -583,51 +584,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     ),
                   ),
                 ),
-                error: (error, _) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Impossible de charger les clients',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$error',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      InkWell(
-                        onTap: () =>
-                            ref.invalidate(clientsNotifierProvider),
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Text(
-                            'Réessayer',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                error: (error, _) => MerchantOfflineErrorWidget(
+                  error: error,
+                  title: 'Impossible de charger les clients',
+                  onRetry: () => ref.invalidate(clientsNotifierProvider),
                 ),
                 data: (state) {
                   if (state.clients.isEmpty) {

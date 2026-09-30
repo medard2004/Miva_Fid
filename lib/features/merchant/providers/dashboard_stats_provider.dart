@@ -29,13 +29,17 @@ class DashboardStats {
   const DashboardStats({
     required this.totalClients,
     required this.stampsToday,
+    this.stampsThisMonth = 0,
     required this.activeRewards,
     required this.recentActivity,
+    this.weeklyActivity = const [0, 0, 0, 0],
   });
   final int totalClients;
   final int stampsToday;
+  final int stampsThisMonth;
   final int activeRewards;
   final List<ActivityItem> recentActivity;
+  final List<int> weeklyActivity;
 
   List<KpiData> get kpiPills => [
         KpiData(label: 'Clients', value: totalClients),
@@ -53,7 +57,13 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
   );
   if (restaurant == null) {
     return const DashboardStats(
-        totalClients: 0, stampsToday: 0, activeRewards: 0, recentActivity: []);
+      totalClients: 0,
+      stampsToday: 0,
+      stampsThisMonth: 0,
+      activeRewards: 0,
+      recentActivity: [],
+      weeklyActivity: [0, 0, 0, 0],
+    );
   }
 
   final cache = ref.watch(offlineCacheServiceProvider);
@@ -93,9 +103,14 @@ Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {
     );
   }).toList();
 
+  final rawWeekly = (data['weekly_activity'] as List?) ?? const [0, 0, 0, 0];
+  final weekly = rawWeekly.map((e) => (e as num?)?.toInt() ?? 0).toList();
+
   return DashboardStats(
     totalClients: data['total_clients'] as int? ?? 0,
     stampsToday: data['stamps_today'] as int? ?? 0,
+    stampsThisMonth: data['stamps_this_month'] as int? ?? 0,
+    weeklyActivity: weekly.length >= 4 ? weekly.sublist(0, 4) : [0, 0, 0, 0],
     activeRewards: data['active_rewards'] as int? ?? 0,
     recentActivity: activity,
   );

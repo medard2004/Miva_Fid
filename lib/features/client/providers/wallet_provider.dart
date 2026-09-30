@@ -89,11 +89,7 @@ class WalletNotifier extends StateNotifier<List<LoyaltyCard>> {
   }
 
   LoyaltyCard? byId(String id) {
-    try {
-      return state.firstWhere((c) => c.id == id);
-    } catch (_) {
-      return null;
-    }
+    return state.where((c) => c.id == id).firstOrNull;
   }
 
   /// Ajoute une carte après un scan QR (onboarding).

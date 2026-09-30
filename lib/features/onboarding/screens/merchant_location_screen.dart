@@ -106,7 +106,8 @@ class _MerchantLocationScreenState
     } on LocationServiceException catch (e) {
       if (!mounted) return;
       ToastService.showError(_messageFor(e.reason));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[merchant_location_screen] Erreur détection GPS: $e');
       if (!mounted) return;
       ToastService.showError(
         'Position introuvable (signal GPS faible). Choisissez sur la carte.',
@@ -214,6 +215,62 @@ class _MerchantLocationScreenState
                       style: AppTextStyles.bodyMd().copyWith(
                         color: AppColors.textSecondary,
                         fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: Sp.sm),
+
+                    // Bannière informative sur l'utilité du GPS
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              LucideIcons.mapPinCheck,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Pourquoi la position GPS est importante ?',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12.5,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'La position GPS de votre établissement sera utilisée par l\'application pour afficher votre commerce aux clients à proximité sur la carte, calculer leur itinéraire et leur envoyer des notifications de fidélité lorsqu\'ils passent près de chez vous.',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11.5,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: Sp.md),

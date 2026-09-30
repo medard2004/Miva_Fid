@@ -53,7 +53,8 @@ class MerchantAvatar extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => imageFallback(),
           );
-        } catch (_) {
+        } catch (e) {
+          debugPrint('[merchant_avatar] Erreur chargement image avatar local: $e');
           childWidget = imageFallback();
         }
       }

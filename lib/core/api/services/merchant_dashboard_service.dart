@@ -160,11 +160,18 @@ class MerchantDashboardService {
 
   /// [amountFcfa] requis côté serveur en mode "Achat" (`spend`) — le montant
   /// réel de l'achat, converti en points au taux du programme.
-  Future<Map<String, dynamic>> addStamp(String cardId, {double? amountFcfa}) =>
+  Future<Map<String, dynamic>> addStamp(
+    String cardId, {
+    double? amountFcfa,
+    String? idempotencyKey,
+  }) =>
       _guard(() async {
+        final data = <String, dynamic>{};
+        if (amountFcfa != null) data['amount_fcfa'] = amountFcfa;
+        if (idempotencyKey != null) data['idempotency_key'] = idempotencyKey;
         final response = await _apiClient.dio.post(
           '/merchant/clients/$cardId/stamps',
-          data: amountFcfa != null ? {'amount_fcfa': amountFcfa} : null,
+          data: data.isNotEmpty ? data : null,
         );
         return (response.data as Map).cast<String, dynamic>();
       });
@@ -261,6 +268,19 @@ class MerchantDashboardService {
   /// Supprime définitivement une campagne — `DELETE /merchant/campaigns/{id}`.
   Future<void> deleteCampaign(String campaignId) => _guard(() async {
         await _apiClient.dio.delete('/merchant/campaigns/$campaignId');
+      });
+
+  /// Renvoie une notification/campagne aux échecs ou à tous — `POST /merchant/campaigns/{id}/resend`.
+  Future<Map<String, dynamic>> resendCampaign(
+    String campaignId, {
+    required String mode,
+  }) =>
+      _guard(() async {
+        final response = await _apiClient.dio.post(
+          '/merchant/campaigns/$campaignId/resend',
+          data: {'mode': mode},
+        );
+        return (response.data as Map).cast<String, dynamic>();
       });
 
   /// Détail complet d'une campagne avec la liste des destinataires et leur

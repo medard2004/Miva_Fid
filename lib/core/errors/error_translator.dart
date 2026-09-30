@@ -308,6 +308,8 @@ class ErrorTranslator {
         return ErrorMessages.profileSaveFailed;
       case ErrorContext.manageTeam:
         return ErrorMessages.teamActionFailed;
+      case ErrorContext.merchantSettings:
+        return ErrorMessages.merchantSettingsFailed;
     }
   }
 

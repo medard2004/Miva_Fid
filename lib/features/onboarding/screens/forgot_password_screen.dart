@@ -19,7 +19,9 @@ import '../../client/widgets/shared/phone_input_with_country_picker.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
-  const ForgotPasswordScreen({super.key});
+  final String? initialIdentifier;
+
+  const ForgotPasswordScreen({super.key, this.initialIdentifier});
 
   @override
   ConsumerState<ForgotPasswordScreen> createState() =>
@@ -37,6 +39,21 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   /// Identifiant utilisé (email OU téléphone), même choix que côté client
   /// (`forgot_password_screen.dart` client) — le backend accepte les deux.
   bool _useEmail = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialIdentifier?.trim();
+    if (initial != null && initial.isNotEmpty) {
+      if (initial.contains('@')) {
+        _useEmail = true;
+        _emailCtrl.text = initial;
+      } else {
+        _useEmail = false;
+        _phoneCtrl.text = initial;
+      }
+    }
+  }
 
   @override
   void dispose() {

@@ -55,4 +55,5 @@ enum ErrorContext {
   changePassword,
   createLoyaltyProgram,
   manageTeam,
+  merchantSettings,
 }

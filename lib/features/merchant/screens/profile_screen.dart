@@ -152,7 +152,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ToastService.showSuccess(
             AppLocalizations.of(context)!.merchantProfileSaveSuccess);
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[profile_screen] Erreur enregistrement profil: $e');
       if (mounted) {
         ToastService.showError(
             AppLocalizations.of(context)!.errProfileSaveFailed);
@@ -229,7 +230,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         if (ctx.mounted) {
                           ToastService.showError(e.message);
                         }
-                      } catch (_) {
+                      } catch (e) {
+                        debugPrint('[profile_screen] Erreur changement email: $e');
                         setDialogState(() => submitting = false);
                         if (ctx.mounted) {
                           ToastService.showError(

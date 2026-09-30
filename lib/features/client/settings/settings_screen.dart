@@ -447,7 +447,6 @@ class _ProximityNotifSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final proximityState = ref.watch(clientProximityProvider);
     final enabled = proximityState.enabled;
-    final needsPermission = enabled && !proximityState.hasPermission;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +498,52 @@ class _ProximityNotifSection extends ConsumerWidget {
             ),
           ],
         ),
-        if (needsPermission) ...[
+
+        // Bannière GPS désactivé
+        if (proximityState.needsLocationService) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE4E6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFDA4AF)),
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.mapPinOff,
+                    size: 16, color: Color(0xFFDC2626)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'La localisation de votre téléphone est désactivée. Activez le GPS pour détecter les commerces proches.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFF991B1B),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => ref
+                      .read(clientProximityProvider.notifier)
+                      .openLocationSettings(),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 30),
+                  ),
+                  child: const Text('Activer GPS',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFDC2626))),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        // Bannière permission refusée
+        if (proximityState.needsPermission) ...[
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(10),
@@ -512,25 +556,38 @@ class _ProximityNotifSection extends ConsumerWidget {
               children: [
                 const Icon(LucideIcons.info, size: 16, color: Color(0xFFD97706)),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Autorisation de localisation requise pour détecter les commerces proches.',
-                    style: TextStyle(
+                    proximityState.isPermissionDeniedForever
+                        ? 'Autorisation de localisation refusée définitivement. Ouvrez les paramètres pour l\'accorder manuellement.'
+                        : 'Autorisation de localisation requise pour détecter les commerces proches.',
+                    style: const TextStyle(
                       fontSize: 11.5,
                       color: Color(0xFF92400E),
                     ),
                   ),
                 ),
                 TextButton(
-                  onPressed: () => ref
-                      .read(clientProximityProvider.notifier)
-                      .openSettings(),
+                  onPressed: () {
+                    if (proximityState.isPermissionDeniedForever) {
+                      ref
+                          .read(clientProximityProvider.notifier)
+                          .openAppSettings();
+                    } else {
+                      ref
+                          .read(clientProximityProvider.notifier)
+                          .toggle(context, true);
+                    }
+                  },
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     minimumSize: const Size(0, 30),
                   ),
-                  child: const Text('Activer',
-                      style: TextStyle(
+                  child: Text(
+                      proximityState.isPermissionDeniedForever
+                          ? 'Paramètres'
+                          : 'Autoriser',
+                      style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFB45309))),

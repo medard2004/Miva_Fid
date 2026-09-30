@@ -70,7 +70,8 @@ class _BirthdayRewardScreenState extends ConsumerState<BirthdayRewardScreen> {
       if (mounted) {
         ToastService.showSuccess('Récompense anniversaire enregistrée !');
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[birthday_reward_screen] Erreur sauvegarde birthday reward: $e');
       if (mounted) {
         ToastService.showError(
             'Impossible d\'enregistrer la récompense anniversaire.');

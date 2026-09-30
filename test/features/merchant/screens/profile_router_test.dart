@@ -13,6 +13,8 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/merchant/models/restaurant_account.dart';
 import 'package:miva_fid/features/merchant/providers/merchant_auth_provider.dart';
 
+import 'package:miva_fid/core/services/proximity_client_service.dart';
+
 class _FakeTokenStorage extends MerchantTokenStorage {
   @override
   Future<void> saveToken(String token) async {}
@@ -22,6 +24,17 @@ class _FakeTokenStorage extends MerchantTokenStorage {
 
   @override
   Future<void> deleteToken() async {}
+}
+
+class _FakeProximityClientService with WidgetsBindingObserver implements ProximityClientService {
+  @override
+  Future<void> checkProximity({bool force = false}) async {}
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {}
+
+  @override
+  void dispose() {}
 }
 
 void main() {
@@ -43,6 +56,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         appBrightnessProvider.overrideWithValue(Brightness.light),
+        proximityClientServiceProvider.overrideWith((ref) => _FakeProximityClientService()),
         appStartupProvider.overrideWith(
           (ref) async => const AppStartupState(hasSeenOnboarding: true, lastRole: 'merchant'),
         ),

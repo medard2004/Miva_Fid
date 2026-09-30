@@ -19,6 +19,8 @@ import '../widgets/validation_success_overlay.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../../core/constants/reward_qr.dart';
 import '../../../core/widgets/offline_action_guard.dart';
+import '../../../core/services/connectivity_service.dart';
+import '../../../core/services/offline_sync_service.dart';
 
 class ValidateScreen extends ConsumerStatefulWidget {
   const ValidateScreen({super.key});
@@ -76,13 +78,6 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   Future<void> _onQrDetected(BarcodeCapture capture) async {
     if (_processing) return;
-    if (!OfflineActionGuard.checkCanPerform(
-      context,
-      ref,
-      message: 'Connexion Internet requise pour scanner et valider un client.',
-    )) {
-      return;
-    }
     final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
     if (raw == null || raw.isEmpty) {
       ToastService.showError(AppLocalizations.of(context)!.merchantValidateQrInvalid);
@@ -91,12 +86,19 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     setState(() => _processing = true);
     try {
       if (raw.startsWith(rewardQrPrefix)) {
+        if (!OfflineActionGuard.checkCanPerform(
+          context,
+          ref,
+          message: 'La validation des récompenses nécessite une connexion Internet.',
+        )) {
+          return;
+        }
         await _lookupAndShowRewardSheet(raw.substring(rewardQrPrefix.length));
       } else {
         await _lookupAndShowSheet(raw);
       }
     } finally {
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(milliseconds: 300));
       if (mounted) setState(() => _processing = false);
     }
   }
@@ -106,14 +108,10 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     try {
       card =
           await ref.read(validateNotifierProvider.notifier).lookupByCode(code);
-    } on NetworkException {
+    } catch (e) {
+      debugPrint('[validate_screen] Erreur lookupByCode: $e');
       if (mounted) {
-        ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
-      }
-      return;
-    } catch (_) {
-      if (mounted) {
-        ToastService.showError(AppLocalizations.of(context)!.errUnexpected);
+        ToastService.showError(AppLocalizations.of(context)!.merchantValidateNoCardFound);
       }
       return;
     }
@@ -160,7 +158,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
       }
       return;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[validate_screen] Erreur lookupReward: $e');
       if (mounted) {
         ToastService.showError(AppLocalizations.of(context)!.errUnexpected);
       }
@@ -222,7 +221,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[validate_screen] Erreur validation récompense: $e');
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError('Échec de la validation. Réessayez.');
@@ -264,7 +264,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError('Connexion impossible. Vérifiez votre réseau.');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[validate_screen] Erreur annulation récompense: $e');
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError('Échec de l\'annulation. Réessayez.');
@@ -272,15 +273,38 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   }
 
   Future<void> _validateStamp(LoyaltyCardModel card, [double? amount]) async {
-    if (!OfflineActionGuard.checkCanPerform(
-      context,
-      ref,
-      message: 'Connexion Internet requise pour valider.',
-    )) {
-      return;
-    }
     final sheetNavigator = Navigator.of(context);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
+
+    final isOffline = ref.read(isOfflineProvider);
+    if (isOffline) {
+      sheetNavigator.pop();
+      await AppHaptics.medium();
+
+      await ref.read(offlineSyncProvider.notifier).queueStampAction(
+            cardId: card.id,
+            amountFcfa: amount,
+            clientName: card.client?.name,
+            currentStamps: card.stampsCount,
+            goal: _goal,
+          );
+
+      if (!mounted) return;
+      rootNavigator.push(MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ValidationSuccessOverlay(
+          clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
+          mechanic: _mechanic,
+          stampCount: card.stampsCount + 1,
+          goal: _goal,
+          pointsEarned: 1,
+          rewardUnlocked: (card.stampsCount + 1) >= _goal,
+          isOfflineSaved: true,
+        ),
+      ));
+      return;
+    }
+
     try {
       final outcome = await ref
           .read(validateNotifierProvider.notifier)
@@ -313,10 +337,34 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         e.statusCode == 409 ? e.message : AppLocalizations.of(context)!.merchantValidateFailedRetry,
       );
     } on NetworkException {
+      // Perte de connexion inopinée : enregistrement hors ligne automatique
       if (!mounted) return;
       sheetNavigator.pop();
-      ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
-    } catch (_) {
+      await AppHaptics.medium();
+
+      await ref.read(offlineSyncProvider.notifier).queueStampAction(
+            cardId: card.id,
+            amountFcfa: amount,
+            clientName: card.client?.name,
+            currentStamps: card.stampsCount,
+            goal: _goal,
+          );
+
+      if (!mounted) return;
+      rootNavigator.push(MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ValidationSuccessOverlay(
+          clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
+          mechanic: _mechanic,
+          stampCount: card.stampsCount + 1,
+          goal: _goal,
+          pointsEarned: 1,
+          rewardUnlocked: (card.stampsCount + 1) >= _goal,
+          isOfflineSaved: true,
+        ),
+      ));
+    } catch (e) {
+      debugPrint('[validate_screen] Erreur validation stamp: $e');
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError(AppLocalizations.of(context)!.merchantValidateFailedRetry);
@@ -356,7 +404,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError(AppLocalizations.of(context)!.merchantValidateNetworkError);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[validate_screen] Erreur redeemCashback: $e');
       if (!mounted) return;
       sheetNavigator.pop();
       ToastService.showError(AppLocalizations.of(context)!.merchantValidateFailedRetry);
@@ -366,13 +415,6 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   Future<void> _searchClientByIdentifier() async {
     final query = _identifierCtrl.text.trim();
     if (query.isEmpty) return;
-    if (!OfflineActionGuard.checkCanPerform(
-      context,
-      ref,
-      message: 'Connexion Internet requise pour rechercher un client.',
-    )) {
-      return;
-    }
     await _lookupAndShowSheet(query);
   }
 

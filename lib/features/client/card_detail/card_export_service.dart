@@ -43,7 +43,8 @@ class CardExportService {
         throw StateError('Impossible de générer l\'image de la carte.');
       }
       bytes = byteData.buffer.asUint8List();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[card_export_service] Erreur capture image carte: $e');
       // bytes reste null ; géré plus bas.
     }
 
@@ -78,7 +79,8 @@ class CardExportService {
         _showSnack(context, message);
       }
       // Feuille de partage annulée par l'utilisateur : pas de message, comportement natif standard.
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[card_export_service] Erreur partage carte: $e');
       if (context.mounted) {
         _showSnack(context, t.exportFailedGeneric, isError: true);
       }

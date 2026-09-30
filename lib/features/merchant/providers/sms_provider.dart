@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/cache/offline_cache_service.dart';
 import '../../../models/campaign_model.dart';
 import '../../../models/campaign_recipient_model.dart';
 import 'merchant_auth_provider.dart';
@@ -18,8 +19,18 @@ class SmsNotifier extends _$SmsNotifier {
     );
     if (restaurant == null) return [];
 
-    final rows = await ref.read(merchantDashboardServiceProvider).campaigns();
-    return rows.map(CampaignModel.fromJson).toList();
+    final cache = ref.watch(offlineCacheServiceProvider);
+    try {
+      final rows = await ref.read(merchantDashboardServiceProvider).campaigns();
+      await cache.saveMerchantCampaigns(rows);
+      return rows.map(CampaignModel.fromJson).toList();
+    } catch (e) {
+      final cached = await cache.getMerchantCampaigns();
+      if (cached != null) {
+        return cached.map(CampaignModel.fromJson).toList();
+      }
+      rethrow;
+    }
   }
 
 
@@ -125,6 +136,19 @@ class SmsNotifier extends _$SmsNotifier {
           scheduledAt: scheduledAt,
         );
     ref.invalidateSelf();
+  }
+
+  /// Renvoie une notification/campagne ('all' ou 'failed_only').
+  Future<Map<String, dynamic>> resendCampaign(
+    String campaignId, {
+    required String mode,
+  }) async {
+    final result = await ref
+        .read(merchantDashboardServiceProvider)
+        .resendCampaign(campaignId, mode: mode);
+    await ref.read(merchantNotifierProvider.notifier).refresh();
+    ref.invalidateSelf();
+    return result;
   }
 
   /// Masque une campagne de l'historique (réversible côté serveur) —

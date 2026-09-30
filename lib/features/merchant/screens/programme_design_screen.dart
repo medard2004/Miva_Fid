@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/errors/error_translator.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/offline_action_guard.dart';
 import '../../../models/merchant_model.dart';
@@ -128,6 +130,8 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
 
     setState(() => _saving = true);
 
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
+
     final hexColor = '#${state.colorPrimary.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
     final secondaryColor = deriveSecondaryColor(state.colorPrimary);
     final hexSecondary = '#${secondaryColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
@@ -147,7 +151,8 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ToastService.showError(t.merchantProgrammeDesignSaveError(e.toString()));
+        final appError = ErrorTranslator.translate(e, context: ErrorContext.merchantSettings);
+        ToastService.showError(appError.displayMessage ?? t.merchantProgrammeDesignSaveError(''));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

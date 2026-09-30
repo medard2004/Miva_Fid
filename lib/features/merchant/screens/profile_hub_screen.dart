@@ -96,11 +96,6 @@ class ProfileHubScreen extends ConsumerWidget {
                       title: t.merchantMoreSocials,
                       onTap: () => context.push('/merchant/more/socials'),
                     ),
-                    Divider(height: 16, color: AppColors.border),
-                    _buildTaskRow(
-                      title: t.merchantMoreGoogleReviewLink,
-                      onTap: () => context.push('/merchant/more/profile'),
-                    ),
                   ],
                 ),
               ),

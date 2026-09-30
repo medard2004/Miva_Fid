@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../models/campaign_model.dart';
+import '../providers/merchant_auth_provider.dart';
 import '../providers/sms_campaign_draft_provider.dart';
 
 /// Écran de création / édition directe de campagne SMS (en un seul écran).
@@ -446,6 +447,16 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
   }
 
   Future<void> _submit() async {
+    final restaurant = ref.read(merchantAuthProvider).restaurant;
+    if (restaurant?.isFcmSuspended == true) {
+      ToastService.showError(
+        restaurant?.fcmSuspensionReason != null && restaurant!.fcmSuspensionReason!.isNotEmpty
+            ? 'Service suspendu : ${restaurant.fcmSuspensionReason}'
+            : 'Le service de notifications FCM est temporairement suspendu par l\'administrateur.',
+      );
+      return;
+    }
+
     final notifier =
         ref.read(campaignDraftProvider(widget.editingCampaign).notifier);
     final draft = ref.read(campaignDraftProvider(widget.editingCampaign));
@@ -456,6 +467,13 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
     }
 
     final isScheduled = draft.scheduledAt != null;
+    if (isScheduled &&
+        draft.scheduledAt!.isBefore(DateTime.now().add(const Duration(minutes: 1)))) {
+      ToastService.showError(
+        'La date de programmation est déjà passée. Veuillez choisir une date future.',
+      );
+      return;
+    }
     final isDraft = widget.editingCampaign?.isDraft ?? false;
     final isEditingExistingScheduled =
         widget.editingCampaign != null && !isDraft;
@@ -508,6 +526,10 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final restaurant = ref.watch(merchantAuthProvider).restaurant;
+    final isFcmSuspended = restaurant?.isFcmSuspended ?? false;
+    final fcmSuspensionReason = restaurant?.fcmSuspensionReason;
+
     final draft = ref.watch(campaignDraftProvider(widget.editingCampaign));
     final notifier =
         ref.read(campaignDraftProvider(widget.editingCampaign).notifier);
@@ -569,6 +591,34 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── BANNIÈRE SUSPENSION SERVICE FCM ─────────────────────
+                    if (isFcmSuspended) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(LucideIcons.bellOff, size: 18, color: Color(0xFFDC2626)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                    ? 'Service FCM suspendu : $fcmSuspensionReason\nL\'envoi et la programmation sont désactivés. Vous pouvez toujours sauvegarder votre campagne en brouillon.'
+                                    : 'Le service de notifications FCM est temporairement suspendu par l\'administrateur. L\'envoi et la programmation sont désactivés. Vous pouvez toujours sauvegarder en brouillon.',
+                                style: const TextStyle(fontSize: 12.5, color: Color(0xFF991B1B), height: 1.35),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     // ── 1. TYPE DE CAMPAGNE (CHAMP DÉROULANT / SÉLECTEUR) ───
                     Text(
                       'Type de campagne',
@@ -1018,14 +1068,22 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
                               Switch.adaptive(
                                 value: _isScheduled,
                                 activeTrackColor: const Color(0xFF5B50EC),
-                                onChanged: (val) {
-                                  setState(() => _isScheduled = val);
-                                  if (!val) {
-                                    notifier.setScheduledAt(null);
-                                  } else {
-                                    _pickDateTime();
-                                  }
-                                },
+                                onChanged: isFcmSuspended
+                                    ? (val) {
+                                        ToastService.showError(
+                                          fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                              ? 'Service suspendu : $fcmSuspensionReason'
+                                              : 'La programmation est désactivée car le service FCM est temporairement suspendu.',
+                                        );
+                                      }
+                                    : (val) {
+                                        setState(() => _isScheduled = val);
+                                        if (!val) {
+                                          notifier.setScheduledAt(null);
+                                        } else {
+                                          _pickDateTime();
+                                        }
+                                      },
                               ),
                             ],
                           ),
@@ -1037,7 +1095,13 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
                             ),
                             const SizedBox(height: 8),
                             InkWell(
-                              onTap: _pickDateTime,
+                              onTap: isFcmSuspended
+                                  ? () {
+                                      ToastService.showError(
+                                        'La programmation est désactivée car le service FCM est temporairement suspendu.',
+                                      );
+                                    }
+                                  : _pickDateTime,
                               borderRadius: BorderRadius.circular(8),
                               child: Padding(
                                 padding:
@@ -1088,9 +1152,19 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
                 width: double.infinity,
                 height: 46,
                 child: ElevatedButton(
-                  onPressed: draft.sending ? null : _submit,
+                  onPressed: isFcmSuspended
+                      ? () {
+                          ToastService.showError(
+                            fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                ? 'Service suspendu : $fcmSuspensionReason'
+                                : 'Le service de notifications FCM est temporairement indisponible.',
+                          );
+                        }
+                      : (draft.sending ? null : _submit),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5B50EC),
+                    backgroundColor: isFcmSuspended
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF5B50EC),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1109,19 +1183,23 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              draft.scheduledAt != null
-                                  ? LucideIcons.clock
-                                  : LucideIcons.send,
+                              isFcmSuspended
+                                  ? LucideIcons.bellOff
+                                  : (draft.scheduledAt != null
+                                      ? LucideIcons.clock
+                                      : LucideIcons.send),
                               size: 16,
                               color: Colors.white,
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              isEditingExistingScheduled
-                                  ? 'Enregistrer les modifications'
-                                  : (draft.scheduledAt != null
-                                      ? 'Programmer la campagne'
-                                      : 'Envoyer la campagne (${draft.selectedClientIds.length})'),
+                              isFcmSuspended
+                                  ? 'Envoi indisponible (Service suspendu)'
+                                  : (isEditingExistingScheduled
+                                      ? 'Enregistrer les modifications'
+                                      : (draft.scheduledAt != null
+                                          ? 'Programmer la campagne'
+                                          : 'Envoyer la campagne (${draft.selectedClientIds.length})')),
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -1161,11 +1239,21 @@ class _ModernDateTimePickerSheetState
   @override
   void initState() {
     super.initState();
-    _selectedDateTime = widget.initialDateTime;
+    final minDate = DateTime.now().add(const Duration(minutes: 5));
+    if (widget.initialDateTime.isBefore(minDate)) {
+      _selectedDateTime = minDate;
+    } else {
+      _selectedDateTime = widget.initialDateTime;
+    }
   }
 
   void _applyPreset(DateTime dt) {
-    setState(() => _selectedDateTime = dt);
+    final minDate = DateTime.now().add(const Duration(minutes: 5));
+    if (dt.isBefore(minDate)) {
+      setState(() => _selectedDateTime = minDate);
+    } else {
+      setState(() => _selectedDateTime = dt);
+    }
   }
 
   @override
@@ -1282,18 +1370,20 @@ class _ModernDateTimePickerSheetState
                     onTap: () => _applyPreset(now.add(const Duration(hours: 1))),
                   ),
                   const SizedBox(width: 8),
-                  if (now.hour < 18) ...[
+                  if (today18h.isAfter(now.add(const Duration(minutes: 15)))) ...[
                     _buildPresetChip(
                       label: 'Ce soir 18h',
                       onTap: () => _applyPreset(today18h),
                     ),
                     const SizedBox(width: 8),
                   ],
-                  _buildPresetChip(
-                    label: 'Demain 10h',
-                    onTap: () => _applyPreset(tomorrow10h),
-                  ),
-                  const SizedBox(width: 8),
+                  if (tomorrow10h.isAfter(now.add(const Duration(minutes: 15)))) ...[
+                    _buildPresetChip(
+                      label: 'Demain 10h',
+                      onTap: () => _applyPreset(tomorrow10h),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   _buildPresetChip(
                     label: 'Demain 18h',
                     onTap: () => _applyPreset(tomorrow18h),
@@ -1327,9 +1417,11 @@ class _ModernDateTimePickerSheetState
                   child: CupertinoDatePicker(
                     mode: CupertinoDatePickerMode.dateAndTime,
                     use24hFormat: true,
-                    minimumDate: now.subtract(const Duration(minutes: 2)),
+                    minimumDate: now.add(const Duration(minutes: 5)),
                     maximumDate: now.add(const Duration(days: 365)),
-                    initialDateTime: _selectedDateTime.isBefore(now) ? now : _selectedDateTime,
+                    initialDateTime: _selectedDateTime.isBefore(now.add(const Duration(minutes: 5)))
+                        ? now.add(const Duration(minutes: 5))
+                        : _selectedDateTime,
                     onDateTimeChanged: (dt) {
                       setState(() => _selectedDateTime = dt);
                     },
@@ -1345,6 +1437,12 @@ class _ModernDateTimePickerSheetState
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
+                  if (_selectedDateTime.isBefore(DateTime.now().add(const Duration(minutes: 2)))) {
+                    ToastService.showError(
+                      'La date de programmation doit être au moins 5 minutes dans le futur.',
+                    );
+                    return;
+                  }
                   widget.onConfirmed(_selectedDateTime);
                   Navigator.pop(context);
                 },

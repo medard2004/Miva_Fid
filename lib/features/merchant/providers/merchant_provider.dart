@@ -85,6 +85,7 @@ class MerchantNotifier extends _$MerchantNotifier {
         'instagram': restaurant.instagram,
         'facebook': restaurant.facebook,
         'tiktok': restaurant.tiktok,
+        'social_profiles': restaurant.socialProfiles,
         ...businessPatch,
       });
       if (!ok) {
@@ -186,6 +187,8 @@ class MerchantNotifier extends _$MerchantNotifier {
             'cashback_expiry_days': config['cashback_expiry_days'],
           'cashback_tier_basis': config['cashback_tier_basis'] ?? 'cumulative',
         },
+        if (config['socials_order'] != null)
+          'socials_order': config['socials_order'],
       });
     }
 
@@ -206,6 +209,7 @@ const _businessKeys = {
   'facebook',
   'tiktok',
   'opening_hours',
+  'social_profiles',
 };
 
 /// Clés portées par la `config` du programme (`POST /loyalty-programs`).
@@ -253,6 +257,8 @@ const _configKeys = {
   'welcome_reward_description',
   'welcome_reward_validity_days',
   'welcome_reward_surprise',
+  'socials_order',
+  'social_profiles',
 };
 
 /// Le backend exige `tiers[]` (non vide) pour tous les modes sauf cashback,

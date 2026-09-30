@@ -51,6 +51,12 @@ class RestaurantAccount {
   /// Crédit SMS restant, décrémenté à chaque campagne envoyée.
   final int smsCredits;
 
+  /// Vrai si les notifications Push FCM ont été suspendues par un administrateur.
+  final bool isFcmSuspended;
+
+  /// Motif de suspension si spécifié par l'administrateur.
+  final String? fcmSuspensionReason;
+
   /// Préférences de notifications marchand — clés : `new_client`, `reward`,
   /// `low_sms`, `weekly_report`, `promotions`. Toujours les 5 clés présentes
   /// (défauts appliqués côté serveur, voir `RestaurantAuthController`).
@@ -68,13 +74,21 @@ class RestaurantAccount {
   bool get hasOpeningHours =>
       openingHours.values.any((day) => day is Map && day['open'] == true);
 
+  /// Profils des réseaux sociaux configurés :
+  /// `{'facebook': {'name': 'Botega', 'link': '...'}, ...}`
+  final Map<String, dynamic> socialProfiles;
+
   /// Vrai si au moins un réseau social est renseigné (WhatsApp, Instagram,
   /// Facebook, TikTok).
   bool get hasSocials =>
       (whatsapp?.isNotEmpty ?? false) ||
       (instagram?.isNotEmpty ?? false) ||
       (facebook?.isNotEmpty ?? false) ||
-      (tiktok?.isNotEmpty ?? false);
+      (tiktok?.isNotEmpty ?? false) ||
+      socialProfiles.values.any((p) =>
+          p is Map &&
+          ((p['link']?.toString().trim().isNotEmpty ?? false) ||
+              (p['url']?.toString().trim().isNotEmpty ?? false)));
 
   const RestaurantAccount({
     required this.id,
@@ -92,6 +106,7 @@ class RestaurantAccount {
     this.instagram,
     this.facebook,
     this.tiktok,
+    this.socialProfiles = const {},
     this.qrToken,
     this.shortCode,
     this.latitude,
@@ -104,6 +119,8 @@ class RestaurantAccount {
     this.loyaltyConfig = const {},
     this.plan = 'free',
     this.smsCredits = 0,
+    this.isFcmSuspended = false,
+    this.fcmSuspensionReason,
     this.notificationPreferences = const {},
     this.actorType = 'restaurant',
     this.staffName,
@@ -128,6 +145,11 @@ class RestaurantAccount {
       instagram: json['instagram'] as String?,
       facebook: json['facebook'] as String?,
       tiktok: json['tiktok'] as String?,
+      socialProfiles:
+          (json['social_profiles'] as Map?)?.cast<String, dynamic>() ??
+              (program?['config']?['social_profiles'] as Map?)
+                  ?.cast<String, dynamic>() ??
+              const {},
       qrToken: json['qr_token'] as String?,
       shortCode: json['short_code'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
@@ -142,6 +164,8 @@ class RestaurantAccount {
           (program?['config'] as Map?)?.cast<String, dynamic>() ?? const {},
       plan: json['plan'] as String? ?? 'free',
       smsCredits: json['sms_credits'] as int? ?? 0,
+      isFcmSuspended: json['is_fcm_suspended'] as bool? ?? false,
+      fcmSuspensionReason: json['fcm_suspension_reason'] as String?,
       notificationPreferences:
           (json['notification_preferences'] as Map?)?.cast<String, bool>() ??
               const {},
@@ -167,6 +191,7 @@ class RestaurantAccount {
         'instagram': instagram,
         'facebook': facebook,
         'tiktok': tiktok,
+        'social_profiles': socialProfiles,
         'qr_token': qrToken,
         'short_code': shortCode,
         'latitude': latitude,
@@ -183,6 +208,8 @@ class RestaurantAccount {
             : null,
         'plan': plan,
         'sms_credits': smsCredits,
+        'is_fcm_suspended': isFcmSuspended,
+        'fcm_suspension_reason': fcmSuspensionReason,
         'notification_preferences': notificationPreferences,
         'actor': {
           'type': actorType,

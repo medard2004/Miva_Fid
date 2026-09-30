@@ -58,6 +58,7 @@ import '../../features/merchant/screens/notifications_screen.dart' as merchant_n
 import '../../features/merchant/screens/preferences_screen.dart';
 import '../../features/merchant/screens/language_theme_screen.dart';
 import '../../features/merchant/screens/sms_campaign_screen.dart';
+import '../../features/merchant/screens/merchant_offline_screen.dart';
 import '../../features/merchant/screens/sms_conversation_screen.dart';
 import '../../features/merchant/screens/sms_campaign_detail_screen.dart';
 import '../../features/merchant/screens/sms_campaign_compose_screen.dart';
@@ -327,7 +328,12 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: '/auth/forgot-password',
-        pageBuilder: (_, __) => _slide(const ForgotPasswordScreen()),
+        pageBuilder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return _slide(ForgotPasswordScreen(
+            initialIdentifier: extra?['identifier'] as String?,
+          ));
+        },
       ),
       GoRoute(
         path: '/auth/merchant/verify-otp',
@@ -678,6 +684,10 @@ GoRouter appRouter(AppRouterRef ref) {
 
       // --- Routes that hide the bottom navigation bar ---
       // These are defined at the top level so they are naturally pushed on the root navigator.
+      GoRoute(
+        path: '/merchant/offline',
+        pageBuilder: (_, __) => _slide(const MerchantOfflineScreen()),
+      ),
       GoRoute(
         path: '/merchant/clients/:id',
         pageBuilder: (_, s) => _slide(

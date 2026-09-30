@@ -8,12 +8,15 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/cache/offline_cache_service.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/merchant_offline_error_widget.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 import '../../../core/widgets/tier_level_icon.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../models/merchant_display.dart';
@@ -60,7 +63,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _clientFuture = ref.read(merchantDashboardServiceProvider).client(widget.clientId);
+    _clientFuture = _loadClientWithCache();
     // Synchronisation temps réel (voir `MerchantRealtimeConnection`) : une
     // transaction confirmée par le backend sur CETTE carte (tampon, cashback
     // crédité/utilisé, récompense) recharge fiche + historique sans refresh
@@ -84,7 +87,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   void _reload() {
     if (!mounted) return;
     setState(() {
-      _clientFuture = ref.read(merchantDashboardServiceProvider).client(widget.clientId);
+      _clientFuture = _loadClientWithCache();
       _historyItems = [];
       _historyCurrentPage = 1;
       _historyLastPage = 1;
@@ -92,6 +95,38 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
       _loadedHistoryCardId = null;
       _historyHasError = false;
     });
+  }
+
+  /// Charge les données client en essayant l'API d'abord, puis le cache.
+  Future<Map<String, dynamic>?> _loadClientWithCache() async {
+    final cache = ref.read(offlineCacheServiceProvider);
+    try {
+      final data = await ref.read(merchantDashboardServiceProvider).client(widget.clientId);
+      // Sauvegarder en cache pour usage hors-ligne
+      if (data != null) {
+        await cache.saveMerchantClientDetail(widget.clientId, data);
+      }
+      return data;
+    } catch (e) {
+      // Fallback cache
+      final cached = await cache.getMerchantClientDetail(widget.clientId);
+      if (cached != null) {
+        return cached;
+      }
+      // Tenter de retrouver dans la liste clients en cache
+      final clientsList = await cache.getMerchantClients();
+      if (clientsList != null) {
+        final items = (clientsList['items'] as List?) ?? [];
+        for (final item in items) {
+          if (item is Map &&
+              (item['id']?.toString() == widget.clientId ||
+                  item['card_code']?.toString() == widget.clientId)) {
+            return Map<String, dynamic>.from(item);
+          }
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<void> _makeCall(String phone) async {
@@ -110,6 +145,10 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
   }
 
   Future<void> _removeStamp(Map<String, dynamic> data) async {
+    if (!OfflineActionGuard.checkCanPerform(context, ref,
+        message: 'Le retrait de tampon nécessite une connexion Internet.')) {
+      return;
+    }
     final currentStamps = (data['stamps_current'] as int?) ?? 0;
     if (currentStamps <= 0) {
       AppToast.error(context, 'Ce client n\'a aucun tampon à retirer');
@@ -166,6 +205,12 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
+            }
+            if (snap.hasError && snap.data == null) {
+              return MerchantOfflineErrorWidget(
+                error: snap.error,
+                onRetry: _reload,
+              );
             }
             final data = snap.data;
             if (data == null) {
@@ -612,10 +657,13 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
     _historyLastPage = 1;
     if (mounted) setState(() {});
 
+    final cache = ref.read(offlineCacheServiceProvider);
     try {
       final page = await ref
           .read(merchantDashboardServiceProvider)
           .history(cardId, page: 1, perPage: 15);
+      // Sauvegarder page 1 en cache
+      await cache.saveMerchantClientHistory(cardId, page.items);
       if (mounted) {
         setState(() {
           _historyItems = page.items;
@@ -624,8 +672,18 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen> {
           _isHistoryInitialLoading = false;
         });
       }
-    } catch (_) {
-      if (mounted) {
+    } catch (e) {
+      debugPrint('[client_detail_screen] Erreur chargement initial historique: $e');
+      // Fallback cache
+      final cached = await cache.getMerchantClientHistory(cardId);
+      if (cached != null && cached.isNotEmpty && mounted) {
+        setState(() {
+          _historyItems = cached;
+          _historyCurrentPage = 1;
+          _historyLastPage = 1;
+          _isHistoryInitialLoading = false;
+        });
+      } else if (mounted) {
         setState(() {
           _historyHasError = true;
           _isHistoryInitialLoading = false;

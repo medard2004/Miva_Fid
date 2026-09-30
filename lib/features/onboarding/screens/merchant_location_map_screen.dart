@@ -48,7 +48,8 @@ class _MerchantLocationMapScreenState
       _controller.move(target, 16);
     } on LocationServiceException {
       // Reste sur _fallbackCenter — l'utilisateur ajuste le pin à la main.
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[merchant_location_map_screen] Erreur localisation GPS: $e');
       // Idem pour un GPS trop lent (`TimeoutException` brute du plugin,
       // pas notre `LocationServiceException`) — best-effort, on n'affiche
       // rien, l'utilisateur ajuste le pin à la main.

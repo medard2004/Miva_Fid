@@ -156,13 +156,61 @@ class LoyaltyCard {
   final double? restaurantLatitude;
   final double? restaurantLongitude;
   final Map<String, dynamic> restaurantOpeningHours;
+  final Map<String, dynamic> restaurantSocialProfiles;
+
+  String? get restaurantFacebookName {
+    final explicit = restaurantSocialProfiles['facebook'] is Map
+        ? (restaurantSocialProfiles['facebook']['name'] as String?)?.trim()
+        : null;
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+    if (restaurantFacebook != null && restaurantFacebook!.trim().isNotEmpty) {
+      return restaurantName.isNotEmpty ? restaurantName : null;
+    }
+    return null;
+  }
+
+  String? get restaurantInstagramName {
+    final explicit = restaurantSocialProfiles['instagram'] is Map
+        ? (restaurantSocialProfiles['instagram']['name'] as String?)?.trim()
+        : null;
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+    if (restaurantInstagram != null && restaurantInstagram!.trim().isNotEmpty) {
+      return restaurantName.isNotEmpty ? restaurantName : null;
+    }
+    return null;
+  }
+
+  String? get restaurantTiktokName {
+    final explicit = restaurantSocialProfiles['tiktok'] is Map
+        ? (restaurantSocialProfiles['tiktok']['name'] as String?)?.trim()
+        : null;
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+    if (restaurantTiktok != null && restaurantTiktok!.trim().isNotEmpty) {
+      return restaurantName.isNotEmpty ? restaurantName : null;
+    }
+    return null;
+  }
+
+  String? get restaurantWhatsappName {
+    final explicit = restaurantSocialProfiles['whatsapp'] is Map
+        ? (restaurantSocialProfiles['whatsapp']['name'] as String?)?.trim()
+        : null;
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+    if (restaurantWhatsapp != null && restaurantWhatsapp!.trim().isNotEmpty) {
+      return restaurantName.isNotEmpty ? restaurantName : 'WhatsApp';
+    }
+    return null;
+  }
 
   bool get hasRestaurantSocials =>
       (restaurantWhatsapp?.isNotEmpty ?? false) ||
       (restaurantInstagram?.isNotEmpty ?? false) ||
       (restaurantFacebook?.isNotEmpty ?? false) ||
       (restaurantTiktok?.isNotEmpty ?? false) ||
-      (googleReviewUrl?.isNotEmpty ?? false);
+      restaurantSocialProfiles.values.any((p) =>
+          p is Map &&
+          ((p['link']?.toString().trim().isNotEmpty ?? false) ||
+              (p['url']?.toString().trim().isNotEmpty ?? false)));
 
   bool get hasRestaurantContact =>
       (restaurantPhone?.isNotEmpty ?? false) ||
@@ -213,6 +261,7 @@ class LoyaltyCard {
     this.restaurantLatitude,
     this.restaurantLongitude,
     this.restaurantOpeningHours = const {},
+    this.restaurantSocialProfiles = const {},
   });
 
   /// Construit une carte réelle depuis `POST/GET /loyalty-cards/*`
@@ -223,6 +272,10 @@ class LoyaltyCard {
     final config = program['config'] as Map<String, dynamic>? ?? {};
     final progress = json['progress'] as Map<String, dynamic>? ?? {};
     final level = json['level'] as Map<String, dynamic>?;
+    final profiles =
+        (restaurant['social_profiles'] as Map?)?.cast<String, dynamic>() ??
+            (config['social_profiles'] as Map?)?.cast<String, dynamic>() ??
+            const {};
 
     return LoyaltyCard(
       id: json['id'].toString(),
@@ -270,14 +323,32 @@ class LoyaltyCard {
       restaurantCity: restaurant['city'] as String?,
       restaurantCountry: restaurant['country'] as String?,
       restaurantDescription: restaurant['description'] as String?,
-      restaurantWhatsapp: restaurant['whatsapp'] as String?,
-      restaurantInstagram: restaurant['instagram'] as String?,
-      restaurantFacebook: restaurant['facebook'] as String?,
-      restaurantTiktok: restaurant['tiktok'] as String?,
-      googleReviewUrl: (restaurant['google_review_url'] ?? config['google_review_url']) as String?,
+      restaurantWhatsapp: (restaurant['whatsapp'] ??
+          (profiles['whatsapp'] is Map
+              ? profiles['whatsapp']['link'] ?? profiles['whatsapp']['url']
+              : null)) as String?,
+      restaurantInstagram: (restaurant['instagram'] ??
+          (profiles['instagram'] is Map
+              ? profiles['instagram']['link'] ?? profiles['instagram']['url']
+              : null)) as String?,
+      restaurantFacebook: (restaurant['facebook'] ??
+          (profiles['facebook'] is Map
+              ? profiles['facebook']['link'] ?? profiles['facebook']['url']
+              : null)) as String?,
+      restaurantTiktok: (restaurant['tiktok'] ??
+          (profiles['tiktok'] is Map
+              ? profiles['tiktok']['link'] ?? profiles['tiktok']['url']
+              : null)) as String?,
+      googleReviewUrl: (restaurant['google_review_url'] ??
+          config['google_review_url'] ??
+          (profiles['google_review'] is Map
+              ? profiles['google_review']['link'] ??
+                  profiles['google_review']['url']
+              : null)) as String?,
       restaurantLatitude: (restaurant['latitude'] as num?)?.toDouble(),
       restaurantLongitude: (restaurant['longitude'] as num?)?.toDouble(),
       restaurantOpeningHours: (restaurant['opening_hours'] as Map?)?.cast<String, dynamic>() ?? const {},
+      restaurantSocialProfiles: profiles,
     );
   }
 
@@ -336,6 +407,7 @@ class LoyaltyCard {
       restaurantLatitude: restaurantLatitude,
       restaurantLongitude: restaurantLongitude,
       restaurantOpeningHours: restaurantOpeningHours,
+      restaurantSocialProfiles: restaurantSocialProfiles,
     );
   }
 
@@ -389,7 +461,8 @@ class LoyaltyCard {
     if (hex == null || hex.isEmpty) return fallback;
     try {
       return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[loyalty_card] Erreur parsing hex color "$hex": $e');
       return fallback;
     }
   }

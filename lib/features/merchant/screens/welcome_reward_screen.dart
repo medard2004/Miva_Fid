@@ -66,7 +66,8 @@ class _WelcomeRewardScreenState extends ConsumerState<WelcomeRewardScreen> {
       if (mounted) {
         ToastService.showSuccess('Cadeau de bienvenue enregistré !');
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[welcome_reward_screen] Erreur sauvegarde welcome reward: $e');
       if (mounted) {
         ToastService.showError(
             'Impossible d\'enregistrer le cadeau de bienvenue.');

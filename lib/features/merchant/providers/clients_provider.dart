@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
@@ -191,13 +192,40 @@ class ClientsNotifier extends _$ClientsNotifier {
     } catch (e) {
       final cached = await cache.getMerchantClients();
       if (cached != null) {
-        final items = (cached['items'] as List?)
+        var items = (cached['items'] as List?)
                 ?.map((i) => Map<String, dynamic>.from(i as Map))
                 .toList() ??
             [];
+
+        // Filtrage local des items en cache (recherche + niveau)
+        if (_filter.search.isNotEmpty) {
+          final q = _filter.search.toLowerCase();
+          items = items.where((item) {
+            final clientMap = item['client'] as Map?;
+            final firstName = (clientMap?['first_name'] ?? item['first_name'] ?? '').toString().toLowerCase();
+            final lastName = (clientMap?['last_name'] ?? item['last_name'] ?? '').toString().toLowerCase();
+            final phone = (clientMap?['phone'] ?? item['phone'] ?? '').toString().toLowerCase();
+            final cardCode = (item['card_code'] ?? '').toString().toLowerCase();
+            final name = (item['name'] ?? '').toString().toLowerCase();
+            return firstName.contains(q) ||
+                lastName.contains(q) ||
+                '$firstName $lastName'.contains(q) ||
+                phone.contains(q) ||
+                cardCode.contains(q) ||
+                name.contains(q);
+          }).toList();
+        }
+        if (_filter.levelKey != null) {
+          items = items.where((item) {
+            final level = item['level'] as Map?;
+            final levelName = (level?['name'] ?? '').toString().toLowerCase();
+            return levelName == _filter.levelKey!.toLowerCase();
+          }).toList();
+        }
+
         return ClientsListState(
           clients: items.map(LoyaltyCardModel.fromJson).toList(),
-          total: (cached['total'] as num?)?.toInt() ?? items.length,
+          total: items.length,
           currentPage: 1,
           lastPage: 1,
         );
@@ -263,7 +291,8 @@ class ClientsNotifier extends _$ClientsNotifier {
         lastPage: next.lastPage,
         isLoadingMore: false,
       ));
-    } on Exception catch (_) {
+    } on Exception catch (e) {
+      debugPrint('[clients_provider] Erreur chargement page suivante clients: $e');
       // Échec silencieux du chargement suivant : la page déjà affichée
       // reste utilisable, l'utilisateur pourra re-scroller pour retenter.
       if (gen != _generation) return;

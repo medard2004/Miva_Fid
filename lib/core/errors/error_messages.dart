@@ -124,6 +124,9 @@ class ErrorMessages {
   // ── Équipe ──
   static String get teamActionFailed => _t?.errTeamActionFailed ?? 'Impossible d\'effectuer cette action. Réessayez.';
 
+  // ── Paramètres commerce ──
+  static String get merchantSettingsFailed => 'Impossible d\'enregistrer vos modifications. Vérifiez votre connexion et réessayez.';
+
   // ── Erreurs de champ (affichées sous le champ) ──
   static String get fieldRequired => _t?.errFieldRequired ?? 'Veuillez renseigner ce champ.';
 

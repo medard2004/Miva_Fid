@@ -299,7 +299,8 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => fallback(),
                             );
-                          } catch (_) {
+                          } catch (e) {
+                            debugPrint('[merchant_step3_screen] Erreur chargement logo local: $e');
                             return fallback();
                           }
                         }),

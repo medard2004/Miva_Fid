@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/core/api/providers/api_providers.dart';
 import 'package:miva_fid/core/services/realtime_service.dart';
@@ -53,7 +54,8 @@ class ReferralNotifier extends StateNotifier<List<Referral>> {
       try {
         await loadMine();
         return;
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[referral_provider] Retry loadMine échoué (tentative $attempt): $e');
         if (attempt >= delays.length) return;
         await Future.delayed(delays[attempt]);
       }

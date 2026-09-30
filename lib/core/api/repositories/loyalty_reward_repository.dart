@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../services/loyalty_reward_service.dart';
 import '../../cache/offline_cache_service.dart';
 import '../../../features/client/models/reward.dart';
@@ -19,7 +20,9 @@ class LoyaltyRewardRepository {
       for (final row in rows) {
         try {
           rewards.add(Reward.fromApi(row));
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[loyalty_reward_repository] Erreur parsing récompense API: $e');
+        }
       }
       return rewards;
     } catch (e) {
@@ -30,7 +33,9 @@ class LoyaltyRewardRepository {
           for (final row in cached) {
             try {
               rewards.add(Reward.fromApi(row));
-            } catch (_) {}
+            } catch (e) {
+              debugPrint('[loyalty_reward_repository] Erreur parsing récompense cache: $e');
+            }
           }
           if (rewards.isNotEmpty) return rewards;
         }
@@ -48,7 +53,9 @@ class LoyaltyRewardRepository {
     for (final row in cached) {
       try {
         rewards.add(Reward.fromApi(row));
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[loyalty_reward_repository] Erreur parsing récompense cache local: $e');
+      }
     }
     return rewards;
   }

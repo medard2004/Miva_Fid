@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../services/referral_service.dart';
 import '../../../features/client/models/referral.dart';
 
@@ -15,7 +16,9 @@ class ReferralRepository {
     for (final row in rows) {
       try {
         referrals.add(Referral.fromJson(row));
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[referral_repository] Erreur parsing referral: $e');
+      }
     }
     return referrals;
   }

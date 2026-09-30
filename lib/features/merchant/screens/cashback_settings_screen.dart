@@ -67,7 +67,8 @@ class _CashbackSettingsScreenState extends ConsumerState<CashbackSettingsScreen>
         'cashback_tier_basis': _tierBasis,
       });
       if (mounted) ToastService.showSuccess('Paramètres cashback enregistrés !');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[cashback_settings_screen] Erreur sauvegarde cashback: $e');
       if (mounted) {
         ToastService.showError('Impossible d\'enregistrer les paramètres cashback.');
       }

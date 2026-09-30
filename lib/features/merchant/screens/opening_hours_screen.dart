@@ -281,7 +281,8 @@ class _OpeningHoursScreenState extends ConsumerState<OpeningHoursScreen> {
         },
       });
       if (mounted) ToastService.showSuccess('Horaires enregistrés !');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[opening_hours_screen] Erreur sauvegarde horaires: $e');
       if (mounted) {
         ToastService.showError("Impossible d'enregistrer les horaires.");
       }

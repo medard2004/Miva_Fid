@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
@@ -272,7 +273,8 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     state = state.copyWith(clearError: true);
     try {
       await _authRepository.logout();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[merchant_auth_provider] Erreur logout merchant: $e');
       // Token déjà invalide ou réseau indisponible : on nettoie quand même.
     } finally {
       state = const MerchantAuthState();

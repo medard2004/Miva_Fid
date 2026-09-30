@@ -8,10 +8,13 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_provider.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -89,6 +92,7 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
   }
 
   Future<void> _save() async {
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     setState(() => _saving = true);
     try {
       await ref.read(merchantNotifierProvider.notifier).updateProgramme({
@@ -99,16 +103,13 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
         'address': _addrCtrl.text.trim(),
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.merchantVitrineSaveSuccess)),
-        );
+        ToastService.showSuccess(AppLocalizations.of(context)!.merchantVitrineSaveSuccess);
         context.go('/merchant');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.merchantVitrineSaveError(e.toString()))),
-        );
+        final appError = ErrorTranslator.translate(e, context: ErrorContext.merchantSettings);
+        ToastService.showError(appError.displayMessage ?? AppLocalizations.of(context)!.merchantVitrineSaveError(''));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/cache/offline_cache_service.dart';
 import '../../../models/loyalty_card_model.dart';
 import 'clients_provider.dart';
 import 'dashboard_stats_provider.dart' show dashboardStatsProvider;
@@ -88,10 +90,60 @@ class ValidateNotifier extends _$ValidateNotifier {
 
   /// Recherche par code de carte, `qr_token` ou identifiant public du
   /// client — le serveur accepte les trois et ne renvoie que des cartes du
-  /// commerce authentifié.
+  /// commerce authentifié. Fallback automatique sur le cache hors ligne.
   Future<LoyaltyCardModel?> lookupByCode(String code) async {
-    final row = await ref.read(merchantDashboardServiceProvider).lookup(code);
-    return row == null ? null : LoyaltyCardModel.fromJson(row);
+    try {
+      final row = await ref.read(merchantDashboardServiceProvider).lookup(code);
+      return row == null ? null : LoyaltyCardModel.fromJson(row);
+    } catch (e) {
+      final local = await lookupOffline(code);
+      if (local != null) return local;
+      rethrow;
+    }
+  }
+
+  /// Recherche une carte dans le cache local (clients du commerce)
+  Future<LoyaltyCardModel?> lookupOffline(String code) async {
+    try {
+      final cached = await ref.read(offlineCacheServiceProvider).getMerchantClients();
+      if (cached == null) return null;
+
+      final items = (cached['items'] as List?)
+              ?.map((i) => Map<String, dynamic>.from(i as Map))
+              .toList() ??
+          [];
+
+      final cleanCode = code.trim();
+      final upperCode = cleanCode.toUpperCase();
+      final phoneDigits = cleanCode.replaceAll(RegExp(r'\D'), '');
+
+      for (final item in items) {
+        if (item['id']?.toString() == cleanCode ||
+            item['card_code']?.toString().toUpperCase() == upperCode) {
+          return LoyaltyCardModel.fromJson(item);
+        }
+
+        final client = item['client'] as Map<String, dynamic>?;
+        if (client != null) {
+          if (client['uuid']?.toString() == cleanCode ||
+              client['id']?.toString() == cleanCode) {
+            return LoyaltyCardModel.fromJson(item);
+          }
+
+          if (phoneDigits.length >= 6) {
+            final clientPhone =
+                client['phone']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
+            if (clientPhone.endsWith(phoneDigits) ||
+                phoneDigits.endsWith(clientPhone)) {
+              return LoyaltyCardModel.fromJson(item);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[validate_provider] Erreur recherche carte en cache par téléphone: $e');
+    }
+    return null;
   }
 
   /// Accorde un tampon (ou des points, en mode "Achat" via [amountFcfa]).

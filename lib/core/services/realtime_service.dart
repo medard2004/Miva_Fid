@@ -170,7 +170,8 @@ class RealtimeService {
     Map<String, dynamic> message;
     try {
       message = jsonDecode(raw as String) as Map<String, dynamic>;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[realtime_service] Erreur décodage message WebSocket: $e');
       return;
     }
 
@@ -215,7 +216,8 @@ class RealtimeService {
     if (data is String) {
       try {
         return (jsonDecode(data) as Map).cast<String, dynamic>();
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[realtime_service] Erreur décodage data pusher: $e');
         return null;
       }
     }

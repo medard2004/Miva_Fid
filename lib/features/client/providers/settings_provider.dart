@@ -32,7 +32,8 @@ class _SettingsStore {
       final content = await file.readAsString();
       if (content.trim().isEmpty) return {};
       return jsonDecode(content) as Map<String, dynamic>;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[settings_provider] Erreur lecture préférences: $e');
       return {};
     }
   }
@@ -43,7 +44,8 @@ class _SettingsStore {
       final current = await read();
       current[key] = value;
       await file.writeAsString(jsonEncode(current));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[settings_provider] Erreur écriture préférence $key: $e');
       // Persistance best-effort : une écriture échouée ne doit jamais
       // bloquer le changement de préférence en mémoire.
     }

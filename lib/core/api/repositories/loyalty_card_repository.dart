@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../services/loyalty_card_service.dart';
 import '../../cache/offline_cache_service.dart';
 import '../../../features/client/models/loyalty_card.dart';
@@ -50,7 +51,9 @@ class LoyaltyCardRepository {
       for (final row in rows) {
         try {
           cards.add(LoyaltyCard.fromApi(row));
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[loyalty_card_repository] Erreur parsing carte depuis API: $e');
+        }
       }
       return cards;
     } catch (e) {
@@ -61,7 +64,9 @@ class LoyaltyCardRepository {
           for (final row in cached) {
             try {
               cards.add(LoyaltyCard.fromApi(row));
-            } catch (_) {}
+            } catch (e) {
+              debugPrint('[loyalty_card_repository] Erreur parsing carte depuis cache: $e');
+            }
           }
           if (cards.isNotEmpty) return cards;
         }
@@ -79,7 +84,9 @@ class LoyaltyCardRepository {
     for (final row in cached) {
       try {
         cards.add(LoyaltyCard.fromApi(row));
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[loyalty_card_repository] Erreur parsing carte depuis cache local: $e');
+      }
     }
     return cards;
   }

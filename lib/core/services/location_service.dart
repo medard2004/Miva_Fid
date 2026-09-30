@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// Raison précise d'un échec de géolocalisation — distincte d'une simple
@@ -117,7 +118,8 @@ class LocationService {
           );
         }
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[location_service] Erreur géocodage inverse: $e');
       // Ignorer l'erreur réseau et laisser la saisie manuelle
     }
     return null;

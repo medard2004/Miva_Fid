@@ -85,7 +85,8 @@ class _ReferralRewardScreenState extends ConsumerState<ReferralRewardScreen> {
         'referral_referred_reward_surprise': _referredSurprise,
       });
       if (mounted) ToastService.showSuccess('Récompenses de parrainage enregistrées !');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[referral_reward_screen] Erreur sauvegarde parrainage: $e');
       if (mounted) {
         ToastService.showError('Impossible d\'enregistrer la configuration de parrainage.');
       }

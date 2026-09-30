@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
@@ -53,6 +57,7 @@ class _ProgrammeRulesScreenState extends ConsumerState<ProgrammeRulesScreen> {
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     final t = AppLocalizations.of(context)!;
 
     setState(() => _saving = true);
@@ -62,14 +67,12 @@ class _ProgrammeRulesScreenState extends ConsumerState<ProgrammeRulesScreen> {
         'fcfa_per_point': int.tryParse(_fcfaPerPointCtrl.text.trim()) ?? 500,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.merchantProgrammeRulesSaveSuccess)));
+        ToastService.showSuccess(t.merchantProgrammeRulesSaveSuccess);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.merchantProgrammeRulesSaveError(e.toString()))),
-        );
+        final appError = ErrorTranslator.translate(e, context: ErrorContext.merchantSettings);
+        ToastService.showError(appError.displayMessage ?? t.merchantProgrammeRulesSaveError(''));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

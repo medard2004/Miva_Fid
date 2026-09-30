@@ -168,6 +168,29 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   accentColor: const Color(0xFF5B50EC),
                   validator: (v) => (v == null || v.isEmpty) ? t.errFieldRequired : null,
                 ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      final restaurant = ref.read(merchantAuthProvider).restaurant;
+                      final identifier = restaurant?.email ?? restaurant?.phone ?? '';
+                      context.push('/auth/forgot-password', extra: {'identifier': identifier});
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'Mot de passe oublié ?',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF5B50EC),
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 12),
 
                 AppInput(

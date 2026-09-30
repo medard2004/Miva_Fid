@@ -87,7 +87,8 @@ class MerchantModel {
     try {
       final hex = colorPrimary.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[merchant_model] Erreur parsing primaryColor "$colorPrimary": $e');
       return const Color(0xFF4F46E5);
     }
   }
@@ -96,7 +97,8 @@ class MerchantModel {
     try {
       final hex = colorSecondary.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[merchant_model] Erreur parsing secondaryColor "$colorSecondary": $e');
       return const Color(0xFF3730A3);
     }
   }

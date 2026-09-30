@@ -18,6 +18,7 @@ import '../../features/client/providers/client_proximity_provider.dart';
 class ProximityClientService with WidgetsBindingObserver {
   final Ref _ref;
   Timer? _periodicTimer;
+  Timer? _initialDelayTimer;
   DateTime? _lastCheckTime;
   Position? _lastPosition;
   bool _isChecking = false;
@@ -34,7 +35,7 @@ class ProximityClientService with WidgetsBindingObserver {
   void _init() {
     _startPeriodicTimer();
     // Délai initial léger après démarrage complet de l'application
-    Future.delayed(const Duration(seconds: 3), () {
+    _initialDelayTimer = Timer(const Duration(seconds: 3), () {
       checkProximity();
     });
   }
@@ -142,6 +143,7 @@ class ProximityClientService with WidgetsBindingObserver {
 
   void dispose() {
     _periodicTimer?.cancel();
+    _initialDelayTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
   }
 }

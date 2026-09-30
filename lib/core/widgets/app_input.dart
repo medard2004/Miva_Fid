@@ -23,6 +23,7 @@ class AppInput extends StatefulWidget {
     this.maxLines = 1,
     this.maxLength,
     this.prefixIcon,
+    this.prefixIconColor,
     this.suffixIcon,
     this.prefix,
     this.prefixText,
@@ -49,6 +50,7 @@ class AppInput extends StatefulWidget {
   final int? maxLines;
   final int? maxLength;
   final IconData? prefixIcon;
+  final Color? prefixIconColor;
   final Widget? suffixIcon;
   final Widget? prefix;
   final String? prefixText;
@@ -115,7 +117,11 @@ class _AppInputState extends State<AppInput> {
                 color: AppColors.textSecondary,
               ),
               prefixIcon: widget.prefixIcon != null
-                  ? Icon(widget.prefixIcon, size: 18, color: AppColors.textSecondary)
+                  ? Icon(
+                      widget.prefixIcon,
+                      size: 18,
+                      color: widget.prefixIconColor ?? AppColors.textSecondary,
+                    )
                   : null,
               prefix: widget.prefix,
               prefixText: widget.prefixText,

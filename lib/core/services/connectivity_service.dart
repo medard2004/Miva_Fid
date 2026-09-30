@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum ConnectivityStatus {
@@ -67,7 +68,8 @@ class ConnectivityNotifier extends StateNotifier<ConnectivityStatus> {
         state = newStatus;
       }
       return isConnected;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[connectivity_service] Erreur vérification connectivité: $e');
       if (mounted && state != ConnectivityStatus.offline) {
         state = ConnectivityStatus.offline;
       }

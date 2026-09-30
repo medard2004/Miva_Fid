@@ -242,7 +242,8 @@ class CampaignDraftNotifier extends StateNotifier<CampaignDraft> {
         selectedClientIds: selected,
         loadingRecipients: false,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[sms_campaign_draft_provider] Erreur chargement destinataires: $e');
       state = state.copyWith(loadingRecipients: false);
     }
   }

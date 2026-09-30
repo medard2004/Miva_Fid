@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/offline_action_guard.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../onboarding/models/program_tier.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
@@ -74,6 +78,7 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
     final t = AppLocalizations.of(context)!;
 
     setState(() => _saving = true);
@@ -84,12 +89,12 @@ class _ProgrammeTiersScreenState extends ConsumerState<ProgrammeTiersScreen> {
         'tiers': tiers.map((t) => t.toJson()).toList(),
       });
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(t.merchantProgrammeTiersSaveSuccess)));
+        ToastService.showSuccess(t.merchantProgrammeTiersSaveSuccess);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.merchantProgrammeTiersSaveError(e.toString()))));
+        final appError = ErrorTranslator.translate(e, context: ErrorContext.merchantSettings);
+        ToastService.showError(appError.displayMessage ?? t.merchantProgrammeTiersSaveError(''));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

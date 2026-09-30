@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/services/realtime_service.dart';
+import '../../../core/widgets/merchant_offline_error_widget.dart';
 import '../../client/providers/settings_provider.dart';
 
 /// Un parrainage tel que renvoyé par `GET /merchant/referrals` — parrain,
@@ -138,18 +139,9 @@ class _ReferralsScreenState extends ConsumerState<ReferralsScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('Impossible de charger les parrainages.'),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () => setState(() => _future = _load()),
-                            child: const Text('Réessayer'),
-                          ),
-                        ],
-                      ),
+                    return MerchantOfflineErrorWidget(
+                      error: snapshot.error,
+                      onRetry: () => setState(() => _future = _load()),
                     );
                   }
                   final referrals = snapshot.data ?? const [];

@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -120,7 +120,8 @@ class NotificationService {
     try {
       final merged = (jsonDecode(payload) as Map).cast<String, dynamic>();
       _route(data: merged, title: merged['title'] as String? ?? '', body: merged['body'] as String? ?? '');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[notification_service] Erreur décodage payload notification: $e');
       // Payload malformé (ancienne version de l'app, format inattendu) :
       // pas de redirection plutôt qu'un crash.
     }

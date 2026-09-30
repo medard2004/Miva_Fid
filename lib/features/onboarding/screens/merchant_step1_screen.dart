@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:simple_icons/simple_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -683,33 +684,45 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    Text(
+                                      'Renseignez simplement vos pseudos ou noms de page. Les liens de redirection directs seront générés automatiquement.',
+                                      style: AppTextStyles.caption().copyWith(
+                                        color: AppColors.textSecondary,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                    const SizedBox(height: Sp.sm),
                                     AppInput(
                                       label: 'WhatsApp',
                                       hint: '+228 90 00 00 00',
                                       controller: _whatsappCtrl,
-                                      prefixIcon: LucideIcons.messageCircle,
+                                      prefixIcon: SimpleIcons.whatsapp,
+                                      prefixIconColor: const Color(0xFF25D366),
                                       keyboardType: TextInputType.phone,
                                       accentColor: AppColors.merchant,
                                     ),
                                     AppInput(
                                       label: 'Instagram',
-                                      hint: '@votre_commerce',
+                                      hint: 'chic_coin ou @chic_coin',
                                       controller: _instagramCtrl,
-                                      prefixIcon: LucideIcons.camera,
+                                      prefixIcon: SimpleIcons.instagram,
+                                      prefixIconColor: const Color(0xFFE1306C),
                                       accentColor: AppColors.merchant,
                                     ),
                                     AppInput(
                                       label: 'Facebook',
-                                      hint: 'facebook.com/votre-page',
+                                      hint: 'Botega (nom de page)',
                                       controller: _facebookCtrl,
-                                      prefixIcon: LucideIcons.globe,
+                                      prefixIcon: SimpleIcons.facebook,
+                                      prefixIconColor: const Color(0xFF1877F2),
                                       accentColor: AppColors.merchant,
                                     ),
                                     AppInput(
                                       label: 'TikTok',
-                                      hint: '@votre_compte',
+                                      hint: 'chez_x ou @chez_x',
                                       controller: _tiktokCtrl,
-                                      prefixIcon: LucideIcons.music,
+                                      prefixIcon: SimpleIcons.tiktok,
+                                      prefixIconColor: const Color(0xFF0F172A),
                                       accentColor: AppColors.merchant,
                                     ),
                                   ],

@@ -8,11 +8,15 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/toast_service.dart';
 import '../../../models/campaign_model.dart';
 import '../../client/providers/settings_provider.dart';
+import '../providers/merchant_auth_provider.dart';
+import '../providers/sms_provider.dart';
 import 'sms_campaign_screen.dart' show targetLabel;
 
 class SmsCampaignDetailScreen extends ConsumerStatefulWidget {
@@ -29,6 +33,7 @@ class _SmsCampaignDetailScreenState
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
   bool _loading = true;
+  bool _isResending = false;
   CampaignModel? _campaign;
   List<Map<String, dynamic>> _recipients = [];
   String? _error;
@@ -85,6 +90,273 @@ class _SmsCampaignDetailScreenState
     }
   }
 
+  Future<void> _handleResend({required String mode}) async {
+    final restaurant = ref.read(merchantAuthProvider).restaurant;
+    if (restaurant?.isFcmSuspended == true) {
+      ToastService.showError(
+        restaurant?.fcmSuspensionReason != null && restaurant!.fcmSuspensionReason!.isNotEmpty
+            ? 'Service suspendu : ${restaurant.fcmSuspensionReason}'
+            : 'Le service de notifications FCM est temporairement suspendu par l\'administrateur.',
+      );
+      return;
+    }
+
+    if (_isResending) return;
+    setState(() => _isResending = true);
+    try {
+      final res = await ref.read(smsNotifierProvider.notifier).resendCampaign(
+            widget.campaignId,
+            mode: mode,
+          );
+      final count = res['recipients_count'] ?? res['queued_recipients'] ?? 0;
+      ToastService.showSuccess(
+        mode == 'failed_only'
+            ? 'Renvoi lancé pour $count destinataire(s) en échec.'
+            : 'Campagne relancée avec succès ($count destinataire(s)).',
+      );
+      await _load();
+    } on ApiException catch (e) {
+      ToastService.showError(e.message);
+    } catch (e) {
+      ToastService.showError('Erreur lors du renvoi de la notification');
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
+  }
+
+  void _openResendSheet(BuildContext context, CampaignModel c, int failedCount) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Renvoyer la notification',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Choisissez la cible pour le renvoi de cette campagne.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (failedCount > 0) ...[
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _handleResend(mode: 'failed_only');
+                    },
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFFDC2626).withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDC2626).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              LucideIcons.alertTriangle,
+                              color: Color(0xFFDC2626),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Renvoyer aux échecs uniquement ($failedCount)',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFDC2626),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Relance la notification uniquement pour les clients n\'ayant pas reçu le message.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            LucideIcons.chevronRight,
+                            size: 18,
+                            color: Color(0xFFDC2626),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _handleResend(mode: 'all');
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5B50EC).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFF5B50EC).withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF5B50EC).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            LucideIcons.users,
+                            color: Color(0xFF5B50EC),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Renvoyer à tous les destinataires (${c.recipientsCount})',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF5B50EC),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Envoie un nouveau push à toute la cible. Anti-doublon actif (min. 5 min entre deux envois).',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          LucideIcons.chevronRight,
+                          size: 18,
+                          color: Color(0xFF5B50EC),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFailedBanner(int failedCount) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFDC2626).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFDC2626).withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(LucideIcons.alertCircle, color: Color(0xFFDC2626), size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '$failedCount notification(s) non délivrée(s).',
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFDC2626),
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: _isResending ? null : () => _handleResend(mode: 'failed_only'),
+              icon: _isResending
+                  ? const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(LucideIcons.rotateCcw, size: 13),
+              label: const Text('Renvoyer'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
@@ -113,12 +385,16 @@ class _SmsCampaignDetailScreenState
     final failed = _recipients.where((r) => r['status'] == 'failed').toList();
     final pending = _recipients.where((r) => r['status'] == 'pending').toList();
 
+    final restaurant = ref.watch(merchantAuthProvider).restaurant;
+    final isFcmSuspended = restaurant?.isFcmSuspended ?? false;
+    final fcmSuspensionReason = restaurant?.fcmSuspensionReason;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(c),
+            _buildHeader(c, failed.length, isFcmSuspended: isFcmSuspended, fcmSuspensionReason: fcmSuspensionReason),
             Expanded(
               child: RefreshIndicator(
                 color: const Color(0xFF5B50EC),
@@ -128,10 +404,41 @@ class _SmsCampaignDetailScreenState
                     parent: BouncingScrollPhysics(),
                   ),
                   slivers: [
+                    if (isFcmSuspended)
+                      SliverToBoxAdapter(
+                        child: Container(
+                          margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFCA5A5)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(LucideIcons.bellOff, size: 18, color: Color(0xFFDC2626)),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                      ? 'Service suspendu : $fcmSuspensionReason\nLes actions d\'envoi et de relance sont temporairement bloquées.'
+                                      : 'Le service de notifications FCM est temporairement indisponible pour votre établissement. Les actions d\'envoi et de relance sont bloquées.',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF991B1B), height: 1.35),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     SliverToBoxAdapter(
                       child: _buildStatsRow(
                           c, sent.length, failed.length, pending.length),
                     ),
+                    if (failed.isNotEmpty && c.isSent)
+                      SliverToBoxAdapter(
+                        child: _buildFailedBanner(failed.length),
+                      ),
                     SliverToBoxAdapter(child: _buildInfoSection(c)),
                     SliverToBoxAdapter(child: _buildMessageCard(c)),
                     SliverToBoxAdapter(
@@ -171,7 +478,7 @@ class _SmsCampaignDetailScreenState
     );
   }
 
-  Widget _buildHeader(CampaignModel c) {
+  Widget _buildHeader(CampaignModel c, int failedCount, {bool isFcmSuspended = false, String? fcmSuspensionReason}) {
     final isPlanned = !c.isSent;
     final statusLabel = c.isScheduled
         ? 'Programmée'
@@ -238,8 +545,37 @@ class _SmsCampaignDetailScreenState
           IconButton(
             icon: Icon(LucideIcons.pencil,
                 color: AppColors.textPrimary, size: 20),
-            tooltip: 'Modifier',
+            tooltip: isFcmSuspended ? 'Modifier (Service suspendu)' : 'Modifier',
             onPressed: () => context.push('/merchant/campaigns/new', extra: c),
+          ),
+        ] else if (c.isSent) ...[
+          const SizedBox(width: 4),
+          IconButton(
+            icon: _isResending
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(LucideIcons.rotateCcw,
+                    color: isFcmSuspended
+                        ? AppColors.textSecondary.withValues(alpha: 0.3)
+                        : AppColors.textPrimary,
+                    size: 20),
+            tooltip: isFcmSuspended
+                ? 'Notifications temporairement suspendues'
+                : 'Renvoyer la campagne',
+            onPressed: _isResending
+                ? null
+                : (isFcmSuspended
+                    ? () {
+                        ToastService.showError(
+                          fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                              ? 'Service suspendu : $fcmSuspensionReason'
+                              : 'Le service de notifications FCM est temporairement suspendu pour votre établissement.',
+                        );
+                      }
+                    : () => _openResendSheet(context, c, failedCount)),
           ),
         ],
       ]),

@@ -11,6 +11,8 @@ class PromoBanner extends StatelessWidget {
     required this.color2,
     this.backgroundIcon,
     this.emoji3D,
+    this.imageUrl,
+    this.onTap,
     this.showButton = false,
   });
 
@@ -21,11 +23,13 @@ class PromoBanner extends StatelessWidget {
   final Color color2;
   final IconData? backgroundIcon;
   final String? emoji3D;
+  final String? imageUrl;
+  final VoidCallback? onTap;
   final bool showButton;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final bannerWidget = Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [color1, color2],
@@ -44,6 +48,17 @@ class PromoBanner extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
+          if (imageUrl != null && imageUrl!.isNotEmpty)
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.28,
+                child: Image.network(
+                  imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
           if (emoji3D != null) ...[
             const Positioned(
               right: 15,
@@ -157,12 +172,13 @@ class PromoBanner extends StatelessWidget {
                   ),
                 ),
                 if (showButton) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   InkWell(
-                    onTap: () {},
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(20),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
+                          horizontal: 14, vertical: 5),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -183,10 +199,23 @@ class PromoBanner extends StatelessWidget {
                 ],
               ],
             ),
-            ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: bannerWidget,
+        ),
+      );
+    }
+
+    return bannerWidget;
   }
 }

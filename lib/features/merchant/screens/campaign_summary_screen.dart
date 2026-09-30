@@ -37,12 +37,28 @@ class _CampaignSummaryScreenState
     final time =
         await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (time == null) return;
-    notifier.setScheduledAt(
-      DateTime(date.year, date.month, date.day, time.hour, time.minute),
-    );
+    final scheduled =
+        DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    if (scheduled.isBefore(DateTime.now().add(const Duration(minutes: 2)))) {
+      ToastService.showError(
+        'La date de programmation doit être au moins 5 minutes dans le futur.',
+      );
+      return;
+    }
+    notifier.setScheduledAt(scheduled);
   }
 
   Future<void> _send() async {
+    final restaurant = ref.read(merchantAuthProvider).restaurant;
+    if (restaurant?.isFcmSuspended == true) {
+      ToastService.showError(
+        restaurant?.fcmSuspensionReason != null && restaurant!.fcmSuspensionReason!.isNotEmpty
+            ? 'Service suspendu : ${restaurant.fcmSuspensionReason}'
+            : 'Le service de notifications FCM est temporairement suspendu par l\'administrateur.',
+      );
+      return;
+    }
+
     final draft = ref.read(campaignDraftProvider(widget.editingCampaign));
     final isEditing = widget.editingCampaign != null;
 
@@ -52,6 +68,13 @@ class _CampaignSummaryScreenState
     }
     if (isEditing && draft.scheduledAt == null && widget.editingCampaign?.status != 'draft') {
       ToastService.showError('Une date de programmation est requise.');
+      return;
+    }
+    if (draft.scheduledAt != null &&
+        draft.scheduledAt!.isBefore(DateTime.now().add(const Duration(minutes: 1)))) {
+      ToastService.showError(
+        'La date de programmation est déjà passée. Veuillez choisir une date future.',
+      );
       return;
     }
 
@@ -119,14 +142,17 @@ class _CampaignSummaryScreenState
     final isEditing = widget.editingCampaign != null;
 
     final authState = ref.watch(merchantAuthProvider);
-    final smsCredits = authState.restaurant?.smsCredits ?? 0;
+    final restaurant = authState.restaurant;
+    final isFcmSuspended = restaurant?.isFcmSuspended ?? false;
+    final fcmSuspensionReason = restaurant?.fcmSuspensionReason;
+    final smsCredits = restaurant?.smsCredits ?? 0;
 
     final cost = isEditing
         ? (draft.selectedClientIds.length -
             (widget.editingCampaign!.recipientsCount))
         : draft.selectedClientIds.length;
     final finalBalance = smsCredits - cost;
-    final canSend = finalBalance >= 0;
+    final canSend = finalBalance >= 0 && !isFcmSuspended;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -186,6 +212,34 @@ class _CampaignSummaryScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── BANNIÈRE SUSPENSION SERVICE FCM ─────────────────────
+                    if (isFcmSuspended) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(LucideIcons.bellOff, size: 18, color: Color(0xFFDC2626)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                    ? 'Service FCM suspendu : $fcmSuspensionReason\nL\'envoi et la programmation sont désactivés pour cet établissement.'
+                                    : 'Le service de notifications FCM est temporairement suspendu par l\'administrateur. L\'envoi et la programmation sont désactivés.',
+                                style: const TextStyle(fontSize: 12.5, color: Color(0xFF991B1B), height: 1.35),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     Text(
                       'Vérifiez avant d\'envoyer',
                       style: TextStyle(
@@ -453,9 +507,21 @@ class _CampaignSummaryScreenState
                   height: 52,
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: (draft.sending || !canSend) ? null : _send,
+                    onPressed: (draft.sending || !canSend)
+                        ? (isFcmSuspended
+                            ? () {
+                                ToastService.showError(
+                                  fcmSuspensionReason != null && fcmSuspensionReason.isNotEmpty
+                                      ? 'Service suspendu : $fcmSuspensionReason'
+                                      : 'Le service de notifications FCM est temporairement indisponible.',
+                                );
+                              }
+                            : null)
+                        : _send,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5B50EC),
+                      backgroundColor: isFcmSuspended
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF5B50EC),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
@@ -469,16 +535,20 @@ class _CampaignSummaryScreenState
                                 strokeWidth: 2, color: Colors.white),
                           )
                         : Icon(
-                            draft.scheduledAt != null
-                                ? LucideIcons.calendarCheck
-                                : LucideIcons.send,
+                            isFcmSuspended
+                                ? LucideIcons.bellOff
+                                : (draft.scheduledAt != null
+                                    ? LucideIcons.calendarCheck
+                                    : LucideIcons.send),
                             size: 18),
                     label: Text(
-                      isEditing
-                          ? 'Enregistrer les modifications'
-                          : (draft.scheduledAt != null
-                              ? 'Programmer la campagne'
-                              : 'Envoyer la campagne'),
+                      isFcmSuspended
+                          ? 'Notifications temporairement suspendues'
+                          : (isEditing
+                              ? 'Enregistrer les modifications'
+                              : (draft.scheduledAt != null
+                                  ? 'Programmer la campagne'
+                                  : 'Envoyer la campagne')),
                       style: const TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 15),
                     ),

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,8 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/cache/offline_cache_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import '../../../core/widgets/merchant_offline_error_widget.dart';
 
 class ReviewsScreen extends ConsumerStatefulWidget {
   const ReviewsScreen({super.key});
@@ -18,6 +19,8 @@ class ReviewsScreen extends ConsumerStatefulWidget {
 
 class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
   bool _isLoading = true;
+  bool _hasError = false;
+  Object? _error;
   double _averageRating = 0;
   int _totalReviews = 0;
   List<dynamic> _reviews = [];
@@ -29,23 +32,44 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
   }
 
   Future<void> _fetchReviews() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+    final cache = ref.read(offlineCacheServiceProvider);
     try {
       final client = ref.read(merchantApiClientProvider);
       final response = await client.dio.get('/merchant/reviews');
+      final data = response.data as Map<String, dynamic>;
+      // Sauvegarder en cache
+      await cache.saveMerchantReviews(data);
       if (mounted) {
         setState(() {
-          _averageRating = (response.data['average_rating'] as num).toDouble();
-          _totalReviews = response.data['total_reviews'] as int;
-          _reviews = response.data['reviews'] as List<dynamic>;
+          _averageRating = (data['average_rating'] as num).toDouble();
+          _totalReviews = data['total_reviews'] as int;
+          _reviews = data['reviews'] as List<dynamic>;
           _isLoading = false;
         });
       }
-    } on DioException {
-      ToastService.showError("Impossible de charger les avis.");
-      if (mounted) {
+    } catch (e) {
+      // Fallback cache
+      final cached = await cache.getMerchantReviews();
+      if (cached != null && mounted) {
         setState(() {
+          _averageRating = (cached['average_rating'] as num?)?.toDouble() ?? 0;
+          _totalReviews = (cached['total_reviews'] as num?)?.toInt() ?? 0;
+          _reviews = (cached['reviews'] as List?) ?? [];
           _isLoading = false;
         });
+      } else if (mounted) {
+        setState(() {
+          _hasError = true;
+          _error = e;
+          _isLoading = false;
+        });
+      }
+      if (_reviews.isEmpty && cached == null) {
+        ToastService.showError("Impossible de charger les avis.");
       }
     }
   }
@@ -68,7 +92,12 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _reviews.isEmpty
+          : _hasError
+              ? MerchantOfflineErrorWidget(
+                  error: _error,
+                  onRetry: _fetchReviews,
+                )
+              : _reviews.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

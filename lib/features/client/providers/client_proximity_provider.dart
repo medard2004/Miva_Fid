@@ -13,21 +13,33 @@ class ClientProximityState {
   final bool isLocationServiceEnabled;
   final bool isLoading;
 
+  /// `true` si la permission est refusée définitivement (`deniedForever`).
+  final bool isPermissionDeniedForever;
+
   const ClientProximityState({
     this.enabled = true,
     this.hasPermission = false,
     this.isLocationServiceEnabled = true,
     this.isLoading = false,
+    this.isPermissionDeniedForever = false,
   });
 
   bool get isEffectivelyActive =>
       enabled && hasPermission && isLocationServiceEnabled;
+
+  /// Le GPS du téléphone est coupé.
+  bool get needsLocationService => enabled && !isLocationServiceEnabled;
+
+  /// La permission app est refusée (mais pas forcément forever).
+  bool get needsPermission =>
+      enabled && isLocationServiceEnabled && !hasPermission;
 
   ClientProximityState copyWith({
     bool? enabled,
     bool? hasPermission,
     bool? isLocationServiceEnabled,
     bool? isLoading,
+    bool? isPermissionDeniedForever,
   }) {
     return ClientProximityState(
       enabled: enabled ?? this.enabled,
@@ -35,16 +47,29 @@ class ClientProximityState {
       isLocationServiceEnabled:
           isLocationServiceEnabled ?? this.isLocationServiceEnabled,
       isLoading: isLoading ?? this.isLoading,
+      isPermissionDeniedForever:
+          isPermissionDeniedForever ?? this.isPermissionDeniedForever,
     );
   }
 }
 
-class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
+/// Observe le cycle de vie de l'app pour re-vérifier GPS + permission
+/// quand l'utilisateur revient des réglages système.
+class ClientProximityNotifier extends StateNotifier<ClientProximityState>
+    with WidgetsBindingObserver {
   final Ref _ref;
   static const _key = 'client_proximity_enabled';
 
   ClientProximityNotifier(this._ref) : super(const ClientProximityState()) {
+    WidgetsBinding.instance.addObserver(this);
     _init();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && this.state.enabled) {
+      refreshStatus();
+    }
   }
 
   Future<void> _init() async {
@@ -58,7 +83,27 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
       enabled: savedEnabled,
       hasPermission: hasPerm,
       isLocationServiceEnabled: isServiceEnabled,
+      isPermissionDeniedForever: permission == LocationPermission.deniedForever,
     );
+  }
+
+  /// Re-vérifie l'état GPS + permission après un retour des réglages système.
+  Future<void> refreshStatus() async {
+    final permission = await Geolocator.checkPermission();
+    final hasPerm = permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always;
+    final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    state = state.copyWith(
+      hasPermission: hasPerm,
+      isLocationServiceEnabled: isServiceEnabled,
+      isPermissionDeniedForever: permission == LocationPermission.deniedForever,
+    );
+
+    // Si tout est OK maintenant, déclencher un check immédiat.
+    if (state.isEffectivelyActive) {
+      _ref.read(proximityClientServiceProvider).checkProximity(force: true);
+    }
   }
 
   Future<bool> _readPreference() async {
@@ -70,7 +115,8 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
       if (content.trim().isEmpty) return true;
       final json = jsonDecode(content) as Map<String, dynamic>;
       return json[_key] as bool? ?? true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[client_proximity_provider] Erreur lecture preference: $e');
       return true;
     }
   }
@@ -88,7 +134,9 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
       }
       json[_key] = value;
       await file.writeAsString(jsonEncode(json));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[client_proximity_provider] Erreur écriture preference: $e');
+    }
   }
 
   /// Bascule l'état d'activation et gère la demande de permission système si besoin.
@@ -104,9 +152,11 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         state = state.copyWith(
+          enabled: true,
           isLocationServiceEnabled: false,
           isLoading: false,
         );
+        await _writePreference(true);
         return false;
       }
 
@@ -117,10 +167,12 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
 
       if (permission == LocationPermission.deniedForever) {
         state = state.copyWith(
+          enabled: true,
           hasPermission: false,
+          isPermissionDeniedForever: true,
           isLoading: false,
         );
-        await Geolocator.openAppSettings();
+        await _writePreference(true);
         return false;
       }
 
@@ -128,13 +180,14 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
           permission == LocationPermission.always;
 
       state = state.copyWith(
-        enabled: granted,
+        enabled: true,
         hasPermission: granted,
         isLocationServiceEnabled: serviceEnabled,
+        isPermissionDeniedForever: false,
         isLoading: false,
       );
 
-      await _writePreference(granted);
+      await _writePreference(true);
 
       if (granted) {
         // Déclencher un check immédiat
@@ -142,15 +195,27 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState> {
       }
 
       return granted;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[client_proximity_provider] Erreur toggle proximity: $e');
       state = state.copyWith(isLoading: false);
       return false;
     }
   }
 
-  /// Ouvre les réglages de l'application si l'utilisateur a refusé définitivement la permission.
-  Future<void> openSettings() async {
+  /// Ouvre les réglages de localisation du téléphone (GPS).
+  Future<void> openLocationSettings() async {
+    await Geolocator.openLocationSettings();
+  }
+
+  /// Ouvre les réglages de l'application (permission localisation).
+  Future<void> openAppSettings() async {
     await Geolocator.openAppSettings();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 }
 
