@@ -198,8 +198,11 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
                           child: const SizedBox(
                             width: 44,
                             height: 44,
-                            child: Icon(LucideIcons.arrowLeft,
-                                color: Colors.white, size: 22),
+                            child: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),

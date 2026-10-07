@@ -92,7 +92,7 @@ class _MerchantLocationMapScreenState
               child: Row(
                 children: [
                   _RoundIconButton(
-                    icon: LucideIcons.arrowLeft,
+                    icon: Icons.arrow_back_ios_new_rounded,
                     onTap: () => context.pop(),
                   ),
                 ],

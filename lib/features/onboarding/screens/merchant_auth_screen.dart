@@ -219,7 +219,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     if (context.canPop()) {
                       context.pop();
                     } else {
-                      context.go('/role-select');
+                      context.go('/onboarding/merchant');
                     }
                   },
                 ),

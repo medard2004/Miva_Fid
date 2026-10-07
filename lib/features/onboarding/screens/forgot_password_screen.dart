@@ -122,7 +122,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 children: [
                   IconButton(
                     icon: Icon(
-                      LucideIcons.arrowLeft,
+                      Icons.arrow_back_ios_new_rounded,
                       size: 20,
                       color: AppColors.textPrimary,
                     ),

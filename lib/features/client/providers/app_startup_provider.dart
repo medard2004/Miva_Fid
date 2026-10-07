@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -72,17 +73,17 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
       }
     }
 
-    // 2. Validation / rafraîchissement réseau
+    // 2. Validation / rafraîchissement réseau (court timeout pour ne jamais bloquer le démarrage)
     try {
-      final freshUser = await authRepository.getMe();
+      final freshUser = await authRepository.getMe().timeout(const Duration(seconds: 3));
       ref.read(authProvider.notifier).setAuthenticated(freshUser);
 
-      // Repeuple le wallet avec les données fraîches du serveur
-      try {
-        await ref.read(walletProvider.notifier).loadMine();
-      } catch (e) {
+      // Repeuple le wallet avec les données fraîches en arrière-plan
+      unawaited(ref.read(walletProvider.notifier).loadMine().catchError((e) {
         debugPrint('[app_startup_provider] Erreur rafraîchissement wallet réseau: $e');
-      }
+      }));
+    } on TimeoutException {
+      debugPrint('[app_startup_provider] Timeout validation réseau client -> conservation session cache');
     } on UnauthorizedException {
       // Token réellement rejeté par le serveur (401) : purge et déconnexion
       await cache.clearClientData();
@@ -117,10 +118,12 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
       }
     }
 
-    // 2. Validation / rafraîchissement réseau
+    // 2. Validation / rafraîchissement réseau (court timeout)
     try {
-      final freshMerchant = await merchantAuthRepository.getMe();
+      final freshMerchant = await merchantAuthRepository.getMe().timeout(const Duration(seconds: 3));
       ref.read(merchantAuthProvider.notifier).setAuthenticated(freshMerchant);
+    } on TimeoutException {
+      debugPrint('[app_startup_provider] Timeout validation réseau merchant -> conservation session cache');
     } on UnauthorizedException {
       // Token réellement rejeté (401)
       await cache.clearMerchantData();

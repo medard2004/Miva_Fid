@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -44,7 +43,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           children: [
             if (canPop)
               _HeaderIconButton(
-                icon: LucideIcons.arrowLeft,
+                icon: Icons.arrow_back_ios_new_rounded,
                 onTap: onBack ?? () => Navigator.of(context).pop(),
               )
             else

@@ -45,24 +45,24 @@ class AppBottomNavBar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF14171D).withValues(alpha: 0.20)
-                  : Colors.white.withValues(alpha: 0.25),
+                  ? const Color(0xFF14171D).withValues(alpha: 0.28)
+                  : Colors.white.withValues(alpha: 0.38),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.12)
-                    : Colors.white.withValues(alpha: 0.40),
+                    : Colors.white.withValues(alpha: 0.50),
                 width: 0.8,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),

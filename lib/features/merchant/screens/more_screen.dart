@@ -10,6 +10,7 @@ import '../../../core/services/offline_sync_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/header_mode_switcher.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
 import '../models/merchant_display.dart';
@@ -169,7 +170,7 @@ class MoreScreen extends ConsumerWidget {
                     ),
                     child: const Icon(
                       LucideIcons.settings,
-                      color: Color(0xFF5B50EC),
+                      color: AppColors.primary,
                       size: 20,
                     ),
                   ),
@@ -178,12 +179,14 @@ class MoreScreen extends ConsumerWidget {
                     child: Text(
                       t.merchantNavSettings,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
                   ),
+                  const HeaderModeSwitcher(isMerchant: true),
+                  const SizedBox(width: 10),
                   InkWell(
                     onTap: () => context.push('/merchant/more/notifications'),
                     borderRadius: BorderRadius.circular(20),

@@ -1,16 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/api/storage/local_preferences.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
-import 'package:miva_fid/features/client/providers/settings_provider.dart';
-import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/core/theme/app_radius.dart';
-import 'package:miva_fid/l10n/gen/app_localizations.dart';
+import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
+import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
+import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -50,8 +51,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _onNext(int slideCount) {
     if (_currentPage < slideCount - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOutCubic,
+        duration: const Duration(milliseconds: 480),
+        curve: Curves.fastEaseInToSlowEaseOut,
       );
     } else {
       _completeOnboarding();
@@ -72,10 +73,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Cet écran peint via les tokens statiques d'AppColors, invisibles pour
-    // le système de dépendances de Flutter : observer la luminosité
-    // effective est son seul déclencheur de rebuild sur une bascule
-    // clair/sombre.
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final slides = _slides(t);
@@ -89,27 +86,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    alignment: Alignment.centerLeft,
-                    icon: Icon(
-                      LucideIcons.arrowLeft,
-                      size: 20,
-                      color: AppColors.ink,
-                    ),
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/role-select');
-                      }
-                    },
-                  ),
+                  if (context.canPop())
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 20,
+                        color: AppColors.ink,
+                      ),
+                      onPressed: () => context.pop(),
+                    )
+                  else
+                    const SizedBox(width: 40),
                   TextButton(
                     onPressed: _completeOnboarding,
-                    child: Text(t.onboardingSkip,
-                        style: AppTextStyles.bodyMedium(
-                            color: AppColors.inkMuted(opacity: 0.6))),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    ),
+                    child: Text(
+                      t.onboardingSkip,
+                      style: AppTextStyles.bodyMedium(
+                        color: AppColors.inkMuted(opacity: 0.6),
+                      ).copyWith(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ],
               ),
@@ -122,12 +122,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   final slide = slides[index];
                   final active = _currentPage == index;
-                  return _OnboardingSlide(slide: slide, active: active);
+                  return _OnboardingSlide(
+                    slide: slide,
+                    active: active,
+                    pageIndex: index,
+                  );
                 },
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(28.0),
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -136,10 +140,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     children: List.generate(
                       slides.length,
                       (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 320),
+                        curve: Curves.fastEaseInToSlowEaseOut,
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         height: 6,
-                        width: _currentPage == index ? 24 : 6,
+                        width: _currentPage == index ? 26 : 6,
                         decoration: BoxDecoration(
                           color: _currentPage == index
                               ? AppColors.primary
@@ -149,7 +154,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: AppButton(
@@ -185,8 +190,13 @@ class OnboardingSlideData {
 class _OnboardingSlide extends StatelessWidget {
   final OnboardingSlideData slide;
   final bool active;
+  final int pageIndex;
 
-  const _OnboardingSlide({required this.slide, required this.active});
+  const _OnboardingSlide({
+    required this.slide,
+    required this.active,
+    required this.pageIndex,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -198,9 +208,9 @@ class _OnboardingSlide extends StatelessWidget {
           Expanded(
             child: Center(
               child: TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeOutBack,
-                tween: Tween(begin: 0.9, end: active ? 1.0 : 0.9),
+                duration: const Duration(milliseconds: 650),
+                curve: Curves.fastEaseInToSlowEaseOut,
+                tween: Tween(begin: 0.92, end: active ? 1.0 : 0.92),
                 builder: (context, scale, child) {
                   return Transform.scale(scale: scale, child: child);
                 },
@@ -208,35 +218,66 @@ class _OnboardingSlide extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 32),
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 400),
-            opacity: active ? 1.0 : 0.0,
-            child: Text(
-              slide.title,
-              style: AppTextStyles.displayLarge(),
-              textAlign: TextAlign.center,
+          const SizedBox(height: 28),
+
+          // Titre avec animation fluide et humaine du bas vers le haut
+          Text(
+            slide.title,
+            style: AppTextStyles.displayLarge().copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 23,
+              letterSpacing: -0.4,
+              height: 1.25,
             ),
-          ),
+            textAlign: TextAlign.center,
+          )
+              .animate(
+                key: ValueKey('title_$pageIndex'),
+                target: active ? 1 : 0,
+              )
+              .fadeIn(duration: 400.ms, curve: Curves.easeOut)
+              .slideY(
+                begin: 0.25,
+                end: 0,
+                duration: 450.ms,
+                curve: Curves.easeOutCubic,
+              ),
+
           const SizedBox(height: 12),
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 500),
-            opacity: active ? 1.0 : 0.0,
-            child: Text(
-              slide.subtitle,
-              style: AppTextStyles.bodyMedium(
-                  color: AppColors.inkMuted(opacity: 0.7)),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 20),
+
+          // Sous-titre avec animation fluide et légère temporisation
+          Text(
+            slide.subtitle,
+            style: AppTextStyles.bodyMedium(
+              color: AppColors.inkMuted(opacity: 0.75),
+            ).copyWith(fontSize: 14.5, height: 1.45),
+            textAlign: TextAlign.center,
+          )
+              .animate(
+                key: ValueKey('sub_$pageIndex'),
+                target: active ? 1 : 0,
+              )
+              .fadeIn(
+                duration: 450.ms,
+                delay: 70.ms,
+                curve: Curves.easeOut,
+              )
+              .slideY(
+                begin: 0.28,
+                end: 0,
+                duration: 500.ms,
+                delay: 70.ms,
+                curve: Curves.easeOutCubic,
+              ),
+
+          const SizedBox(height: 18),
         ],
       ),
     );
   }
 }
 
-/// Visuel 1 : pile de cartes superposées.
+/// Visuel 1 : pile de cartes superposées avec mouvement fluide.
 class _WalletVisual extends StatelessWidget {
   final bool active;
   const _WalletVisual({required this.active});
@@ -247,16 +288,16 @@ class _WalletVisual extends StatelessWidget {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: SizedBox(
-          height: 300,
-          width: 300,
+          height: 310,
+          width: 310,
           child: Stack(
             alignment: Alignment.center,
             children: [
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 700),
-                curve: Curves.easeOutBack,
+                duration: const Duration(milliseconds: 750),
+                curve: Curves.fastEaseInToSlowEaseOut,
                 left: active ? 45 : 70,
-                top: active ? 40 : 50,
+                top: active ? 35 : 55,
                 child: Transform.rotate(
                   angle: active ? -0.1 : -0.04,
                   child: GradientCardSurface(
@@ -280,16 +321,16 @@ class _WalletVisual extends StatelessWidget {
                 ),
               ),
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 700),
-                curve: Curves.easeOutBack,
-                right: active ? 40 : 65,
-                bottom: active ? 40 : 50,
+                duration: const Duration(milliseconds: 750),
+                curve: Curves.fastEaseInToSlowEaseOut,
+                right: active ? 38 : 65,
+                bottom: active ? 35 : 55,
                 child: Transform.rotate(
                   angle: active ? 0.05 : 0.0,
                   child: GradientCardSurface(
                     color: AppColors.liningIndigo,
-                    width: 230,
-                    height: 145,
+                    width: 232,
+                    height: 148,
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,11 +382,18 @@ class _WalletVisual extends StatelessWidget {
           ),
         ),
       ),
-    );
+    )
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+        .moveY(
+          begin: -3,
+          end: 3,
+          duration: 2600.ms,
+          curve: Curves.easeInOut,
+        );
   }
 }
 
-/// Visuel 2 : carte à tampons.
+/// Visuel 2 : carte à tampons avec micro-animations.
 class _RewardsVisual extends StatelessWidget {
   final bool active;
   const _RewardsVisual({required this.active});
@@ -356,8 +404,8 @@ class _RewardsVisual extends StatelessWidget {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: SizedBox(
-          height: 300,
-          width: 300,
+          height: 310,
+          width: 310,
           child: Center(
             child: AppCard(
               elevated: true,
@@ -404,13 +452,20 @@ class _RewardsVisual extends StatelessWidget {
           ),
         ),
       ),
-    );
+    )
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+        .moveY(
+          begin: -2.5,
+          end: 2.5,
+          duration: 2800.ms,
+          curve: Curves.easeInOut,
+        );
   }
 
   Widget _buildStamp(int index) {
     final stamped = index < 5;
     return AnimatedContainer(
-      duration: Duration(milliseconds: 300 + (index * 70)),
+      duration: Duration(milliseconds: 320 + (index * 60)),
       curve: Curves.easeOutBack,
       margin: const EdgeInsets.symmetric(horizontal: 6),
       width: 36,
@@ -434,7 +489,7 @@ class _RewardsVisual extends StatelessWidget {
   }
 }
 
-/// Visuel 3 : carton d'invitation / parrainage.
+/// Visuel 3 : carton d'invitation / parrainage avec micro-animations.
 class _ReferralVisual extends StatelessWidget {
   final bool active;
   const _ReferralVisual({required this.active});
@@ -445,8 +500,8 @@ class _ReferralVisual extends StatelessWidget {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: SizedBox(
-          height: 300,
-          width: 300,
+          height: 310,
+          width: 310,
           child: Center(
             child: SizedBox(
               width: 280,
@@ -504,6 +559,13 @@ class _ReferralVisual extends StatelessWidget {
           ),
         ),
       ),
-    );
+    )
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+        .moveY(
+          begin: -3,
+          end: 3,
+          duration: 2500.ms,
+          curve: Curves.easeInOut,
+        );
   }
 }

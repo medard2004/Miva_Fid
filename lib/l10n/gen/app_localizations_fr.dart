@@ -72,6 +72,76 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsAccount => 'Compte';
 
   @override
+  String get settingsSupport => 'Assistance & Support';
+
+  @override
+  String get settingsContactUs => 'Nous contacter';
+
+  @override
+  String get settingsReportBug => 'Signaler un bug';
+
+  @override
+  String get contactTitle => 'Nous contacter';
+
+  @override
+  String get contactSubtitle =>
+      'Une question ou besoin d\'aide ? Notre équipe est à votre disposition.';
+
+  @override
+  String get contactWhatsApp => 'Support WhatsApp';
+
+  @override
+  String get contactWhatsAppSubtitle => 'Discutez avec nous en direct';
+
+  @override
+  String get contactEmail => 'Support par Email';
+
+  @override
+  String get contactEmailSubtitle => 'support@miva-fid.com';
+
+  @override
+  String get contactPhone => 'Appel téléphonique';
+
+  @override
+  String get contactPhoneSubtitle => '+228 90 12 34 56';
+
+  @override
+  String get contactHours => 'Horaires d\'ouverture';
+
+  @override
+  String get contactHoursSubtitle => 'Du lundi au samedi, de 8h00 à 20h00';
+
+  @override
+  String get reportBugTitle => 'Signaler un bug';
+
+  @override
+  String get reportBugSubtitle =>
+      'Aidez-nous à améliorer Miva-Fid en nous décrivant le problème rencontré.';
+
+  @override
+  String get reportBugCategory => 'Type de problème';
+
+  @override
+  String get reportBugSubject => 'Sujet';
+
+  @override
+  String get reportBugSubjectHint => 'Ex : Problème lors du scan de QR code';
+
+  @override
+  String get reportBugDescription => 'Description détaillée';
+
+  @override
+  String get reportBugDescriptionHint =>
+      'Décrivez ce qui s\'est passé, les étapes pour reproduire le bug...';
+
+  @override
+  String get reportBugSubmit => 'Envoyer le signalement';
+
+  @override
+  String get reportBugSuccess =>
+      'Signalement envoyé avec succès ! Merci de votre aide.';
+
+  @override
   String get settingsNotifications => 'Notifications';
 
   @override

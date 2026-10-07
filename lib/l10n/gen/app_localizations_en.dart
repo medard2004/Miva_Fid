@@ -72,6 +72,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccount => 'Account';
 
   @override
+  String get settingsSupport => 'Help & Support';
+
+  @override
+  String get settingsContactUs => 'Contact us';
+
+  @override
+  String get settingsReportBug => 'Report a bug';
+
+  @override
+  String get contactTitle => 'Contact us';
+
+  @override
+  String get contactSubtitle =>
+      'Have a question or need assistance? Our team is here to help.';
+
+  @override
+  String get contactWhatsApp => 'WhatsApp Support';
+
+  @override
+  String get contactWhatsAppSubtitle => 'Chat with our support team';
+
+  @override
+  String get contactEmail => 'Email Support';
+
+  @override
+  String get contactEmailSubtitle => 'support@miva-fid.com';
+
+  @override
+  String get contactPhone => 'Phone Call';
+
+  @override
+  String get contactPhoneSubtitle => '+228 90 12 34 56';
+
+  @override
+  String get contactHours => 'Opening Hours';
+
+  @override
+  String get contactHoursSubtitle => 'Monday to Saturday, 8:00 AM - 8:00 PM';
+
+  @override
+  String get reportBugTitle => 'Report a bug';
+
+  @override
+  String get reportBugSubtitle =>
+      'Help us improve Miva-Fid by describing the issue you encountered.';
+
+  @override
+  String get reportBugCategory => 'Issue Type';
+
+  @override
+  String get reportBugSubject => 'Subject';
+
+  @override
+  String get reportBugSubjectHint => 'E.g.: Issue when scanning QR code';
+
+  @override
+  String get reportBugDescription => 'Detailed Description';
+
+  @override
+  String get reportBugDescriptionHint =>
+      'Describe what happened and the steps to reproduce...';
+
+  @override
+  String get reportBugSubmit => 'Submit Report';
+
+  @override
+  String get reportBugSuccess =>
+      'Report submitted successfully! Thank you for your help.';
+
+  @override
   String get settingsNotifications => 'Notifications';
 
   @override

@@ -103,7 +103,7 @@ class _MerchantReviewScreenState extends ConsumerState<MerchantReviewScreen> {
                     padding: EdgeInsets.zero,
                     alignment: Alignment.centerLeft,
                     icon: Icon(
-                      LucideIcons.arrowLeft,
+                      Icons.arrow_back_ios_new_rounded,
                       size: 20,
                       color: AppColors.textPrimary,
                     ),

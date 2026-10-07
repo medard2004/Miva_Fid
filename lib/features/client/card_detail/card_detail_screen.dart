@@ -1257,90 +1257,77 @@ class _MerchantShowcaseCard extends StatelessWidget {
           ],
           const SizedBox(height: 14),
           // Actions rapides de contact & itinéraire & réseaux sociaux
+          // Actions rapides de contact & itinéraire & réseaux sociaux (icônes épurées)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 if (card.restaurantPhone?.isNotEmpty ?? false) ...[
-                  _ContactActionButton(
+                  _ContactIconAction(
                     icon: LucideIcons.phone,
-                    label: 'Appeler',
                     color: const Color(0xFF2563EB),
+                    tooltip: 'Appeler',
                     onTap: () => _launch('tel:${card.restaurantPhone}'),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
                 if (card.restaurantWhatsapp?.isNotEmpty ?? false) ...[
-                  _ContactActionButton(
+                  _ContactIconAction(
                     icon: SimpleIcons.whatsapp,
-                    label: card.restaurantWhatsappName?.isNotEmpty == true
-                        ? card.restaurantWhatsappName!
-                        : 'WhatsApp',
                     color: const Color(0xFF16A34A),
+                    tooltip: 'WhatsApp',
                     onTap: () => _launch(
                         _formatSocialUrl('whatsapp', card.restaurantWhatsapp!)),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
                 if ((card.restaurantLatitude != null &&
                         card.restaurantLongitude != null) ||
                     hasAddress) ...[
-                  _ContactActionButton(
-                    icon: LucideIcons.navigation,
-                    label: 'Google Maps',
+                  _ContactIconAction(
+                    icon: LucideIcons.mapPin,
                     color: const Color(0xFFEA4335),
+                    tooltip: 'Google Maps',
                     onTap: _openGoogleMaps,
                   ),
-                  const SizedBox(width: 8),
-                  _ContactActionButton(
+                  const SizedBox(width: 10),
+                  _ContactIconAction(
                     icon: LucideIcons.map,
-                    label: 'Plan',
                     color: AppColors.primary,
+                    tooltip: 'Plan',
                     onTap: () => _openMap(context),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
                 if (card.restaurantInstagram?.isNotEmpty ?? false) ...[
-                  _ContactActionButton(
+                  _ContactIconAction(
                     icon: SimpleIcons.instagram,
-                    label: card.restaurantInstagramName?.isNotEmpty == true
-                        ? card.restaurantInstagramName!
-                        : (card.restaurantName.isNotEmpty
-                            ? card.restaurantName
-                            : 'Instagram'),
                     color: const Color(0xFFE1306C),
+                    tooltip: 'Instagram',
                     onTap: () => _launch(
                         _formatSocialUrl('instagram', card.restaurantInstagram!)),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
                 if (card.restaurantFacebook?.isNotEmpty ?? false) ...[
-                  _ContactActionButton(
+                  _ContactIconAction(
                     icon: SimpleIcons.facebook,
-                    label: card.restaurantFacebookName?.isNotEmpty == true
-                        ? card.restaurantFacebookName!
-                        : (card.restaurantName.isNotEmpty
-                            ? card.restaurantName
-                            : 'Facebook'),
                     color: const Color(0xFF1877F2),
+                    tooltip: 'Facebook',
                     onTap: () => _launch(
                         _formatSocialUrl('facebook', card.restaurantFacebook!)),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
                 if (card.restaurantTiktok?.isNotEmpty ?? false) ...[
-                  _ContactActionButton(
+                  _ContactIconAction(
                     icon: SimpleIcons.tiktok,
-                    label: card.restaurantTiktokName?.isNotEmpty == true
-                        ? card.restaurantTiktokName!
-                        : (card.restaurantName.isNotEmpty
-                            ? card.restaurantName
-                            : 'TikTok'),
                     color: AppColors.ink,
+                    tooltip: 'TikTok',
                     onTap: () => _launch(
                         _formatSocialUrl('tiktok', card.restaurantTiktok!)),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
               ],
             ),
@@ -1373,16 +1360,16 @@ String _formatSocialUrl(String platform, String raw) {
   }
 }
 
-class _ContactActionButton extends StatelessWidget {
+class _ContactIconAction extends StatelessWidget {
   final IconData icon;
-  final String label;
   final Color color;
+  final String? tooltip;
   final VoidCallback onTap;
 
-  const _ContactActionButton({
+  const _ContactIconAction({
     required this.icon,
-    required this.label,
     required this.color,
+    this.tooltip,
     required this.onTap,
   });
 
@@ -1390,31 +1377,18 @@ class _ContactActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppTapScale(
       onTap: onTap,
-      scaleDown: 0.96,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+      scaleDown: 0.92,
+      child: Tooltip(
+        message: tooltip ?? '',
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 20, color: color),
         ),
       ),
     );
@@ -1539,234 +1513,211 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
 
               if (card.restaurantDescription?.isNotEmpty ?? false) ...[
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    card.restaurantDescription!,
-                    style: AppTextStyles.bodyMedium(
-                      color: AppColors.ink.withValues(alpha: 0.85),
-                    ).copyWith(height: 1.45),
-                  ),
+                Text(
+                  card.restaurantDescription!,
+                  style: AppTextStyles.bodyMedium(
+                    color: AppColors.ink.withValues(alpha: 0.85),
+                  ).copyWith(height: 1.45),
+                ),
+                const SizedBox(height: 16),
+                Divider(
+                  height: 1,
+                  thickness: 0.6,
+                  color: AppColors.border.withValues(alpha: 0.45),
                 ),
               ],
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
-              // Coordonnées & localisation
+              // Coordonnées & localisation (ouvert et sans boîte)
               if (hasAddress) ...[
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceCard,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(LucideIcons.mapPin,
-                          size: 20, color: AppColors.primary),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.mapPin,
+                          size: 18, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Adresse',
+                            style: AppTextStyles.label().copyWith(fontSize: 12),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            fullAddress,
+                            style: AppTextStyles.bodySmall(
+                              color: AppColors.inkMuted(opacity: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppTapScale(
+                          onTap: () {
+                            final lat = card.restaurantLatitude;
+                            final lng = card.restaurantLongitude;
+                            final name = card.restaurantName;
+                            Uri url;
+                            if (lat != null && lng != null) {
+                              url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                            } else if (fullAddress.isNotEmpty) {
+                              url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$name, $fullAddress')}');
+                            } else {
+                              url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(name)}');
+                            }
+                            launchUrl(url, mode: LaunchMode.externalApplication);
+                          },
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEA4335).withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(LucideIcons.navigation, size: 16, color: Color(0xFFEA4335)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        AppTapScale(
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            context.push(
+                              '/client/card/${card.id}/map',
+                              extra: MerchantMapArguments(
+                                merchantName: card.restaurantName,
+                                address: fullAddress,
+                                latitude: card.restaurantLatitude,
+                                longitude: card.restaurantLongitude,
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(LucideIcons.map, size: 16, color: AppColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Divider(
+                  height: 1,
+                  thickness: 0.6,
+                  color: AppColors.border.withValues(alpha: 0.45),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Horaires d'ouverture (ouvert et sans boîte)
+              if (card.restaurantOpeningHours.isNotEmpty) ...[
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(LucideIcons.clock,
+                            size: 16, color: AppColors.inkMuted()),
+                        const SizedBox(width: 8),
+                        Text('Horaires d\'ouverture',
+                            style: AppTextStyles.titleMedium()
+                                .copyWith(fontSize: 14)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ...dayLabels.entries.map((e) {
+                      final info = card.restaurantOpeningHours[e.key] as Map?;
+                      final isOpen = info?['open'] == true;
+                      final from = info?['from']?.toString() ?? '';
+                      final to = info?['to']?.toString() ?? '';
+                      final timeStr = isOpen
+                          ? (from.isNotEmpty && to.isNotEmpty
+                              ? '$from - $to'
+                              : 'Ouvert')
+                          : 'Fermé';
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Adresse',
-                              style: AppTextStyles.label().copyWith(fontSize: 12),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              fullAddress,
+                              e.value,
                               style: AppTextStyles.bodySmall(
                                 color: AppColors.inkMuted(opacity: 0.8),
                               ),
                             ),
+                            Text(
+                              timeStr,
+                              style: AppTextStyles.bodySmall(
+                                color: isOpen
+                                    ? AppColors.ink
+                                    : AppColors.error.withValues(alpha: 0.8),
+                              ).copyWith(
+                                  fontWeight: isOpen
+                                      ? FontWeight.w600
+                                      : FontWeight.w400),
+                            ),
                           ],
                         ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AppTapScale(
-                            onTap: () {
-                              final lat = card.restaurantLatitude;
-                              final lng = card.restaurantLongitude;
-                              final name = card.restaurantName;
-                              Uri url;
-                              if (lat != null && lng != null) {
-                                url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
-                              } else if (fullAddress.isNotEmpty) {
-                                url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$name, $fullAddress')}');
-                              } else {
-                                url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(name)}');
-                              }
-                              launchUrl(url, mode: LaunchMode.externalApplication);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEA4335).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFEA4335).withValues(alpha: 0.25), width: 0.8),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(LucideIcons.navigation, size: 12, color: Color(0xFFEA4335)),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Maps',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFFEA4335),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          AppTapScale(
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              context.push(
-                                '/client/card/${card.id}/map',
-                                extra: MerchantMapArguments(
-                                  merchantName: card.restaurantName,
-                                  address: fullAddress,
-                                  latitude: card.restaurantLatitude,
-                                  longitude: card.restaurantLongitude,
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.25), width: 0.8),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(LucideIcons.map, size: 12, color: AppColors.primary),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Plan',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      );
+                    }),
+                  ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
+                Divider(
+                  height: 1,
+                  thickness: 0.6,
+                  color: AppColors.border.withValues(alpha: 0.45),
+                ),
+                const SizedBox(height: 16),
               ],
 
-              // Horaires d'ouverture
-              if (card.restaurantOpeningHours.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceCard,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(LucideIcons.clock,
-                              size: 16, color: AppColors.inkMuted()),
-                          const SizedBox(width: 8),
-                          Text('Horaires d\'ouverture',
-                              style: AppTextStyles.titleMedium()
-                                  .copyWith(fontSize: 14)),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      ...dayLabels.entries.map((e) {
-                        final info = card.restaurantOpeningHours[e.key] as Map?;
-                        final isOpen = info?['open'] == true;
-                        final from = info?['from']?.toString() ?? '';
-                        final to = info?['to']?.toString() ?? '';
-                        final timeStr = isOpen
-                            ? (from.isNotEmpty && to.isNotEmpty
-                                ? '$from - $to'
-                                : 'Ouvert')
-                            : 'Fermé';
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                e.value,
-                                style: AppTextStyles.bodySmall(
-                                  color: AppColors.inkMuted(opacity: 0.8),
-                                ),
-                              ),
-                              Text(
-                                timeStr,
-                                style: AppTextStyles.bodySmall(
-                                  color: isOpen
-                                      ? AppColors.ink
-                                      : AppColors.error.withValues(alpha: 0.8),
-                                ).copyWith(
-                                    fontWeight: isOpen
-                                        ? FontWeight.w600
-                                        : FontWeight.w400),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-              ],
-
-              // Réseaux sociaux & contact direct
+              // Réseaux sociaux & contact direct (icônes seules avec Wrap pour éviter tout overflow)
               if (card.hasRestaurantContact) ...[
                 Text(
                   'Contact & Réseaux',
                   style: AppTextStyles.eyebrow(color: AppColors.inkMuted()),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Wrap(
-                  spacing: 10,
+                  spacing: 12,
                   runSpacing: 10,
                   children: [
                     if (card.restaurantPhone?.isNotEmpty ?? false)
-                      _SocialPill(
+                      _ContactIconAction(
                         icon: LucideIcons.phone,
-                        label: card.restaurantPhone!,
                         color: const Color(0xFF2563EB),
+                        tooltip: 'Téléphone',
                         onTap: () => launchUrl(
                             Uri.parse('tel:${card.restaurantPhone}'),
                             mode: LaunchMode.externalApplication),
                       ),
                     if (card.restaurantWhatsapp?.isNotEmpty ?? false)
-                      _SocialPill(
+                      _ContactIconAction(
                         icon: SimpleIcons.whatsapp,
-                        label: card.restaurantWhatsappName?.isNotEmpty == true
-                            ? card.restaurantWhatsappName!
-                            : 'WhatsApp',
                         color: const Color(0xFF16A34A),
+                        tooltip: 'WhatsApp',
                         onTap: () => launchUrl(
                             Uri.parse(_formatSocialUrl(
                                 'whatsapp', card.restaurantWhatsapp!)),
@@ -1775,10 +1726,10 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                     if ((card.restaurantLatitude != null &&
                             card.restaurantLongitude != null) ||
                         (card.restaurantAddress?.isNotEmpty ?? false))
-                      _SocialPill(
+                      _ContactIconAction(
                         icon: LucideIcons.navigation,
-                        label: 'Google Maps',
                         color: const Color(0xFFEA4335),
+                        tooltip: 'Localisation',
                         onTap: () {
                           final lat = card.restaurantLatitude;
                           final lng = card.restaurantLongitude;
@@ -1805,42 +1756,30 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                         },
                       ),
                     if (card.restaurantInstagram?.isNotEmpty ?? false)
-                      _SocialPill(
+                      _ContactIconAction(
                         icon: SimpleIcons.instagram,
-                        label: card.restaurantInstagramName?.isNotEmpty == true
-                            ? card.restaurantInstagramName!
-                            : (card.restaurantName.isNotEmpty
-                                ? card.restaurantName
-                                : 'Instagram'),
                         color: const Color(0xFFE1306C),
+                        tooltip: 'Instagram',
                         onTap: () => launchUrl(
                             Uri.parse(_formatSocialUrl(
                                 'instagram', card.restaurantInstagram!)),
                             mode: LaunchMode.externalApplication),
                       ),
                     if (card.restaurantFacebook?.isNotEmpty ?? false)
-                      _SocialPill(
+                      _ContactIconAction(
                         icon: SimpleIcons.facebook,
-                        label: card.restaurantFacebookName?.isNotEmpty == true
-                            ? card.restaurantFacebookName!
-                            : (card.restaurantName.isNotEmpty
-                                ? card.restaurantName
-                                : 'Facebook'),
                         color: const Color(0xFF1877F2),
+                        tooltip: 'Facebook',
                         onTap: () => launchUrl(
                             Uri.parse(_formatSocialUrl(
                                 'facebook', card.restaurantFacebook!)),
                             mode: LaunchMode.externalApplication),
                       ),
                     if (card.restaurantTiktok?.isNotEmpty ?? false)
-                      _SocialPill(
+                      _ContactIconAction(
                         icon: SimpleIcons.tiktok,
-                        label: card.restaurantTiktokName?.isNotEmpty == true
-                            ? card.restaurantTiktokName!
-                            : (card.restaurantName.isNotEmpty
-                                ? card.restaurantName
-                                : 'TikTok'),
                         color: AppColors.ink,
+                        tooltip: 'TikTok',
                         onTap: () => launchUrl(
                             Uri.parse(_formatSocialUrl(
                                 'tiktok', card.restaurantTiktok!)),
@@ -1855,54 +1794,4 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
       );
     },
   );
-}
-
-class _SocialPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _SocialPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppTapScale(
-      onTap: onTap,
-      scaleDown: 0.95,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 160),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

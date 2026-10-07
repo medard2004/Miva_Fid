@@ -100,7 +100,7 @@ class _MerchantResetPasswordScreenState
                 IconButton(
                   padding: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,
-                  icon: Icon(LucideIcons.arrowLeft, size: 20, color: AppColors.textPrimary),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AppColors.textPrimary),
                   onPressed: () => context.canPop() ? context.pop() : context.go('/auth/merchant/auth'),
                 ),
                 const SizedBox(height: Sp.md),

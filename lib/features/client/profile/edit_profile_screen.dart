@@ -147,7 +147,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     final t = AppLocalizations.of(context)!;
     final auth = ref.watch(authProvider);
     final user = auth.user;
-    final isDark = AppColors.isDark;
     final dateFormatLocale =
         Localizations.localeOf(context).languageCode == 'fr'
             ? 'fr_FR'
@@ -172,58 +171,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                     Stack(
                       alignment: Alignment.bottomRight,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.25),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: UserAvatar(
-                            fullName: user?.fullName ?? '',
-                            photoUrl: user?.photoUrl,
-                            localImage: auth.localAvatar,
-                            radius: 46,
-                            isLoading: isBusy,
-                          ),
+                        UserAvatar(
+                          fullName: user?.fullName ?? '',
+                          photoUrl: user?.photoUrl,
+                          localImage: auth.localAvatar,
+                          radius: 42,
+                          isLoading: isBusy,
                         ),
                         Positioned(
-                          right: 0,
-                          bottom: 0,
+                          right: -2,
+                          bottom: -2,
                           child: AppTapScale(
                             onTap: isBusy
                                 ? null
                                 : () => _showPhotoOptions(user?.photoUrl != null),
                             child: Container(
-                              width: 34,
-                              height: 34,
+                              width: 30,
+                              height: 30,
                               decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: AppColors.surface,
-                                  width: 2.5,
+                                  width: 2,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.18),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
                               ),
                               child: const Icon(
                                 LucideIcons.camera,
-                                size: 16,
+                                size: 14,
                                 color: Colors.white,
                               ),
                             ),
@@ -231,18 +206,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     AppTapScale(
                       onTap: isBusy
                           ? null
                           : () => _showPhotoOptions(user?.photoUrl != null),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         child: Text(
                           t.editProfilePhotoChange,
                           style: AppTextStyles.bodyMedium(color: AppColors.primary).copyWith(
                             fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                            fontSize: 13,
                           ),
                         ),
                       ),
@@ -251,17 +226,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
 
               // ── Informations personnelles ────────────────────────
               Align(
                 alignment: Alignment.centerLeft,
                 child: SectionEyebrow(t.settingsAccount),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
-              AppCard(
-                padding: EdgeInsets.zero,
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
                 child: Column(
                   children: [
                     _ModernInfoRow(
@@ -307,7 +286,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -338,20 +317,20 @@ class _ModernInfoRow extends StatelessWidget {
       onTap: onTap,
       scaleDown: 0.99,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 34,
+              height: 34,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.primaryTint,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 18, color: AppColors.primary),
+              child: Icon(icon, size: 16, color: AppColors.primary),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,35 +340,25 @@ class _ModernInfoRow extends StatelessWidget {
                     label,
                     style: AppTextStyles.bodySmall(
                       color: AppColors.inkMuted(opacity: 0.6),
-                    ),
+                    ).copyWith(fontSize: 11),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   if (isIncomplete)
                     Row(
                       children: [
                         Text(
                           value,
-                          style: AppTextStyles.bodyMedium(
-                            color: AppColors.inkMuted(opacity: 0.45),
+                          style: AppTextStyles.bodyMedium().copyWith(
+                            color: AppColors.warning,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'À compléter',
-                            style: AppTextStyles.bodySmall(
-                              color: AppColors.warning,
-                            ).copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                        const SizedBox(width: 5),
+                        const Icon(
+                          LucideIcons.triangleAlert,
+                          size: 13,
+                          color: AppColors.warning,
                         ),
                       ],
                     )
@@ -398,6 +367,7 @@ class _ModernInfoRow extends StatelessWidget {
                       value,
                       style: AppTextStyles.bodyMedium().copyWith(
                         fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -407,7 +377,7 @@ class _ModernInfoRow extends StatelessWidget {
             ),
             Icon(
               LucideIcons.chevronRight,
-              size: 18,
+              size: 16,
               color: AppColors.inkMuted(opacity: 0.35),
             ),
           ],

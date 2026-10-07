@@ -36,6 +36,13 @@ import '../../features/client/profile/edit_birthdate_screen.dart';
 import '../../features/client/profile/verify_current_password_screen.dart';
 import '../../features/client/profile/set_new_password_screen.dart';
 import '../../features/client/settings/settings_screen.dart' as client_settings;
+import '../../features/client/settings/notifications_settings_screen.dart';
+import '../../features/client/settings/language_settings_screen.dart';
+import '../../features/client/settings/appearance_settings_screen.dart';
+import '../../features/client/settings/help_center_screen.dart';
+import '../../features/client/settings/about_screen.dart';
+import '../../features/client/support/contact_screen.dart';
+import '../../features/client/support/report_bug_screen.dart';
 import '../../features/client/legal/legal_screen.dart';
 import '../../features/client/notifications/notifications_screen.dart';
 import '../../features/client/widgets/shared/app_shell.dart';
@@ -611,8 +618,36 @@ GoRouter appRouter(AppRouterRef ref) {
         ),
       ),
       GoRoute(
+        path: '/client/settings/notifications',
+        builder: (_, __) => const NotificationsSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/client/settings/language',
+        builder: (_, __) => const LanguageSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/client/settings/appearance',
+        builder: (_, __) => const AppearanceSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/client/settings/help',
+        builder: (_, __) => const HelpCenterScreen(),
+      ),
+      GoRoute(
+        path: '/client/settings/about',
+        builder: (_, __) => const AboutScreen(),
+      ),
+      GoRoute(
         path: '/client/notifications',
         builder: (_, __) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/client/support/contact',
+        builder: (_, __) => const ContactScreen(),
+      ),
+      GoRoute(
+        path: '/client/support/report-bug',
+        builder: (_, __) => const ReportBugScreen(),
       ),
 
       // Recherche du Wallet — glisse depuis le bas.

@@ -76,8 +76,11 @@ class _WalletSearchScreenState extends ConsumerState<WalletSearchScreen> {
                         color: AppColors.surfaceMuted,
                         borderRadius: BorderRadius.circular(11),
                       ),
-                      child: Icon(LucideIcons.arrowLeft,
-                          color: AppColors.ink, size: 20),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: AppColors.ink,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

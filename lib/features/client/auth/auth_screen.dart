@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
@@ -136,7 +135,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
                   padding: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,
                   icon: Icon(
-                    LucideIcons.arrowLeft,
+                    Icons.arrow_back_ios_new_rounded,
                     size: 20,
                     color: AppColors.ink,
                   ),
@@ -144,7 +143,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
                     if (context.canPop()) {
                       context.pop();
                     } else {
-                      context.go('/role-select');
+                      context.go('/client/onboarding');
                     }
                   },
                 ),

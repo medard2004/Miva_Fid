@@ -2,57 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/utils/loading_overlay_service.dart';
+import 'package:miva_fid/core/widgets/app_dialog.dart';
+import 'package:miva_fid/core/widgets/header_mode_switcher.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
-import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
-import 'package:miva_fid/features/client/providers/client_proximity_provider.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
-import 'package:miva_fid/features/client/providers/wallet_provider.dart';
-import 'package:miva_fid/core/utils/loading_overlay_service.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
 import 'package:miva_fid/features/client/widgets/shared/user_avatar.dart';
+import 'package:miva_fid/features/merchant/providers/merchant_auth_provider.dart';
+import 'package:miva_fid/l10n/gen/app_localizations.dart';
 
-/// Paramètres — apparence (clair/sombre/système), langue, notifications
-/// par établissement et déconnexion. Regroupe ce qui encombrait
-/// auparavant l'écran Profil pour lui laisser une lecture directe.
+/// Paramètres — apparence, langue, notifications, compte, assistance & déconnexion.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  void _confirmSignOut(
-      BuildContext context, WidgetRef ref, AppLocalizations t) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.settingsSignOutConfirmTitle,
-            style: AppTextStyles.titleMedium().copyWith(fontSize: 18)),
-        content: Text(
-          t.settingsSignOutConfirmMessage,
-          style:
-              AppTextStyles.bodyMedium(color: AppColors.inkMuted(opacity: 0.7)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(t.commonCancel,
-                style: AppTextStyles.bodyMedium(
-                    color: AppColors.inkMuted(opacity: 0.6))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(minimumSize: const Size(0, 40)),
-            onPressed: () async {
-              Navigator.pop(context);
-              LoadingOverlayService.show(message: t.authLoadingSignOut);
-              await ref.read(authProvider.notifier).signOut();
-              await LoadingOverlayService.hide();
-              if (context.mounted) context.go('/client/auth');
-            },
-            child: Text(t.settingsSignOut),
-          ),
-        ],
-      ),
+  Future<void> _confirmSignOut(
+      BuildContext context, WidgetRef ref, AppLocalizations t) async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: t.settingsSignOutConfirmTitle,
+      message: t.settingsSignOutConfirmMessage,
+      confirmLabel: t.settingsSignOut,
+      cancelLabel: t.commonCancel,
+      destructive: true,
+      icon: LucideIcons.logOut,
     );
+
+    if (confirmed && context.mounted) {
+      LoadingOverlayService.show(message: t.authLoadingSignOut);
+      await ref.read(authProvider.notifier).signOut();
+      await LoadingOverlayService.hide();
+      if (context.mounted) context.go('/client/auth');
+    }
   }
 
   @override
@@ -61,9 +45,20 @@ class SettingsScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(appBrightnessProvider);
     final locale = ref.watch(localeProvider);
-    final cards = ref.watch(walletProvider);
     final auth = ref.watch(authProvider);
     final user = auth.user;
+    final merchantAuth = ref.watch(merchantAuthProvider);
+    final isMerchantAuthenticated = merchantAuth.isAuthenticated;
+
+    final themeModeLabel = switch (themeMode) {
+      ThemeMode.light => t.settingsThemeLight,
+      ThemeMode.dark => t.settingsThemeDark,
+      ThemeMode.system => t.settingsThemeSystem,
+    };
+
+    final languageLabel = locale.languageCode == 'fr'
+        ? t.settingsLanguageFrench
+        : t.settingsLanguageEnglish;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -74,173 +69,238 @@ class SettingsScreen extends ConsumerWidget {
             AppSectionHeader(
               title: t.settingsTitle,
               showDivider: false,
+              actions: const [
+                HeaderModeSwitcher(isMerchant: false),
+              ],
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 90),
                 children: [
+                  // ── Carte Profil Utilisateur ──────────────────────────
                   if (user != null) ...[
-                    AppCard(
+                    GestureDetector(
                       onTap: () => context.push('/client/profile/edit'),
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          UserAvatar(
-                            fullName: user.fullName,
-                            photoUrl: user.photoUrl,
-                            localImage: auth.localAvatar,
-                            radius: 28,
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  user.fullName.isNotEmpty
-                                      ? user.fullName
-                                      : t.profileTitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTextStyles.titleMedium()
-                                      .copyWith(fontSize: 17, fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  user.maskedPhoneNumber,
-                                  style: AppTextStyles.bodySmall(
-                                    color: AppColors.inkMuted(opacity: 0.65),
-                                  ),
-                                ),
-                              ],
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceCard,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            UserAvatar(
+                              fullName: user.fullName,
+                              photoUrl: user.photoUrl,
+                              localImage: auth.localAvatar,
+                              radius: 28,
                             ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user.fullName.isNotEmpty
+                                        ? user.fullName
+                                        : t.profileTitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.titleMedium().copyWith(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    user.maskedPhoneNumber.isNotEmpty
+                                        ? user.maskedPhoneNumber
+                                        : ((user.email?.isNotEmpty ?? false)
+                                            ? user.email!
+                                            : 'Modifier mon profil'),
+                                    style: AppTextStyles.bodySmall(
+                                      color: AppColors.inkMuted(opacity: 0.65),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              LucideIcons.chevronRight,
+                              size: 20,
+                              color: AppColors.inkMuted(opacity: 0.35),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // ── Bouton Configuration Espace Commerçant (Affiché UNIQUEMENT si non configuré) ──
+                  if (!isMerchantAuthenticated) ...[
+                    GestureDetector(
+                      onTap: () => context.push('/onboarding/merchant'),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceCard,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
+                            width: 1.2,
                           ),
-                          Icon(
-                            LucideIcons.chevronRight,
-                            size: 20,
-                            color: AppColors.inkMuted(opacity: 0.35),
-                          ),
-                        ],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                LucideIcons.store,
+                                size: 20,
+                                color: Color(0xFF7C3AED),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Espace Commerçant',
+                                    style: AppTextStyles.bodyMedium().copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Gérer un commerce et fidéliser vos clients',
+                                    style: AppTextStyles.caption().copyWith(
+                                      color: AppColors.inkMuted(opacity: 0.65),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              LucideIcons.chevronRight,
+                              size: 18,
+                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.7),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
                   ],
-                  SectionEyebrow(t.settingsAccount),
+
+                  // ── SECTION : MON COMPTE ──────────────────────────────
+                  _SectionHeader(title: t.settingsAccount.toUpperCase()),
                   const SizedBox(height: 8),
-                  AppCard(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        _ActionRow(
-                          icon: LucideIcons.userRoundPen,
-                          label: t.profileEditProfile,
-                          subtitle: t.editProfileTitle,
-                          onTap: () => context.push('/client/profile/edit'),
-                        ),
-                        Divider(height: 1, color: AppColors.border),
-                        _ActionRow(
-                          icon: LucideIcons.shieldCheck,
-                          label: t.editProfileSecurity,
-                          subtitle: t.changePasswordTitle,
-                          onTap: () => context.push('/client/profile/verify-password'),
-                        ),
-                      ],
-                    ),
+                  _GroupedContainer(
+                    children: [
+                      _SettingNavigationRow(
+                        icon: LucideIcons.userRoundPen,
+                        iconColor: const Color(0xFF3B82F6),
+                        title: t.profileEditProfile,
+                        onTap: () => context.push('/client/profile/edit'),
+                      ),
+                      _SettingNavigationRow(
+                        icon: LucideIcons.shieldCheck,
+                        iconColor: const Color(0xFF10B981),
+                        title: t.editProfileSecurity,
+                        onTap: () =>
+                            context.push('/client/profile/verify-password'),
+                        isLast: true,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  SectionEyebrow(t.settingsAppearance),
+
+                  const SizedBox(height: 24),
+
+                  // ── SECTION : PRÉFÉRENCES ─────────────────────────────
+                  _SectionHeader(title: t.settingsPreferences.toUpperCase()),
                   const SizedBox(height: 8),
-                  AppCard(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        _OptionRow(
-                          icon: LucideIcons.sun,
-                          label: t.settingsThemeLight,
-                          selected: themeMode == ThemeMode.light,
-                          onTap: () => ref
-                              .read(themeModeProvider.notifier)
-                              .setThemeMode(ThemeMode.light),
-                        ),
-                        Divider(height: 1, color: AppColors.border),
-                        _OptionRow(
-                          icon: LucideIcons.moon,
-                          label: t.settingsThemeDark,
-                          selected: themeMode == ThemeMode.dark,
-                          onTap: () => ref
-                              .read(themeModeProvider.notifier)
-                              .setThemeMode(ThemeMode.dark),
-                        ),
-                        Divider(height: 1, color: AppColors.border),
-                        _OptionRow(
-                          icon: LucideIcons.monitor,
-                          label: t.settingsThemeSystem,
-                          selected: themeMode == ThemeMode.system,
-                          onTap: () => ref
-                              .read(themeModeProvider.notifier)
-                              .setThemeMode(ThemeMode.system),
-                        ),
-                      ],
-                    ),
+                  _GroupedContainer(
+                    children: [
+                      _SettingNavigationRow(
+                        icon: LucideIcons.bell,
+                        iconColor: const Color(0xFFF59E0B),
+                        title: t.settingsNotifications,
+                        onTap: () =>
+                            context.push('/client/settings/notifications'),
+                      ),
+                      _SettingNavigationRow(
+                        icon: LucideIcons.languages,
+                        iconColor: const Color(0xFF6366F1),
+                        title: t.settingsLanguage,
+                        valueBadge: languageLabel,
+                        onTap: () => context.push('/client/settings/language'),
+                      ),
+                      _SettingNavigationRow(
+                        icon: LucideIcons.palette,
+                        iconColor: const Color(0xFFEC4899),
+                        title: t.settingsAppearance,
+                        valueBadge: themeModeLabel,
+                        onTap: () =>
+                            context.push('/client/settings/appearance'),
+                        isLast: true,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  SectionEyebrow(t.settingsLanguage),
+
+                  const SizedBox(height: 24),
+
+                  // ── SECTION : ASSISTANCE & INFORMATIONS ───────────────
+                  _SectionHeader(title: t.settingsSupport.toUpperCase()),
                   const SizedBox(height: 8),
-                  AppCard(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        _OptionRow(
-                          icon: LucideIcons.languages,
-                          label: t.settingsLanguageFrench,
-                          selected: locale.languageCode == 'fr',
-                          onTap: () => ref
-                              .read(localeProvider.notifier)
-                              .setLocale(const Locale('fr')),
-                        ),
-                        Divider(height: 1, color: AppColors.border),
-                        _OptionRow(
-                          icon: LucideIcons.languages,
-                          label: t.settingsLanguageEnglish,
-                          selected: locale.languageCode == 'en',
-                          onTap: () => ref
-                              .read(localeProvider.notifier)
-                              .setLocale(const Locale('en')),
-                        ),
-                      ],
-                    ),
+                  _GroupedContainer(
+                    children: [
+                      _SettingNavigationRow(
+                        icon: LucideIcons.helpCircle,
+                        iconColor: const Color(0xFF8B5CF6),
+                        title: 'Centre d\'aide',
+                        onTap: () => context.push('/client/settings/help'),
+                      ),
+                      _SettingNavigationRow(
+                        icon: LucideIcons.headset,
+                        iconColor: const Color(0xFF06B6D4),
+                        title: t.settingsContactUs,
+                        onTap: () => context.push('/client/support/contact'),
+                      ),
+                      _SettingNavigationRow(
+                        icon: LucideIcons.bug,
+                        iconColor: const Color(0xFFEF4444),
+                        title: t.settingsReportBug,
+                        onTap: () => context.push('/client/support/report-bug'),
+                      ),
+                      _SettingNavigationRow(
+                        icon: LucideIcons.info,
+                        iconColor: const Color(0xFF64748B),
+                        title: 'À propos de MivaFid',
+                        onTap: () => context.push('/client/settings/about'),
+                        isLast: true,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  const SectionEyebrow('LOCALISATION & PROXIMITÉ'),
-                  const SizedBox(height: 8),
-                  const AppCard(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: _ProximityNotifSection(),
-                  ),
-                  const SizedBox(height: 20),
-                  SectionEyebrow(t.settingsNotifications),
-                  const SizedBox(height: 8),
-                  AppCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < cards.length; i++) ...[
-                          if (i > 0) Divider(height: 1, color: AppColors.border),
-                          _NotifToggleRow(
-                            cardId: cards[i].id,
-                            name: cards[i].restaurantName,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 28),
+
+                  const SizedBox(height: 32),
+
+                  // ── BOUTON DÉCONNEXION ────────────────────────────────
                   AppButton(
                     label: t.settingsSignOut,
                     variant: AppButtonVariant.destructive,
                     icon: LucideIcons.logOut,
                     fullWidth: true,
-                    height: 48,
+                    height: 50,
                     onTap: () => _confirmSignOut(context, ref, t),
                   ),
                 ],
@@ -253,349 +313,129 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _OptionRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _OptionRow({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return AppTapScale(
-      onTap: onTap,
-      scaleDown: 0.99,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(label, style: AppTextStyles.bodyMedium()),
-            ),
-            if (selected)
-              const Icon(LucideIcons.check, size: 18, color: AppColors.primary),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ActionRow({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppTapScale(
-      onTap: onTap,
-      scaleDown: 0.99,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 19, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: AppTextStyles.bodyMedium()),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: AppTextStyles.bodySmall(
-                      color: AppColors.inkMuted(opacity: 0.55),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              LucideIcons.chevronRight,
-              size: 18,
-              color: AppColors.inkMuted(opacity: 0.35),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NotifToggleRow extends ConsumerWidget {
-  final String cardId;
-  final String name;
-  const _NotifToggleRow({required this.cardId, required this.name});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final enabled =
-        ref.watch(notificationPrefsProvider.select((p) => p[cardId] ?? true));
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(name, style: AppTextStyles.bodyMedium()),
-          ),
-          _NotificationToggle(
-            enabled: enabled,
-            onChanged: (value) => ref
-                .read(notificationPrefsProvider.notifier)
-                .toggle(cardId, value),
-          ),
-        ],
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: AppTextStyles.label().copyWith(
+          color: AppColors.inkMuted(opacity: 0.55),
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
       ),
     );
   }
 }
 
-class _NotificationToggle extends StatelessWidget {
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
+class _GroupedContainer extends StatelessWidget {
+  final List<Widget> children;
+  const _GroupedContainer({required this.children});
 
-  const _NotificationToggle({
-    required this.enabled,
-    required this.onChanged,
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          children: children,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingNavigationRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String? valueBadge;
+  final VoidCallback onTap;
+  final bool isLast;
+
+  const _SettingNavigationRow({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    this.valueBadge,
+    required this.onTap,
+    this.isLast = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      toggled: enabled,
-      label: 'Notifications',
-      onTap: () => onChanged(!enabled),
-      child: GestureDetector(
-        onTap: () => onChanged(!enabled),
-        child: SizedBox(
-          width: 64,
-          height: 44,
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              width: 50,
-              height: 28,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: enabled ? AppColors.primaryTint : AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: enabled ? AppColors.primary : AppColors.border,
-                ),
-              ),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                alignment: enabled
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: enabled ? AppColors.primary : AppColors.surfaceCard,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.ink.withValues(alpha: 0.12),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    enabled ? LucideIcons.bell : LucideIcons.bellOff,
-                    size: 13,
-                    color: enabled ? Colors.white : AppColors.inkMuted(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProximityNotifSection extends ConsumerWidget {
-  const _ProximityNotifSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final proximityState = ref.watch(clientProximityProvider);
-    final enabled = proximityState.enabled;
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: enabled ? AppColors.primaryTint : AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                LucideIcons.radar,
-                size: 19,
-                color: enabled ? AppColors.primary : AppColors.inkMuted(),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              child: Row(
                 children: [
-                  Text(
-                    'Alertes de proximité',
-                    style: AppTextStyles.bodyMedium().copyWith(
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: iconColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 18,
+                      color: iconColor,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Recevoir des offres lorsque vous passez près de vos commerces.',
-                    style: AppTextStyles.bodySmall(
-                      color: AppColors.inkMuted(opacity: 0.65),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTextStyles.bodyMedium().copyWith(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14.5,
+                      ),
                     ),
+                  ),
+                  if (valueBadge != null) ...[
+                    Text(
+                      valueBadge!,
+                      style: AppTextStyles.caption().copyWith(
+                        color: AppColors.inkMuted(opacity: 0.65),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Icon(
+                    LucideIcons.chevronRight,
+                    size: 18,
+                    color: AppColors.inkMuted(opacity: 0.35),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            _NotificationToggle(
-              enabled: enabled,
-              onChanged: (value) async {
-                await ref
-                    .read(clientProximityProvider.notifier)
-                    .toggle(context, value);
-              },
-            ),
-          ],
+          ),
         ),
-
-        // Bannière GPS désactivé
-        if (proximityState.needsLocationService) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE4E6),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFDA4AF)),
-            ),
-            child: Row(
-              children: [
-                const Icon(LucideIcons.mapPinOff,
-                    size: 16, color: Color(0xFFDC2626)),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'La localisation de votre téléphone est désactivée. Activez le GPS pour détecter les commerces proches.',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFF991B1B),
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => ref
-                      .read(clientProximityProvider.notifier)
-                      .openLocationSettings(),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, 30),
-                  ),
-                  child: const Text('Activer GPS',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFDC2626))),
-                ),
-              ],
-            ),
+        if (!isLast)
+          Divider(
+            height: 1,
+            thickness: 1,
+            indent: 64,
+            endIndent: 16,
+            color: AppColors.border,
           ),
-        ],
-
-        // Bannière permission refusée
-        if (proximityState.needsPermission) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFDE68A)),
-            ),
-            child: Row(
-              children: [
-                const Icon(LucideIcons.info, size: 16, color: Color(0xFFD97706)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    proximityState.isPermissionDeniedForever
-                        ? 'Autorisation de localisation refusée définitivement. Ouvrez les paramètres pour l\'accorder manuellement.'
-                        : 'Autorisation de localisation requise pour détecter les commerces proches.',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFF92400E),
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (proximityState.isPermissionDeniedForever) {
-                      ref
-                          .read(clientProximityProvider.notifier)
-                          .openAppSettings();
-                    } else {
-                      ref
-                          .read(clientProximityProvider.notifier)
-                          .toggle(context, true);
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, 30),
-                  ),
-                  child: Text(
-                      proximityState.isPermissionDeniedForever
-                          ? 'Paramètres'
-                          : 'Autoriser',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFB45309))),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }

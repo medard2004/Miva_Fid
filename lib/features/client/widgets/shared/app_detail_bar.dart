@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import '../components/app_tap_scale.dart';
 import '../components/section_eyebrow.dart';
@@ -36,7 +35,11 @@ class AppDetailBar extends StatelessWidget implements PreferredSizeWidget {
       leading: Center(
         child: AppTapScale(
           onTap: onBack ?? () => context.pop(),
-          child: Icon(LucideIcons.arrowLeft, color: AppColors.ink, size: 20),
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.ink,
+            size: 20,
+          ),
         ),
       ),
       title: SectionEyebrow(title),

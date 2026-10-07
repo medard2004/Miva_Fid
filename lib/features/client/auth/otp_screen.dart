@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
@@ -127,7 +126,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> with FormErrorHandler {
                 padding: EdgeInsets.zero,
                 alignment: Alignment.centerLeft,
                 icon: Icon(
-                  LucideIcons.arrowLeft,
+                  Icons.arrow_back_ios_new_rounded,
                   size: 20,
                   color: AppColors.ink,
                 ),

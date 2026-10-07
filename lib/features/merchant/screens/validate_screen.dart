@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/header_mode_switcher.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../providers/merchant_auth_provider.dart';
@@ -45,12 +46,6 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   String get _mechanic =>
       ref.read(merchantAuthProvider).restaurant?.loyaltyType ?? 'stamps';
-
-  String get _validationTitle => switch (_mechanic) {
-        'points' || 'spend' => 'Valider un achat',
-        'cashback' => 'Valider un cashback',
-        _ => 'Valider un tampon',
-      };
 
   int get _goal {
     final config =
@@ -451,30 +446,8 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Row(
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      LucideIcons.qrCode,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _validationTitle,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
+                  const HeaderModeSwitcher(isMerchant: true),
+                  const Spacer(),
                   if (!isAdmin) ...[
                     PopupMenuButton<String>(
                       icon: Container(

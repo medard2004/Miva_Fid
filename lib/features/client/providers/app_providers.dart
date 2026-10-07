@@ -58,10 +58,14 @@ class RewardsNotifier extends StateNotifier<List<Reward>> {
   }
 
   Future<void> _loadFromCache() async {
-    final cached =
-        await _ref.read(loyaltyRewardRepositoryProvider).listFromCache();
-    if (cached.isNotEmpty && state.isEmpty) {
-      state = cached;
+    try {
+      final cached =
+          await _ref.read(loyaltyRewardRepositoryProvider).listFromCache();
+      if (cached.isNotEmpty && state.isEmpty) {
+        state = cached;
+      }
+    } catch (e) {
+      debugPrint('[app_providers] Erreur load rewards from cache: $e');
     }
   }
 
@@ -204,7 +208,11 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
   }
 
   Future<void> load() async {
-    state = await _ref.read(notificationRepositoryProvider).list();
+    try {
+      state = await _ref.read(notificationRepositoryProvider).list();
+    } catch (e) {
+      debugPrint('[app_providers] Erreur load notifications: $e');
+    }
   }
 
   int get unreadCount => state.where((n) => !n.isRead).length;
@@ -237,8 +245,14 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
   }
 
   Future<void> remove(String id) async {
-    await _ref.read(notificationRepositoryProvider).delete(id);
+    final previousState = state;
     state = state.where((n) => n.id != id).toList();
+    try {
+      await _ref.read(notificationRepositoryProvider).delete(id);
+    } catch (e) {
+      debugPrint('[app_providers] Erreur remove notification: $e');
+      state = previousState;
+    }
   }
 
   @override

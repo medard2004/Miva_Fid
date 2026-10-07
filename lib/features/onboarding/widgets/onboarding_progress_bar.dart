@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -71,8 +70,8 @@ class OnboardingProgressBar extends ConsumerWidget {
                     }
                   },
                   icon: Icon(
-                    LucideIcons.arrowLeft,
-                    size: 22,
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 20,
                     color: AppColors.textPrimary,
                   ),
                   splashRadius: 20,

@@ -224,6 +224,138 @@ abstract class AppLocalizations {
   /// **'Compte'**
   String get settingsAccount;
 
+  /// No description provided for @settingsSupport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Assistance & Support'**
+  String get settingsSupport;
+
+  /// No description provided for @settingsContactUs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nous contacter'**
+  String get settingsContactUs;
+
+  /// No description provided for @settingsReportBug.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signaler un bug'**
+  String get settingsReportBug;
+
+  /// No description provided for @contactTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nous contacter'**
+  String get contactTitle;
+
+  /// No description provided for @contactSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une question ou besoin d\'aide ? Notre équipe est à votre disposition.'**
+  String get contactSubtitle;
+
+  /// No description provided for @contactWhatsApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Support WhatsApp'**
+  String get contactWhatsApp;
+
+  /// No description provided for @contactWhatsAppSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Discutez avec nous en direct'**
+  String get contactWhatsAppSubtitle;
+
+  /// No description provided for @contactEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Support par Email'**
+  String get contactEmail;
+
+  /// No description provided for @contactEmailSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'support@miva-fid.com'**
+  String get contactEmailSubtitle;
+
+  /// No description provided for @contactPhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appel téléphonique'**
+  String get contactPhone;
+
+  /// No description provided for @contactPhoneSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'+228 90 12 34 56'**
+  String get contactPhoneSubtitle;
+
+  /// No description provided for @contactHours.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horaires d\'ouverture'**
+  String get contactHours;
+
+  /// No description provided for @contactHoursSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Du lundi au samedi, de 8h00 à 20h00'**
+  String get contactHoursSubtitle;
+
+  /// No description provided for @reportBugTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signaler un bug'**
+  String get reportBugTitle;
+
+  /// No description provided for @reportBugSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aidez-nous à améliorer Miva-Fid en nous décrivant le problème rencontré.'**
+  String get reportBugSubtitle;
+
+  /// No description provided for @reportBugCategory.
+  ///
+  /// In fr, this message translates to:
+  /// **'Type de problème'**
+  String get reportBugCategory;
+
+  /// No description provided for @reportBugSubject.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sujet'**
+  String get reportBugSubject;
+
+  /// No description provided for @reportBugSubjectHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ex : Problème lors du scan de QR code'**
+  String get reportBugSubjectHint;
+
+  /// No description provided for @reportBugDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Description détaillée'**
+  String get reportBugDescription;
+
+  /// No description provided for @reportBugDescriptionHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Décrivez ce qui s\'est passé, les étapes pour reproduire le bug...'**
+  String get reportBugDescriptionHint;
+
+  /// No description provided for @reportBugSubmit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le signalement'**
+  String get reportBugSubmit;
+
+  /// No description provided for @reportBugSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalement envoyé avec succès ! Merci de votre aide.'**
+  String get reportBugSuccess;
+
   /// No description provided for @settingsNotifications.
   ///
   /// In fr, this message translates to:

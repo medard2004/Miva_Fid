@@ -9,6 +9,7 @@ import '../components/section_eyebrow.dart';
 /// l'autre ; la structure (fond, marges, typographie, bordure de pied)
 /// reste strictement identique.
 class AppSectionHeader extends StatelessWidget {
+  final Widget? leading;
   final String? eyebrow;
   final String title;
   final List<Widget> actions;
@@ -16,6 +17,7 @@ class AppSectionHeader extends StatelessWidget {
 
   const AppSectionHeader({
     super.key,
+    this.leading,
     this.eyebrow,
     required this.title,
     this.actions = const [],
@@ -31,27 +33,35 @@ class AppSectionHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (eyebrow != null) ...[
-                  SectionEyebrow(eyebrow!),
-                  const SizedBox(height: 2),
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: 12),
+          ],
+          if (eyebrow != null || title.isNotEmpty)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (eyebrow != null) ...[
+                    SectionEyebrow(eyebrow!),
+                    const SizedBox(height: 2),
+                  ],
+                  if (title.isNotEmpty)
+                    Text(
+                      title,
+                      style: AppTextStyles.displayMedium().copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
-                Text(
-                  title,
-                  style: AppTextStyles.displayMedium().copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
+              ),
+            )
+          else
+            const Spacer(),
           if (actions.isNotEmpty)
             Row(
               mainAxisSize: MainAxisSize.min,

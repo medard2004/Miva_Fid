@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_radius.dart';
 import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
+import 'package:miva_fid/features/client/providers/settings_provider.dart';
 
 /// Conteneur de surface unique — remplace `BrassBorderedContainer` et
 /// les ~10 conteneurs "carte" dupliqués à la main à travers l'app.
-/// Fond blanc, bordure hairline neutre, ombre optionnelle à 1 niveau.
-class AppCard extends StatelessWidget {
+/// Fond blanc/sombre adaptatif, bordure hairline neutre, ombre optionnelle à 1 niveau.
+class AppCard extends ConsumerWidget {
   final Widget child;
   final Color? backgroundColor;
   final double radius;
@@ -27,7 +29,9 @@ class AppCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appBrightnessProvider);
+
     final content = Container(
       padding: padding,
       decoration: BoxDecoration(
@@ -52,3 +56,4 @@ class AppCard extends StatelessWidget {
     );
   }
 }
+

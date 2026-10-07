@@ -137,15 +137,14 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
               actions: [NotificationBellButton(unreadCount: unreadNotifs)],
             ),
 
-            // ── Sélecteur d'onglets (Segmented Control) ──────────────────────
+            // ── Sélecteur d'onglets épuré et ouvert ───────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border, width: 0.8),
+                  color: AppColors.surfaceMuted.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
@@ -185,7 +184,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 100),
                   child: AnimatedSwitcher(
                     duration: AppMotion.pageDuration,
                     switchInCurve: AppMotion.pageCurve,
@@ -220,15 +219,22 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
     return Column(
       key: const ValueKey('unlocked_list'),
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: availableRewards.map((reward) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _ActiveRewardCard(
-            reward: reward,
-            onUse: () => showRewardDetailSheet(context, ref, reward),
+      children: [
+        for (int i = 0; i < availableRewards.length; i++) ...[
+          _ActiveRewardCard(
+            reward: availableRewards[i],
+            onUse: () => showRewardDetailSheet(context, ref, availableRewards[i]),
           ),
-        );
-      }).toList(),
+          if (i < availableRewards.length - 1)
+            Divider(
+              height: 20,
+              thickness: 1,
+              indent: 56,
+              endIndent: 8,
+              color: AppColors.border,
+            ),
+        ],
+      ],
     );
   }
 
@@ -254,12 +260,19 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
     return Column(
       key: const ValueKey('locked_list'),
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: lockedTiers.map((item) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _LockedRewardCard(item: item),
-        );
-      }).toList(),
+      children: [
+        for (int i = 0; i < lockedTiers.length; i++) ...[
+          _LockedRewardCard(item: lockedTiers[i]),
+          if (i < lockedTiers.length - 1)
+            Divider(
+              height: 24,
+              thickness: 1,
+              indent: 56,
+              endIndent: 8,
+              color: AppColors.border,
+            ),
+        ],
+      ],
     );
   }
 
@@ -275,17 +288,24 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
         ),
       );
     }
-    return AppCard(
-      key: const ValueKey('history_card'),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        children: usedRewards
-            .map((reward) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: _HistoryRewardRow(reward: reward),
-                ))
-            .toList(),
-      ),
+    return Column(
+      key: const ValueKey('history_open_list'),
+      children: [
+        for (int i = 0; i < usedRewards.length; i++) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            child: _HistoryRewardRow(reward: usedRewards[i]),
+          ),
+          if (i < usedRewards.length - 1)
+            Divider(
+              height: 1,
+              thickness: 1,
+              indent: 44,
+              endIndent: 8,
+              color: AppColors.border,
+            ),
+        ],
+      ],
     );
   }
 }
@@ -378,7 +398,7 @@ class _SegmentTab extends StatelessWidget {
   }
 }
 
-/// Carte de récompense disponible / prête à l'utilisation.
+/// Carte/Ligne de récompense disponible / prête à l'utilisation (design épuré sans boîte).
 class _ActiveRewardCard extends StatelessWidget {
   final Reward reward;
   final VoidCallback onUse;
@@ -389,77 +409,91 @@ class _ActiveRewardCard extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     return AppTapScale(
       onTap: onUse,
-      scaleDown: 0.99,
-      child: AppCard(
-        elevated: true,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      scaleDown: 0.98,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      reward.restaurantName.toUpperCase(),
-                      style: AppTextStyles.eyebrow(color: AppColors.primary),
-                    ),
-                  ],
-                ),
-                if (reward.expiresAt != null)
-                  StatusBadge(
-                    label: reward.daysRemainingText(t.commonCountdownPrefix),
-                    tone: reward.isExpiringSoon
-                        ? StatusTone.warning
-                        : StatusTone.neutral,
-                  ),
-              ],
+            // Icône douce
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: reward.isBirthday
+                  ? Text(reward.isSurprise ? '🎁' : '🎂',
+                      style: const TextStyle(fontSize: 20))
+                  : const Icon(LucideIcons.gift, color: AppColors.primary, size: 20),
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                if (reward.isBirthday) ...[
-                  Text(reward.isSurprise ? '🎁' : '🎂',
-                      style: const TextStyle(fontSize: 20)),
-                  const SizedBox(width: 8),
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(LucideIcons.gift, color: AppColors.primary, size: 18),
+            const SizedBox(width: 14),
+
+            // Textes et détails
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          reward.restaurantName.toUpperCase(),
+                          style: AppTextStyles.eyebrow(color: AppColors.primary).copyWith(fontSize: 10),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (reward.expiresAt != null) ...[
+                        const SizedBox(width: 8),
+                        StatusBadge(
+                          label: reward.daysRemainingText(t.commonCountdownPrefix),
+                          tone: reward.isExpiringSoon
+                              ? StatusTone.warning
+                              : StatusTone.neutral,
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                ],
-                Expanded(
-                  child: Text(
+                  const SizedBox(height: 3),
+                  Text(
                     reward.title,
                     style: AppTextStyles.titleMedium().copyWith(
-                      fontSize: 16,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            // Bouton d'action QR
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.qrCode, color: Colors.white, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    t.rewardsUseButton,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            AppButton(
-              label: t.rewardsUseButton,
-              onTap: onUse,
-              height: 44,
-              icon: LucideIcons.qrCode,
+                ],
+              ),
             ),
           ],
         ),
@@ -489,7 +523,7 @@ class _UpcomingRewardItem {
   });
 }
 
-/// Carte de récompense verrouillée / en cours de progression.
+/// Ligne de récompense verrouillée / en cours de progression (sans boîte).
 class _LockedRewardCard extends StatelessWidget {
   final _UpcomingRewardItem item;
   const _LockedRewardCard({required this.item});
@@ -502,107 +536,95 @@ class _LockedRewardCard extends StatelessWidget {
 
     return AppTapScale(
       onTap: () => context.push('/client/card/${item.cardId}'),
-      scaleDown: 0.99,
-      child: AppCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      scaleDown: 0.98,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  item.restaurantName.toUpperCase(),
-                  style: AppTextStyles.eyebrow(color: AppColors.inkMuted(opacity: 0.7)),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border, width: 0.8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(LucideIcons.lock, size: 12, color: AppColors.inkMuted(opacity: 0.6)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'À débloquer',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.inkMuted(opacity: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: item.liningColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(LucideIcons.gift, size: 18, color: item.liningColor),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: AppTextStyles.titleMedium().copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        remaining > 0
-                            ? 'Plus que $remaining $unitLabel pour l\'obtenir'
-                            : 'Objectif atteint !',
-                        style: AppTextStyles.bodySmall(
-                          color: AppColors.inkMuted(opacity: 0.65),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            // Barre de progression
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: ratio,
-                minHeight: 7,
-                backgroundColor: AppColors.surfaceMuted,
-                valueColor: AlwaysStoppedAnimation<Color>(item.liningColor),
+            // Icône douce
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: item.liningColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
               ),
+              child: Icon(LucideIcons.gift, size: 20, color: item.liningColor),
             ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${item.currentProgress} / ${item.goal} $unitLabel',
-                  style: AppTextStyles.monoSmall(color: AppColors.inkMuted(opacity: 0.6)),
-                ),
-                Text(
-                  '${(ratio * 100).toInt()}%',
-                  style: AppTextStyles.monoSmall(color: AppColors.inkMuted(opacity: 0.6)),
-                ),
-              ],
+            const SizedBox(width: 14),
+
+            // Progression et détails
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          item.restaurantName.toUpperCase(),
+                          style: AppTextStyles.eyebrow(color: AppColors.inkMuted(opacity: 0.7)).copyWith(fontSize: 10),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.lock, size: 10, color: AppColors.inkMuted(opacity: 0.5)),
+                          const SizedBox(width: 4),
+                          Text(
+                            remaining > 0 ? 'En cours' : 'Prêt',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.inkMuted(opacity: 0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.title,
+                    style: AppTextStyles.titleMedium().copyWith(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: ratio,
+                      minHeight: 5,
+                      backgroundColor: AppColors.surfaceMuted,
+                      valueColor: AlwaysStoppedAnimation<Color>(item.liningColor),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${item.currentProgress} / ${item.goal} $unitLabel',
+                        style: AppTextStyles.monoSmall(color: AppColors.inkMuted(opacity: 0.6)).copyWith(fontSize: 10.5),
+                      ),
+                      Text(
+                        '${(ratio * 100).toInt()}%',
+                        style: AppTextStyles.monoSmall(color: AppColors.inkMuted(opacity: 0.6)).copyWith(fontSize: 10.5),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),

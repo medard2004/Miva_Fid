@@ -63,26 +63,19 @@ class CardUnlockedRewardsScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header Commerce
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceCard,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
+            // Header Commerce (épuré)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(LucideIcons.gift, color: AppColors.primary, size: 22),
+                    child: const Icon(LucideIcons.gift, color: AppColors.primary, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -91,7 +84,7 @@ class CardUnlockedRewardsScreen extends ConsumerWidget {
                       children: [
                         Text(
                           card.restaurantName,
-                          style: AppTextStyles.titleMedium().copyWith(fontSize: 16),
+                          style: AppTextStyles.titleMedium().copyWith(fontSize: 16, fontWeight: FontWeight.w700),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -106,8 +99,10 @@ class CardUnlockedRewardsScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 8),
+            Divider(height: 1, thickness: 1, color: AppColors.border),
 
-            // Liste des Récompenses
+            // Liste des Récompenses (ouverte avec séparateurs nets)
             Expanded(
               child: rewards.isEmpty
                   ? Center(
@@ -142,7 +137,11 @@ class CardUnlockedRewardsScreen extends ConsumerWidget {
                       child: ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         itemCount: rewards.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        separatorBuilder: (_, __) => Divider(
+                          height: 20,
+                          thickness: 1,
+                          color: AppColors.border,
+                        ),
                         itemBuilder: (context, index) {
                           final reward = rewards[index];
                           return _UnlockedRewardCard(
@@ -187,58 +186,81 @@ class _UnlockedRewardCard extends StatelessWidget {
     final statusIcon =
         isReady ? LucideIcons.circleCheckBig : (reward.isExpired ? LucideIcons.circleX : null);
 
-    return AppCard(
+    return AppTapScale(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
-      elevated: isReady,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              StatusBadge(
-                label: statusLabel,
-                tone: statusTone,
-                icon: statusIcon,
-              ),
-              if (reward.expiresAt != null && isReady)
-                Text(
-                  'Expire le ${DateFormat('dd/MM/yyyy', dateFormatLocale).format(reward.expiresAt!)}',
-                  style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
+      scaleDown: 0.98,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                StatusBadge(
+                  label: statusLabel,
+                  tone: statusTone,
+                  icon: statusIcon,
                 ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            reward.title,
-            style: AppTextStyles.titleMedium().copyWith(fontSize: 16),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (reward.unlockedAt != null)
-                Text(
-                  'Débloquée le ${DateFormat('dd MMMM yyyy', dateFormatLocale).format(reward.unlockedAt!)}',
-                  style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.6)),
-                )
-              else
-                const SizedBox.shrink(),
-              if (isReady)
-                Row(
-                  children: [
-                    Text(
-                      'Afficher QR',
-                      style: AppTextStyles.label(color: AppColors.primary),
+                if (reward.expiresAt != null && isReady)
+                  Flexible(
+                    child: Text(
+                      'Expire le ${DateFormat('dd/MM/yyyy', dateFormatLocale).format(reward.expiresAt!)}',
+                      style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.7)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(LucideIcons.qrCode, size: 16, color: AppColors.primary),
-                  ],
-                ),
-            ],
-          ),
-        ],
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              reward.title,
+              style: AppTextStyles.titleMedium().copyWith(fontSize: 15.5, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (reward.unlockedAt != null)
+                  Expanded(
+                    child: Text(
+                      'Débloquée le ${DateFormat('dd MMM yyyy', dateFormatLocale).format(reward.unlockedAt!)}',
+                      style: AppTextStyles.bodySmall(color: AppColors.inkMuted(opacity: 0.6)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                else
+                  const Spacer(),
+                const SizedBox(width: 8),
+                if (isReady)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(LucideIcons.qrCode, size: 14, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'Afficher QR',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

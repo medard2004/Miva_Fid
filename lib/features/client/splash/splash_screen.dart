@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,61 +17,124 @@ import 'package:miva_fid/l10n/gen/app_localizations.dart';
 ///
 /// Sans cette étape, l'app afficherait brièvement l'écran de connexion à un
 /// utilisateur déjà authentifié, le temps que `GET /auth/me` réponde.
-class SplashScreen extends ConsumerWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _hasNavigated = false;
+  Timer? _fallbackTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Filet de sécurité absolu : si pour une raison quelconque (réseau, timeout)
+    // l'amorçage tarde, on ne laisse jamais l'utilisateur bloqué sur le splash.
+    _fallbackTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted && !_hasNavigated) {
+        _performNavigation(ref.read(appStartupProvider).valueOrNull);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _fallbackTimer?.cancel();
+    super.dispose();
+  }
+
+  void _performNavigation(AppStartupState? state) {
+    if (_hasNavigated || !mounted) return;
+    _hasNavigated = true;
+    _fallbackTimer?.cancel();
+
+    final lastRole = state?.lastRole;
+    final isClientAuth = ref.read(authProvider).isAuthenticated;
+    final isMerchantAuth = ref.read(merchantAuthProvider).isAuthenticated;
+
+    // 1. Si le dernier mode actif était 'merchant' et que le compte marchand est connecté
+    if (lastRole == 'merchant' && isMerchantAuth) {
+      final restaurant = ref.read(merchantAuthProvider).restaurant;
+      ref.read(onboardingNotifierProvider.notifier).hydrateFrom(restaurant);
+      context.go(switch ((
+        restaurant?.hasLoyaltyProgram ?? false,
+        restaurant?.hasLocation ?? false,
+        restaurant?.hasBusinessInfo ?? false,
+      )) {
+        (true, _, _) => '/merchant/validate',
+        (false, true, _) => '/auth/merchant/step2',
+        (false, false, true) => '/auth/merchant/location',
+        _ => '/auth/merchant/step1',
+      });
+      return;
+    }
+
+    // 2. Session client restaurée
+    if (isClientAuth) {
+      context.go('/client/wallet');
+      return;
+    }
+
+    // 3. Session marchand restaurée (fallback)
+    if (isMerchantAuth) {
+      final restaurant = ref.read(merchantAuthProvider).restaurant;
+      ref.read(onboardingNotifierProvider.notifier).hydrateFrom(restaurant);
+      context.go(switch ((
+        restaurant?.hasLoyaltyProgram ?? false,
+        restaurant?.hasLocation ?? false,
+        restaurant?.hasBusinessInfo ?? false,
+      )) {
+        (true, _, _) => '/merchant/validate',
+        (false, true, _) => '/auth/merchant/step2',
+        (false, false, true) => '/auth/merchant/location',
+        _ => '/auth/merchant/step1',
+      });
+      return;
+    }
+
+    // 3. Onboarding et rôle déjà choisis par le passé
+    if (state != null && state.hasSeenOnboarding) {
+      if (state.lastRole == 'merchant') {
+        context.go('/auth/merchant/auth');
+        return;
+      }
+      context.go('/client/auth');
+      return;
+    }
+
+    // 4. Par défaut : Onboarding client direct (sélection de rôle supprimée au premier lancement)
+    context.go('/client/onboarding');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
 
-    ref.listen<AsyncValue<AppStartupState>>(appStartupProvider, (_, next) {
-      next.whenOrNull(
-        data: (state) {
-          // Session restaurée : on court-circuite le choix de rôle.
-          if (ref.read(authProvider).isAuthenticated) {
-            context.go('/client/wallet');
-            return;
-          }
-          final merchant = ref.read(merchantAuthProvider);
-          if (merchant.isAuthenticated) {
-            final restaurant = merchant.restaurant;
-            // Reprise d'une session déjà authentifiée sans passer par l'écran
-            // de connexion (donc sans son propre appel à `hydrateFrom`) :
-            // sans ceci, `OnboardingState` repart vide et l'étape localisation
-            // (ou la revue) affiche des champs vierges malgré des données déjà
-            // enregistrées côté serveur.
-            ref.read(onboardingNotifierProvider.notifier).hydrateFrom(restaurant);
-            context.go(switch ((
-              restaurant?.hasLoyaltyProgram ?? false,
-              restaurant?.hasLocation ?? false,
-              restaurant?.hasBusinessInfo ?? false,
-            )) {
-              (true, _, _) => '/merchant/validate',
-              (false, true, _) => '/auth/merchant/step2',
-              (false, false, true) => '/auth/merchant/location',
-              _ => '/auth/merchant/step1',
-            });
-            return;
-          }
-          // Onboarding et rôle déjà vus : on saute directement à l'écran de
-          // connexion du rôle mémorisé, plutôt que de tout remontrer.
-          if (state.hasSeenOnboarding && state.lastRole == 'client') {
-            context.go('/client/auth');
-            return;
-          }
-          if (state.hasSeenOnboarding && state.lastRole == 'merchant') {
-            context.go('/auth/merchant/auth');
-            return;
-          }
-          context.go('/role-select');
-        },
-        // L'amorçage avale déjà ses erreurs (token refusé, backend absent) :
-        // ce cas ne se produit qu'en cas de défaillance inattendue, et repart
-        // sur le parcours normal plutôt que de bloquer l'app.
-        error: (_, __) => context.go('/role-select'),
-      );
-    });
+    // Si l'état d'amorçage est déjà disponible
+    final currentStartup = ref.read(appStartupProvider);
+    if (currentStartup.hasValue || currentStartup.hasError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasNavigated) {
+          _performNavigation(currentStartup.valueOrNull);
+        }
+      });
+    }
+
+    // Écoute réactive des changements futurs
+    ref.listen<AsyncValue<AppStartupState>>(
+      appStartupProvider,
+      (_, next) {
+        next.when(
+          data: (state) => _performNavigation(state),
+          error: (_, __) => _performNavigation(null),
+          loading: () {},
+        );
+      },
+    );
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -78,11 +142,6 @@ class SplashScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Séquence d'entrée façon Pinterest (portée depuis le design) :
-            // apparition à taille normale puis léger effet de respiration.
-            // Contrairement à l'écran design d'origine, pas d'envol/fondu de
-            // sortie ici — la navigation réelle est pilotée par
-            // `appStartupProvider` ci-dessus, pas par un minuteur fixe.
             Image.asset(
               'assets/images/logo_mivaFid.png',
               width: 104,

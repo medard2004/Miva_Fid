@@ -47,7 +47,9 @@ class DeviceTokenNotifier {
     final isClientAuth = _ref.read(authProvider).isAuthenticated;
     final isMerchantAuth = _ref.read(merchantAuthProvider).isAuthenticated;
     if (isClientAuth || isMerchantAuth) {
-      _register(token);
+      _register(token).catchError((e) {
+        debugPrint('[device_token_provider] Erreur refresh token: $e');
+      });
     }
   }
 

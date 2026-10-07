@@ -63,8 +63,8 @@ class _ProfileOnboardingScreenState
     HapticFeedback.mediumImpact();
     if (_currentPage < _slides.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 480),
+        curve: Curves.fastEaseInToSlowEaseOut,
       );
     } else {
       _finish();
@@ -112,7 +112,7 @@ class _ProfileOnboardingScreenState
                     padding: EdgeInsets.zero,
                     alignment: Alignment.centerLeft,
                     icon: Icon(
-                      LucideIcons.arrowLeft,
+                      Icons.arrow_back_ios_new_rounded,
                       size: 20,
                       color: AppColors.textPrimary,
                     ),
@@ -121,7 +121,7 @@ class _ProfileOnboardingScreenState
                       if (context.canPop()) {
                         context.pop();
                       } else {
-                        context.go('/role-select');
+                        context.go('/client/wallet');
                       }
                     },
                   ),
@@ -156,6 +156,7 @@ class _ProfileOnboardingScreenState
                 },
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
+                  final isActive = _currentPage == index;
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: Sp.lg),
                     child: Column(
@@ -194,9 +195,17 @@ class _ProfileOnboardingScreenState
                             ),
                           ),
                         )
-                            .animate(key: ValueKey('tag_$index'))
-                            .fadeIn(duration: 200.ms)
-                            .slideY(begin: 0.1, end: 0),
+                            .animate(
+                              key: ValueKey('tag_$index'),
+                              target: isActive ? 1 : 0,
+                            )
+                            .fadeIn(duration: 350.ms, curve: Curves.easeOut)
+                            .slideY(
+                              begin: 0.2,
+                              end: 0,
+                              duration: 400.ms,
+                              curve: Curves.easeOutCubic,
+                            ),
 
                         const SizedBox(height: 10),
 
@@ -211,9 +220,22 @@ class _ProfileOnboardingScreenState
                           ),
                           textAlign: TextAlign.center,
                         )
-                            .animate(key: ValueKey('ttl_$index'))
-                            .fadeIn(duration: 250.ms)
-                            .slideY(begin: 0.05, end: 0),
+                            .animate(
+                              key: ValueKey('ttl_$index'),
+                              target: isActive ? 1 : 0,
+                            )
+                            .fadeIn(
+                              duration: 400.ms,
+                              delay: 50.ms,
+                              curve: Curves.easeOut,
+                            )
+                            .slideY(
+                              begin: 0.25,
+                              end: 0,
+                              duration: 450.ms,
+                              delay: 50.ms,
+                              curve: Curves.easeOutCubic,
+                            ),
 
                         const SizedBox(height: 8),
 
@@ -230,8 +252,22 @@ class _ProfileOnboardingScreenState
                             textAlign: TextAlign.center,
                           ),
                         )
-                            .animate(key: ValueKey('dsc_$index'))
-                            .fadeIn(duration: 250.ms, delay: 50.ms),
+                            .animate(
+                              key: ValueKey('dsc_$index'),
+                              target: isActive ? 1 : 0,
+                            )
+                            .fadeIn(
+                              duration: 450.ms,
+                              delay: 90.ms,
+                              curve: Curves.easeOut,
+                            )
+                            .slideY(
+                              begin: 0.25,
+                              end: 0,
+                              duration: 500.ms,
+                              delay: 90.ms,
+                              curve: Curves.easeOutCubic,
+                            ),
 
                         const SizedBox(height: Sp.md),
                       ],
@@ -354,7 +390,14 @@ class _MerchantRichGraphic extends StatelessWidget {
       fit: BoxFit.scaleDown,
       alignment: Alignment.center,
       child: content,
-    );
+    )
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+        .moveY(
+          begin: -3,
+          end: 3,
+          duration: 2600.ms,
+          curve: Curves.easeInOut,
+        );
   }
 
   // Visual 1 : Carte de fidélité marchand avec tampons dorés et récompense

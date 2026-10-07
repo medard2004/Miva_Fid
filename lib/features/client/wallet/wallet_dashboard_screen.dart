@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/widgets/header_mode_switcher.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -11,6 +12,7 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_section_header.dart';
 import 'package:miva_fid/features/client/widgets/shared/notification_bell_button.dart';
+import 'package:miva_fid/features/merchant/providers/merchant_auth_provider.dart';
 import 'providers/advertisements_provider.dart';
 import 'widgets/card_stack.dart';
 import 'widgets/promo_carousel.dart';
@@ -32,6 +34,7 @@ class WalletDashboardScreen extends ConsumerWidget {
     final t = AppLocalizations.of(context)!;
     final cards = ref.watch(walletProvider);
     final auth = ref.watch(authProvider);
+    final isMerchantAuth = ref.watch(merchantAuthProvider).isAuthenticated;
     final unread =
         ref.watch(notificationsProvider).where((n) => !n.isRead).length;
     final firstName = auth.user?.firstName ?? t.walletFallbackName;
@@ -42,8 +45,9 @@ class WalletDashboardScreen extends ConsumerWidget {
         child: Column(
           children: [
             AppSectionHeader(
-              eyebrow: _greeting(t),
-              title: firstName,
+              leading: const HeaderModeSwitcher(isMerchant: false),
+              eyebrow: isMerchantAuth ? null : _greeting(t),
+              title: isMerchantAuth ? '' : firstName,
               actions: [
                 Semantics(
                   button: true,
