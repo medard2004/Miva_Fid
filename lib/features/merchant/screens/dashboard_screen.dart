@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/loyalty_level.dart';
 import '../../../core/theme/app_colors.dart';
@@ -15,6 +14,7 @@ import '../providers/clients_provider.dart';
 import '../providers/dashboard_stats_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../widgets/merchant_notification_bell_button.dart';
 
 import 'merchant_shell.dart';
 
@@ -77,41 +77,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                     ),
                   ),
-                  InkWell(
-                    onTap: () => context.push('/merchant/more/notifications'),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Icon(
-                            LucideIcons.bell,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const MerchantNotificationBellButton(),
                 ],
               ),
             ),

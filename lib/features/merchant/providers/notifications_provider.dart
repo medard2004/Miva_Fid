@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/cache/offline_cache_service.dart';
+import '../../../core/services/connectivity_service.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../client/models/app_notification.dart';
 import 'merchant_auth_provider.dart';
@@ -24,10 +25,33 @@ class MerchantNotificationsNotifier extends _$MerchantNotificationsNotifier {
     // Recharge la liste dès qu'une notification est créée côté serveur
     // (`NotificationCreated`, canal `merchant.{id}`) — la cloche/l'inbox
     // marchande n'attendent plus le prochain chargement manuel de l'écran.
-    final sub = RealtimeService.instance.onNotificationCreated.listen((_) {
+    final sub = RealtimeService.instance.onNotificationCreated.listen((payload) {
+      final current = state.value;
+      if (current != null) {
+        try {
+          final newNotif = AppNotification.fromApi(payload);
+          if (!current.any((n) => n.id == newNotif.id)) {
+            state = AsyncData([newNotif, ...current]);
+          }
+        } catch (e) {
+          debugPrint('[MerchantNotificationsNotifier] Erreur insertion optimiste: $e');
+        }
+      }
       ref.invalidateSelf();
     });
     ref.onDispose(sub.cancel);
+
+    // Rattrapage des notifications manquées lors d'une reconnexion réseau
+    final reconnectSub = RealtimeService.instance.onReconnected.listen((_) {
+      ref.invalidateSelf();
+    });
+    ref.onDispose(reconnectSub.cancel);
+
+    ref.listen<ConnectivityStatus>(connectivityStatusProvider, (previous, next) {
+      if (previous == ConnectivityStatus.offline && next == ConnectivityStatus.online) {
+        ref.invalidateSelf();
+      }
+    });
 
     final cache = ref.watch(offlineCacheServiceProvider);
     try {
@@ -83,11 +107,6 @@ class MerchantNotificationsNotifier extends _$MerchantNotificationsNotifier {
   }
 
   Future<void> delete(String id) async {
-    try {
-      await ref.read(merchantNotificationRepositoryProvider).delete(id);
-    } catch (e) {
-      debugPrint('[notifications_provider] Erreur delete marchand: $e');
-    }
     final current = state.value;
     if (current == null) return;
     final updated = current.where((n) => n.id != id).toList();
@@ -95,15 +114,32 @@ class MerchantNotificationsNotifier extends _$MerchantNotificationsNotifier {
     unawaited(ref.read(offlineCacheServiceProvider).saveMerchantNotifications(
       updated.map((n) => n.toJson()).toList(),
     ));
+    try {
+      await ref.read(merchantNotificationRepositoryProvider).delete(id);
+    } catch (e) {
+      debugPrint('[notifications_provider] Erreur delete marchand: $e');
+    }
   }
 
   Future<void> deleteAll() async {
+    final previous = state.value;
+    state = const AsyncData([]);
+    unawaited(ref.read(offlineCacheServiceProvider).saveMerchantNotifications([]));
     try {
       await ref.read(merchantNotificationRepositoryProvider).deleteAll();
     } catch (e) {
       debugPrint('[notifications_provider] Erreur deleteAll marchand: $e');
+      if (previous != null) {
+        state = AsyncData(previous);
+      }
     }
-    state = const AsyncData([]);
-    unawaited(ref.read(offlineCacheServiceProvider).saveMerchantNotifications([]));
   }
 }
+
+/// Nombre de notifications marchandes non lues — calculé réactivement
+/// à partir de `merchantNotificationsNotifierProvider` pour alimenter les cloches/badges.
+final merchantUnreadCountProvider = Provider<int>((ref) {
+  final notifs = ref.watch(merchantNotificationsNotifierProvider).valueOrNull;
+  if (notifs == null) return 0;
+  return notifs.where((n) => !n.isRead).length;
+});

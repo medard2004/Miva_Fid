@@ -153,12 +153,15 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final allCards = ref.watch(walletProvider);
-    final cards = allCards.where((c) => c.referralQrToken != null).toList();
+    final cards = allCards
+        .where((c) => c.referralQrToken != null && c.hasReferralReward)
+        .toList();
     final referrals = ref.watch(referralProvider);
     final unreadNotifs =
         ref.watch(notificationsProvider).where((n) => !n.isRead).length;
 
     if (cards.isEmpty) {
+      final hasAnyCards = allCards.isNotEmpty;
       return Scaffold(
         backgroundColor: AppColors.surface,
         body: SafeArea(
@@ -171,9 +174,13 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
               Expanded(
                 child: Center(
                   child: EmptyState(
-                    icon: LucideIcons.users,
-                    title: t.referralEmptyTitle,
-                    message: t.referralEmptyMessage,
+                    icon: LucideIcons.gift,
+                    title: hasAnyCards
+                        ? 'Aucun parrainage actif'
+                        : t.referralEmptyTitle,
+                    message: hasAnyCards
+                        ? 'Aucun de vos établissements rejoints n\'a configuré de récompense de parrainage pour le moment.'
+                        : t.referralEmptyMessage,
                   ),
                 ),
               ),
@@ -190,9 +197,8 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
     final cardReferrals = referrals
         .where((r) => r.restaurantName == selectedCard.restaurantName)
         .toList();
-    final pending = cardReferrals
-        .where((r) => r.status == ReferralStatus.pending)
-        .toList();
+    final pending =
+        cardReferrals.where((r) => r.status == ReferralStatus.pending).toList();
     final validated = cardReferrals
         .where((r) => r.status == ReferralStatus.validated)
         .toList();
@@ -444,6 +450,73 @@ class _HeroReferralCard extends StatelessWidget {
             ],
           ),
 
+          if (card.referralRewardLabel != null || card.isReferralRewardSurprise) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFF16A34A).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.25),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.sparkles,
+                    size: 15,
+                    color: Color(0xFF16A34A),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      card.isReferralRewardSurprise
+                          ? 'Cadeau parrain : Surprise à débloquer !'
+                          : 'Cadeau parrain : ${card.referralRewardLabel}',
+                      style: AppTextStyles.bodySmall(
+                        color: const Color(0xFF16A34A),
+                      ).copyWith(fontWeight: FontWeight.w600, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (card.referralReferredRewardLabel != null ||
+              card.isReferralReferredRewardSurprise) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryTint.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.gift,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      card.isReferralReferredRewardSurprise
+                          ? 'Cadeau pour votre invité : Surprise à l\'adhésion !'
+                          : 'Cadeau invité : ${card.referralReferredRewardLabel}',
+                      style: AppTextStyles.bodySmall(
+                        color: AppColors.primary,
+                      ).copyWith(fontWeight: FontWeight.w600, fontSize: 11.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 12),
 
           // Mini étapes épurées (texte léger sans cadre lourd)
@@ -504,8 +577,8 @@ class _HeroReferralCard extends StatelessWidget {
                 AppTapScale(
                   onTap: onCopy,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 7),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(8),
@@ -713,7 +786,9 @@ class _SegmentedFilterBar extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? (isDark ? const Color(0xFF2C323D) : AppColors.surfaceCard)
+                      ? (isDark
+                          ? const Color(0xFF2C323D)
+                          : AppColors.surfaceCard)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(9),
                   boxShadow: isSelected ? AppShadows.resting : null,

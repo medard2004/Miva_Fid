@@ -100,7 +100,9 @@ class OfflineBanner extends ConsumerWidget {
           ),
         ),
       );
-    } else if (syncState.status == SyncStatus.error && !isOffline && syncState.pendingCount > 0) {
+    } else if (syncState.status == SyncStatus.error &&
+        !isOffline &&
+        syncState.pendingCount > 0) {
       banner = GestureDetector(
         onTap: () => ref.read(offlineSyncProvider.notifier).syncPending(),
         child: Container(
@@ -236,7 +238,7 @@ class OfflineBanner extends ConsumerWidget {
       transitionBuilder: (child, animation) {
         return SizeTransition(
           sizeFactor: animation,
-          alignment: Alignment.topCenter,
+          axisAlignment: -1.0,
           child: child,
         );
       },

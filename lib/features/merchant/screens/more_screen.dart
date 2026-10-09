@@ -18,6 +18,7 @@ import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/proximity_settings_provider.dart';
 import '../providers/team_provider.dart';
+import '../widgets/merchant_notification_bell_button.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -187,41 +188,7 @@ class MoreScreen extends ConsumerWidget {
                   ),
                   const HeaderModeSwitcher(isMerchant: true),
                   const SizedBox(width: 10),
-                  InkWell(
-                    onTap: () => context.push('/merchant/more/notifications'),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Icon(
-                            LucideIcons.bell,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const MerchantNotificationBellButton(),
                 ],
               ),
             ),

@@ -124,12 +124,38 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
     _ref.listen<AuthState>(authProvider, _onAuthChanged, fireImmediately: true);
     _realtimeSub = RealtimeService.instance.onNotificationCreated.listen((payload) {
       _showToastForPayload(payload);
+      
+      // Insertion optimiste de la notification reçue par WebSocket
+      try {
+        final newNotif = AppNotification.fromApi(payload);
+        if (!state.any((n) => n.id == newNotif.id)) {
+          state = [newNotif, ...state];
+        }
+      } catch (e) {
+        debugPrint('[NotificationsNotifier] Erreur insertion optimiste: $e');
+      }
+
       load();
+    });
+
+    // Rattrapage des notifications manquées lors d'une reconnexion WebSocket
+    _reconnectSub = RealtimeService.instance.onReconnected.listen((_) {
+      load();
+    });
+
+    // Reconnexion réseau : rafraîchissement transparent des notifications
+    _ref.listen<ConnectivityStatus>(connectivityStatusProvider, (previous, next) {
+      if (previous == ConnectivityStatus.offline && next == ConnectivityStatus.online) {
+        if (_ref.read(authProvider).isAuthenticated) {
+          load();
+        }
+      }
     });
   }
 
   final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  StreamSubscription<void>? _reconnectSub;
 
   static const _merchantTypes = {
     'merchant_new_client',
@@ -258,6 +284,7 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
   @override
   void dispose() {
     _realtimeSub?.cancel();
+    _reconnectSub?.cancel();
     super.dispose();
   }
 }

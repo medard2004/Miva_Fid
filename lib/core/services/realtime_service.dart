@@ -209,6 +209,14 @@ class RealtimeService {
         final data = _decodeData(message['data']);
         if (data != null) _campaignUpdatedController.add(data);
         return;
+      case 'pusher_internal:subscription_succeeded':
+        if (kDebugMode) debugPrint('RealtimeService: abonné au canal avec succès');
+        return;
+      case 'pusher:pong':
+        return;
+      default:
+        if (kDebugMode) debugPrint('RealtimeService: événement non géré: $event');
+        return;
     }
   }
 

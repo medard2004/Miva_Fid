@@ -20,6 +20,7 @@ import '../../onboarding/widgets/color_palette_picker.dart';
 import '../../onboarding/widgets/loyalty_card_preview.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../providers/notifications_provider.dart';
 import '../widgets/merchant_avatar.dart';
 import '../../client/providers/settings_provider.dart';
 
@@ -348,6 +349,8 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
         ? state.logoUrl!
         : (merchant?.logoUrl ?? restaurant?.logoUrl ?? '');
 
+    final unreadCount = ref.watch(merchantUnreadCountProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -372,18 +375,19 @@ class _ProgrammeDesignScreenState extends ConsumerState<ProgrammeDesignScreen> {
               clipBehavior: Clip.none,
               children: [
                 Icon(LucideIcons.bell, size: 18, color: AppColors.textPrimary),
-                Positioned(
-                  top: -1,
-                  right: -1,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF59E0B),
-                      shape: BoxShape.circle,
+                if (unreadCount > 0)
+                  Positioned(
+                    top: -1,
+                    right: -1,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF59E0B),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             onPressed: () => context.push('/merchant/more/notifications'),

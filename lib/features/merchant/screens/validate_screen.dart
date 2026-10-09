@@ -17,6 +17,7 @@ import '../providers/validate_provider.dart';
 import '../widgets/client_card_sheet.dart';
 import '../widgets/reward_redeem_sheet.dart';
 import '../widgets/validation_success_overlay.dart';
+import '../widgets/merchant_notification_bell_button.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../../core/constants/reward_qr.dart';
 import '../../../core/widgets/offline_action_guard.dart';
@@ -519,41 +520,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
                     ),
                   ],
                   if (isAdmin)
-                    InkWell(
-                      onTap: () => context.push('/merchant/more/notifications'),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Icon(
-                              LucideIcons.bell,
-                              size: 18,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                color: AppColors.warning,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    const MerchantNotificationBellButton(),
                 ],
               ),
             ),

@@ -17,6 +17,7 @@ import '../models/restaurant_account.dart';
 import '../providers/clients_provider.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../widgets/merchant_notification_bell_button.dart';
 
 class _DisplayTier {
   final int position;
@@ -494,43 +495,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           ],
                         ),
                         const SizedBox(width: 8),
-                        // Notifications Button in TopBar
-                        InkWell(
-                          onTap: () =>
-                              context.push('/merchant/more/notifications'),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.border),
-                                ),
-                                child: Icon(
-                                  LucideIcons.bell,
-                                  size: 18,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              Positioned(
-                                top: 6,
-                                right: 6,
-                                child: Container(
-                                  width: 7,
-                                  height: 7,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFF59E0B),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        const MerchantNotificationBellButton(size: 36),
                       ],
                     ),
             ),

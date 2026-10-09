@@ -15,6 +15,7 @@ import '../../client/providers/settings_provider.dart';
 import '../models/restaurant_account.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
+import '../providers/notifications_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -306,8 +307,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(LucideIcons.bell,
-                size: 20, color: AppColors.textPrimary),
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(LucideIcons.bell,
+                    size: 20, color: AppColors.textPrimary),
+                if (ref.watch(merchantUnreadCountProvider) > 0)
+                  Positioned(
+                    top: -1,
+                    right: -1,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF59E0B),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             onPressed: () => context.push('/merchant/more/notifications'),
           ),
           const SizedBox(width: 8),

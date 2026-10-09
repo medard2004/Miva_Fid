@@ -262,7 +262,31 @@ class LoyaltyCard {
     this.restaurantLongitude,
     this.restaurantOpeningHours = const {},
     this.restaurantSocialProfiles = const {},
+    this.hasReferralReward = false,
+    this.referralRewardLabel,
+    this.referralRewardDescription,
+    this.isReferralRewardSurprise = false,
+    this.referralReferredRewardLabel,
+    this.isReferralReferredRewardSurprise = false,
   });
+
+  /// Indique si l'établissement a configuré une récompense pour le parrainage.
+  final bool hasReferralReward;
+
+  /// Libellé de la récompense parrain (ex. "1 dessert offert").
+  final String? referralRewardLabel;
+
+  /// Description / détails de la récompense parrain.
+  final String? referralRewardDescription;
+
+  /// Indique si la récompense parrain est une surprise.
+  final bool isReferralRewardSurprise;
+
+  /// Libellé de la récompense filleul à l'adhésion.
+  final String? referralReferredRewardLabel;
+
+  /// Indique si la récompense filleul est une surprise.
+  final bool isReferralReferredRewardSurprise;
 
   /// Construit une carte réelle depuis `POST/GET /loyalty-cards/*`
   /// (`{card: {..., restaurant: {...}, loyalty_program: {...}}}`).
@@ -276,6 +300,37 @@ class LoyaltyCard {
         (restaurant['social_profiles'] as Map?)?.cast<String, dynamic>() ??
             (config['social_profiles'] as Map?)?.cast<String, dynamic>() ??
             const {};
+
+    final referralConfig =
+        (config['referral_reward'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final bool referrerEnabled = (config['referral_reward_enabled'] as bool?) ??
+        (referralConfig['enabled'] as bool?) ??
+        false;
+    final String? referrerLabel = ((config['referral_reward_label'] as String?) ??
+        (referralConfig['label'] as String?))?.trim();
+    final String? referrerDesc = ((config['referral_reward_description'] as String?) ??
+        (referralConfig['description'] as String?))?.trim();
+    final bool referrerSurprise = (config['referral_reward_surprise'] as bool?) ??
+        (referralConfig['surprise'] as bool?) ??
+        false;
+
+    final bool referredEnabled =
+        (config['referral_referred_reward_enabled'] as bool?) ??
+            (referralConfig['referred_enabled'] as bool?) ??
+            false;
+    final String? referredLabel =
+        ((config['referral_referred_reward_label'] as String?) ??
+            (referralConfig['referred_label'] as String?))?.trim();
+    final bool referredSurprise =
+        (config['referral_referred_reward_surprise'] as bool?) ??
+            (referralConfig['referred_surprise'] as bool?) ??
+            false;
+
+    final bool hasReferrerReward = referrerEnabled &&
+        ((referrerLabel != null && referrerLabel.isNotEmpty) || referrerSurprise);
+    final bool hasReferredReward = referredEnabled &&
+        ((referredLabel != null && referredLabel.isNotEmpty) || referredSurprise);
+    final bool hasReferralReward = hasReferrerReward || hasReferredReward;
 
     return LoyaltyCard(
       id: json['id'].toString(),
@@ -349,6 +404,12 @@ class LoyaltyCard {
       restaurantLongitude: (restaurant['longitude'] as num?)?.toDouble(),
       restaurantOpeningHours: (restaurant['opening_hours'] as Map?)?.cast<String, dynamic>() ?? const {},
       restaurantSocialProfiles: profiles,
+      hasReferralReward: hasReferralReward,
+      referralRewardLabel: (referrerLabel?.isEmpty ?? true) ? null : referrerLabel,
+      referralRewardDescription: (referrerDesc?.isEmpty ?? true) ? null : referrerDesc,
+      isReferralRewardSurprise: referrerSurprise,
+      referralReferredRewardLabel: (referredLabel?.isEmpty ?? true) ? null : referredLabel,
+      isReferralReferredRewardSurprise: referredSurprise,
     );
   }
 
@@ -363,6 +424,12 @@ class LoyaltyCard {
     bool? isMaxLevel,
     List<CardTier>? tiers,
     CardTier? nextReward,
+    bool? hasReferralReward,
+    String? referralRewardLabel,
+    String? referralRewardDescription,
+    bool? isReferralRewardSurprise,
+    String? referralReferredRewardLabel,
+    bool? isReferralReferredRewardSurprise,
   }) {
     return LoyaltyCard(
       id: id,
@@ -408,6 +475,12 @@ class LoyaltyCard {
       restaurantLongitude: restaurantLongitude,
       restaurantOpeningHours: restaurantOpeningHours,
       restaurantSocialProfiles: restaurantSocialProfiles,
+      hasReferralReward: hasReferralReward ?? this.hasReferralReward,
+      referralRewardLabel: referralRewardLabel ?? this.referralRewardLabel,
+      referralRewardDescription: referralRewardDescription ?? this.referralRewardDescription,
+      isReferralRewardSurprise: isReferralRewardSurprise ?? this.isReferralRewardSurprise,
+      referralReferredRewardLabel: referralReferredRewardLabel ?? this.referralReferredRewardLabel,
+      isReferralReferredRewardSurprise: isReferralReferredRewardSurprise ?? this.isReferralReferredRewardSurprise,
     );
   }
 
