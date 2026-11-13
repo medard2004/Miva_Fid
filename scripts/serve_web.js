@@ -73,3 +73,4 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`URL locale : http://localhost:${PORT}/`);
   console.log(`URL Deep-link test : http://localhost:${PORT}/join?code=RESTO123`);
 });
+
