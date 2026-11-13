@@ -1,53 +1,27 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../core/theme/app_colors.dart' as core_colors;
 import '../core/theme/app_colors.dart';
+import 'settings_file_stub.dart'
+    if (dart.library.io) 'settings_file_io.dart';
 
 /// Langues prises en charge par l'app.
 const List<Locale> supportedLocales = [Locale('fr'), Locale('en')];
 
-/// Petite persistance locale pour les préférences (thème, langue) — un
-/// fichier JSON plutôt qu'un plugin dédié (shared_preferences), pour ne
-/// pas ajouter de dépendance native supplémentaire à l'app.
+/// Petite persistance locale pour les préférences (thème, langue) :
+/// sur mobile un fichier JSON (sans dépendance native superflue),
+/// sur web stockage sécurisé / mémoire.
 class _SettingsStore {
-  static const _fileName = 'settings.json';
-  static File? _cachedFile;
-
-  static Future<File> _file() async {
-    if (_cachedFile != null) return _cachedFile!;
-    final dir = await getApplicationDocumentsDirectory();
-    _cachedFile = File('${dir.path}/$_fileName');
-    return _cachedFile!;
-  }
-
-  static Future<Map<String, dynamic>> read() async {
-    try {
-      final file = await _file();
-      if (!await file.exists()) return {};
-      final content = await file.readAsString();
-      if (content.trim().isEmpty) return {};
-      return jsonDecode(content) as Map<String, dynamic>;
-    } catch (e) {
-      debugPrint('[settings_provider] Erreur lecture préférences: $e');
-      return {};
-    }
-  }
+  static Future<Map<String, dynamic>> read() => readFileStore();
 
   static Future<void> write(String key, String value) async {
     try {
-      final file = await _file();
       final current = await read();
       current[key] = value;
-      await file.writeAsString(jsonEncode(current));
+      await writeFileStore(current);
     } catch (e) {
       debugPrint('[settings_provider] Erreur écriture préférence $key: $e');
-      // Persistance best-effort : une écriture échouée ne doit jamais
-      // bloquer le changement de préférence en mémoire.
     }
   }
 }

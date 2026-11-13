@@ -9,6 +9,11 @@ class OfflineCacheDatabase {
 
   Database? _db;
 
+  // Cache en mémoire pour environnement Web (évite tout appel à sqflite)
+  final Map<String, String> _webCache = {};
+  final Map<String, int> _webTimestamps = {};
+  final List<OfflineMutation> _webMutations = [];
+
   static const String _tableName = 'offline_cache';
   static const String _mutationsTable = 'offline_mutations';
   static const String _dbName = 'miva_fid_offline.db';
@@ -83,6 +88,13 @@ class OfflineCacheDatabase {
 
   /// Sauvegarde une entrée JSON brute associée à une clé
   Future<void> put(String key, dynamic value) async {
+    if (kIsWeb) {
+      final jsonString = jsonEncode(value);
+      _webCache[key] = jsonString;
+      _webTimestamps[key] = DateTime.now().millisecondsSinceEpoch;
+      return;
+    }
+
     final db = await database;
     final jsonString = jsonEncode(value);
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -100,6 +112,17 @@ class OfflineCacheDatabase {
 
   /// Récupère et décode une entrée JSON brute
   Future<dynamic> get(String key) async {
+    if (kIsWeb) {
+      final raw = _webCache[key];
+      if (raw == null || raw.isEmpty) return null;
+      try {
+        return jsonDecode(raw);
+      } catch (e) {
+        debugPrint('[offline_cache_database] Erreur décodage JSON Web pour clé $key: $e');
+        return null;
+      }
+    }
+
     final db = await database;
     final results = await db.query(
       _tableName,
@@ -123,6 +146,12 @@ class OfflineCacheDatabase {
 
   /// Récupère la date de dernière mise à jour d'une clé
   Future<DateTime?> getLastUpdated(String key) async {
+    if (kIsWeb) {
+      final timestamp = _webTimestamps[key];
+      if (timestamp == null) return null;
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    }
+
     final db = await database;
     final results = await db.query(
       _tableName,
@@ -140,6 +169,12 @@ class OfflineCacheDatabase {
 
   /// Supprime une entrée spécifique
   Future<void> delete(String key) async {
+    if (kIsWeb) {
+      _webCache.remove(key);
+      _webTimestamps.remove(key);
+      return;
+    }
+
     final db = await database;
     await db.delete(
       _tableName,
@@ -150,12 +185,29 @@ class OfflineCacheDatabase {
 
   /// Purge toutes les données en cache (ex: déconnexion globale)
   Future<void> clearAll() async {
+    if (kIsWeb) {
+      _webCache.clear();
+      _webTimestamps.clear();
+      _webMutations.clear();
+      return;
+    }
+
     final db = await database;
     await db.delete(_tableName);
   }
 
   /// Purge les données du client (profil, cartes, récompenses)
   Future<void> clearClientData() async {
+    if (kIsWeb) {
+      _webCache.remove(keyClientUser);
+      _webCache.remove(keyClientWallet);
+      _webCache.remove(keyClientRewards);
+      _webTimestamps.remove(keyClientUser);
+      _webTimestamps.remove(keyClientWallet);
+      _webTimestamps.remove(keyClientRewards);
+      return;
+    }
+
     final db = await database;
     await db.delete(
       _tableName,
@@ -166,6 +218,12 @@ class OfflineCacheDatabase {
 
   /// Purge les données du marchand
   Future<void> clearMerchantData() async {
+    if (kIsWeb) {
+      _webCache.removeWhere((k, _) => k.startsWith('merchant_'));
+      _webTimestamps.removeWhere((k, _) => k.startsWith('merchant_'));
+      return;
+    }
+
     final db = await database;
     await db.delete(
       _tableName,
@@ -370,7 +428,6 @@ class OfflineCacheDatabase {
   /// Renvoie un map { clé_cache: DateTime_dernière_MAJ } pour toutes les
   /// entrées marchand existantes.
   Future<Map<String, DateTime>> getMerchantCacheTimestamps() async {
-    final db = await database;
     final keys = [
       keyMerchantAccount,
       keyMerchantStats,
@@ -380,6 +437,17 @@ class OfflineCacheDatabase {
       keyMerchantCampaigns,
       keyMerchantReviews,
     ];
+
+    if (kIsWeb) {
+      final result = <String, DateTime>{};
+      for (final k in keys) {
+        final ts = _webTimestamps[k];
+        if (ts != null) result[k] = DateTime.fromMillisecondsSinceEpoch(ts);
+      }
+      return result;
+    }
+
+    final db = await database;
     final placeholders = keys.map((_) => '?').join(', ');
     final rows = await db.query(
       _tableName,
@@ -401,6 +469,12 @@ class OfflineCacheDatabase {
   // ---------------------------------------------------------
 
   Future<void> insertMutation(OfflineMutation mutation) async {
+    if (kIsWeb) {
+      _webMutations.removeWhere((m) => m.id == mutation.id);
+      _webMutations.add(mutation);
+      return;
+    }
+
     final db = await database;
     await db.insert(
       _mutationsTable,
@@ -410,6 +484,12 @@ class OfflineCacheDatabase {
   }
 
   Future<List<OfflineMutation>> getPendingMutations() async {
+    if (kIsWeb) {
+      return _webMutations
+          .where((m) => m.status == 'pending' || m.status == 'failed')
+          .toList();
+    }
+
     final db = await database;
     final rows = await db.query(
       _mutationsTable,
@@ -421,6 +501,11 @@ class OfflineCacheDatabase {
   }
 
   Future<void> deleteMutation(String id) async {
+    if (kIsWeb) {
+      _webMutations.removeWhere((m) => m.id == id);
+      return;
+    }
+
     final db = await database;
     await db.delete(
       _mutationsTable,
@@ -434,6 +519,23 @@ class OfflineCacheDatabase {
     String status, {
     int? attempts,
   }) async {
+    if (kIsWeb) {
+      final index = _webMutations.indexWhere((m) => m.id == id);
+      if (index != -1) {
+        final existing = _webMutations[index];
+        _webMutations[index] = OfflineMutation(
+          id: existing.id,
+          actionType: existing.actionType,
+          cardId: existing.cardId,
+          payload: existing.payload,
+          createdAt: existing.createdAt,
+          attempts: attempts ?? existing.attempts,
+          status: status,
+        );
+      }
+      return;
+    }
+
     final db = await database;
     final values = <String, dynamic>{'status': status};
     if (attempts != null) {
@@ -448,6 +550,12 @@ class OfflineCacheDatabase {
   }
 
   Future<int> getPendingMutationsCount() async {
+    if (kIsWeb) {
+      return _webMutations
+          .where((m) => m.status == 'pending' || m.status == 'failed')
+          .length;
+    }
+
     final db = await database;
     final res = await db.rawQuery(
       'SELECT COUNT(*) as count FROM $_mutationsTable WHERE status IN (?, ?)',

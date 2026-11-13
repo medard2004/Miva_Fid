@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -322,7 +321,7 @@ class _ReportBugScreenState extends ConsumerState<ReportBugScreen> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          '${Platform.operatingSystem.toUpperCase()} · Miva-Fid v1.0.0${user != null ? ' · ${user.phoneNumber}' : ''}',
+                          '${kIsWeb ? 'WEB' : defaultTargetPlatform.name.toUpperCase()} · Miva-Fid v1.0.0${user != null ? ' · ${user.phoneNumber}' : ''}',
                           style: AppTextStyles.monoSmall(
                             color: AppColors.inkMuted(opacity: 0.5),
                           ).copyWith(fontSize: 10.5),

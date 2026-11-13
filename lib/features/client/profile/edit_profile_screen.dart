@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
@@ -42,23 +40,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     );
     if (picked == null || !mounted) return;
 
-    final ext = picked.path.contains('.') ? picked.path.split('.').last : 'jpg';
-    final docsDir = await getApplicationDocumentsDirectory();
-    final persisted = await File(picked.path).copy(
-      '${docsDir.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.$ext',
-    );
-    if (!mounted) return;
-
     try {
       await runGuarded(
-        () => ref.read(authProvider.notifier).updateAvatar(persisted),
+        () => ref.read(authProvider.notifier).updateAvatar(picked),
         useOverlay: true,
       );
       if (mounted) showSuccessToast(ErrorMessages.avatarUpdateSuccess);
     } catch (e) {
       if (mounted) handleError(e, context: ErrorContext.updateAvatar);
-    } finally {
-      unawaited(persisted.delete().catchError((_) => persisted));
     }
   }
 

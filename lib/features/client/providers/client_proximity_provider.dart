@@ -1,10 +1,9 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:path_provider/path_provider.dart';
 
+import 'settings_file_stub.dart'
+    if (dart.library.io) 'settings_file_io.dart';
 import '../../../core/services/proximity_client_service.dart';
 
 class ClientProximityState {
@@ -108,12 +107,7 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState>
 
   Future<bool> _readPreference() async {
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/settings.json');
-      if (!await file.exists()) return true;
-      final content = await file.readAsString();
-      if (content.trim().isEmpty) return true;
-      final json = jsonDecode(content) as Map<String, dynamic>;
+      final json = await readFileStore();
       return json[_key] as bool? ?? true;
     } catch (e) {
       debugPrint('[client_proximity_provider] Erreur lecture preference: $e');
@@ -123,17 +117,9 @@ class ClientProximityNotifier extends StateNotifier<ClientProximityState>
 
   Future<void> _writePreference(bool value) async {
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/settings.json');
-      Map<String, dynamic> json = {};
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        if (content.trim().isNotEmpty) {
-          json = jsonDecode(content) as Map<String, dynamic>;
-        }
-      }
+      final json = await readFileStore();
       json[_key] = value;
-      await file.writeAsString(jsonEncode(json));
+      await writeFileStore(json);
     } catch (e) {
       debugPrint('[client_proximity_provider] Erreur écriture preference: $e');
     }

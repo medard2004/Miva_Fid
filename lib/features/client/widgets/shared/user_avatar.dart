@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
@@ -10,7 +10,7 @@ import '../../core/theme/app_text_styles.dart';
 class UserAvatar extends StatelessWidget {
   final String fullName;
   final String? photoUrl;
-  final File? localImage;
+  final dynamic localImage;
   final double radius;
   final bool isLoading;
 
@@ -44,14 +44,12 @@ class UserAvatar extends StatelessWidget {
             ],
           ),
           child: ClipOval(
-            child: localImage != null
-                ? Image.file(
-                    localImage!,
+            child: localImage is Uint8List
+                ? Image.memory(
+                    localImage as Uint8List,
                     fit: BoxFit.cover,
                     width: size,
                     height: size,
-                    // Le fichier local peut disparaître (cache OS purgé) : on
-                    // retombe sur l'URL serveur plutôt que les initiales.
                     errorBuilder: (context, error, stackTrace) =>
                         _networkOrInitials(size),
                   )

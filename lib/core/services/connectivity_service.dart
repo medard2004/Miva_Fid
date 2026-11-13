@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'internet_checker_stub.dart'
+    if (dart.library.io) 'internet_checker_io.dart';
 
 enum ConnectivityStatus {
   online,
@@ -56,12 +58,10 @@ class ConnectivityNotifier extends StateNotifier<ConnectivityStatus> {
         return false;
       }
 
-      // Test de résolution DNS avec timeout court (3 secondes)
-      final lookupResult = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 3));
+      // Test de résolution DNS avec timeout court (3 secondes) sur mobile,
+      // ou validation immédiate sur web
+      final isConnected = await checkInternetAccess();
       if (!mounted) return false;
-
-      final isConnected = lookupResult.isNotEmpty && lookupResult[0].rawAddress.isNotEmpty;
       final newStatus = isConnected ? ConnectivityStatus.online : ConnectivityStatus.offline;
 
       if (mounted && state != newStatus) {

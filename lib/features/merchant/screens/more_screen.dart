@@ -515,12 +515,12 @@ class MoreScreen extends ConsumerWidget {
                 _buildMenuItem(
                   icon: LucideIcons.shieldCheck,
                   label: t.merchantMoreLegalPrivacy,
-                  onTap: () => context.push('/client/legal/privacy'),
+                  onTap: () => context.push('/merchant/legal/privacy'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.fileText,
                   label: t.merchantMoreLegalTerms,
-                  onTap: () => context.push('/client/legal/terms'),
+                  onTap: () => context.push('/merchant/legal/terms'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.messageCircle,

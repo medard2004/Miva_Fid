@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -138,8 +139,8 @@ class SettingsScreen extends ConsumerWidget {
                     const SizedBox(height: 14),
                   ],
 
-                  // ── Bouton Configuration Espace Commerçant (Affiché UNIQUEMENT si non configuré) ──
-                  if (!isMerchantAuthenticated) ...[
+                  // ── Bouton Configuration Espace Commerçant (Affiché UNIQUEMENT si non configuré et hors Web) ──
+                  if (!kIsWeb && !isMerchantAuthenticated) ...[
                     GestureDetector(
                       onTap: () => context.push('/onboarding/merchant'),
                       child: Container(

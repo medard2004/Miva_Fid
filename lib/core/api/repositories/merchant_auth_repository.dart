@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import '../services/merchant_auth_service.dart';
 import '../storage/token_storage.dart' show TokenStorageBase;
@@ -98,7 +97,7 @@ class MerchantAuthRepository {
     return RestaurantAccount.fromJson(restaurantData);
   }
 
-  Future<RestaurantAccount> uploadLogo(File file) async {
+  Future<RestaurantAccount> uploadLogo(dynamic file) async {
     final response = await _authService.uploadLogo(file);
     final restaurantData = response['restaurant'] ?? {};
     if (restaurantData is Map<String, dynamic>) {

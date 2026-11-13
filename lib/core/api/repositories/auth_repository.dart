@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
 import '../core/api_exceptions.dart';
@@ -136,7 +135,7 @@ class AuthRepository {
     return AppUser.fromJson(clientData);
   }
 
-  Future<AppUser> uploadAvatar(File file) async {
+  Future<AppUser> uploadAvatar(dynamic file) async {
     final response = await _authService.uploadAvatar(file);
     final clientData = response['client'] ?? {};
     if (clientData is Map<String, dynamic>) {

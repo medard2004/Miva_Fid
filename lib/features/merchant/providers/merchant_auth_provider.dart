@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -174,7 +172,7 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
-  Future<bool> uploadLogo(File file) async {
+  Future<bool> uploadLogo(dynamic file) async {
     state = state.copyWith(clearError: true);
     try {
       final restaurant = await _authRepository.uploadLogo(file);

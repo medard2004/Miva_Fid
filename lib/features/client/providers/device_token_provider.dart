@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,9 +70,10 @@ class DeviceTokenNotifier {
   }
 
   Future<void> _register(String token) {
-    return _ref
-        .read(deviceTokenServiceProvider)
-        .register(token, Platform.isIOS ? 'ios' : 'android');
+    final platform = defaultTargetPlatform == TargetPlatform.iOS
+        ? 'ios'
+        : (kIsWeb ? 'web' : 'android');
+    return _ref.read(deviceTokenServiceProvider).register(token, platform);
   }
 
   void dispose() {

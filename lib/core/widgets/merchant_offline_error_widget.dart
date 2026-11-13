@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,7 +32,7 @@ class MerchantOfflineErrorWidget extends ConsumerWidget {
   bool _isNetworkProblem(bool isOffline) {
     if (isOffline) return true;
     if (error is NetworkException) return true;
-    if (error is SocketException) return true;
+    if (error.runtimeType.toString() == 'SocketException') return true;
     final errStr = error?.toString().toLowerCase() ?? '';
     return errStr.contains('socket') ||
         errStr.contains('connection') ||

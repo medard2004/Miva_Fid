@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Miva-Fid — Pitch Deck Officiel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0D13;
+      --card-bg: #141721;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #6366F1;
+      --primary-light: #818CF8;
+      --accent: #F59E0B;
+      --success: #10B981;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #050608;
+      color: var(--text);
+      font-family: var(--font-main);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      padding: 40px 20px;
+    }
+
+    /* Print settings for PDF export */
+    @page {
+      size: 16in 9in;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        background-color: var(--bg);
+        padding: 0;
+        gap: 0;
+      }
+      .slide {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always;
+        break-after: page;
+        width: 16in !important;
+        height: 9in !important;
+        min-height: 9in !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    .slide {
+      background: radial-gradient(circle at 85% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 45%),
+                  radial-gradient(circle at 15% 85%, rgba(245, 158, 11, 0.06) 0%, transparent 40%),
+                  var(--bg);
+      width: 1200px;
+      height: 675px; /* 16:9 ratio */
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      padding: 56px 64px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .brand-tag {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tag::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 12px var(--primary);
+    }
+
+    .slide-num {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .slide-title {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #FFFFFF;
+      margin-top: 6px;
+    }
+
+    .slide-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .highlight-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      padding: 3px 8px;
+      border-radius: 6px;
+      align-self: flex-start;
+    }
+
+    .success-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 3px 8px;
+      border-radius: 6px;
+      align-self: flex-start;
+    }
+
+    .primary-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--primary-light);
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      padding: 3px 8px;
+      border-radius: 6px;
+      align-self: flex-start;
+    }
+
+    /* Metric Callouts */
+    .metric {
+      font-family: var(--font-mono);
+      font-size: 38px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1;
+    }
+
+    .metric-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Cover specific */
+    .cover-content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 800px;
+    }
+
+    .cover-title {
+      font-size: 58px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #FFFFFF 60%, var(--primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cover-sub {
+      font-size: 22px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    /* Steps */
+    .step-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    /* Toolbar for print */
+    .print-bar {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .print-bar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(99, 102, 241, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <button class="print-bar no-print" onclick="window.print()">
+    📥 Exporter en PDF (Imprimer)
+  </button>
+
+  <!-- ==================== SLIDE 1 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div class="brand-tag">Miva-Fid • Lomé, Togo</div>
+      <div class="slide-num">01 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="cover-content">
+        <span class="highlight-badge">INNOVATION COMMERCE LOCAL & FINTECH</span>
+        <h1 class="cover-title">Miva-Fid</h1>
+        <p class="cover-sub">
+          La plateforme mobile tout-en-un de fidélisation digitale et de relation client pour les commerces de proximité en Afrique de l'Ouest.
+        </p>
+        <div class="hero-tags">
+          <span class="success-badge">✓ 100% Mobile & Sans Matériel</span>
+          <span class="primary-badge">✓ Architecture Offline-First (Sans Internet)</span>
+          <span class="highlight-badge">✓ Tarification en FCFA</span>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Présentation de candidature — Concours de Pitch</span>
+      <span>Lomé, Togo 🇹🇬</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 2 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Le Constat Terrain</div>
+        <h2 class="slide-title">Le Problème</h2>
+        <p class="slide-subtitle">Le grand vide relationnel des commerces de proximité au Togo</p>
+      </div>
+      <div class="slide-num">02 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3">
+        <div class="card">
+          <span class="highlight-badge">ABSENCE DE FIDÉLISATION</span>
+          <div class="card-title">Zéro Outil de Rétention</div>
+          <p class="card-desc">
+            Au Togo, plus de 90% des restaurants, boutiques et salons n'ont aucun programme pour récompenser et retenir leurs clients. Chaque client repart comme un inconnu.
+          </p>
+        </div>
+        <div class="card">
+          <span class="highlight-badge">PERTE DE CONTACT</span>
+          <div class="card-title">Aucune Base Clients</div>
+          <p class="card-desc">
+            Les gérants n'ont aucun moyen de recontacter leurs clients : ni nom, ni numéro WhatsApp. Dès qu'un client franchit la porte, il est définitivement hors de portée.
+          </p>
+        </div>
+        <div class="card">
+          <span class="highlight-badge">BARRIÈRE TECHNIQUE</span>
+          <div class="card-title">Coupures Réseau & Coûts</div>
+          <p class="card-desc">
+            Les logiciels occidentaux exigent des terminaux TPE coûteux (plusieurs centaines de milliers de FCFA) et une connexion Internet stable, inadaptée aux réalités locales.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Conséquence : Perte sèche de clientèle et dépendance constante aux clients de passage.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 3 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Notre Réponse</div>
+        <h2 class="slide-title">La Solution Miva-Fid</h2>
+        <p class="slide-subtitle">La fidélisation digitale accessible sur smartphone en 1 clic</p>
+      </div>
+      <div class="slide-num">03 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2">
+        <div class="card" style="border-left: 4px solid var(--primary);">
+          <span class="primary-badge">POUR LE COMMERÇANT</span>
+          <div class="card-title">Application Marchand Intuitive</div>
+          <p class="card-desc">
+            • <strong>Zéro matériel à acheter :</strong> Tourne sur n'importe quel smartphone Android existant.<br>
+            • <strong>Programmes sur-mesure :</strong> Tampons (ex: 9 achetés = 1 offert), Points ou Cashback.<br>
+            • <strong>Fichier clients qualifié :</strong> Vue centralisée des meilleurs habitués et de leur récurrence.<br>
+            • <strong>Scan ultra-rapide :</strong> Validation d'un passage en moins d'une seconde.
+          </p>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--success);">
+          <span class="success-badge">POUR LE CLIENT</span>
+          <div class="card-title">Portefeuille Digital Universel</div>
+          <p class="card-desc">
+            • <strong>Un seul QR Code :</strong> Toutes ses enseignes favorites réunies dans une seule app.<br>
+            • <strong>Zéro papier ni carton perdu :</strong> Sa carte est toujours disponible sur son téléphone.<br>
+            • <strong>Récompenses en direct :</strong> Déblocage instantané de cadeaux, remises et avantages VIP.<br>
+            • <strong>Expérience valorisante :</strong> Sentiment d'être reconnu et privilégié.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Une expérience gagnant-gagnant pensée pour les habitudes du consommateur ouest-africain.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 4 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Parcours Utilisateur</div>
+        <h2 class="slide-title">L'Expérience en 3 Étapes Simples</h2>
+        <p class="slide-subtitle">Zéro friction en caisse : validation en moins d'une seconde</p>
+      </div>
+      <div class="slide-num">04 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3">
+        <div class="step-box">
+          <div class="step-num">1</div>
+          <div class="card-title">Présentation du QR</div>
+          <p class="card-desc">
+            Le client ouvre son application Miva-Fid et présente son QR code unique ou son numéro lors du paiement au comptoir.
+          </p>
+        </div>
+        <div class="step-box">
+          <div class="step-num">2</div>
+          <div class="card-title">Scan Instantané (0.8s)</div>
+          <p class="card-desc">
+            Le serveur ou caissier scanne le code avec le téléphone de la boutique. Confirmation instantanée avec vibration haptique.
+          </p>
+        </div>
+        <div class="step-box">
+          <div class="step-num">3</div>
+          <div class="card-title">Récompense & Rétention</div>
+          <p class="card-desc">
+            Le tampon ou point est crédité en temps réel. Le client est incité à revenir pour atteindre son prochain palier de cadeau.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Fluidité absolue : aucune file d'attente créée au comptoir.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 5 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Notre Force Technologique</div>
+        <h2 class="slide-title">L'Architecture "Offline-First"</h2>
+        <p class="slide-subtitle">Pourquoi Miva-Fid réussit là où les autres échouent en Afrique</p>
+      </div>
+      <div class="slide-num">05 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3">
+        <div class="card">
+          <span class="success-badge">BASE LOCALE SQLITE</span>
+          <div class="card-title">Fonctionne Sans Internet</div>
+          <p class="card-desc">
+            L'application embarque une base de données locale sécurisée. Même en pleine coupure réseau ou sans crédit data, le scanner continue de valider les tampons sans interruption.
+          </p>
+        </div>
+        <div class="card">
+          <span class="primary-badge">FILE D'ATTENTE INTELLIGENTE</span>
+          <div class="card-title">Auto-Synchronisation</div>
+          <p class="card-desc">
+            Dès que le téléphone capte à nouveau du Wi-Fi ou de la 4G, toutes les opérations hors-ligne sont synchronisées avec le serveur sans aucune action manuelle.
+          </p>
+        </div>
+        <div class="card">
+          <span class="highlight-badge">SÉCURITÉ ANTI-FRAUDE</span>
+          <div class="card-title">Clés d'Idempotence</div>
+          <p class="card-desc">
+            Chaque transaction hors-ligne possède un identifiant unique (UUID) garantissant zéro doublon et zéro perte de données, tout en protégeant les déblocages de cadeaux.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Adaptation totale aux réalités des télécoms en Afrique de l'Ouest.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 6 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Modèle Économique</div>
+        <h2 class="slide-title">Un Business Model SaaS Récurrent</h2>
+        <p class="slide-subtitle">Tarification simple, accessible et adaptée en FCFA</p>
+      </div>
+      <div class="slide-num">06 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3">
+        <div class="card">
+          <span class="primary-badge">FORMULE DÉCOUVERTE</span>
+          <div class="metric">0 FCFA</div>
+          <div class="metric-sub">Pour tester et amorcer</div>
+          <p class="card-desc" style="margin-top: 8px;">
+            • Jusqu'à 50 clients fidélisés<br>
+            • 1 programme au choix<br>
+            • Validation QR code illimitée
+          </p>
+        </div>
+        <div class="card" style="border: 2px solid var(--primary); background: rgba(99, 102, 241, 0.08);">
+          <span class="highlight-badge">PLAN PRO — POPULAIRE</span>
+          <div class="metric">15 000 <span style="font-size: 18px;">FCFA/mois</span></div>
+          <div class="metric-sub">Pour les commerces actifs</div>
+          <p class="card-desc" style="margin-top: 8px;">
+            • Clients fidélisés illimités<br>
+            • Multi-caissiers & rôles<br>
+            • Relances SMS/WhatsApp<br>
+            • Statistiques avancées & export
+          </p>
+        </div>
+        <div class="card">
+          <span class="success-badge">REVENUS COMPLÉMENTAIRES</span>
+          <div class="metric">+ Usage</div>
+          <div class="metric-sub">Packs & Écosystème</div>
+          <p class="card-desc" style="margin-top: 8px;">
+            • Packs de SMS marketing<br>
+            • Relances WhatsApp ciblées<br>
+            • Commissions futures Marketplace<br>
+            • Plan Réseau / Multi-boutiques
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Rentable pour le commerçant dès le 2ème client fidélisé réactivé dans le mois.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 7 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Taille du Marché</div>
+        <h2 class="slide-title">Opportunité & Marché Cible</h2>
+        <p class="slide-subtitle">Un océan bleu à Lomé, puis dans toute la sous-région UEMOA</p>
+      </div>
+      <div class="slide-num">07 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-4">
+        <div class="card">
+          <div class="metric">+4 500</div>
+          <div class="metric-sub">Établissements cibles à Lomé</div>
+          <p class="card-desc">Restaurants, maquis chics, cafés, superettes, salons de coiffure & spas.</p>
+        </div>
+        <div class="card">
+          <div class="metric">>75%</div>
+          <div class="metric-sub">Pénétration Smartphone</div>
+          <p class="card-desc">Généralisation du mobile dans les zones urbaines au Togo.</p>
+        </div>
+        <div class="card">
+          <div class="metric">+35%</div>
+          <div class="metric-sub">Fréquence de retour visée</div>
+          <p class="card-desc">Impact mesuré sur la récurrence de visite chez nos commerçants partenaires.</p>
+        </div>
+        <div class="card">
+          <div class="metric">8 Pays</div>
+          <div class="metric-sub">Potentiel Zone UEMOA</div>
+          <p class="card-desc">Marché sous-régional unifié par la même monnaie (FCFA) : Bénin, Côte d'Ivoire, Sénégal...</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Le boom du Mobile Money (T-Money, Flooz) a déjà préparé le terrain des usages digitaux au comptoir.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 8 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Feuille de Route</div>
+        <h2 class="slide-title">Roadmap : IA & Engagement</h2>
+        <p class="slide-subtitle">Passer d'une carte de fidélité à un copilote intelligent de croissance</p>
+      </div>
+      <div class="slide-num">08 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-4">
+        <div class="card">
+          <span class="primary-badge">COPILOTE IA</span>
+          <div class="card-title">Intelligence Artificielle</div>
+          <p class="card-desc">
+            • Recommandations personnalisées.<br>
+            • Prédiction du départ des clients (churn).<br>
+            • Rédaction automatique de notifications ciblées validées en 1 clic.
+          </p>
+        </div>
+        <div class="card">
+          <span class="success-badge">CANAUX MULTIPLES</span>
+          <div class="card-title">SMS & WhatsApp IA</div>
+          <p class="card-desc">
+            • Relance WhatsApp sous contrôle des coûts (super admin).<br>
+            • SMS de secours quand le push n'a pas été vu.<br>
+            • L'IA choisit le canal optimal d'envoi.
+          </p>
+        </div>
+        <div class="card">
+          <span class="highlight-badge">GAMIFICATION</span>
+          <div class="card-title">Mini-Jeux & Défis</div>
+          <p class="card-desc">
+            • Roue de la fortune et défis du jour.<br>
+            • Objectifs collectifs de communauté.<br>
+            • Tirage sécurisé côté serveur pour éliminer toute triche.
+          </p>
+        </div>
+        <div class="card">
+          <span class="primary-badge">VIRALITÉ LOCALE</span>
+          <div class="card-title">Statuts Dynamiques</div>
+          <p class="card-desc">
+            • Flux éphémère façon WhatsApp.<br>
+            • Plat du jour, ambiance, promo flash.<br>
+            • Incite à ouvrir l'application chaque matin.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Technologie développée pour créer une habitude d'utilisation quotidienne.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 9 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Écosystème Futur</div>
+        <h2 class="slide-title">Marketplace & Super-App Locale</h2>
+        <p class="slide-subtitle">Monétisation avancée et services à forte valeur ajoutée</p>
+      </div>
+      <div class="slide-num">09 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3">
+        <div class="card">
+          <span class="primary-badge">COMMERCE & VOIX</span>
+          <div class="card-title">Marketplace Vocale</div>
+          <p class="card-desc">
+            Commande directe et réservation vocale par IA auprès des établissements partenaires. Recherche en langage naturel et panier instantané.
+          </p>
+        </div>
+        <div class="card">
+          <span class="success-badge">FINTECH LOCALE</span>
+          <div class="card-title">Portefeuille & Cashback</div>
+          <p class="card-desc">
+            Solde interne de cashback réutilisable pour payer ses achats, avec passerelle vers les comptes Mobile Money locaux.
+          </p>
+        </div>
+        <div class="card">
+          <span class="highlight-badge">REMPLISSAGE HEURES CREUSES</span>
+          <div class="card-title">Promos Flash & Réservation</div>
+          <p class="card-desc">
+            Offres avec compte à rebours pour remplir les heures calmes. Réservations intelligentes avec prédiction IA des no-shows.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>+ Espace publicitaire récompensé (Ads) & API de fidélité pour logiciels de caisse, hôtels et pharmacies.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 10 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Exécution & Rigueur</div>
+        <h2 class="slide-title">L'Équipe du Projet</h2>
+        <p class="slide-subtitle">La complémentarité entre expertise technique et immersion terrain</p>
+      </div>
+      <div class="slide-num">10 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2">
+        <div class="card" style="border-left: 4px solid var(--primary);">
+          <span class="primary-badge">MAÎTRISE TECHNIQUE AVANCÉE</span>
+          <div class="card-title">Développement Mobile & Systèmes</div>
+          <p class="card-desc">
+            • Expertise éprouvée sur Flutter / Dart, architecture Riverpod et synchronisation hors-ligne SQLite.<br>
+            • Conception d'APIs robustes, performantes et sécurisées adaptées aux connexions mobiles africaines.<br>
+            • Rigueur sur la sécurité des données, l'intégrité anti-fraude et la fluidité des interfaces utilisateurs.
+          </p>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--success);">
+          <span class="success-badge">ANCRAGE LOCAL & TERRAIN</span>
+          <div class="card-title">Connaissance Intime du Marché</div>
+          <p class="card-desc">
+            • Présence directe à Lomé, au contact régulier des restaurateurs et commerçants de quartier.<br>
+            • Compréhension claire des freins à l'adoption (peur de la complexité, manque de temps, coupures de réseau).<br>
+            • Vision pragmatique : une solution pensée pour faire gagner de l'argent aux commerces dès le premier mois.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Une équipe agile, déterminée et obsédée par la résolution des problèmes réels de nos commerces.</span>
+      <span>Miva-Fid</span>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 11 ==================== -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <div class="brand-tag">Perspectives & Ambition</div>
+        <h2 class="slide-title">Objectifs du Concours & Conclusion</h2>
+        <p class="slide-subtitle">Accélérer le déploiement de Miva-Fid auprès des 100 premiers commerces pilotes</p>
+      </div>
+      <div class="slide-num">11 / 11</div>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3">
+        <div class="card">
+          <span class="primary-badge">DÉPLOIEMENT TERRAIN (40%)</span>
+          <div class="card-title">Acquisition Pilote</div>
+          <p class="card-desc">
+            Enrôlement et accompagnement des 100 premiers restaurants, cafés et boutiques à Lomé avec kits comptoir offerts.
+          </p>
+        </div>
+        <div class="card">
+          <span class="success-badge">R&D PRODUIT (40%)</span>
+          <div class="card-title">IA & WhatsApp</div>
+          <p class="card-desc">
+            Finalisation du Copilote IA prédictif et du module de relance automatisée WhatsApp sous contrôle des coûts.
+          </p>
+        </div>
+        <div class="card">
+          <span class="highlight-badge">COMMUNICATION (20%)</span>
+          <div class="card-title">Adoption Utilisateurs</div>
+          <p class="card-desc">
+            Campagnes d'incitation auprès des consommateurs locaux pour créer le réflexe Miva-Fid à chaque sortie.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span style="font-weight: 700; color: #FFFFFF;">Miva-Fid : Donnons à nos commerces locaux le pouvoir de grandir.</span>
+      <span>Merci pour votre attention ! 🚀</span>
+    </div>
+  </div>
+
+</body>
+</html>

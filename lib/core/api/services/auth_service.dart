@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import '../core/api_client.dart';
 import '../core/api_exceptions.dart';
@@ -172,9 +173,21 @@ class AuthService {
         return response.data as Map<String, dynamic>;
       });
 
-  Future<Map<String, dynamic>> uploadAvatar(File file) => _guard(() async {
+  Future<Map<String, dynamic>> uploadAvatar(dynamic file) => _guard(() async {
+        MultipartFile multipart;
+        if (file is List<int>) {
+          multipart = MultipartFile.fromBytes(file, filename: 'avatar.jpg');
+        } else {
+          // file.readAsBytes() fonctionne universellement (XFile, File, etc.)
+          final bytes = await (file as dynamic).readAsBytes() as List<int>;
+          String filename = 'avatar.jpg';
+          try {
+            filename = ((file as dynamic).name ?? 'avatar.jpg') as String;
+          } catch (_) {}
+          multipart = MultipartFile.fromBytes(bytes, filename: filename);
+        }
         final formData = FormData.fromMap({
-          'avatar': await MultipartFile.fromFile(file.path, filename: 'avatar.jpg'),
+          'avatar': multipart,
         });
         final response =
             await _apiClient.dio.post('/auth/profile/avatar', data: formData);

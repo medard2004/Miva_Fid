@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
@@ -58,12 +56,14 @@ class CardExportService {
     }
 
     try {
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/carte_${card.fallbackId}.png');
-      await file.writeAsBytes(bytes);
+      final xFile = XFile.fromData(
+        bytes,
+        mimeType: 'image/png',
+        name: 'carte_${card.fallbackId}.png',
+      );
 
       final result = await Share.shareXFiles(
-        [XFile(file.path)],
+        [xFile],
         subject: t.exportShareSubject(card.restaurantName),
         text: action == 'share' ? t.exportShareText(card.restaurantName) : null,
       );

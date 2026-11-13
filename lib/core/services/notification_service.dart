@@ -23,22 +23,24 @@ class NotificationService {
       sound: true,
     );
 
-    // Local notifications setup
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings();
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-    await _localNotifications.initialize(
-      initSettings,
-      // Notif locale affichée pendant que l'app est au premier plan (voir
-      // `_handleForegroundMessage`) — tapée, elle doit rediriger comme
-      // n'importe quel autre push.
-      onDidReceiveNotificationResponse: (response) {
-        _routeFromPayload(response.payload);
-      },
-    );
+    // Local notifications setup (uniquement sur plateformes mobiles natives)
+    if (!kIsWeb) {
+      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosSettings = DarwinInitializationSettings();
+      const initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
+      await _localNotifications.initialize(
+        initSettings,
+        // Notif locale affichée pendant que l'app est au premier plan (voir
+        // `_handleForegroundMessage`) — tapée, elle doit rediriger comme
+        // n'importe quel autre push.
+        onDidReceiveNotificationResponse: (response) {
+          _routeFromPayload(response.payload);
+        },
+      );
+    }
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -160,6 +162,7 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
+    if (kIsWeb) return;
     const androidDetails = AndroidNotificationDetails(
       'mivafid_channel',
       'Miva-Fid',

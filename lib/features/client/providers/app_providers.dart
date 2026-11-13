@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -385,7 +384,7 @@ class AuthState {
   final Object? lastError;
 
   /// Avatar choisi localement, affiché en attendant que l'upload aboutisse.
-  final File? localAvatar;
+  final Uint8List? localAvatar;
 
   const AuthState({
     this.isAuthenticated = false,
@@ -399,7 +398,7 @@ class AuthState {
     AppUser? user,
     Object? lastError,
     bool clearError = false,
-    File? localAvatar,
+    Uint8List? localAvatar,
     bool clearLocalAvatar = false,
   }) =>
       AuthState(
@@ -707,11 +706,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Affiche immédiatement le fichier choisi, puis le remplace par l'URL
+  /// Affiche immédiatement l'image choisie, puis la remplace par l'URL
   /// renvoyée par le serveur une fois l'upload terminé.
-  Future<void> updateAvatar(File file) async {
+  Future<void> updateAvatar(dynamic file) async {
     if (state.user == null) return;
-    state = state.copyWith(localAvatar: file);
+    Uint8List? bytes;
+    if (file is Uint8List) {
+      bytes = file;
+    } else {
+      try {
+        bytes = await (file as dynamic).readAsBytes() as Uint8List;
+      } catch (_) {}
+    }
+    state = state.copyWith(localAvatar: bytes);
     try {
       final user = await _authRepository.uploadAvatar(file);
       state = state.copyWith(user: user, clearLocalAvatar: true);

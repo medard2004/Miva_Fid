@@ -6,6 +6,7 @@
 .pub-cache/
 .pub/
 build/
+livrables/
 *.g.dart
 *.freezed.dart
 

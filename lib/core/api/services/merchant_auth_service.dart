@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 import 'package:dio/dio.dart';
 import '../core/api_client.dart';
 import '../core/api_exceptions.dart';
@@ -101,9 +101,20 @@ class MerchantAuthService {
         return response.data as Map<String, dynamic>;
       });
 
-  Future<Map<String, dynamic>> uploadLogo(File file) => _guard(() async {
+  Future<Map<String, dynamic>> uploadLogo(dynamic file) => _guard(() async {
+        MultipartFile multipart;
+        if (file is List<int>) {
+          multipart = MultipartFile.fromBytes(file, filename: 'logo.jpg');
+        } else {
+          final bytes = await (file as dynamic).readAsBytes() as List<int>;
+          String filename = 'logo.jpg';
+          try {
+            filename = ((file as dynamic).name ?? 'logo.jpg') as String;
+          } catch (_) {}
+          multipart = MultipartFile.fromBytes(bytes, filename: filename);
+        }
         final formData = FormData.fromMap({
-          'logo': await MultipartFile.fromFile(file.path, filename: 'logo.jpg'),
+          'logo': multipart,
         });
         final response =
             await _apiClient.dio.post('/auth/merchant/profile/logo', data: formData);
