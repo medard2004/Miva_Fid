@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 class QrLinkHelper {
   static const String _defaultWebAppUrl = String.fromEnvironment(
     'WEB_APP_URL',
-    defaultValue: 'https://miva-fid.vercel.app',
+    defaultValue: 'https://miva-fid-app.vercel.app',
   );
 
   /// Retourne l'origine web active sur le navigateur, ou l'URL configurée
