@@ -10,6 +10,7 @@ import 'package:miva_fid/core/utils/toast_service.dart';
 import 'package:miva_fid/features/client/models/reward.dart';
 import 'package:miva_fid/features/client/models/app_notification.dart';
 import 'package:miva_fid/features/client/models/user.dart';
+import 'package:miva_fid/features/client/providers/wallet_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Récompenses
@@ -156,10 +157,32 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
     final notificationId = payload['id']?.toString();
     final data = payload['data'] as Map<String, dynamic>? ?? {};
     final dedupId = data['notification_id']?.toString() ?? notificationId;
-    final restaurantName =
+    var restaurantName =
         data['restaurant_name']?.toString() ?? payload['restaurant_name']?.toString();
-    final restaurantLogo =
+    var restaurantLogo =
         data['restaurant_logo']?.toString() ?? payload['restaurant_logo']?.toString();
+
+    if (restaurantLogo == null || restaurantLogo.isEmpty ||
+        restaurantName == null || restaurantName.isEmpty) {
+      final cardId = data['card_id']?.toString();
+      final cards = _ref.read(walletProvider);
+      for (final card in cards) {
+        final matchById = cardId != null && cardId.isNotEmpty && card.id == cardId;
+        final matchByName = restaurantName != null &&
+            restaurantName.isNotEmpty &&
+            card.restaurantName.toLowerCase() == restaurantName.toLowerCase();
+        final matchByTitle = title.isNotEmpty &&
+            card.restaurantName.isNotEmpty &&
+            title.toLowerCase().contains(card.restaurantName.toLowerCase());
+        if (matchById || matchByName || matchByTitle) {
+          restaurantName ??= card.restaurantName;
+          if (restaurantLogo == null || restaurantLogo.isEmpty) {
+            restaurantLogo = card.logoUrl;
+          }
+          break;
+        }
+      }
+    }
 
     if (ToastService.hasBeenSeen(dedupId)) return;
 

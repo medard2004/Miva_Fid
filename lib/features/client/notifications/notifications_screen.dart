@@ -11,6 +11,7 @@ import 'package:miva_fid/features/client/models/app_notification.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
+import 'package:miva_fid/features/client/providers/wallet_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
 import 'package:miva_fid/features/client/widgets/shared/app_detail_bar.dart';
 
@@ -98,6 +99,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     ref.watch(appBrightnessProvider);
     final t = AppLocalizations.of(context)!;
     final allNotifications = ref.watch(notificationsProvider);
+    final cards = ref.watch(walletProvider);
     final unreadCount = allNotifications.where((n) => !n.isRead).length;
 
     final filteredList = allNotifications
@@ -207,8 +209,35 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       itemBuilder: (context, i) {
                         final n = filteredList[i];
                         final style = _styleFor(n.type);
-                        final restaurantLogo = n.data['restaurant_logo']?.toString();
-                        final restaurantName = n.data['restaurant_name']?.toString();
+                        var restaurantLogo = n.data['restaurant_logo']?.toString();
+                        var restaurantName = n.data['restaurant_name']?.toString();
+                        if (restaurantLogo == null ||
+                            restaurantLogo.isEmpty ||
+                            restaurantName == null ||
+                            restaurantName.isEmpty) {
+                          final cardId = n.data['card_id']?.toString();
+                          for (final card in cards) {
+                            final matchById = cardId != null &&
+                                cardId.isNotEmpty &&
+                                card.id == cardId;
+                            final matchByName = restaurantName != null &&
+                                restaurantName.isNotEmpty &&
+                                card.restaurantName.toLowerCase() ==
+                                    restaurantName.toLowerCase();
+                            final matchByTitle = n.title.isNotEmpty &&
+                                card.restaurantName.isNotEmpty &&
+                                n.title
+                                    .toLowerCase()
+                                    .contains(card.restaurantName.toLowerCase());
+                            if (matchById || matchByName || matchByTitle) {
+                              restaurantName ??= card.restaurantName;
+                              if (restaurantLogo == null || restaurantLogo.isEmpty) {
+                                restaurantLogo = card.logoUrl;
+                              }
+                              break;
+                            }
+                          }
+                        }
                         final displayTitle = (restaurantName != null &&
                                 restaurantName.isNotEmpty &&
                                 !n.title.contains(restaurantName))
