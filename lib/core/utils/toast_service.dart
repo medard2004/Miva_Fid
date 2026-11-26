@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../api/config/api_constants.dart';
 import '../router/app_router.dart';
 import '../notifications/notification_destination.dart';
 import '../theme/app_colors.dart';
@@ -535,7 +536,11 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                       color: AppColors.background,
                       child: hasImage
                           ? CachedNetworkImage(
-                              imageUrl: widget.imageUrl!,
+                              imageUrl:
+                                  ApiConstants.resolveMediaUrl(widget.imageUrl),
+                              httpHeaders: ApiConstants.mediaHeaders(
+                                  ApiConstants.resolveMediaUrl(
+                                      widget.imageUrl)),
                               fit: BoxFit.cover,
                               placeholder: (_, __) => Container(
                                 color: AppColors.background,

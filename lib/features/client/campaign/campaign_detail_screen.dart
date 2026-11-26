@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/api/config/api_constants.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_radius.dart';
 import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
@@ -61,7 +62,10 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                     ? AspectRatio(
                         aspectRatio: 16 / 9,
                         child: CachedNetworkImage(
-                          imageUrl: widget.imageUrl!,
+                          imageUrl:
+                              ApiConstants.resolveMediaUrl(widget.imageUrl),
+                          httpHeaders: ApiConstants.mediaHeaders(
+                              ApiConstants.resolveMediaUrl(widget.imageUrl)),
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Container(
                             color: AppColors.surfaceMuted,

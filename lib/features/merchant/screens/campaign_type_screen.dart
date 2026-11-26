@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
@@ -735,7 +736,11 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
                                             fit: BoxFit.cover,
                                           ))
                                     : Image.network(
-                                        draft.imageUrl!,
+                                        ApiConstants.resolveMediaUrl(
+                                            draft.imageUrl),
+                                        headers: ApiConstants.mediaHeaders(
+                                            ApiConstants.resolveMediaUrl(
+                                                draft.imageUrl)),
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) =>
                                             const Center(

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/api/config/api_constants.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/core/theme/app_radius.dart';
 import 'package:miva_fid/features/client/models/loyalty_card.dart';
@@ -166,7 +167,9 @@ class _CardTopGroup extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: CachedNetworkImage(
-                    imageUrl: card.logoUrl!,
+                    imageUrl: ApiConstants.resolveMediaUrl(card.logoUrl),
+                    httpHeaders: ApiConstants.mediaHeaders(
+                        ApiConstants.resolveMediaUrl(card.logoUrl)),
                     width: 22,
                     height: 22,
                     fit: BoxFit.cover,

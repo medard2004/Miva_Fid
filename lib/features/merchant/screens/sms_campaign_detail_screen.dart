@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/services/realtime_service.dart';
@@ -728,7 +729,9 @@ class _SmsCampaignDetailScreenState
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: CachedNetworkImage(
-                imageUrl: c.imageUrl!,
+                imageUrl: ApiConstants.resolveMediaUrl(c.imageUrl),
+                httpHeaders: ApiConstants.mediaHeaders(
+                    ApiConstants.resolveMediaUrl(c.imageUrl)),
                 height: 130,
                 width: double.infinity,
                 fit: BoxFit.cover,

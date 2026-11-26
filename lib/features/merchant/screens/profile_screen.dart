@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/api/core/api_exceptions.dart';
 import '../../../core/services/image_upload_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -348,18 +349,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                             .withValues(alpha: 0.25),
                                         width: 2,
                                       ),
-                                      image: (logoUrl != null &&
-                                              logoUrl.isNotEmpty)
-                                          ? DecorationImage(
-                                              image: CachedNetworkImageProvider(
-                                                  logoUrl),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
                                     ),
-                                    child: (logoUrl == null ||
-                                            logoUrl.isEmpty)
-                                        ? Center(
+                                    child: (logoUrl != null &&
+                                            logoUrl.isNotEmpty)
+                                        ? ClipOval(
+                                            child: CachedNetworkImage(
+                                              imageUrl:
+                                                  ApiConstants.resolveMediaUrl(
+                                                      logoUrl),
+                                              httpHeaders:
+                                                  ApiConstants.mediaHeaders(
+                                                      ApiConstants
+                                                          .resolveMediaUrl(
+                                                              logoUrl)),
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                              placeholder: (_, __) => Center(
+                                                child: Text(
+                                                  initials,
+                                                  style: const TextStyle(
+                                                    fontSize: 28,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: Color(0xFF5B50EC),
+                                                  ),
+                                                ),
+                                              ),
+                                              errorWidget: (_, __, ___) =>
+                                                  Center(
+                                                child: Text(
+                                                  initials,
+                                                  style: const TextStyle(
+                                                    fontSize: 28,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: Color(0xFF5B50EC),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : Center(
                                             child: Text(
                                               initials,
                                               style: const TextStyle(
@@ -368,8 +397,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                 color: Color(0xFF5B50EC),
                                               ),
                                             ),
-                                          )
-                                        : null,
+                                          ),
                                   ),
                                   Positioned(
                                     bottom: 0,

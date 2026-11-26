@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/services/image_upload_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -292,13 +293,14 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                         const Icon(LucideIcons.store, color: AppColors.merchant, size: 28)
                       else
                         Builder(builder: (_) {
-                          final url = state.logoUrl!;
+                          final url = ApiConstants.resolveMediaUrl(state.logoUrl);
                           Widget fallback() => const Icon(LucideIcons.store, color: AppColors.merchant, size: 28);
                           if (url.startsWith('http') ||
                               url.startsWith('blob:') ||
                               url.startsWith('data:')) {
                             return Image.network(
                               url,
+                              headers: ApiConstants.mediaHeaders(url),
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => fallback(),
                             );

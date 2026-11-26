@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/onboarding_provider.dart';
@@ -176,7 +177,7 @@ class _CardTopGroup extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Builder(builder: (context) {
-                    final url = logoUrl!;
+                    final url = ApiConstants.resolveMediaUrl(logoUrl);
                     Widget fallback() => Icon(
                           iconForCommerceType(commerceType),
                           size: 13,
@@ -185,6 +186,7 @@ class _CardTopGroup extends StatelessWidget {
                     if (url.startsWith('http')) {
                       return CachedNetworkImage(
                         imageUrl: url,
+                        httpHeaders: ApiConstants.mediaHeaders(url),
                         width: 22,
                         height: 22,
                         fit: BoxFit.cover,

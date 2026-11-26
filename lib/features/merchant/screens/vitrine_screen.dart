@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/services/image_upload_service.dart';
 
 import '../../../core/errors/app_error.dart';
@@ -450,7 +451,9 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
               )
             else
               CachedNetworkImage(
-                imageUrl: logoUrl,
+                imageUrl: ApiConstants.resolveMediaUrl(logoUrl),
+                httpHeaders: ApiConstants.mediaHeaders(
+                    ApiConstants.resolveMediaUrl(logoUrl)),
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,

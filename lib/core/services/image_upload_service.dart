@@ -68,32 +68,37 @@ class ImageUploadService {
     Uint8List bytes;
 
     if (enableCrop && context.mounted) {
-      final cropped = await ImageCropper().cropImage(
-        sourcePath: picked.path,
-        aspectRatio: aspectRatio,
-        compressQuality: imageQuality,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Recadrer l\'image',
-            toolbarColor: AppColors.primary,
-            toolbarWidgetColor: Colors.white,
-            lockAspectRatio: aspectRatio != null,
-          ),
-          IOSUiSettings(
-            title: 'Recadrer l\'image',
-            aspectRatioLockEnabled: aspectRatio != null,
-          ),
-          WebUiSettings(
-            context: context,
-          ),
-        ],
-      );
+      try {
+        final cropped = await ImageCropper().cropImage(
+          sourcePath: picked.path,
+          aspectRatio: aspectRatio,
+          compressQuality: imageQuality,
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Recadrer l\'image',
+              toolbarColor: AppColors.primary,
+              toolbarWidgetColor: Colors.white,
+              lockAspectRatio: aspectRatio != null,
+            ),
+            IOSUiSettings(
+              title: 'Recadrer l\'image',
+              aspectRatioLockEnabled: aspectRatio != null,
+            ),
+            WebUiSettings(
+              context: context,
+            ),
+          ],
+        );
 
-      if (cropped == null) return null;
-      finalPath = cropped.path;
-      bytes = await cropped.readAsBytes();
-      if (!finalName.contains('.')) {
-        finalName = 'image.jpg';
+        if (cropped == null) return null;
+        finalPath = cropped.path;
+        bytes = await cropped.readAsBytes();
+        if (!finalName.contains('.')) {
+          finalName = 'image.jpg';
+        }
+      } catch (e) {
+        debugPrint('[ImageUploadService] Recadrage indisponible, repli image brute: $e');
+        bytes = await picked.readAsBytes();
       }
     } else {
       bytes = await picked.readAsBytes();

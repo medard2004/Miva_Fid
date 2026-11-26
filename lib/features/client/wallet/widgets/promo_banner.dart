@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:miva_fid/core/api/config/api_constants.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 
 class PromoBanner extends StatelessWidget {
@@ -53,7 +54,9 @@ class PromoBanner extends StatelessWidget {
               child: Opacity(
                 opacity: 0.28,
                 child: Image.network(
-                  imageUrl!,
+                  ApiConstants.resolveMediaUrl(imageUrl),
+                  headers: ApiConstants.mediaHeaders(
+                      ApiConstants.resolveMediaUrl(imageUrl)),
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),

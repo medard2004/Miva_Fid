@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:miva_fid/core/api/config/api_constants.dart';
 import 'package:miva_fid/core/notifications/content_unavailable_view.dart';
 import 'package:miva_fid/core/services/wallet_pass_service.dart';
 import 'package:miva_fid/core/utils/toast_service.dart';
@@ -1207,7 +1208,9 @@ class _MerchantShowcaseCard extends StatelessWidget {
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: CachedNetworkImage(
-                            imageUrl: card.logoUrl!,
+                            imageUrl: ApiConstants.resolveMediaUrl(card.logoUrl),
+                            httpHeaders: ApiConstants.mediaHeaders(
+                                ApiConstants.resolveMediaUrl(card.logoUrl)),
                             width: 42,
                             height: 42,
                             fit: BoxFit.cover,
@@ -1526,7 +1529,10 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(16),
                               child: CachedNetworkImage(
-                                imageUrl: card.logoUrl!,
+                                imageUrl:
+                                    ApiConstants.resolveMediaUrl(card.logoUrl),
+                                httpHeaders: ApiConstants.mediaHeaders(
+                                    ApiConstants.resolveMediaUrl(card.logoUrl)),
                                 width: 52,
                                 height: 52,
                                 fit: BoxFit.cover,

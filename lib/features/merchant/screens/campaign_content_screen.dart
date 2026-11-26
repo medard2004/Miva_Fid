@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../models/campaign_model.dart';
@@ -187,7 +188,11 @@ class _CampaignContentScreenState
                                   ? ClipRRect(
                                       borderRadius: BorderRadius.circular(12),
                                       child: CachedNetworkImage(
-                                        imageUrl: draft.imageUrl!,
+                                        imageUrl: ApiConstants.resolveMediaUrl(
+                                            draft.imageUrl),
+                                        httpHeaders: ApiConstants.mediaHeaders(
+                                            ApiConstants.resolveMediaUrl(
+                                                draft.imageUrl)),
                                         fit: BoxFit.cover,
                                         placeholder: (context, url) => const Center(
                                           child: CircularProgressIndicator(),

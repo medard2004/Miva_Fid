@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:miva_fid/core/api/config/api_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
@@ -80,9 +81,11 @@ class UserAvatar extends StatelessWidget {
   }
 
   Widget _networkOrInitials(double size) {
-    if (photoUrl == null || photoUrl!.isEmpty) return _initials();
+    final resolved = ApiConstants.resolveMediaUrl(photoUrl);
+    if (resolved.isEmpty) return _initials();
     return CachedNetworkImage(
-      imageUrl: photoUrl!,
+      imageUrl: resolved,
+      httpHeaders: ApiConstants.mediaHeaders(resolved),
       fit: BoxFit.cover,
       width: size,
       height: size,

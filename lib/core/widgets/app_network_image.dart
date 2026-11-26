@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../api/config/api_constants.dart';
 import 'skeleton_loader.dart';
 
 /// Widget réutilisable d'affichage d'image avec :
@@ -62,8 +63,10 @@ class AppNetworkImage extends StatelessWidget {
         errorBuilder: (_, __, ___) => _buildFallback(),
       );
     } else if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
+      final resolvedUrl = ApiConstants.resolveMediaUrl(imageUrl);
       content = CachedNetworkImage(
-        imageUrl: imageUrl!.trim(),
+        imageUrl: resolvedUrl,
+        httpHeaders: ApiConstants.mediaHeaders(resolvedUrl),
         width: width,
         height: height,
         fit: fit,
