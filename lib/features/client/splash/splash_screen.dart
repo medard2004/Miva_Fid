@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,7 +96,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       return;
     }
 
-    // 3. Onboarding et rôle déjà choisis par le passé
+    // 3. Sur le Web, redirection directe vers l'authentification marchand
+    if (kIsWeb) {
+      context.go('/auth/merchant/auth');
+      return;
+    }
+
+    // 4. Onboarding et rôle déjà choisis par le passé
     if (state != null && state.hasSeenOnboarding) {
       if (state.lastRole == 'merchant') {
         context.go('/auth/merchant/auth');
