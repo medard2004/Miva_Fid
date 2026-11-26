@@ -187,6 +187,8 @@ class _CardTopGroup extends StatelessWidget {
                       return CachedNetworkImage(
                         imageUrl: url,
                         httpHeaders: ApiConstants.mediaHeaders(url),
+                        imageRenderMethodForWeb:
+                            ApiConstants.webRenderMethodFor(url),
                         width: 22,
                         height: 22,
                         fit: BoxFit.cover,

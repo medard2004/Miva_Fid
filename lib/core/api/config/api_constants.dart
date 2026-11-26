@@ -1,3 +1,6 @@
+// ignore: depend_on_referenced_packages
+import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart';
+
 class ApiConstants {
   /// URL de l'API Laravel.
   ///
@@ -81,5 +84,13 @@ class ApiConstants {
       return const {'ngrok-skip-browser-warning': 'true'};
     }
     return null;
+  }
+
+  /// Sur Flutter Web, `HtmlImage` ignore `httpHeaders` : il faut utiliser
+  /// `HttpGet` dès que des en-têtes (ngrok) sont nécessaires.
+  static ImageRenderMethodForWeb webRenderMethodFor(String? url) {
+    return mediaHeaders(url) != null
+        ? ImageRenderMethodForWeb.HttpGet
+        : ImageRenderMethodForWeb.HtmlImage;
   }
 }

@@ -67,6 +67,7 @@ class AppNetworkImage extends StatelessWidget {
       content = CachedNetworkImage(
         imageUrl: resolvedUrl,
         httpHeaders: ApiConstants.mediaHeaders(resolvedUrl),
+        imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(resolvedUrl),
         width: width,
         height: height,
         fit: fit,

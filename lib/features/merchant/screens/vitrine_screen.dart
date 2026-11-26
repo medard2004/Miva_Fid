@@ -83,6 +83,8 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
         ToastService.showError(
           AppLocalizations.of(context)!.merchantVitrineLogoUploadError,
         );
+      } else {
+        ref.invalidate(merchantNotifierProvider);
       }
     } on ImageValidationException catch (e) {
       if (mounted) ToastService.showError(e.message);
@@ -103,6 +105,8 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
     if (!mounted) return;
     if (!ok) {
       ToastService.showError(AppLocalizations.of(context)!.merchantVitrineLogoRemoveError);
+    } else {
+      ref.invalidate(merchantNotifierProvider);
     }
     setState(() => _uploadingLogo = false);
   }
@@ -281,7 +285,10 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
                     // Section Photo de couverture
                     _SectionTitle(t.merchantVitrineCoverPhotoSection).animate().fadeIn(duration: 300.ms, delay: 220.ms),
                     const SizedBox(height: 6),
-                    _buildLogoPicker(merchant?.logoUrl, t)
+                    _buildLogoPicker(
+                        ref.watch(merchantAuthProvider).restaurant?.logoUrl ??
+                            merchant?.logoUrl,
+                        t)
                         .animate()
                         .fadeIn(duration: 400.ms, delay: 260.ms)
                         .slideY(begin: 0.06, end: 0),
@@ -453,6 +460,8 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
               CachedNetworkImage(
                 imageUrl: ApiConstants.resolveMediaUrl(logoUrl),
                 httpHeaders: ApiConstants.mediaHeaders(
+                    ApiConstants.resolveMediaUrl(logoUrl)),
+                imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
                     ApiConstants.resolveMediaUrl(logoUrl)),
                 height: 120,
                 width: double.infinity,

@@ -66,6 +66,10 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                               ApiConstants.resolveMediaUrl(widget.imageUrl),
                           httpHeaders: ApiConstants.mediaHeaders(
                               ApiConstants.resolveMediaUrl(widget.imageUrl)),
+                          imageRenderMethodForWeb:
+                              ApiConstants.webRenderMethodFor(
+                                  ApiConstants.resolveMediaUrl(
+                                      widget.imageUrl)),
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Container(
                             color: AppColors.surfaceMuted,

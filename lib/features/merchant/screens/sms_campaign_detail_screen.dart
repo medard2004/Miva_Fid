@@ -732,6 +732,8 @@ class _SmsCampaignDetailScreenState
                 imageUrl: ApiConstants.resolveMediaUrl(c.imageUrl),
                 httpHeaders: ApiConstants.mediaHeaders(
                     ApiConstants.resolveMediaUrl(c.imageUrl)),
+                imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
+                    ApiConstants.resolveMediaUrl(c.imageUrl)),
                 height: 130,
                 width: double.infinity,
                 fit: BoxFit.cover,

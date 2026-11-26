@@ -193,6 +193,10 @@ class _CampaignContentScreenState
                                         httpHeaders: ApiConstants.mediaHeaders(
                                             ApiConstants.resolveMediaUrl(
                                                 draft.imageUrl)),
+                                        imageRenderMethodForWeb:
+                                            ApiConstants.webRenderMethodFor(
+                                                ApiConstants.resolveMediaUrl(
+                                                    draft.imageUrl)),
                                         fit: BoxFit.cover,
                                         placeholder: (context, url) => const Center(
                                           child: CircularProgressIndicator(),

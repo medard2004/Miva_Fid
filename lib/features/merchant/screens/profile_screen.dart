@@ -81,6 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (!mounted) return;
       final t = AppLocalizations.of(context)!;
       if (ok) {
+        ref.invalidate(merchantNotifierProvider);
         ToastService.showSuccess(t.merchantProfileLogoSuccess);
       } else {
         ToastService.showError(t.merchantProfileLogoError);
@@ -362,6 +363,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                       ApiConstants
                                                           .resolveMediaUrl(
                                                               logoUrl)),
+                                              imageRenderMethodForWeb:
+                                                  ApiConstants
+                                                      .webRenderMethodFor(
+                                                          ApiConstants
+                                                              .resolveMediaUrl(
+                                                                  logoUrl)),
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,

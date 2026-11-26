@@ -1211,6 +1211,9 @@ class _MerchantShowcaseCard extends StatelessWidget {
                             imageUrl: ApiConstants.resolveMediaUrl(card.logoUrl),
                             httpHeaders: ApiConstants.mediaHeaders(
                                 ApiConstants.resolveMediaUrl(card.logoUrl)),
+                            imageRenderMethodForWeb:
+                                ApiConstants.webRenderMethodFor(
+                                    ApiConstants.resolveMediaUrl(card.logoUrl)),
                             width: 42,
                             height: 42,
                             fit: BoxFit.cover,
@@ -1533,6 +1536,10 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                                     ApiConstants.resolveMediaUrl(card.logoUrl),
                                 httpHeaders: ApiConstants.mediaHeaders(
                                     ApiConstants.resolveMediaUrl(card.logoUrl)),
+                                imageRenderMethodForWeb:
+                                    ApiConstants.webRenderMethodFor(
+                                        ApiConstants.resolveMediaUrl(
+                                            card.logoUrl)),
                                 width: 52,
                                 height: 52,
                                 fit: BoxFit.cover,

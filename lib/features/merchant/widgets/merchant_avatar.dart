@@ -42,6 +42,7 @@ class MerchantAvatar extends StatelessWidget {
         childWidget = CachedNetworkImage(
           imageUrl: url,
           httpHeaders: ApiConstants.mediaHeaders(url),
+          imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(url),
           width: size,
           height: size,
           fit: BoxFit.cover,

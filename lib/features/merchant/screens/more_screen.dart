@@ -9,6 +9,8 @@ import '../../../core/services/connectivity_service.dart';
 import '../../../core/services/offline_sync_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/api/config/api_constants.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_download_section.dart';
 import '../../../core/widgets/header_mode_switcher.dart';
@@ -251,15 +253,34 @@ class MoreScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: AppColors.primaryTint,
                           shape: BoxShape.circle,
-                          image: (logoUrl != null && logoUrl.isNotEmpty)
-                              ? DecorationImage(
-                                  image: NetworkImage(logoUrl),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
                         ),
-                        child: (logoUrl == null || logoUrl.isEmpty)
-                            ? Center(
+                        child: (logoUrl != null && logoUrl.isNotEmpty)
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl:
+                                      ApiConstants.resolveMediaUrl(logoUrl),
+                                  httpHeaders: ApiConstants.mediaHeaders(
+                                      ApiConstants.resolveMediaUrl(logoUrl)),
+                                  imageRenderMethodForWeb:
+                                      ApiConstants.webRenderMethodFor(
+                                          ApiConstants.resolveMediaUrl(
+                                              logoUrl)),
+                                  width: 44,
+                                  height: 44,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => Center(
+                                    child: Text(
+                                      initials,
+                                      style: const TextStyle(
+                                        color: Color(0xFF5B50EC),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Center(
                                 child: Text(
                                   initials,
                                   style: const TextStyle(
@@ -268,8 +289,7 @@ class MoreScreen extends ConsumerWidget {
                                     fontSize: 15,
                                   ),
                                 ),
-                              )
-                            : null,
+                              ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

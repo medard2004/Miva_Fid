@@ -595,6 +595,10 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                               httpHeaders: ApiConstants.mediaHeaders(
                                   ApiConstants.resolveMediaUrl(
                                       widget.imageUrl)),
+                              imageRenderMethodForWeb:
+                                  ApiConstants.webRenderMethodFor(
+                                      ApiConstants.resolveMediaUrl(
+                                          widget.imageUrl)),
                               fit: BoxFit.cover,
                               placeholder: (_, __) => Container(
                                 color: AppColors.background,

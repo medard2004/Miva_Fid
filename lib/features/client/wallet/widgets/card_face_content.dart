@@ -170,6 +170,8 @@ class _CardTopGroup extends StatelessWidget {
                     imageUrl: ApiConstants.resolveMediaUrl(card.logoUrl),
                     httpHeaders: ApiConstants.mediaHeaders(
                         ApiConstants.resolveMediaUrl(card.logoUrl)),
+                    imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
+                        ApiConstants.resolveMediaUrl(card.logoUrl)),
                     width: 22,
                     height: 22,
                     fit: BoxFit.cover,

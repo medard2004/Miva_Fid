@@ -86,6 +86,7 @@ class UserAvatar extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: resolved,
       httpHeaders: ApiConstants.mediaHeaders(resolved),
+      imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(resolved),
       fit: BoxFit.cover,
       width: size,
       height: size,
