@@ -14,9 +14,8 @@ import 'package:miva_fid/features/client/models/user.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
 import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
-import 'package:miva_fid/features/client/widgets/shared/phone_input_with_country_picker.dart';
 
-/// Formulaire d'inscription complet : Nom · Date de naissance · Téléphone → /wallet
+/// Écran d'inscription client : uniquement via fournisseur OAuth (Google / Apple).
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
@@ -26,11 +25,6 @@ class SignupScreen extends ConsumerStatefulWidget {
 
 class _SignupScreenState extends ConsumerState<SignupScreen>
     with FormErrorHandler {
-  final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
-  final _phoneInputKey = GlobalKey<PhoneInputWithCountryPickerState>();
-  final _phoneController = TextEditingController();
-  DateTime? _birthDate;
   bool _acceptedTerms = false;
   bool _showTermsError = false;
   late final _termsTap = TapGestureRecognizer()
@@ -40,57 +34,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
 
   @override
   void dispose() {
-    _fullNameController.dispose();
-    _phoneController.dispose();
     _termsTap.dispose();
     _privacyTap.dispose();
     super.dispose();
-  }
-
-  /// Étape 1 de l'inscription : identité, téléphone, date de naissance.
-  ///
-  /// Le compte n'est pas encore créé ici. Les informations sont d'abord
-  /// soumises à `POST /auth/validate-register-step1`, qui vérifie l'unicité du
-  /// numéro et le fait passer par `FraudRiskService`. Échouer maintenant évite
-  /// de faire choisir un mot de passe pour un numéro qui sera refusé.
-  Future<void> _submit() async {
-    FocusScope.of(context).unfocus();
-    clearAllFieldErrors();
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (!_acceptedTerms) {
-      setState(() => _showTermsError = true);
-      return;
-    }
-
-    final fullPhone = _phoneInputKey.currentState?.fullPhoneNumber ??
-        _phoneController.text.trim();
-
-    ref.read(signupFlowProvider.notifier).startPhoneSignup(
-          fullName: _fullNameController.text.trim(),
-          phone: fullPhone,
-          birthDate: _birthDate,
-        );
-
-    final t = AppLocalizations.of(context)!;
-    final valid = await runGuarded(
-      () => ref
-          .read(authProvider.notifier)
-          .validateRegisterStep1(ref.read(signupFlowProvider)),
-      useOverlay: true,
-      loadingMessage: t.authLoadingSignup,
-    );
-
-    if (!mounted || valid == null) return;
-
-    if (valid) {
-      context.push('/client/create-password');
-    } else {
-      handleError(
-        ref.read(authProvider).lastError,
-        context: ErrorContext.signup,
-        formKey: _formKey,
-      );
-    }
   }
 
   void _goToLogin() {
@@ -155,191 +101,139 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  alignment: Alignment.centerLeft,
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 20,
-                    color: AppColors.ink,
-                  ),
-                  onPressed: () {
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go('/client/auth');
-                    }
-                  },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconButton(
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerLeft,
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 20,
+                  color: AppColors.ink,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  t.authSignupTitle,
-                  style: AppTextStyles.authTitle(),
-                ),
-                const SizedBox(height: 20),
-                Text(t.editProfileFullName, style: AppTextStyles.label()),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _fullNameController,
-                  keyboardType: TextInputType.name,
-                  validator: fieldValidator(
-                    'first_name',
-                    requiredMessage: t.editProfileFullNameError,
-                  ),
-                  onChanged: (_) => clearFieldError('first_name'),
-                  style: AppTextStyles.bodyMedium(),
-                  decoration: InputDecoration(
-                    hintText: t.editProfileFullNameHint,
-                    hintStyle: AppTextStyles.bodyMedium(
-                        color: AppColors.inkMuted(opacity: 0.4)),
-                    filled: true,
-                    fillColor: AppColors.surfaceMuted,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(t.editProfileBirthDate,
-                    style: AppTextStyles.label()),
-                const SizedBox(height: 6),
-                AppDatePickerField(
-                  value: _birthDate,
-                  onChanged: (date) => setState(() => _birthDate = date),
-                  validator: (_) => _birthDate == null
-                      ? t.authBirthDateError
-                      : fieldError('birthdate'),
-                ),
-                const SizedBox(height: 14),
-                Text(t.commonPhoneLabel, style: AppTextStyles.label()),
-                const SizedBox(height: 6),
-                PhoneInputWithCountryPicker(
-                  key: _phoneInputKey,
-                  controller: _phoneController,
-                  validator: fieldValidator(
-                    'phone',
-                    requiredMessage: t.authPhoneRequiredError,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: _acceptedTerms,
-                        onChanged: (value) => setState(() {
-                          _acceptedTerms = value ?? false;
-                          if (_acceptedTerms) _showTermsError = false;
-                        }),
-                      ),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/client/auth');
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              Text(
+                t.authSignupTitle,
+                style: AppTextStyles.authTitle(),
+              ),
+              const SizedBox(height: 28),
+              AppButton(
+                label: t.authSignupGoogle,
+                variant: AppButtonVariant.outline,
+                leading: SvgPicture.asset(
+                    'assets/icons/google_logo.svg',
+                    width: 18,
+                    height: 18),
+                onTap: isBusy
+                    ? null
+                    : () => _continueWithSocial(AuthProvider.google),
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                label: t.authSignupApple,
+                variant: AppButtonVariant.outline,
+                icon: SimpleIcons.apple,
+                onTap: isBusy
+                    ? null
+                    : () => _continueWithSocial(AuthProvider.apple),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Checkbox(
+                      value: _acceptedTerms,
+                      onChanged: (value) => setState(() {
+                        _acceptedTerms = value ?? false;
+                        if (_acceptedTerms) _showTermsError = false;
+                      }),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => setState(() {
-                          _acceptedTerms = !_acceptedTerms;
-                          if (_acceptedTerms) _showTermsError = false;
-                        }),
-                        child: RichText(
-                          text: TextSpan(
-                            style: AppTextStyles.bodySmall(
-                                color: AppColors.inkMuted(opacity: 0.55)),
-                            children: [
-                              TextSpan(text: t.authAcceptPrefix),
-                              TextSpan(
-                                text: t.authTermsLink,
-                                style: AppTextStyles.bodySmall(
-                                        color: AppColors.ink)
-                                    .copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        decoration:
-                                            TextDecoration.underline),
-                                recognizer: _termsTap,
-                              ),
-                              TextSpan(text: t.authAcceptAnd),
-                              TextSpan(
-                                text: t.authPrivacyLink,
-                                style: AppTextStyles.bodySmall(
-                                        color: AppColors.ink)
-                                    .copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        decoration:
-                                            TextDecoration.underline),
-                                recognizer: _privacyTap,
-                              ),
-                              const TextSpan(text: '.'),
-                            ],
-                          ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => setState(() {
+                        _acceptedTerms = !_acceptedTerms;
+                        if (_acceptedTerms) _showTermsError = false;
+                      }),
+                      child: RichText(
+                        text: TextSpan(
+                          style: AppTextStyles.bodySmall(
+                              color: AppColors.inkMuted(opacity: 0.55)),
+                          children: [
+                            TextSpan(text: t.authAcceptPrefix),
+                            TextSpan(
+                              text: t.authTermsLink,
+                              style: AppTextStyles.bodySmall(
+                                      color: AppColors.ink)
+                                  .copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      decoration:
+                                          TextDecoration.underline),
+                              recognizer: _termsTap,
+                            ),
+                            TextSpan(text: t.authAcceptAnd),
+                            TextSpan(
+                              text: t.authPrivacyLink,
+                              style: AppTextStyles.bodySmall(
+                                      color: AppColors.ink)
+                                  .copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      decoration:
+                                          TextDecoration.underline),
+                              recognizer: _privacyTap,
+                            ),
+                            const TextSpan(text: '.'),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-                if (_showTermsError) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    t.authTermsRequiredError,
-                    style: AppTextStyles.bodySmall(color: AppColors.error),
                   ),
                 ],
-                const SizedBox(height: 18),
-                AppButton(
-                  label: t.authSignupButton,
-                  onTap: isBusy ? null : _submit,
+              ),
+              if (_showTermsError) ...[
+                const SizedBox(height: 6),
+                Text(
+                  t.authTermsRequiredError,
+                  style: AppTextStyles.bodySmall(color: AppColors.error),
                 ),
-                const SizedBox(height: 18),
-                const OrDivider(),
-                const SizedBox(height: 18),
-                AppButton(
-                  label: t.authSignupGoogle,
-                  variant: AppButtonVariant.outline,
-                  leading: SvgPicture.asset(
-                      'assets/icons/google_logo.svg',
-                      width: 18,
-                      height: 18),
-                  onTap: isBusy
-                      ? null
-                      : () => _continueWithSocial(AuthProvider.google),
-                ),
-                const SizedBox(height: 10),
-                AppButton(
-                  label: t.authSignupApple,
-                  variant: AppButtonVariant.outline,
-                  icon: SimpleIcons.apple,
-                  onTap: isBusy
-                      ? null
-                      : () => _continueWithSocial(AuthProvider.apple),
-                ),
-                const SizedBox(height: 20),
-                Center(
-                  child: AppTapScale(
-                    onTap: _goToLogin,
-                    scaleDown: 0.95,
-                    child: Text.rich(
-                      TextSpan(
-                        text: t.authHasAccountPrefix,
-                        style: AppTextStyles.bodyMedium(
-                            color: AppColors.inkMuted(opacity: 0.55)),
-                        children: [
-                          TextSpan(
-                            text: t.profileSignIn,
-                            style: AppTextStyles.bodyMedium(
-                                    color: AppColors.primary)
-                                .copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
+              ],
+              const SizedBox(height: 28),
+              Center(
+                child: AppTapScale(
+                  onTap: _goToLogin,
+                  scaleDown: 0.95,
+                  child: Text.rich(
+                    TextSpan(
+                      text: t.authHasAccountPrefix,
+                      style: AppTextStyles.bodyMedium(
+                          color: AppColors.inkMuted(opacity: 0.55)),
+                      children: [
+                        TextSpan(
+                          text: t.profileSignIn,
+                          style: AppTextStyles.bodyMedium(
+                                  color: AppColors.primary)
+                              .copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
