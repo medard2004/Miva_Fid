@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import '../storage/web_local_storage.dart';
+
 class OfflineCacheDatabase {
   static final OfflineCacheDatabase instance = OfflineCacheDatabase._();
   OfflineCacheDatabase._();
@@ -86,12 +88,18 @@ class OfflineCacheDatabase {
     );
   }
 
+  static const String _webPrefix = 'miva_cache_';
+  static const String _webTsPrefix = 'miva_cache_ts_';
+
   /// Sauvegarde une entrée JSON brute associée à une clé
   Future<void> put(String key, dynamic value) async {
     if (kIsWeb) {
       final jsonString = jsonEncode(value);
+      final now = DateTime.now().millisecondsSinceEpoch;
       _webCache[key] = jsonString;
-      _webTimestamps[key] = DateTime.now().millisecondsSinceEpoch;
+      _webTimestamps[key] = now;
+      webStorageSet('$_webPrefix$key', jsonString);
+      webStorageSet('$_webTsPrefix$key', now.toString());
       return;
     }
 
@@ -113,8 +121,9 @@ class OfflineCacheDatabase {
   /// Récupère et décode une entrée JSON brute
   Future<dynamic> get(String key) async {
     if (kIsWeb) {
-      final raw = _webCache[key];
+      final raw = _webCache[key] ?? webStorageGet('$_webPrefix$key');
       if (raw == null || raw.isEmpty) return null;
+      _webCache[key] = raw;
       try {
         return jsonDecode(raw);
       } catch (e) {
@@ -147,8 +156,13 @@ class OfflineCacheDatabase {
   /// Récupère la date de dernière mise à jour d'une clé
   Future<DateTime?> getLastUpdated(String key) async {
     if (kIsWeb) {
-      final timestamp = _webTimestamps[key];
+      var timestamp = _webTimestamps[key];
+      if (timestamp == null) {
+        final rawTs = webStorageGet('$_webTsPrefix$key');
+        if (rawTs != null) timestamp = int.tryParse(rawTs);
+      }
       if (timestamp == null) return null;
+      _webTimestamps[key] = timestamp;
       return DateTime.fromMillisecondsSinceEpoch(timestamp);
     }
 
@@ -172,6 +186,8 @@ class OfflineCacheDatabase {
     if (kIsWeb) {
       _webCache.remove(key);
       _webTimestamps.remove(key);
+      webStorageRemove('$_webPrefix$key');
+      webStorageRemove('$_webTsPrefix$key');
       return;
     }
 
@@ -189,6 +205,8 @@ class OfflineCacheDatabase {
       _webCache.clear();
       _webTimestamps.clear();
       _webMutations.clear();
+      webStorageRemoveByPrefix(_webPrefix);
+      webStorageRemoveByPrefix(_webTsPrefix);
       return;
     }
 
@@ -199,12 +217,12 @@ class OfflineCacheDatabase {
   /// Purge les données du client (profil, cartes, récompenses)
   Future<void> clearClientData() async {
     if (kIsWeb) {
-      _webCache.remove(keyClientUser);
-      _webCache.remove(keyClientWallet);
-      _webCache.remove(keyClientRewards);
-      _webTimestamps.remove(keyClientUser);
-      _webTimestamps.remove(keyClientWallet);
-      _webTimestamps.remove(keyClientRewards);
+      for (final k in [keyClientUser, keyClientWallet, keyClientRewards]) {
+        _webCache.remove(k);
+        _webTimestamps.remove(k);
+        webStorageRemove('$_webPrefix$k');
+        webStorageRemove('$_webTsPrefix$k');
+      }
       return;
     }
 
@@ -221,6 +239,8 @@ class OfflineCacheDatabase {
     if (kIsWeb) {
       _webCache.removeWhere((k, _) => k.startsWith('merchant_'));
       _webTimestamps.removeWhere((k, _) => k.startsWith('merchant_'));
+      webStorageRemoveByPrefix('${_webPrefix}merchant_');
+      webStorageRemoveByPrefix('${_webTsPrefix}merchant_');
       return;
     }
 

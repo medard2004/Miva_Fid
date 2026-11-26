@@ -93,8 +93,9 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
 
     Future<void> refreshClientSession() async {
       try {
-        final freshUser =
-            await authRepository.getMe().timeout(const Duration(seconds: 4));
+        final freshUser = await authRepository
+            .getMe()
+            .timeout(Duration(seconds: restoredFromCache ? 10 : 15));
         ref.read(authProvider.notifier).setAuthenticated(freshUser);
         unawaited(ref.read(walletProvider.notifier).loadMine().catchError((e) {
           debugPrint('[app_startup_provider] Erreur rafraîchissement wallet réseau: $e');
@@ -137,7 +138,7 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
       try {
         final freshMerchant = await merchantAuthRepository
             .getMe()
-            .timeout(const Duration(seconds: 4));
+            .timeout(Duration(seconds: restoredFromCache ? 10 : 15));
         ref.read(merchantAuthProvider.notifier).setAuthenticated(freshMerchant);
       } on TimeoutException {
         debugPrint('[app_startup_provider] Timeout validation réseau merchant -> conservation session cache');
