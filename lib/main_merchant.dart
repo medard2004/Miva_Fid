@@ -27,23 +27,23 @@ Future<void> main() async {
     usePathUrlStrategy();
   }
 
-  try {
-    await Firebase.initializeApp(
+  // Initialisation Firebase + notifications en arrière-plan pour ne jamais
+  // retarder le premier rendu Flutter.
+  unawaited(
+    Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    );
-    unawaited(
-      NotificationService()
-          .init(isMerchantApp: true, navigatorKey: merchantNavigatorKey)
-          .catchError((e) {
-        if (kDebugMode) debugPrint('NotificationService init erreur: $e');
-      }),
-    );
-  } catch (error, stackTrace) {
-    if (kDebugMode) {
-      debugPrint('Firebase/Notifications non initialisé : $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
-  }
+    ).then((_) {
+      return NotificationService().init(
+        isMerchantApp: true,
+        navigatorKey: merchantNavigatorKey,
+      );
+    }).catchError((Object error, StackTrace stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Firebase/Notifications non initialisé : $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
+    }),
+  );
 
   runApp(const ProviderScope(child: MivaFidMerchantApp()));
 }

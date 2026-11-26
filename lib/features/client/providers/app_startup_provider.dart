@@ -72,84 +72,87 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   ref.read(deviceTokenProvider);
 
   // ───────────────────────────────────────────────────────────────────────────
-  // CLIENT : Restauration Cache-First
+  // CLIENT : Restauration Cache-First (non-bloquante si cache disponible)
   // ───────────────────────────────────────────────────────────────────────────
   if (isClientLoggedIn) {
-    // 1. Restauration immédiate depuis le cache local (si disponible)
     final cachedUserJson = await cache.getClientUser();
+    var restoredFromCache = false;
     if (cachedUserJson != null) {
       try {
         ref.read(authProvider.notifier).setAuthenticated(
               AppUser.fromJson(cachedUserJson),
             );
-        try {
-          await ref.read(walletProvider.notifier).loadFromCache();
-        } catch (e) {
+        restoredFromCache = true;
+        unawaited(ref.read(walletProvider.notifier).loadFromCache().catchError((e) {
           debugPrint('[app_startup_provider] Erreur chargement wallet cache: $e');
-        }
+        }));
       } catch (e) {
         debugPrint('[app_startup_provider] Erreur parsing client user cache: $e');
       }
     }
 
-    // 2. Validation / rafraîchissement réseau (court timeout pour ne jamais bloquer le démarrage)
-    try {
-      final freshUser = await authRepository.getMe().timeout(const Duration(seconds: 3));
-      ref.read(authProvider.notifier).setAuthenticated(freshUser);
-
-      // Repeuple le wallet avec les données fraîches en arrière-plan
-      unawaited(ref.read(walletProvider.notifier).loadMine().catchError((e) {
-        debugPrint('[app_startup_provider] Erreur rafraîchissement wallet réseau: $e');
-      }));
-    } on TimeoutException {
-      debugPrint('[app_startup_provider] Timeout validation réseau client -> conservation session cache');
-    } on UnauthorizedException {
-      // Token réellement rejeté par le serveur (401) : purge et déconnexion
-      await cache.clearClientData();
-      await ref.read(authProvider.notifier).signOut();
-    } catch (e) {
-      debugPrint('[app_startup_provider] Erreur validation réseau client: $e');
-      // Erreur réseau (hors-ligne, timeout) :
-      // On conserve la session restaurée depuis le cache !
-      if (ref.read(authProvider).isAuthenticated) {
-        try {
-          await ref.read(walletProvider.notifier).loadFromCache();
-        } catch (e2) {
-          debugPrint('[app_startup_provider] Erreur fallback wallet cache: $e2');
-        }
+    Future<void> refreshClientSession() async {
+      try {
+        final freshUser =
+            await authRepository.getMe().timeout(const Duration(seconds: 4));
+        ref.read(authProvider.notifier).setAuthenticated(freshUser);
+        unawaited(ref.read(walletProvider.notifier).loadMine().catchError((e) {
+          debugPrint('[app_startup_provider] Erreur rafraîchissement wallet réseau: $e');
+        }));
+      } on TimeoutException {
+        debugPrint('[app_startup_provider] Timeout validation réseau client -> conservation session cache');
+      } on UnauthorizedException {
+        await cache.clearClientData();
+        await ref.read(authProvider.notifier).signOut();
+      } catch (e) {
+        debugPrint('[app_startup_provider] Erreur validation réseau client: $e');
       }
+    }
+
+    if (restoredFromCache) {
+      unawaited(refreshClientSession());
+    } else {
+      await refreshClientSession();
     }
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // MARCHAND : Restauration Cache-First
+  // MARCHAND : Restauration Cache-First (non-bloquante si cache disponible)
   // ───────────────────────────────────────────────────────────────────────────
   if (isMerchantLoggedIn) {
-    // 1. Restauration immédiate depuis le cache local (si disponible)
     final cachedMerchantJson = await cache.getMerchantAccount();
+    var restoredFromCache = false;
     if (cachedMerchantJson != null) {
       try {
         ref.read(merchantAuthProvider.notifier).setAuthenticated(
               RestaurantAccount.fromJson(cachedMerchantJson),
             );
+        restoredFromCache = true;
       } catch (e) {
         debugPrint('[app_startup_provider] Erreur parsing merchant account cache: $e');
       }
     }
 
-    // 2. Validation / rafraîchissement réseau (court timeout)
-    try {
-      final freshMerchant = await merchantAuthRepository.getMe().timeout(const Duration(seconds: 3));
-      ref.read(merchantAuthProvider.notifier).setAuthenticated(freshMerchant);
-    } on TimeoutException {
-      debugPrint('[app_startup_provider] Timeout validation réseau merchant -> conservation session cache');
-    } on UnauthorizedException {
-      // Token réellement rejeté (401)
-      await cache.clearMerchantData();
-      await ref.read(merchantAuthProvider.notifier).signOut();
-    } catch (e) {
-      debugPrint('[app_startup_provider] Erreur validation réseau merchant: $e');
-      // Erreur réseau : on conserve la session restaurée depuis le cache !
+    Future<void> refreshMerchantSession() async {
+      try {
+        final freshMerchant = await merchantAuthRepository
+            .getMe()
+            .timeout(const Duration(seconds: 4));
+        ref.read(merchantAuthProvider.notifier).setAuthenticated(freshMerchant);
+      } on TimeoutException {
+        debugPrint('[app_startup_provider] Timeout validation réseau merchant -> conservation session cache');
+      } on UnauthorizedException {
+        await cache.clearMerchantData();
+        await ref.read(merchantAuthProvider.notifier).signOut();
+      } catch (e) {
+        debugPrint('[app_startup_provider] Erreur validation réseau merchant: $e');
+      }
+    }
+
+    if (restoredFromCache) {
+      unawaited(refreshMerchantSession());
+    } else {
+      await refreshMerchantSession();
     }
   }
 

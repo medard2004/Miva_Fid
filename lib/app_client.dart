@@ -56,24 +56,7 @@ class MivaFidClientApp extends ConsumerWidget {
       builder: (context, child) {
         ErrorMessages.bind(AppLocalizations.of(context)!);
         if (isBootstrapping) {
-          return const Scaffold(
-            body: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonLoader(height: 28, width: 160),
-                    SizedBox(height: 16),
-                    SkeletonCard(height: 180),
-                    SizedBox(height: 16),
-                    SkeletonLoader(height: 64),
-                    SkeletonLoader(height: 64),
-                  ],
-                ),
-              ),
-            ),
-          );
+          return const BootSkeletonScreen(isMerchant: false);
         }
         return child ?? const SizedBox.shrink();
       },

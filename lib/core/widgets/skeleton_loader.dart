@@ -118,3 +118,87 @@ class SkeletonListTile extends StatelessWidget {
     );
   }
 }
+
+/// Écran de chargement complet en squelettes animés (style YouTube),
+/// utilisé pendant l'hydratation initiale côté Client et Marchand.
+class BootSkeletonScreen extends StatelessWidget {
+  const BootSkeletonScreen({super.key, this.isMerchant = false});
+
+  final bool isMerchant;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Barre supérieure (avatar + titre + pilule action)
+                  Row(
+                    children: [
+                      SkeletonLoader(
+                        height: 42,
+                        width: 42,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonLoader(height: 15, width: 150),
+                            SkeletonLoader(height: 10, width: 96),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SkeletonLoader(
+                        height: 32,
+                        width: 78,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Grande carte héroïque (carte fidélité ou bandeau KPI)
+                  SkeletonLoader(
+                    height: isMerchant ? 124 : 164,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // 3 tuiles KPI / raccourcis côte à côte
+                  const Row(
+                    children: [
+                      Expanded(child: SkeletonLoader(height: 68)),
+                      SizedBox(width: 10),
+                      Expanded(child: SkeletonLoader(height: 68)),
+                      SizedBox(width: 10),
+                      Expanded(child: SkeletonLoader(height: 68)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Titre de section
+                  const SkeletonLoader(height: 14, width: 130),
+                  const SizedBox(height: 4),
+
+                  // Cartes de contenu (vignette + texte)
+                  const SkeletonCard(height: 130),
+                  const SkeletonCard(height: 130),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
