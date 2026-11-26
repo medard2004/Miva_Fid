@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api/storage/local_preferences.dart';
+import '../utils/qr_link_helper.dart';
 import '../../features/client/core/router/app_route_observer.dart' as client_router_observer;
 import '../../features/client/core/router/tab_transition_direction.dart';
 import '../../features/client/core/theme/app_motion.dart' as client_motion;
@@ -139,10 +141,23 @@ final clientRouterProvider = Provider<GoRouter>((ref) {
 
       // 1. Accès racine web
       if (location == '/') {
-        return isAuthenticated ? '/client/wallet' : '/client/onboarding';
+        return isAuthenticated
+            ? consumePostClientAuthRoute(ref)
+            : '/client/auth';
       }
 
-      // 2. Gestion de l'accès public
+      // 2. Gestion de l'accès public & scan QR avec redirection post-auth
+      if (!isAuthenticated &&
+          (location == '/join' || location == '/client/onboarding/join')) {
+        final queryCode = state.uri.queryParameters['code'];
+        if (queryCode != null && queryCode.trim().isNotEmpty) {
+          final token = QrLinkHelper.extractQrToken(queryCode);
+          ref.read(pendingJoinCodeProvider.notifier).state = token;
+          ref.read(localPreferencesProvider).setPendingJoinCode(token);
+        }
+        return '/client/auth';
+      }
+
       final isPublicRoute = _clientPublicRoutes.contains(location) ||
           location.startsWith('/client/onboarding') ||
           location.startsWith('/client/legal') ||
@@ -162,7 +177,7 @@ final clientRouterProvider = Provider<GoRouter>((ref) {
           location != '/client/forgot-password';
 
       if (isAuthOnlyScreen) {
-        return '/client/wallet';
+        return consumePostClientAuthRoute(ref);
       }
 
       return null;

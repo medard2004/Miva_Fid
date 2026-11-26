@@ -59,8 +59,8 @@ final pendingJoinCodeProvider = StateProvider<String?>((ref) => null);
 /// Consomme l'éventuel `qr_token` en attente après authentification client et
 /// retourne la route cible (`/client/onboarding/join?code=...` ou
 /// `/client/wallet`).
-String consumePostClientAuthRoute(WidgetRef ref) {
-  final pendingCode = ref.read(pendingJoinCodeProvider);
+String consumePostClientAuthRoute(dynamic ref) {
+  final pendingCode = ref.read(pendingJoinCodeProvider) as String?;
   if (pendingCode != null && pendingCode.isNotEmpty) {
     ref.read(pendingJoinCodeProvider.notifier).state = null;
     ref.read(localPreferencesProvider).setPendingJoinCode(null);

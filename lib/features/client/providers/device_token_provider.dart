@@ -70,9 +70,9 @@ class DeviceTokenNotifier {
   }
 
   Future<void> _register(String token) {
-    final platform = defaultTargetPlatform == TargetPlatform.iOS
-        ? 'ios'
-        : (kIsWeb ? 'web' : 'android');
+    final platform = kIsWeb
+        ? 'web'
+        : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android');
     return _ref.read(deviceTokenServiceProvider).register(token, platform);
   }
 

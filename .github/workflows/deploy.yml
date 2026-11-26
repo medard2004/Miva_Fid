@@ -1,4 +1,4 @@
-name: Deploy Flutter Web to Vercel
+name: Deploy Flutter Web PWAs to Vercel
 
 on:
   push:
@@ -6,7 +6,8 @@ on:
       - main
 
 jobs:
-  deploy:
+  deploy-merchant:
+    name: Deploy Merchant PWA (Light Theme)
     runs-on: ubuntu-latest
 
     steps:
@@ -22,15 +23,25 @@ jobs:
       - name: Récupération des dépendances
         run: flutter pub get
 
-      - name: Compilation Flutter Web
+      - name: Compilation Flutter Web (Marchand)
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          CLIENT_WEB_APP_URL: ${{ secrets.CLIENT_WEB_APP_URL }}
+          FIREBASE_VAPID_KEY: ${{ secrets.FIREBASE_VAPID_KEY }}
         run: |
           API_URL="${API_BASE_URL:-https://distract-buffalo-mockup.ngrok-free.dev/api}"
-          flutter build web --release --no-tree-shake-icons --dart-define=API_BASE_URL="$API_URL"
+          CLIENT_URL="${CLIENT_WEB_APP_URL:-https://miva-fid-client.vercel.app}"
+          flutter build web -t lib/main_merchant.dart --release \
+            --no-tree-shake-icons \
+            --dart-define=API_BASE_URL="$API_URL" \
+            --dart-define=CLIENT_WEB_APP_URL="$CLIENT_URL" \
+            --dart-define=FIREBASE_VAPID_KEY="${FIREBASE_VAPID_KEY:-}"
 
-      - name: Préparer vercel.json pour le déploiement
+      - name: Préparer PWA Marchand (logo clair) & vercel.json
         run: |
+          cp web/manifest_merchant.json build/web/manifest.json
+          cp web/favicon_merchant.png build/web/favicon.png
+          cp -r web/icons_merchant/* build/web/icons/
           cat > build/web/vercel.json << 'EOF'
           {
             "rewrites": [
@@ -38,7 +49,7 @@ jobs:
             ],
             "headers": [
               {
-                "source": "/flutter_service_worker.js",
+                "source": "/(flutter_service_worker|firebase-messaging-sw).js",
                 "headers": [
                   { "key": "Cache-Control", "value": "no-cache" }
                 ]
@@ -47,10 +58,77 @@ jobs:
           }
           EOF
 
-      - name: Déploiement sur Vercel
+      - name: Déploiement Marchand sur Vercel
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm i -g vercel@latest
+          cd build/web
+          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-client:
+    name: Deploy Client PWA (Dark Theme)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          cache: true
+
+      - name: Récupération des dépendances
+        run: flutter pub get
+
+      - name: Compilation Flutter Web (Client)
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          CLIENT_WEB_APP_URL: ${{ secrets.CLIENT_WEB_APP_URL }}
+          FIREBASE_VAPID_KEY: ${{ secrets.FIREBASE_VAPID_KEY }}
+          VERCEL_CLIENT_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
+        if: env.VERCEL_CLIENT_PROJECT_ID != ''
+        run: |
+          API_URL="${API_BASE_URL:-https://distract-buffalo-mockup.ngrok-free.dev/api}"
+          CLIENT_URL="${CLIENT_WEB_APP_URL:-https://miva-fid-client.vercel.app}"
+          flutter build web -t lib/main_client.dart --release \
+            --no-tree-shake-icons \
+            --dart-define=API_BASE_URL="$API_URL" \
+            --dart-define=CLIENT_WEB_APP_URL="$CLIENT_URL" \
+            --dart-define=FIREBASE_VAPID_KEY="${FIREBASE_VAPID_KEY:-}"
+
+      - name: Préparer PWA Client (logo sombre) & vercel.json
+        env:
+          VERCEL_CLIENT_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
+        if: env.VERCEL_CLIENT_PROJECT_ID != ''
+        run: |
+          cp web/manifest_client.json build/web/manifest.json
+          cp web/favicon_client.png build/web/favicon.png
+          cp -r web/icons_client/* build/web/icons/
+          cat > build/web/vercel.json << 'EOF'
+          {
+            "rewrites": [
+              { "source": "/(.*)", "destination": "/index.html" }
+            ],
+            "headers": [
+              {
+                "source": "/(flutter_service_worker|firebase-messaging-sw).js",
+                "headers": [
+                  { "key": "Cache-Control", "value": "no-cache" }
+                ]
+              }
+            ]
+          }
+          EOF
+
+      - name: Déploiement Client sur Vercel
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
+        if: env.VERCEL_PROJECT_ID != ''
         run: |
           npm i -g vercel@latest
           cd build/web

@@ -7,6 +7,7 @@ import 'core/errors/error_messages.dart';
 import 'core/router/merchant_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
+import 'features/client/providers/app_startup_provider.dart';
 import 'features/client/providers/settings_provider.dart';
 import 'features/merchant/providers/merchant_auth_provider.dart';
 import 'l10n/gen/app_localizations.dart';
@@ -18,6 +19,7 @@ class MivaFidMerchantApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(merchantRouterProvider);
+    ref.watch(appStartupProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 

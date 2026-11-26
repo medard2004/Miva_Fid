@@ -8,6 +8,7 @@ import 'core/router/client_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
 import 'features/client/providers/app_providers.dart';
+import 'features/client/providers/app_startup_provider.dart';
 import 'features/client/providers/settings_provider.dart';
 import 'l10n/gen/app_localizations.dart';
 
@@ -18,6 +19,7 @@ class MivaFidClientApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(clientRouterProvider);
+    ref.watch(appStartupProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 

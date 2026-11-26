@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -12,11 +13,23 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._();
 
+  static const String webVapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
+
   final _localNotifications = FlutterLocalNotificationsPlugin();
   final _messaging = FirebaseMessaging.instance;
+  bool _isMerchantApp = false;
+  GlobalKey<NavigatorState> _navigatorKey = rootNavigatorKey;
 
-  Future<void> init() async {
-    // Request permissions
+  Future<void> init({
+    bool isMerchantApp = false,
+    GlobalKey<NavigatorState>? navigatorKey,
+  }) async {
+    _isMerchantApp = isMerchantApp;
+    if (navigatorKey != null) {
+      _navigatorKey = navigatorKey;
+    }
+
+    // Request permissions (mobile + Web Push PWA)
     await _messaging.requestPermission(
       alert: true,
       badge: true,
@@ -77,7 +90,7 @@ class NotificationService {
       'admin_broadcast',
     };
 
-    if (merchantTypes.contains(type)) return;
+    if (!_isMerchantApp && merchantTypes.contains(type)) return;
 
     if (notificationId != null && ToastService.hasBeenSeen(notificationId)) {
       return;
@@ -141,7 +154,7 @@ class NotificationService {
   /// `resolveNotificationDestination`, seule source de vérité pour la
   /// politique de navigation (partagée avec le tap dans la boîte in-app).
   void _route({required Map<String, dynamic> data, required String title, required String body}) {
-    final context = rootNavigatorKey.currentContext;
+    final context = _navigatorKey.currentContext;
     if (context == null) return;
 
     final type = data['type'] as String? ?? '';
@@ -154,7 +167,14 @@ class NotificationService {
     navigateToNotificationDestination(context, destination);
   }
 
-  Future<String?> getToken() => _messaging.getToken();
+  Future<String?> getToken() {
+    if (kIsWeb) {
+      return _messaging.getToken(
+        vapidKey: webVapidKey.isNotEmpty ? webVapidKey : null,
+      );
+    }
+    return _messaging.getToken();
+  }
 
   Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
 

@@ -1,0 +1,54 @@
+{
+    "name": "Miva Fid Pro - Espace Commerçant",
+    "short_name": "Miva Fid Pro",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#FFFFFF",
+    "theme_color": "#4F46E5",
+    "description": "Gérez votre programme de fidélité et validez vos clients — Miva Fid Pro",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "categories": ["business", "productivity"],
+    "lang": "fr",
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Valider un client",
+            "short_name": "Valider",
+            "description": "Scanner ou saisir une carte client",
+            "url": "/merchant/validate",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Mes Clients",
+            "short_name": "Clients",
+            "description": "Consulter la liste des clients fidèles",
+            "url": "/merchant/clients",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+        }
+    ]
+}

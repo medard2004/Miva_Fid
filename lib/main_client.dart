@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app_client.dart';
+import 'core/router/client_router.dart';
+import 'core/services/notification_service.dart';
 import 'firebase_options.dart';
 
 /// Point d'entrée principal pour l'application Client (Flutter Web).
@@ -22,6 +24,10 @@ Future<void> main() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await NotificationService().init(
+      isMerchantApp: false,
+      navigatorKey: clientNavigatorKey,
     );
   } catch (error, stackTrace) {
     if (kDebugMode) {

@@ -1,0 +1,54 @@
+{
+    "name": "Miva Fid - Ma Carte Fidélité",
+    "short_name": "Miva Fid",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#0F0E1A",
+    "theme_color": "#0F0E1A",
+    "description": "Vos cartes de fidélité digitales et récompenses — Miva Fid",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "categories": ["shopping", "lifestyle"],
+    "lang": "fr",
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Mon Wallet",
+            "short_name": "Wallet",
+            "description": "Accéder directement à mes cartes de fidélité",
+            "url": "/client/wallet",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Mes Récompenses",
+            "short_name": "Récompenses",
+            "description": "Voir mes récompenses débloquées",
+            "url": "/client/rewards",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+        }
+    ]
+}

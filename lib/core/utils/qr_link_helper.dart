@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Utilitaires pour construire et parser les liens intelligents des QR codes
 /// commerçants.
 ///
@@ -8,30 +6,24 @@ import 'package:flutter/foundation.dart';
 /// qu'un scan depuis l'appareil photo natif du téléphone ouvre directement
 /// l'application web, tout en restant compatible avec le scanner intégré.
 class QrLinkHelper {
-  static const String _defaultWebAppUrl = String.fromEnvironment(
-    'WEB_APP_URL',
-    defaultValue: 'https://miva-fid-app.vercel.app',
+  static const String _defaultClientWebAppUrl = String.fromEnvironment(
+    'CLIENT_WEB_APP_URL',
+    defaultValue: 'https://miva-fid-client.vercel.app',
   );
 
-  /// Retourne l'origine web active sur le navigateur, ou l'URL configurée
-  /// via `WEB_APP_URL` sur mobile.
+  /// Retourne l'URL de la PWA Client (cible des QR codes commerçants).
   static String get webAppBaseUrl {
-    if (kIsWeb) {
-      final origin = Uri.base.origin;
-      if (origin.isNotEmpty && origin != 'null') {
-        return origin;
-      }
-    }
-    return _defaultWebAppUrl.endsWith('/')
-        ? _defaultWebAppUrl.substring(0, _defaultWebAppUrl.length - 1)
-        : _defaultWebAppUrl;
+    return _defaultClientWebAppUrl.endsWith('/')
+        ? _defaultClientWebAppUrl.substring(
+            0, _defaultClientWebAppUrl.length - 1)
+        : _defaultClientWebAppUrl;
   }
 
   /// Construit l'URL encodée dans le QR code du commerçant.
   static String buildJoinUrl(String qrToken) {
     final clean = qrToken.trim();
     if (clean.isEmpty) return '';
-    return '$webAppBaseUrl/#/client/onboarding/join?code=${Uri.encodeComponent(clean)}';
+    return '$webAppBaseUrl/join?code=${Uri.encodeComponent(clean)}';
   }
 
   /// Extrait le `qr_token` (ou code court) depuis une valeur scannée :
