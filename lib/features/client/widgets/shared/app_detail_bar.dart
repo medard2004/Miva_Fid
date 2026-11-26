@@ -34,7 +34,14 @@ class AppDetailBar extends StatelessWidget implements PreferredSizeWidget {
       leadingWidth: 44,
       leading: Center(
         child: AppTapScale(
-          onTap: onBack ?? () => context.pop(),
+          onTap: onBack ??
+              () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/client/wallet');
+                }
+              },
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.ink,
