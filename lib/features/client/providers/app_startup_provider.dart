@@ -27,6 +27,15 @@ class AppStartupState {
   const AppStartupState({required this.hasSeenOnboarding, this.lastRole});
 }
 
+Future<T> _safeRead<T>(Future<T> future, T fallback, String label) async {
+  try {
+    return await future;
+  } catch (e) {
+    debugPrint('[app_startup_provider] Erreur lecture $label: $e');
+    return fallback;
+  }
+}
+
 /// Restaure la session avant le premier rendu.
 ///
 /// Approche « Cache-First, Network-Refresh » :
@@ -44,13 +53,14 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   final merchantAuthRepository = ref.read(merchantAuthRepositoryProvider);
   final cache = ref.read(offlineCacheServiceProvider);
 
-  // Lectures locales parallèles pour réduire la latence au démarrage / F5.
+  // Lectures locales parallèles (isolées individuellement pour qu'une erreur de
+  // préférence n'empêche jamais la restauration de session).
   final results = await Future.wait<dynamic>([
-    prefs.hasSeenOnboarding(),
-    prefs.getLastRole(),
-    prefs.getPendingJoinCode(),
-    authRepository.isLoggedIn(),
-    merchantAuthRepository.isLoggedIn(),
+    _safeRead(prefs.hasSeenOnboarding(), false, 'hasSeenOnboarding'),
+    _safeRead<String?>(prefs.getLastRole(), null, 'lastRole'),
+    _safeRead<String?>(prefs.getPendingJoinCode(), null, 'pendingJoinCode'),
+    _safeRead(authRepository.isLoggedIn(), false, 'clientIsLoggedIn'),
+    _safeRead(merchantAuthRepository.isLoggedIn(), false, 'merchantIsLoggedIn'),
   ]);
 
   final hasSeenOnboarding = results[0] as bool;

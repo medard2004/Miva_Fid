@@ -19,10 +19,15 @@ String? webStorageGet(String key) {
   }
 }
 
-void webStorageSet(String key, String value) {
+bool webStorageSet(String key, String value) {
   try {
-    _localStorage?.setItem(key.toJS, value.toJS);
-  } catch (_) {}
+    final storage = _localStorage;
+    if (storage == null) return false;
+    storage.setItem(key.toJS, value.toJS);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 void webStorageRemove(String key) {
@@ -31,7 +36,10 @@ void webStorageRemove(String key) {
   } catch (_) {}
 }
 
-void webStorageRemoveByPrefix(String prefix) {
+void webStorageRemoveByPrefix(
+  String prefix, {
+  Set<String> excludeKeys = const {},
+}) {
   try {
     final storage = _localStorage;
     if (storage == null) return;
@@ -39,7 +47,7 @@ void webStorageRemoveByPrefix(String prefix) {
     final len = storage.length;
     for (var i = 0; i < len; i++) {
       final k = storage.key(i)?.toDart;
-      if (k != null && k.startsWith(prefix)) {
+      if (k != null && k.startsWith(prefix) && !excludeKeys.contains(k)) {
         keys.add(k);
       }
     }

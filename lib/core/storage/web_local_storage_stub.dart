@@ -1,7 +1,10 @@
 String? webStorageGet(String key) => null;
 
-void webStorageSet(String key, String value) {}
+bool webStorageSet(String key, String value) => false;
 
 void webStorageRemove(String key) {}
 
-void webStorageRemoveByPrefix(String prefix) {}
+void webStorageRemoveByPrefix(
+  String prefix, {
+  Set<String> excludeKeys = const {},
+}) {}

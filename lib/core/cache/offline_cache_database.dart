@@ -98,7 +98,19 @@ class OfflineCacheDatabase {
       final now = DateTime.now().millisecondsSinceEpoch;
       _webCache[key] = jsonString;
       _webTimestamps[key] = now;
-      webStorageSet('$_webPrefix$key', jsonString);
+      final ok = webStorageSet('$_webPrefix$key', jsonString);
+      if (!ok) {
+        // Quota localStorage atteint : libérer les caches secondaires en
+        // préservant les profils de session (`client_user` / `merchant_account`).
+        const protected = {
+          '$_webPrefix$keyClientUser',
+          '$_webPrefix$keyMerchantAccount',
+          '$_webTsPrefix$keyClientUser',
+          '$_webTsPrefix$keyMerchantAccount',
+        };
+        webStorageRemoveByPrefix(_webPrefix, excludeKeys: protected);
+        webStorageSet('$_webPrefix$key', jsonString);
+      }
       webStorageSet('$_webTsPrefix$key', now.toString());
       return;
     }
