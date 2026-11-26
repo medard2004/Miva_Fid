@@ -105,50 +105,47 @@ class _WebPushPermissionDialogState
       _errorMessage = null;
     });
 
+    bool granted = false;
     try {
-      final granted =
+      granted =
           await NotificationService().requestPermissionFromUserGesture();
-      if (!mounted) return;
-
-      if (granted) {
-        final registered =
-            await ref.read(deviceTokenProvider).registerCurrentToken();
-        if (!mounted) return;
-        if (registered) {
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
-          }
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ToastService.showSuccess('Notifications activées avec succès !');
-          });
-          return;
-        } else {
-          setState(() {
-            _state = WebPushPermissionState.granted;
-            _errorMessage =
-                "Autorisation accordée, mais l'enregistrement du navigateur a échoué. Vérifiez votre connexion et réessayez.";
-          });
-        }
-      } else {
-        final updatedState =
-            await NotificationService().getWebPermissionState();
-        if (!mounted) return;
-        setState(() {
-          _state = updatedState == WebPushPermissionState.promptable
-              ? WebPushPermissionState.denied
-              : updatedState;
-        });
-      }
     } catch (e, st) {
-      debugPrint('[web_push_prompt_banner] Erreur activation: $e\n$st');
-      if (!mounted) return;
-      setState(() {
-        _errorMessage =
-            "Impossible d'activer les notifications sur ce navigateur. Réessayez.";
-      });
-    } finally {
-      if (mounted) setState(() => _busy = false);
+      debugPrint('[web_push_prompt_banner] Erreur requestPermission: $e\n$st');
     }
+
+    if (!mounted) return;
+
+    if (granted) {
+      bool registered = false;
+      try {
+        registered =
+            await ref.read(deviceTokenProvider).registerCurrentToken();
+      } catch (e, st) {
+        debugPrint('[web_push_prompt_banner] Erreur registerToken: $e\n$st');
+      }
+      if (!mounted) return;
+      setState(() => _busy = false);
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (registered) {
+          ToastService.showSuccess('Notifications activées avec succès !');
+        } else {
+          ToastService.showInfo('Notifications autorisées !');
+        }
+      });
+      return;
+    }
+
+    final updatedState = await NotificationService().getWebPermissionState();
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _state = updatedState == WebPushPermissionState.promptable
+          ? WebPushPermissionState.denied
+          : updatedState;
+    });
   }
 
   Future<void> _recheckPermission() async {
