@@ -10,6 +10,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_input.dart';
+import '../../../core/utils/social_links_helper.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/errors/error_messages.dart';
@@ -74,6 +75,8 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
   late final _instagramCtrl = TextEditingController();
   late final _facebookCtrl = TextEditingController();
   late final _tiktokCtrl = TextEditingController();
+  late final _xCtrl = TextEditingController();
+  late final _websiteCtrl = TextEditingController();
   bool _isCustomCategory = false;
   bool _socialsExpanded = false;
 
@@ -121,10 +124,14 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     _instagramCtrl.text = state.instagram;
     _facebookCtrl.text = state.facebook;
     _tiktokCtrl.text = state.tiktok;
+    _xCtrl.text = state.x;
+    _websiteCtrl.text = state.website;
     _socialsExpanded = state.whatsapp.isNotEmpty ||
         state.instagram.isNotEmpty ||
         state.facebook.isNotEmpty ||
-        state.tiktok.isNotEmpty;
+        state.tiktok.isNotEmpty ||
+        state.x.isNotEmpty ||
+        state.website.isNotEmpty;
   }
 
   @override
@@ -136,6 +143,8 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     _instagramCtrl.dispose();
     _facebookCtrl.dispose();
     _tiktokCtrl.dispose();
+    _xCtrl.dispose();
+    _websiteCtrl.dispose();
     super.dispose();
   }
 
@@ -148,10 +157,17 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
     notifier.setCommerceName(_nameCtrl.text.trim());
     // Save phone with dial code prefix
     notifier.setPhone('${_selectedCountry.dialCode} ${_phoneCtrl.text.trim()}');
-    notifier.setWhatsapp(_whatsappCtrl.text.trim());
-    notifier.setInstagram(_instagramCtrl.text.trim());
-    notifier.setFacebook(_facebookCtrl.text.trim());
-    notifier.setTiktok(_tiktokCtrl.text.trim());
+    notifier.setWhatsapp(
+        SocialLinksHelper.normalize('whatsapp', _whatsappCtrl.text));
+    notifier.setInstagram(
+        SocialLinksHelper.normalize('instagram', _instagramCtrl.text));
+    notifier.setFacebook(
+        SocialLinksHelper.normalize('facebook', _facebookCtrl.text));
+    notifier.setTiktok(
+        SocialLinksHelper.normalize('tiktok', _tiktokCtrl.text));
+    notifier.setX(SocialLinksHelper.normalize('x', _xCtrl.text));
+    notifier.setWebsite(
+        SocialLinksHelper.normalize('website', _websiteCtrl.text));
     // If the user typed a custom category, use it instead of "Autre"
     if (_isCustomCategory && _customCategoryCtrl.text.trim().isNotEmpty) {
       notifier.setCommerceType(_customCategoryCtrl.text.trim());
@@ -692,38 +708,56 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
                                       ),
                                     ),
                                     const SizedBox(height: Sp.sm),
-                                    AppInput(
+                                    _OnboardingSocialField(
+                                      platform: 'whatsapp',
                                       label: 'WhatsApp',
-                                      hint: '+228 90 00 00 00',
+                                      hint: '+228 90 00 00 00 ou lien wa.me',
                                       controller: _whatsappCtrl,
-                                      prefixIcon: SimpleIcons.whatsapp,
-                                      prefixIconColor: const Color(0xFF25D366),
+                                      icon: SimpleIcons.whatsapp,
+                                      iconColor: const Color(0xFF25D366),
                                       keyboardType: TextInputType.phone,
-                                      accentColor: AppColors.merchant,
                                     ),
-                                    AppInput(
+                                    _OnboardingSocialField(
+                                      platform: 'instagram',
                                       label: 'Instagram',
-                                      hint: 'chic_coin ou @chic_coin',
+                                      hint: '@chic_coin ou lien instagram.com/...',
                                       controller: _instagramCtrl,
-                                      prefixIcon: SimpleIcons.instagram,
-                                      prefixIconColor: const Color(0xFFE1306C),
-                                      accentColor: AppColors.merchant,
+                                      icon: SimpleIcons.instagram,
+                                      iconColor: const Color(0xFFE1306C),
                                     ),
-                                    AppInput(
+                                    _OnboardingSocialField(
+                                      platform: 'facebook',
                                       label: 'Facebook',
-                                      hint: 'Botega (nom de page)',
+                                      hint: 'chez_awa ou lien facebook.com/...',
                                       controller: _facebookCtrl,
-                                      prefixIcon: SimpleIcons.facebook,
-                                      prefixIconColor: const Color(0xFF1877F2),
-                                      accentColor: AppColors.merchant,
+                                      icon: SimpleIcons.facebook,
+                                      iconColor: const Color(0xFF1877F2),
+                                      keyboardType: TextInputType.url,
                                     ),
-                                    AppInput(
+                                    _OnboardingSocialField(
+                                      platform: 'tiktok',
                                       label: 'TikTok',
-                                      hint: 'chez_x ou @chez_x',
+                                      hint: '@chez_x ou lien tiktok.com/...',
                                       controller: _tiktokCtrl,
-                                      prefixIcon: SimpleIcons.tiktok,
-                                      prefixIconColor: const Color(0xFF0F172A),
-                                      accentColor: AppColors.merchant,
+                                      icon: SimpleIcons.tiktok,
+                                      iconColor: const Color(0xFF0F172A),
+                                    ),
+                                    _OnboardingSocialField(
+                                      platform: 'x',
+                                      label: 'X (Twitter)',
+                                      hint: '@chez_x ou lien x.com/...',
+                                      controller: _xCtrl,
+                                      icon: SimpleIcons.x,
+                                      iconColor: const Color(0xFF0F172A),
+                                    ),
+                                    _OnboardingSocialField(
+                                      platform: 'website',
+                                      label: 'Site web',
+                                      hint: 'https://moncommerce.com',
+                                      controller: _websiteCtrl,
+                                      icon: LucideIcons.globe,
+                                      iconColor: const Color(0xFF2563EB),
+                                      keyboardType: TextInputType.url,
                                     ),
                                   ],
                                 ),
@@ -752,6 +786,103 @@ class _MerchantStep1ScreenState extends ConsumerState<MerchantStep1Screen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OnboardingSocialField extends StatefulWidget {
+  final String platform;
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final IconData icon;
+  final Color iconColor;
+  final TextInputType? keyboardType;
+
+  const _OnboardingSocialField({
+    required this.platform,
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.icon,
+    required this.iconColor,
+    this.keyboardType,
+  });
+
+  @override
+  State<_OnboardingSocialField> createState() => _OnboardingSocialFieldState();
+}
+
+class _OnboardingSocialFieldState extends State<_OnboardingSocialField> {
+  @override
+  Widget build(BuildContext context) {
+    final text = widget.controller.text.trim();
+    final isValid =
+        text.isNotEmpty && SocialLinksHelper.validate(widget.platform, text) == null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppInput(
+          label: widget.label,
+          hint: widget.hint,
+          controller: widget.controller,
+          prefixIcon: widget.icon,
+          prefixIconColor: widget.iconColor,
+          keyboardType: widget.keyboardType,
+          accentColor: AppColors.merchant,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (val) => SocialLinksHelper.validate(
+            widget.platform,
+            val ?? '',
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        if (isValid) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10, left: 4, right: 4),
+            child: Row(
+              children: [
+                Icon(LucideIcons.link, size: 12, color: widget.iconColor),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    SocialLinksHelper.previewLabel(widget.platform, text),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: widget.iconColor,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () => SocialLinksHelper.launchTest(widget.platform, text),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Tester',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: widget.iconColor,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(LucideIcons.externalLink, size: 11, color: widget.iconColor),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

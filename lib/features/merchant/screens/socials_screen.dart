@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:simple_icons/simple_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/social_links_helper.dart';
 import '../../../core/utils/toast_service.dart';
 import '../providers/merchant_auth_provider.dart';
 import '../providers/merchant_provider.dart';
@@ -59,10 +60,10 @@ const _kAvailablePlatforms = <_SocialPlatformConfig>[
     name: 'Facebook',
     icon: SimpleIcons.facebook,
     brandColor: Color(0xFF1877F2),
-    placeholder: 'Botega',
-    helper: 'Nom de votre page ou identifiant Facebook',
+    placeholder: 'chez_awa ou facebook.com/chez_awa',
+    helper: 'Collez le lien de votre page ou tapez son identifiant (sans espaces)',
     prefixText: null,
-    keyboardType: TextInputType.text,
+    keyboardType: TextInputType.url,
   ),
   _SocialPlatformConfig(
     key: 'tiktok',
@@ -110,6 +111,7 @@ class SocialsScreen extends ConsumerStatefulWidget {
 }
 
 class _SocialsScreenState extends ConsumerState<SocialsScreen> {
+  final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {};
   final List<String> _selectedKeys = [];
   bool _isSaving = false;
@@ -245,49 +247,21 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
     });
   }
 
-  String _cleanInput(String key, String input) {
-    final trimmed = input.trim();
-    if (trimmed.isEmpty) return '';
-    if (key == 'instagram' || key == 'tiktok' || key == 'x') {
-      if (trimmed.startsWith('@')) {
-        return trimmed.substring(1).trim();
-      }
-      if (trimmed.contains('instagram.com/')) {
-        final parts = trimmed.split('instagram.com/');
-        return parts.last.split('?').first.replaceAll('/', '').trim();
-      }
-      if (trimmed.contains('tiktok.com/@')) {
-        final parts = trimmed.split('tiktok.com/@');
-        return parts.last.split('?').first.replaceAll('/', '').trim();
-      }
-      if (trimmed.contains('x.com/')) {
-        final parts = trimmed.split('x.com/');
-        return parts.last.split('?').first.replaceAll('/', '').trim();
-      }
-      if (trimmed.contains('twitter.com/')) {
-        final parts = trimmed.split('twitter.com/');
-        return parts.last.split('?').first.replaceAll('/', '').trim();
-      }
-    } else if (key == 'facebook') {
-      if (trimmed.contains('facebook.com/')) {
-        final parts = trimmed.split('facebook.com/');
-        return parts.last.split('?').first.replaceAll('/', '').trim();
-      }
-    } else if (key == 'website') {
-      if (!trimmed.startsWith('http://') &&
-          !trimmed.startsWith('https://') &&
-          trimmed.contains('.')) {
-        return 'https://$trimmed';
-      }
-    }
-    return trimmed;
-  }
+  String _cleanInput(String key, String input) =>
+      SocialLinksHelper.normalize(key, input);
 
   Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? true)) {
+      ToastService.showError(
+        'Corrigez les liens invalides avant d\'enregistrer.',
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
     try {
       final whatsapp = _selectedKeys.contains('whatsapp')
-          ? _controllers['whatsapp']!.text.trim()
+          ? _cleanInput('whatsapp', _controllers['whatsapp']!.text)
           : '';
       final instagram = _selectedKeys.contains('instagram')
           ? _cleanInput('instagram', _controllers['instagram']!.text)
@@ -303,11 +277,15 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
       for (final key in _selectedKeys) {
         final raw = _controllers[key]!.text.trim();
         final cleaned = _cleanInput(key, raw);
-        if (raw.isNotEmpty) {
+        if (cleaned.isNotEmpty && cleaned != raw) {
+          _controllers[key]!.text = cleaned;
+        }
+        if (cleaned.isNotEmpty) {
           socialProfilesPayload[key] = {
-            'name': raw,
+            'name': cleaned,
             'handle': cleaned,
-            'link': cleaned,
+            'link': SocialLinksHelper.buildUrl(key, cleaned),
+            'url': SocialLinksHelper.buildUrl(key, cleaned),
           };
         }
       }
@@ -382,8 +360,12 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -597,6 +579,7 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
                     const SizedBox(height: 28),
                   ],
                 ),
+              ),
               ),
             ),
 
@@ -908,11 +891,13 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Champ unique : Nom de la page ou pseudo
+          // Champ unique : Pseudo, numéro ou lien collé
           Text(
             platform.key == 'whatsapp'
-                ? 'Numéro WhatsApp :'
-                : 'Nom de page ou pseudo :',
+                ? 'Numéro WhatsApp (ou lien wa.me) :'
+                : platform.key == 'website'
+                    ? 'Adresse du site web :'
+                    : 'Pseudo (@...) ou lien complet :',
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
@@ -920,12 +905,14 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          TextField(
+          TextFormField(
             controller: controller,
             keyboardType: platform.keyboardType,
-            textCapitalization: platform.key == 'facebook'
-                ? TextCapitalization.words
-                : TextCapitalization.none,
+            textCapitalization: TextCapitalization.none,
+            validator: (val) => SocialLinksHelper.validate(
+              platform.key,
+              val ?? '',
+            ),
             style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
@@ -963,30 +950,108 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: platform.brandColor, width: 1.5),
               ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFEF4444)),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                LucideIcons.sparkles,
-                size: 13,
-                color: platform.brandColor.withValues(alpha: 0.8),
+          if (controller.text.trim().isNotEmpty &&
+              SocialLinksHelper.validate(platform.key, controller.text) ==
+                  null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: platform.brandColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  '${platform.helper} • Redirection directe automatique',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: AppColors.textSecondary.withValues(alpha: 0.8),
-                    height: 1.3,
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.link,
+                    size: 13,
+                    color: platform.brandColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      SocialLinksHelper.previewLabel(
+                        platform.key,
+                        controller.text,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: platform.brandColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => SocialLinksHelper.launchTest(
+                      platform.key,
+                      controller.text,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Tester',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: platform.brandColor,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(
+                            LucideIcons.externalLink,
+                            size: 12,
+                            color: platform.brandColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  LucideIcons.sparkles,
+                  size: 13,
+                  color: platform.brandColor.withValues(alpha: 0.8),
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    platform.helper,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: AppColors.textSecondary.withValues(alpha: 0.8),
+                      height: 1.3,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );

@@ -42,6 +42,8 @@ class OnboardingState {
     this.instagram = '',
     this.facebook = '',
     this.tiktok = '',
+    this.x = '',
+    this.website = '',
     this.latitude,
     this.longitude,
     this.isLoading = false,
@@ -84,6 +86,8 @@ class OnboardingState {
   final String instagram;
   final String facebook;
   final String tiktok;
+  final String x;
+  final String website;
   final double? latitude;
   final double? longitude;
   final bool isLoading;
@@ -132,6 +136,8 @@ class OnboardingState {
     String? instagram,
     String? facebook,
     String? tiktok,
+    String? x,
+    String? website,
     double? latitude,
     double? longitude,
     bool? isLoading,
@@ -170,6 +176,8 @@ class OnboardingState {
       instagram: instagram ?? this.instagram,
       facebook: facebook ?? this.facebook,
       tiktok: tiktok ?? this.tiktok,
+      x: x ?? this.x,
+      website: website ?? this.website,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       isLoading: isLoading ?? this.isLoading,
@@ -208,6 +216,16 @@ class OnboardingState {
   /// Payload envoyé à `PUT /auth/merchant/profile` (step1, puis réutilisé
   /// tel quel par l'étape localisation avec latitude/longitude en plus).
   Map<String, dynamic> toBusinessInfoJson() {
+    final socialProfiles = <String, dynamic>{};
+    if (x.isNotEmpty) {
+      socialProfiles['x'] = {'name': x, 'handle': x, 'link': 'https://x.com/$x'};
+    }
+    if (website.isNotEmpty) {
+      final url = website.startsWith('http://') || website.startsWith('https://')
+          ? website
+          : 'https://$website';
+      socialProfiles['website'] = {'name': website, 'handle': website, 'link': url, 'url': url};
+    }
     return {
       'name': commerceName,
       'category': commerceType,
@@ -220,6 +238,7 @@ class OnboardingState {
       'instagram': instagram.isEmpty ? null : instagram,
       'facebook': facebook.isEmpty ? null : facebook,
       'tiktok': tiktok.isEmpty ? null : tiktok,
+      if (socialProfiles.isNotEmpty) 'social_profiles': socialProfiles,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
     };
@@ -253,6 +272,8 @@ class OnboardingState {
         'instagram': instagram,
         'facebook': facebook,
         'tiktok': tiktok,
+        'x': x,
+        'website': website,
         'latitude': latitude,
         'longitude': longitude,
         'tiers': tiers.map((t) => t.toJson()).toList(),
@@ -306,6 +327,8 @@ class OnboardingState {
       instagram: json['instagram'] as String? ?? '',
       facebook: json['facebook'] as String? ?? '',
       tiktok: json['tiktok'] as String? ?? '',
+      x: json['x'] as String? ?? '',
+      website: json['website'] as String? ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
     );
@@ -446,6 +469,8 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   void setInstagram(String v) => state = state.copyWith(instagram: v);
   void setFacebook(String v) => state = state.copyWith(facebook: v);
   void setTiktok(String v) => state = state.copyWith(tiktok: v);
+  void setX(String v) => state = state.copyWith(x: v);
+  void setWebsite(String v) => state = state.copyWith(website: v);
   void setLocation(double lat, double lng) =>
       state = state.copyWith(latitude: lat, longitude: lng);
 
@@ -578,6 +603,13 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       instagram: text(restaurant.instagram),
       facebook: text(restaurant.facebook),
       tiktok: text(restaurant.tiktok),
+      x: text(restaurant.socialProfiles['x'] is Map
+          ? restaurant.socialProfiles['x']['handle']?.toString()
+          : restaurant.socialProfiles['x']?.toString()),
+      website: text(restaurant.socialProfiles['website'] is Map
+          ? restaurant.socialProfiles['website']['url']?.toString() ??
+              restaurant.socialProfiles['website']['link']?.toString()
+          : restaurant.socialProfiles['website']?.toString()),
       latitude: restaurant.latitude,
       longitude: restaurant.longitude,
     );
