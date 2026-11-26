@@ -48,28 +48,32 @@ class DeviceTokenNotifier {
     if (isClientAuth || isMerchantAuth) {
       _register(token).catchError((e) {
         debugPrint('[device_token_provider] Erreur refresh token: $e');
+        return false;
       });
     }
   }
 
   /// Ré-enregistre le token FCM actuel — appelé au login et exposé
   /// publiquement pour le pull-to-refresh marchand après une réactivation.
-  Future<void> registerCurrentToken() async {
-    await _registerCurrentToken();
+  Future<bool> registerCurrentToken() async {
+    return _registerCurrentToken();
   }
 
-  Future<void> _registerCurrentToken() async {
+  Future<bool> _registerCurrentToken() async {
     try {
       final token = await NotificationService().getToken();
-      if (token != null) {
-        await _register(token);
+      if (token != null && token.isNotEmpty) {
+        return await _register(token);
       }
+      debugPrint('[device_token_provider] Aucun token FCM obtenu (vapidKey ou permission manquante)');
+      return false;
     } catch (e) {
       debugPrint('[device_token_provider] Erreur register token: $e');
+      return false;
     }
   }
 
-  Future<void> _register(String token) {
+  Future<bool> _register(String token) {
     final platform = kIsWeb
         ? 'web'
         : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android');

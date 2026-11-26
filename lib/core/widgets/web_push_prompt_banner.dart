@@ -48,10 +48,16 @@ class _WebPushPromptBannerState extends ConsumerState<WebPushPromptBanner> {
       if (!mounted) return;
 
       if (granted) {
-        await ref.read(deviceTokenProvider).registerCurrentToken();
-        if (mounted) {
+        final registered =
+            await ref.read(deviceTokenProvider).registerCurrentToken();
+        if (!mounted) return;
+        if (registered) {
           setState(() => _visible = false);
           ToastService.showSuccess('Notifications activées avec succès !');
+        } else {
+          ToastService.showError(
+            "Autorisation accordée, mais l'enregistrement push a échoué (vérifiez FIREBASE_VAPID_KEY ou le mode PWA installée).",
+          );
         }
       } else {
         setState(() => _visible = false);

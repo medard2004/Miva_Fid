@@ -11,14 +11,16 @@ class DeviceTokenService {
 
   DeviceTokenService(this._apiClient);
 
-  Future<void> register(String token, String platform) async {
+  Future<bool> register(String token, String platform) async {
     try {
       await _apiClient.dio.post('/device-tokens', data: {
         'token': token,
         'platform': platform,
       });
+      return true;
     } catch (e) {
       developer.log('DeviceTokenService: échec enregistrement token', error: e);
+      return false;
     }
   }
 }

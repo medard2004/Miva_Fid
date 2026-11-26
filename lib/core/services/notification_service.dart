@@ -199,6 +199,11 @@ class NotificationService {
 
   Future<String?> getToken() {
     if (kIsWeb) {
+      if (webVapidKey.isEmpty) {
+        debugPrint(
+          '[notification_service] FIREBASE_VAPID_KEY non défini : le push Web/PWA nécessite --dart-define=FIREBASE_VAPID_KEY=...',
+        );
+      }
       return _messaging.getToken(
         vapidKey: webVapidKey.isNotEmpty ? webVapidKey : null,
       );
