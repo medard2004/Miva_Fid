@@ -626,8 +626,8 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: _buildKpiBox(
-            value: '${smsRemaining ?? 0}',
-            label: 'Solde SMS',
+            value: '∞',
+            label: 'Quota SMS',
           ),
         ),
       ],

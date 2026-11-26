@@ -145,14 +145,12 @@ class _CampaignSummaryScreenState
     final restaurant = authState.restaurant;
     final isFcmSuspended = restaurant?.isFcmSuspended ?? false;
     final fcmSuspensionReason = restaurant?.fcmSuspensionReason;
-    final smsCredits = restaurant?.smsCredits ?? 0;
 
     final cost = isEditing
         ? (draft.selectedClientIds.length -
             (widget.editingCampaign!.recipientsCount))
         : draft.selectedClientIds.length;
-    final finalBalance = smsCredits - cost;
-    final canSend = finalBalance >= 0 && !isFcmSuspended;
+    final canSend = !isFcmSuspended;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -422,7 +420,7 @@ class _CampaignSummaryScreenState
                                       fontSize: 13,
                                       color: AppColors.textSecondary)),
                               Text(
-                                '$smsCredits crédit${smsCredits > 1 ? 's' : ''}',
+                                'Illimité (∞)',
                                 style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -434,12 +432,12 @@ class _CampaignSummaryScreenState
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Coût estimé',
+                              Text('Destinataires',
                                   style: TextStyle(
                                       fontSize: 13,
                                       color: AppColors.textSecondary)),
                               Text(
-                                '${cost > 0 ? '-' : (cost < 0 ? '+' : '')}${cost.abs()} crédit${cost.abs() > 1 ? 's' : ''}',
+                                '${cost.abs()} client${cost.abs() > 1 ? 's' : ''}',
                                 style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -459,33 +457,15 @@ class _CampaignSummaryScreenState
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.textPrimary)),
-                              Text(
-                                '$finalBalance crédit${finalBalance.abs() > 1 ? 's' : ''}',
+                              const Text(
+                                'Illimité (∞)',
                                 style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: finalBalance < 0
-                                        ? Colors.red
-                                        : AppColors.textPrimary),
+                                    color: Color(0xFF10B981)),
                               ),
                             ],
                           ),
-                          if (finalBalance < 0) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(LucideIcons.alertCircle, size: 14, color: Colors.red),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    'Crédit insuffisant. Veuillez recharger votre compte.',
-                                    style: TextStyle(fontSize: 12, color: Colors.red.shade700),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                         ],
                       ),
                     ),

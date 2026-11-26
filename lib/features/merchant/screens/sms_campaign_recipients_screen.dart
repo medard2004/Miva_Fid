@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../models/campaign_model.dart';
-import '../providers/merchant_provider.dart';
 import '../providers/sms_campaign_draft_provider.dart';
 
 const _segments = [
@@ -50,9 +49,7 @@ class _SmsCampaignRecipientsScreenState
   Widget build(BuildContext context) {
     final draft = ref.watch(smsCampaignDraftProvider(widget.editingCampaign));
     final notifier = ref.read(smsCampaignDraftProvider(widget.editingCampaign).notifier);
-    final smsRemaining = ref.watch(merchantNotifierProvider).value?.smsRemaining ?? 0;
     final selectedCount = draft.selectedClientIds.length;
-    final remainingAfter = smsRemaining - selectedCount;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -210,15 +207,14 @@ class _SmsCampaignRecipientsScreenState
                           },
                         ),
             ),
-            _buildFooter(context, selectedCount, remainingAfter),
+            _buildFooter(context, selectedCount),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFooter(BuildContext context, int selectedCount, int remainingAfter) {
-    final over = remainingAfter < 0;
+  Widget _buildFooter(BuildContext context, int selectedCount) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
@@ -231,13 +227,11 @@ class _SmsCampaignRecipientsScreenState
           children: [
             Expanded(
               child: Text(
-                over
-                    ? 'Solde SMS insuffisant ($remainingAfter)'
-                    : '$remainingAfter SMS restants après envoi',
+                '$selectedCount destinataire${selectedCount > 1 ? 's' : ''} • Quota illimité (∞)',
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: over ? AppColors.danger : AppColors.textSecondary,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
