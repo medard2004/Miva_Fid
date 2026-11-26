@@ -21,6 +21,7 @@ class _ToastRequest {
   final String? campaignId;
   final String? restaurantName;
   final String? restaurantLogo;
+  final bool isNotificationCard;
   final VoidCallback? onTap;
 
   _ToastRequest({
@@ -32,10 +33,12 @@ class _ToastRequest {
     this.campaignId,
     this.restaurantName,
     this.restaurantLogo,
+    this.isNotificationCard = false,
     this.onTap,
   });
 
-  bool get isCampaign => campaignId != null && campaignId!.isNotEmpty;
+  bool get isCampaign =>
+      isNotificationCard || (campaignId != null && campaignId!.isNotEmpty);
 }
 
 class ToastService {
@@ -81,6 +84,21 @@ class ToastService {
     return _recentlyShown.contains(notificationId);
   }
 
+  static String _contentDedupKey({
+    String? title,
+    String? body,
+    String? restaurantName,
+    String? campaignId,
+  }) {
+    if (campaignId != null && campaignId.isNotEmpty) {
+      return 'campaign:$campaignId';
+    }
+    final t = (title ?? '').trim().toLowerCase();
+    final b = (body ?? '').trim().toLowerCase();
+    final r = (restaurantName ?? '').trim().toLowerCase();
+    return 'content:$r|$t|$b';
+  }
+
   static void hideCurrent() {
     final entry = _overlayEntry;
     _overlayEntry = null;
@@ -110,6 +128,7 @@ class ToastService {
       campaignId: next.campaignId,
       restaurantName: next.restaurantName,
       restaurantLogo: next.restaurantLogo,
+      isNotificationCard: next.isNotificationCard,
       onTap: next.onTap,
     );
   }
@@ -149,6 +168,13 @@ class ToastService {
     }
 
     if (notificationId != null && markSeen(notificationId)) return;
+    final contentKey = _contentDedupKey(
+      title: title,
+      body: body,
+      restaurantName: restaurantName,
+      campaignId: campaignId,
+    );
+    if (markSeen(contentKey)) return;
 
     void onTap() {
       hideCurrent();
@@ -205,14 +231,16 @@ class ToastService {
     String? restaurantLogo,
     bool isWarning = false,
     Map<String, dynamic>? notificationData,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(seconds: 5),
   }) {
+    final contentKey = _contentDedupKey(
+      title: title,
+      body: body,
+      restaurantName: restaurantName,
+    );
+    if (markSeen(contentKey)) return;
+
     final type = isWarning ? ToastType.warning : ToastType.success;
-    final displayTitle = (restaurantName != null &&
-            restaurantName.isNotEmpty &&
-            !title.contains(restaurantName))
-        ? restaurantName
-        : (title.isNotEmpty ? title : restaurantName);
     final displayMessage = body.isNotEmpty ? body : title;
 
     void onTap() {
@@ -232,10 +260,11 @@ class ToastService {
       message: displayMessage,
       type: type,
       duration: duration,
-      title: displayTitle,
+      title: title,
       restaurantName: restaurantName,
       restaurantLogo: restaurantLogo,
-      onTap: notificationData != null ? onTap : null,
+      isNotificationCard: true,
+      onTap: notificationData != null ? onTap : hideCurrent,
     );
 
     if (_isShowing) {
@@ -250,6 +279,7 @@ class ToastService {
       title: request.title,
       restaurantName: request.restaurantName,
       restaurantLogo: request.restaurantLogo,
+      isNotificationCard: true,
       onTap: request.onTap,
     );
   }
@@ -263,6 +293,7 @@ class ToastService {
     String? campaignId,
     String? restaurantName,
     String? restaurantLogo,
+    bool isNotificationCard = false,
     VoidCallback? onTap,
   }) {
     final activeKey = _activeNavigatorKey;
@@ -273,16 +304,18 @@ class ToastService {
       return;
     }
 
-    final isCampaign = campaignId != null && campaignId.isNotEmpty;
+    final useNotificationCard =
+        isNotificationCard || (campaignId != null && campaignId.isNotEmpty);
 
     late Widget toast;
-    if (isCampaign) {
+    if (useNotificationCard) {
       toast = _CampaignToastWidget(
         title: title ?? message,
         body: message,
         imageUrl: imageUrl,
         restaurantName: restaurantName,
         restaurantLogo: restaurantLogo,
+        isWarning: type == ToastType.warning,
         onDismiss: hideCurrent,
         onTap: onTap ?? hideCurrent,
       );
@@ -624,6 +657,7 @@ class _CampaignToastWidget extends StatefulWidget {
   final String? imageUrl;
   final String? restaurantName;
   final String? restaurantLogo;
+  final bool isWarning;
   final VoidCallback onDismiss;
   final VoidCallback onTap;
 
@@ -635,6 +669,7 @@ class _CampaignToastWidget extends StatefulWidget {
     this.imageUrl,
     this.restaurantName,
     this.restaurantLogo,
+    this.isWarning = false,
   });
 
   @override
@@ -681,18 +716,52 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
     super.dispose();
   }
 
+  String _extractActionLabel(String rawTitle, String headerName) {
+    var cleaned = rawTitle.trim();
+    if (cleaned.isEmpty || cleaned.toLowerCase() == headerName.toLowerCase()) {
+      return '';
+    }
+    for (final sep in [' • ', ' — ', ' - ', ' : ']) {
+      final prefix = '$headerName$sep';
+      if (cleaned.toLowerCase().startsWith(prefix.toLowerCase())) {
+        cleaned = cleaned.substring(prefix.length).trim();
+        break;
+      }
+    }
+    if (cleaned.toLowerCase() == headerName.toLowerCase()) {
+      return '';
+    }
+    return cleaned;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final thumbUrl = (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
-        ? widget.imageUrl
-        : (widget.restaurantLogo != null && widget.restaurantLogo!.isNotEmpty
-            ? widget.restaurantLogo
-            : null);
-    final hasImage = thumbUrl != null;
-    final hasLogo = widget.restaurantLogo != null && widget.restaurantLogo!.isNotEmpty;
-    final badgeLabel = (widget.restaurantName != null && widget.restaurantName!.isNotEmpty)
-        ? widget.restaurantName!
-        : 'Nouvelle offre';
+    final accentColor = widget.isWarning ? AppColors.warning : AppColors.primary;
+    final hasLogo =
+        widget.restaurantLogo != null && widget.restaurantLogo!.isNotEmpty;
+    final hasPromoImage = widget.imageUrl != null &&
+        widget.imageUrl!.isNotEmpty &&
+        widget.imageUrl != widget.restaurantLogo;
+    final headerName =
+        (widget.restaurantName != null && widget.restaurantName!.isNotEmpty)
+            ? widget.restaurantName!
+            : (widget.title.isNotEmpty ? widget.title : 'Notification');
+    final actionLabel = _extractActionLabel(widget.title, headerName);
+
+    final fallbackAvatar = Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        widget.isWarning ? LucideIcons.triangleAlert : LucideIcons.store,
+        color: accentColor,
+        size: 20,
+      ),
+    );
 
     return SlideTransition(
       position: _offsetAnimation,
@@ -701,209 +770,147 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
         child: ScaleTransition(
           scale: _scaleAnimation,
           alignment: Alignment.topCenter,
-          child: AppTapScale(
-            scaleDown: 0.985,
-            onTap: widget.onTap,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: const Color(0xFF5B50EC).withValues(alpha: 0.2),
-                  width: 1,
+          child: Dismissible(
+            key: ValueKey('notif_card_${headerName}_${widget.body}'),
+            direction: DismissDirection.up,
+            onDismissed: (_) => widget.onDismiss(),
+            child: AppTapScale(
+              scaleDown: 0.985,
+              onTap: widget.onTap,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.18),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF5B50EC).withValues(alpha: 0.12),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: IntrinsicHeight(
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Vignette image (image campagne ou logo établissement)
-                    Container(
-                      width: 84,
-                      color: AppColors.background,
-                      child: hasImage
-                          ? CachedNetworkImage(
-                              imageUrl:
-                                  ApiConstants.resolveMediaUrl(thumbUrl),
-                              httpHeaders: ApiConstants.mediaHeaders(
-                                  ApiConstants.resolveMediaUrl(
-                                      thumbUrl)),
-                              imageRenderMethodForWeb:
-                                  ApiConstants.webRenderMethodFor(
-                                      ApiConstants.resolveMediaUrl(
-                                          thumbUrl)),
-                              fit: BoxFit.cover,
-                              placeholder: (_, __) => Container(
-                                color: AppColors.background,
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Color(0xFF5B50EC),
-                                    ),
+                    // Logo établissement circulaire uniforme 44x44
+                    if (hasLogo)
+                      ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              ApiConstants.resolveMediaUrl(widget.restaurantLogo!),
+                          httpHeaders: ApiConstants.mediaHeaders(
+                              ApiConstants.resolveMediaUrl(widget.restaurantLogo!)),
+                          imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
+                              ApiConstants.resolveMediaUrl(widget.restaurantLogo!)),
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => fallbackAvatar,
+                          errorWidget: (_, __, ___) => fallbackAvatar,
+                        ),
+                      )
+                    else
+                      fallbackAvatar,
+                    const SizedBox(width: 12),
+
+                    // Contenu texte uniforme (nom affiché une seule fois)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  headerName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.25,
                                   ),
                                 ),
                               ),
-                              errorWidget: (_, __, ___) => Container(
-                                color: AppColors.background,
-                                child: Icon(
-                                  LucideIcons.imageOff,
-                                  color: AppColors.textSecondary.withValues(alpha: 0.4),
-                                  size: 22,
-                                ),
-                              ),
-                            )
-                          : Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Color(0xFF5B50EC),
-                                    Color(0xFF7C3AED),
-                                  ],
-                                ),
-                              ),
-                              child: const Icon(
-                                LucideIcons.megaphone,
-                                color: Colors.white,
-                                size: 26,
-                              ),
-                            ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
+                              if (actionLabel.isNotEmpty) ...[
+                                const SizedBox(width: 6),
                                 Flexible(
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF5B50EC).withValues(alpha: 0.1),
+                                      color: accentColor.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (hasLogo) ...[
-                                          ClipOval(
-                                            child: CachedNetworkImage(
-                                              imageUrl: ApiConstants.resolveMediaUrl(widget.restaurantLogo!),
-                                              httpHeaders: ApiConstants.mediaHeaders(
-                                                  ApiConstants.resolveMediaUrl(widget.restaurantLogo!)),
-                                              imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
-                                                  ApiConstants.resolveMediaUrl(widget.restaurantLogo!)),
-                                              width: 14,
-                                              height: 14,
-                                              fit: BoxFit.cover,
-                                              errorWidget: (_, __, ___) => const Icon(
-                                                LucideIcons.store,
-                                                size: 11,
-                                                color: Color(0xFF5B50EC),
-                                              ),
-                                            ),
-                                          ),
-                                        ] else
-                                          const Icon(
-                                            LucideIcons.sparkles,
-                                            size: 11,
-                                            color: Color(0xFF5B50EC),
-                                          ),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          child: Text(
-                                            badgeLabel,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 10.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF5B50EC),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                GestureDetector(
-                                  onTap: widget.onDismiss,
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: Icon(
-                                      LucideIcons.x,
-                                      size: 15,
-                                      color: AppColors.textSecondary.withValues(alpha: 0.5),
+                                    child: Text(
+                                      actionLabel,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: accentColor,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            widget.body,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12.5,
+                              height: 1.35,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.body,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11.5,
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Row(
-                              children: [
-                                Text(
-                                  'Taper pour voir',
-                                  style: TextStyle(
-                                    color: Color(0xFF5B50EC),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                SizedBox(width: 3),
-                                Icon(
-                                  LucideIcons.chevronRight,
-                                  size: 13,
-                                  color: Color(0xFF5B50EC),
-                                ),
-                              ],
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Vignette image fixe 44x44 (sans jamais déformer la carte)
+                    if (hasPromoImage) ...[
+                      const SizedBox(width: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: CachedNetworkImage(
+                          imageUrl: ApiConstants.resolveMediaUrl(widget.imageUrl!),
+                          httpHeaders: ApiConstants.mediaHeaders(
+                              ApiConstants.resolveMediaUrl(widget.imageUrl!)),
+                          imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
+                              ApiConstants.resolveMediaUrl(widget.imageUrl!)),
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: widget.onDismiss,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          LucideIcons.x,
+                          size: 16,
+                          color: AppColors.textSecondary.withValues(alpha: 0.55),
                         ),
                       ),
                     ),
