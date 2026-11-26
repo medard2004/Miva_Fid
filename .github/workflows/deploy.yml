@@ -4,32 +4,28 @@ on:
   push:
     branches:
       - main
-      - main2
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Récupération du code
+      - name: Récupération du code
         uses: actions/checkout@v4
 
-      - name: 💙 Installation de Flutter
+      - name: Installation de Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          flutter-version: '3.41.6'
           cache: true
 
-      - name: 📦 Récupération des dépendances
+      - name: Récupération des dépendances
         run: flutter pub get
 
-      - name: 🔨 Compilation Flutter Web
-        run: |
-          flutter build web --release \
-            --no-tree-shake-icons \
-            --dart-define=API_BASE_URL="${{ secrets.API_BASE_URL || 'https://distract-buffalo-mockup.ngrok-free.dev/api' }}"
+      - name: Compilation Flutter Web
+        run: flutter build web --release --no-tree-shake-icons --dart-define=API_BASE_URL="${{ secrets.API_BASE_URL || 'https://distract-buffalo-mockup.ngrok-free.dev/api' }}"
 
-      - name: 🚀 Déploiement sur Vercel
+      - name: Déploiement sur Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -37,4 +33,3 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
           working-directory: ./
-
