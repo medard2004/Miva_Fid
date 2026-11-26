@@ -5,6 +5,16 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "headers": [
+    {
+      "source": "/(index\\.html|flutter_bootstrap\\.js|flutter_service_worker\\.js|firebase-messaging-sw\\.js|manifest\\.json|version\\.json|main\\.dart\\.js|main\\.dart\\.wasm|main\\.dart\\.mjs)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
   ]
 }
-

@@ -45,6 +45,9 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, {
           'Content-Type': contentType,
           'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         });
         res.end(content);
       } else {
@@ -56,6 +59,9 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, {
               'Content-Type': 'text/html; charset=UTF-8',
               'Access-Control-Allow-Origin': '*',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0',
             });
             res.end(indexContent);
           } else {

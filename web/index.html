@@ -64,6 +64,75 @@
     window.isPWAInstalled = function() {
       return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     };
+
+    // Réalignement PWA : désactive tout ancien service worker Flutter
+    // (tout en conservant firebase-messaging-sw.js), purge les caches
+    // d'assets obsolètes et recharge une seule fois si une nouvelle build
+    // est détectée. Ne touche jamais au localStorage des tokens.
+    (function realignPwaAssets() {
+      var RELOAD_GUARD_KEY = 'mivafid_pwa_realigned';
+      var VERSION_KEY = 'mivafid_build_sig';
+
+      async function run() {
+        var needsReload = false;
+
+        if ('serviceWorker' in navigator) {
+          try {
+            var regs = await navigator.serviceWorker.getRegistrations();
+            for (var i = 0; i < regs.length; i++) {
+              var reg = regs[i];
+              var urls = [
+                reg.active && reg.active.scriptURL,
+                reg.waiting && reg.waiting.scriptURL,
+                reg.installing && reg.installing.scriptURL
+              ].filter(Boolean);
+              var isLegacyFlutterSw = urls.some(function(u) {
+                return u.indexOf('flutter_service_worker.js') !== -1;
+              });
+              if (isLegacyFlutterSw) {
+                var unregistered = await reg.unregister();
+                if (unregistered) needsReload = true;
+              }
+            }
+          } catch (_) {}
+        }
+
+        if ('caches' in window) {
+          try {
+            var keys = await caches.keys();
+            for (var j = 0; j < keys.length; j++) {
+              var name = keys[j];
+              if (name.indexOf('firebase') === -1) {
+                await caches.delete(name);
+              }
+            }
+          } catch (_) {}
+        }
+
+        try {
+          var res = await fetch('flutter_bootstrap.js?t=' + Date.now(), { cache: 'no-store' });
+          if (res.ok) {
+            var text = await res.text();
+            var match = text.match(/serviceWorkerVersion:\s*"([^"]+)"/);
+            var sig = match ? match[1] : String(text.length);
+            var prev = localStorage.getItem(VERSION_KEY);
+            if (prev && prev !== sig) {
+              needsReload = true;
+            }
+            localStorage.setItem(VERSION_KEY, sig);
+          }
+        } catch (_) {}
+
+        if (needsReload && !sessionStorage.getItem(RELOAD_GUARD_KEY)) {
+          sessionStorage.setItem(RELOAD_GUARD_KEY, '1');
+          window.location.reload();
+        } else {
+          sessionStorage.removeItem(RELOAD_GUARD_KEY);
+        }
+      }
+
+      run();
+    })();
   </script>
   
   
