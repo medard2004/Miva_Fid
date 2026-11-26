@@ -1,4 +1,5 @@
 {
+    "id": "/client-pwa",
     "name": "Miva Fid - Ma Carte Fidélité",
     "short_name": "Miva Fid",
     "start_url": "/",

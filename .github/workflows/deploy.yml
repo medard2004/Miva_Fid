@@ -49,9 +49,9 @@ jobs:
             ],
             "headers": [
               {
-                "source": "/(flutter_service_worker|firebase-messaging-sw).js",
+                "source": "/(flutter_service_worker\\.js|firebase-messaging-sw\\.js|manifest\\.json|index\\.html)",
                 "headers": [
-                  { "key": "Cache-Control", "value": "no-cache" }
+                  { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
                 ]
               }
             ]
@@ -115,9 +115,9 @@ jobs:
             ],
             "headers": [
               {
-                "source": "/(flutter_service_worker|firebase-messaging-sw).js",
+                "source": "/(flutter_service_worker\\.js|firebase-messaging-sw\\.js|manifest\\.json|index\\.html)",
                 "headers": [
-                  { "key": "Cache-Control", "value": "no-cache" }
+                  { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
                 ]
               }
             ]

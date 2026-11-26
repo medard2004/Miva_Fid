@@ -29,12 +29,16 @@ class NotificationService {
       _navigatorKey = navigatorKey;
     }
 
-    // Request permissions (mobile + Web Push PWA)
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // Sur mobile natif, on demande la permission dès le boot. Sur le Web/PWA,
+    // les navigateurs exigent une action utilisateur (clic) pour afficher
+    // la fenêtre d'autorisation — gérée par `WebPushPromptBanner`.
+    if (!kIsWeb) {
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
 
     // Local notifications setup (uniquement sur plateformes mobiles natives)
     if (!kIsWeb) {
@@ -165,6 +169,32 @@ class NotificationService {
       body: body,
     );
     navigateToNotificationDestination(context, destination);
+  }
+
+  Future<bool> hasPromptableWebPermission() async {
+    if (!kIsWeb) return false;
+    try {
+      final settings = await _messaging.getNotificationSettings();
+      return settings.authorizationStatus == AuthorizationStatus.notDetermined;
+    } catch (e) {
+      debugPrint('[notification_service] Erreur check permission web: $e');
+      return false;
+    }
+  }
+
+  Future<bool> requestPermissionFromUserGesture() async {
+    try {
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      return settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+    } catch (e) {
+      debugPrint('[notification_service] Erreur requestPermission web: $e');
+      return false;
+    }
   }
 
   Future<String?> getToken() {
