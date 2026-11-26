@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
 import '../core/api_exceptions.dart';
 import '../../cache/offline_cache_service.dart';
+import '../../services/social_auth_service.dart';
 import '../../../features/client/models/user.dart';
 
 class AuthRepository {
@@ -98,6 +99,7 @@ class AuthRepository {
     } finally {
       await _tokenStorage.deleteToken();
       await _cache?.clearClientData();
+      await SocialAuthService.signOut();
       unawaited(Future.delayed(const Duration(seconds: 2), () {
         _authService.suppressUnauthorized = false;
       }));

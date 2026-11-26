@@ -4,6 +4,7 @@ import '../services/merchant_auth_service.dart';
 import '../storage/token_storage.dart' show TokenStorageBase;
 import '../core/api_exceptions.dart';
 import '../../cache/offline_cache_service.dart';
+import '../../services/social_auth_service.dart';
 import '../../../features/merchant/models/restaurant_account.dart';
 
 /// Normalise la charge `restaurant` de la réponse `staffLogin`.
@@ -189,6 +190,7 @@ class MerchantAuthRepository {
     } finally {
       await _tokenStorage.deleteToken();
       await _cache?.clearMerchantData();
+      await SocialAuthService.signOut();
       unawaited(Future.delayed(const Duration(seconds: 2), () {
         _authService.suppressUnauthorized = false;
       }));

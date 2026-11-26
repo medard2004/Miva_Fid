@@ -268,12 +268,38 @@ class ErrorTranslator {
   static AppError _fromUnknown(Object? error, ErrorContext context) {
     final raw = _normalize(error?.toString() ?? '');
 
-    if (_has(raw,
-        ['socket', 'connection refused', 'network', 'failed host lookup'])) {
+    if (_has(raw, [
+      'socket',
+      'connection refused',
+      'network',
+      'network-request-failed',
+      'failed host lookup',
+    ])) {
       return AppError.general(ErrorMessages.serverUnreachable);
     }
     if (_has(raw, ['timeout', 'timed out'])) {
       return AppError.general(ErrorMessages.serverUnreachable);
+    }
+    if (_has(raw, ['too-many-requests', 'trop de tentatives'])) {
+      return AppError.general(ErrorMessages.tooManyAttempts);
+    }
+    if (_has(raw, ['unauthorized-domain', 'unauthorized_domain'])) {
+      return const AppError.general(
+        'Domaine non autorisé dans Firebase Authentication. Ajoutez ce domaine dans la console Firebase.',
+      );
+    }
+    if (_has(raw, ['popup-blocked', 'popup_blocked'])) {
+      return const AppError.general(
+        'La fenêtre de connexion Google a été bloquée par le navigateur. Autorisez les popups et réessayez.',
+      );
+    }
+    if (_has(raw, ['operation-not-allowed'])) {
+      return const AppError.general(
+        'La connexion Google n\'est pas activée dans Firebase Authentication.',
+      );
+    }
+    if (_has(raw, ['account-exists-with-different-credential'])) {
+      return AppError.general(ErrorMessages.socialEmailUsesPassword);
     }
     return AppError.general(_fallbackMessage(context));
   }

@@ -264,18 +264,24 @@ class LoyaltyCard {
     this.restaurantSocialProfiles = const {},
   });
 
+  static Map<String, dynamic>? _asMap(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return null;
+  }
+
   /// Construit une carte réelle depuis `POST/GET /loyalty-cards/*`
   /// (`{card: {..., restaurant: {...}, loyalty_program: {...}}}`).
   factory LoyaltyCard.fromApi(Map<String, dynamic> json) {
-    final restaurant = json['restaurant'] as Map<String, dynamic>? ?? {};
-    final program = json['loyalty_program'] as Map<String, dynamic>? ?? {};
-    final config = program['config'] as Map<String, dynamic>? ?? {};
-    final progress = json['progress'] as Map<String, dynamic>? ?? {};
-    final level = json['level'] as Map<String, dynamic>?;
-    final profiles =
-        (restaurant['social_profiles'] as Map?)?.cast<String, dynamic>() ??
-            (config['social_profiles'] as Map?)?.cast<String, dynamic>() ??
-            const {};
+    final restaurant = _asMap(json['restaurant']) ?? const {};
+    final program = _asMap(json['loyalty_program']) ?? const {};
+    final config = _asMap(program['config']) ?? const {};
+    final progress = _asMap(json['progress']) ?? const {};
+    final level = _asMap(json['level']);
+    final profiles = _asMap(restaurant['social_profiles']) ??
+        _asMap(config['social_profiles']) ??
+        const {};
 
     return LoyaltyCard(
       id: json['id'].toString(),

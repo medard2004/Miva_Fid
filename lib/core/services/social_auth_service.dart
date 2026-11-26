@@ -56,10 +56,36 @@ class SocialAuthService {
     _googleInitialized = true;
   }
 
+  /// Déconnecte proprement les sessions Google / Firebase locales afin de
+  /// permettre le changement de compte ou la connexion à un autre compte sur
+  /// mobile comme sur web.
+  static Future<void> signOut() async {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        await FirebaseAuth.instance.signOut();
+      }
+    } catch (e) {
+      debugPrint('Erreur Firebase signOut: $e');
+    }
+
+    if (!kIsWeb) {
+      try {
+        await _ensureInitialized();
+        await GoogleSignIn.instance.signOut();
+      } catch (e) {
+        debugPrint('Erreur GoogleSignIn signOut: $e');
+      }
+    }
+  }
+
   /// S'authentifie avec Google puis Firebase, et retourne l'id_token Firebase pour le backend
   static Future<String?> signInWithGoogle() async {
     try {
       _assertFirebaseReady();
+
+      // Purge toute session sociale précédente afin de toujours proposer le
+      // sélecteur de compte (utile pour changer de compte ou en tester plusieurs).
+      await signOut();
 
       // Sur le Web, on utilise directement le flux popup natif Firebase Auth.
       // Cela évite les contraintes de rendu de bouton GIS de google_sign_in_web,
@@ -73,7 +99,8 @@ class SocialAuthService {
         final UserCredential userCredential =
             await FirebaseAuth.instance.signInWithPopup(googleProvider);
 
-        final String? firebaseIdToken = await userCredential.user?.getIdToken();
+        final String? firebaseIdToken =
+            await userCredential.user?.getIdToken(true);
 
         if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
           throw Exception(
@@ -113,7 +140,8 @@ class SocialAuthService {
 
       // Récupère le jeton JWT Firebase (idToken)
       // Ce jeton sera validé par le backend Laravel
-      final String? firebaseIdToken = await userCredential.user?.getIdToken();
+      final String? firebaseIdToken =
+          await userCredential.user?.getIdToken(true);
 
       if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
         throw Exception(

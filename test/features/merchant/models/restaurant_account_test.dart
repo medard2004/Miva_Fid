@@ -33,5 +33,21 @@ void main() {
       expect(account.actorType, 'restaurant');
       expect(account.staffRole, 'admin');
     });
+
+    test('social_profiles et autres maps envoyées en [] par Laravel ne plantent pas', () {
+      final account = RestaurantAccount.fromJson({
+        'id': 43,
+        'uuid': 'u43',
+        'email': 'merchant@example.com',
+        'social_profiles': <dynamic>[],
+        'opening_hours': <dynamic>[],
+        'notification_preferences': <dynamic>[],
+      });
+
+      expect(account.id, '43');
+      expect(account.socialProfiles, isEmpty);
+      expect(account.openingHours, isEmpty);
+      expect(account.notificationPreferences, isEmpty);
+    });
   });
 }

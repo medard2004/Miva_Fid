@@ -127,8 +127,24 @@ class RestaurantAccount {
     this.staffRole = 'admin',
   });
 
+  static Map<String, dynamic>? _asMap(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return null;
+  }
+
+  static Map<String, bool>? _asBoolMap(dynamic value) {
+    if (value is Map) {
+      return value.map((k, v) => MapEntry(k.toString(), v == true));
+    }
+    return null;
+  }
+
   factory RestaurantAccount.fromJson(Map<String, dynamic> json) {
-    final program = json['loyalty_program'] as Map<String, dynamic>?;
+    final program = _asMap(json['loyalty_program']);
+    final programConfig = _asMap(program?['config']);
+    final actor = _asMap(json['actor']);
     return RestaurantAccount(
       id: json['id']?.toString() ?? '',
       uuid: json['uuid']?.toString() ?? '',
@@ -146,9 +162,8 @@ class RestaurantAccount {
       facebook: json['facebook'] as String?,
       tiktok: json['tiktok'] as String?,
       socialProfiles:
-          (json['social_profiles'] as Map?)?.cast<String, dynamic>() ??
-              (program?['config']?['social_profiles'] as Map?)
-                  ?.cast<String, dynamic>() ??
+          _asMap(json['social_profiles']) ??
+              _asMap(programConfig?['social_profiles']) ??
               const {},
       qrToken: json['qr_token'] as String?,
       shortCode: json['short_code'] as String?,
@@ -156,22 +171,19 @@ class RestaurantAccount {
       longitude: (json['longitude'] as num?)?.toDouble(),
       hasBusinessInfo: json['has_business_info'] as bool? ?? false,
       hasLocation: json['has_location'] as bool? ?? false,
-      openingHours:
-          (json['opening_hours'] as Map?)?.cast<String, dynamic>() ?? const {},
+      openingHours: _asMap(json['opening_hours']) ?? const {},
       hasLoyaltyProgram: json['has_loyalty_program'] as bool? ?? false,
       loyaltyType: program?['type'] as String?,
-      loyaltyConfig:
-          (program?['config'] as Map?)?.cast<String, dynamic>() ?? const {},
+      loyaltyConfig: programConfig ?? const {},
       plan: json['plan'] as String? ?? 'free',
-      smsCredits: json['sms_credits'] as int? ?? 0,
+      smsCredits: (json['sms_credits'] as num?)?.toInt() ?? 0,
       isFcmSuspended: json['is_fcm_suspended'] as bool? ?? false,
       fcmSuspensionReason: json['fcm_suspension_reason'] as String?,
       notificationPreferences:
-          (json['notification_preferences'] as Map?)?.cast<String, bool>() ??
-              const {},
-      actorType: (json['actor'] as Map?)?['type'] as String? ?? 'restaurant',
-      staffName: (json['actor'] as Map?)?['name'] as String?,
-      staffRole: (json['actor'] as Map?)?['role'] as String? ?? 'admin',
+          _asBoolMap(json['notification_preferences']) ?? const {},
+      actorType: actor?['type'] as String? ?? 'restaurant',
+      staffName: actor?['name'] as String?,
+      staffRole: actor?['role'] as String? ?? 'admin',
     );
   }
 
