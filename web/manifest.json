@@ -1,13 +1,16 @@
 {
-    "name": "miva_fid",
-    "short_name": "miva_fid",
+    "name": "Miva Fid - Fidélité & Récompenses",
+    "short_name": "Miva Fid",
     "start_url": ".",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F0E1A",
+    "theme_color": "#4F46E5",
+    "description": "Plateforme de fidélité digitale pour commerces locaux — Lomé, Togo",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["shopping", "lifestyle", "business"],
+    "lang": "fr",
     "icons": [
         {
             "src": "icons/Icon-192.png",
@@ -30,6 +33,22 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Ma Carte de Fidélité",
+            "short_name": "Ma Carte",
+            "description": "Accéder directement à ma carte de fidélité",
+            "url": "/#/client/wallet",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Espace Commerçant",
+            "short_name": "Commerçant",
+            "description": "Accéder à l'espace commerçant",
+            "url": "/#/auth/merchant/auth",
+            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
         }
     ]
 }

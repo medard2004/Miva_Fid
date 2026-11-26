@@ -60,6 +60,29 @@ class SocialAuthService {
   static Future<String?> signInWithGoogle() async {
     try {
       _assertFirebaseReady();
+
+      // Sur le Web, on utilise directement le flux popup natif Firebase Auth.
+      // Cela évite les contraintes de rendu de bouton GIS de google_sign_in_web,
+      // ouvre la fenêtre Google officielle et retourne directement le jeton Firebase requis par Laravel.
+      if (kIsWeb) {
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
+
+        final UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+        final String? firebaseIdToken = await userCredential.user?.getIdToken();
+
+        if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
+          throw Exception(
+              'Impossible de récupérer le jeton Firebase après l\'authentification.');
+        }
+
+        return firebaseIdToken;
+      }
+
       await _ensureInitialized();
 
       // Flux interactif systématique : la reconnexion silencieuse reprenait

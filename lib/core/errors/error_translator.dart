@@ -322,6 +322,8 @@ class ErrorTranslator {
       'canceled',
       'cancelled',
       'sign_in_canceled',
+      'popup-closed-by-user',
+      'popup_closed_by_user',
       'annule',
       'aborted',
     ]);
