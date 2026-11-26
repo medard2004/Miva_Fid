@@ -208,8 +208,9 @@
   -->
   <script>
     (function () {
+      var FCM_SCOPE = '/firebase-cloud-messaging-push-scope';
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(function () {});
+        navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: FCM_SCOPE }).catch(function () {});
       }
       window.__mivaWebPush = {
         isIosNonPwa: function () {
@@ -225,9 +226,8 @@
         },
         ensureServiceWorker: function () {
           if (!('serviceWorker' in navigator)) return Promise.resolve(false);
-          return navigator.serviceWorker.register('/firebase-messaging-sw.js')
-            .then(function () { return navigator.serviceWorker.ready; })
-            .then(function () { return true; })
+          return navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: FCM_SCOPE })
+            .then(function (reg) { return Boolean(reg); })
             .catch(function () { return false; });
         },
         requestPermission: function () {

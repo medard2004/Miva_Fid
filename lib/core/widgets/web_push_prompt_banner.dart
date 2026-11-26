@@ -115,8 +115,13 @@ class _WebPushPermissionDialogState
             await ref.read(deviceTokenProvider).registerCurrentToken();
         if (!mounted) return;
         if (registered) {
-          Navigator.of(context, rootNavigator: true).pop();
-          ToastService.showSuccess('Notifications activées avec succès !');
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ToastService.showSuccess('Notifications activées avec succès !');
+          });
+          return;
         } else {
           setState(() {
             _state = WebPushPermissionState.granted;
@@ -134,7 +139,8 @@ class _WebPushPermissionDialogState
               : updatedState;
         });
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[web_push_prompt_banner] Erreur activation: $e\n$st');
       if (!mounted) return;
       setState(() {
         _errorMessage =
@@ -159,8 +165,12 @@ class _WebPushPermissionDialogState
             await ref.read(deviceTokenProvider).registerCurrentToken();
         if (!mounted) return;
         if (registered) {
-          Navigator.of(context, rootNavigator: true).pop();
-          ToastService.showSuccess('Notifications activées avec succès !');
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ToastService.showSuccess('Notifications activées avec succès !');
+          });
           return;
         }
         setState(() {
