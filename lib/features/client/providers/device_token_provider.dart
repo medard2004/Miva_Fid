@@ -30,7 +30,7 @@ class DeviceTokenNotifier {
 
   void _onAuthChanged(AuthState? previous, AuthState next) {
     if (next.isAuthenticated && (previous == null || !previous.isAuthenticated)) {
-      _registerCurrentToken();
+      _registerCurrentToken(forMerchant: false);
     }
   }
 
@@ -38,16 +38,22 @@ class DeviceTokenNotifier {
       MerchantAuthState? previous, MerchantAuthState next) {
     if (next.isAuthenticated &&
         (previous == null || !previous.isAuthenticated)) {
-      _registerCurrentToken();
+      _registerCurrentToken(forMerchant: true);
     }
   }
 
   void _onTokenRefreshed(String token) {
     final isClientAuth = _ref.read(authProvider).isAuthenticated;
     final isMerchantAuth = _ref.read(merchantAuthProvider).isAuthenticated;
-    if (isClientAuth || isMerchantAuth) {
-      _register(token).catchError((e) {
-        debugPrint('[device_token_provider] Erreur refresh token: $e');
+    if (isClientAuth) {
+      _register(token, forMerchant: false).catchError((e) {
+        debugPrint('[device_token_provider] Erreur refresh token client: $e');
+        return false;
+      });
+    }
+    if (isMerchantAuth) {
+      _register(token, forMerchant: true).catchError((e) {
+        debugPrint('[device_token_provider] Erreur refresh token marchand: $e');
         return false;
       });
     }
@@ -56,14 +62,25 @@ class DeviceTokenNotifier {
   /// Ré-enregistre le token FCM actuel — appelé au login et exposé
   /// publiquement pour le pull-to-refresh marchand après une réactivation.
   Future<bool> registerCurrentToken() async {
-    return _registerCurrentToken();
+    final isMerchantAuth = _ref.read(merchantAuthProvider).isAuthenticated;
+    final isClientAuth = _ref.read(authProvider).isAuthenticated;
+    if (!isMerchantAuth && !isClientAuth) return false;
+
+    bool ok = false;
+    if (isClientAuth) {
+      ok = await _registerCurrentToken(forMerchant: false) || ok;
+    }
+    if (isMerchantAuth) {
+      ok = await _registerCurrentToken(forMerchant: true) || ok;
+    }
+    return ok;
   }
 
-  Future<bool> _registerCurrentToken() async {
+  Future<bool> _registerCurrentToken({required bool forMerchant}) async {
     try {
       final token = await NotificationService().getToken();
       if (token != null && token.isNotEmpty) {
-        return await _register(token);
+        return await _register(token, forMerchant: forMerchant);
       }
       debugPrint('[device_token_provider] Aucun token FCM obtenu (vapidKey ou permission manquante)');
       return false;
@@ -73,11 +90,14 @@ class DeviceTokenNotifier {
     }
   }
 
-  Future<bool> _register(String token) {
+  Future<bool> _register(String token, {required bool forMerchant}) {
     final platform = kIsWeb
         ? 'web'
         : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android');
-    return _ref.read(deviceTokenServiceProvider).register(token, platform);
+    final service = forMerchant
+        ? _ref.read(merchantDeviceTokenServiceProvider)
+        : _ref.read(deviceTokenServiceProvider);
+    return service.register(token, platform);
   }
 
   void dispose() {

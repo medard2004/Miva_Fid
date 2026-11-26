@@ -15,23 +15,43 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || payload.data?.title || 'Miva Fid';
   const body = payload.notification?.body || payload.data?.body || '';
+  const image = payload.notification?.image || payload.data?.image_url || undefined;
+  const tag = payload.data?.notification_id || payload.data?.type || 'miva-fid-push';
   const options = {
     body,
     icon: '/icons/Icon-192.png',
     badge: '/icons/Icon-192.png',
-    data: payload.data || {},
+    ...(image ? { image } : {}),
+    tag,
+    vibrate: [200, 100, 200],
+    data: {
+      ...(payload.data || {}),
+      link: payload.fcmOptions?.link || payload.data?.link || '/',
+    },
   };
   self.registration.showNotification(title, options);
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const data = event.notification.data || {};
+  const targetUrl =
+    data.FCM_MSG?.fcmOptions?.link ||
+    data.link ||
+    data.url ||
+    '/';
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
-        if ('focus' in client) return client.focus();
+        if ('focus' in client) {
+          if ('navigate' in client && targetUrl && targetUrl !== '/') {
+            client.navigate(targetUrl).catch(() => {});
+          }
+          return client.focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow('/');
+      if (clients.openWindow) return clients.openWindow(targetUrl);
     })
   );
 });

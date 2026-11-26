@@ -73,6 +73,11 @@ final deviceTokenServiceProvider = Provider<DeviceTokenService>((ref) {
   return DeviceTokenService(apiClient);
 });
 
+final merchantDeviceTokenServiceProvider = Provider<DeviceTokenService>((ref) {
+  final apiClient = ref.watch(merchantApiClientProvider);
+  return DeviceTokenService(apiClient);
+});
+
 final merchantAuthServiceProvider = Provider<MerchantAuthService>((ref) {
   final apiClient = ref.watch(merchantApiClientProvider);
   return MerchantAuthService(apiClient);

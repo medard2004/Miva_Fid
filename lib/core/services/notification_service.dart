@@ -100,8 +100,8 @@ class NotificationService {
       return;
     }
 
-    final title = notification?.title ?? '';
-    final body = notification?.body ?? '';
+    final title = notification?.title ?? data['title']?.toString() ?? '';
+    final body = notification?.body ?? data['body']?.toString() ?? '';
     if (body.isEmpty && title.isEmpty) return;
 
     // Cas spéciaux : campagnes marchandes — toast façon vignette Instagram
