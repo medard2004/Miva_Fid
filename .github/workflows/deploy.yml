@@ -26,6 +26,7 @@ jobs:
       - name: 🔨 Compilation Flutter Web
         run: |
           flutter build web --release \
+            --no-tree-shake-icons \
             --dart-define=API_BASE_URL="${{ secrets.API_BASE_URL || 'https://distract-buffalo-mockup.ngrok-free.dev/api' }}"
 
       - name: 🚀 Déploiement sur Vercel
