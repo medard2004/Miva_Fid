@@ -33,3 +33,12 @@ bool isPwaInstalledImpl() {
   } catch (_) {}
   return false;
 }
+
+void removeWebSplashImpl() {
+  try {
+    final fn = globalContext.getProperty('removeSplashFromWeb'.toJS);
+    if (fn != null && fn.typeofEquals('function')) {
+      (fn as JSFunction).callAsFunction(globalContext);
+    }
+  } catch (_) {}
+}

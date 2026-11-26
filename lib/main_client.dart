@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'app_client.dart';
 import 'core/router/client_router.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/pwa_install_service.dart';
 import 'core/utils/loading_overlay_service.dart';
 import 'core/utils/toast_service.dart';
 import 'firebase_options.dart';
@@ -45,6 +46,12 @@ Future<void> main() async {
       }
     }),
   );
+
+  if (kIsWeb) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PwaInstallService.removeWebSplash();
+    });
+  }
 
   runApp(const ProviderScope(child: MivaFidClientApp()));
 }

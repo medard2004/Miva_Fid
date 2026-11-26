@@ -108,7 +108,8 @@
     #splash {
       position: fixed;
       inset: 0;
-      z-index: 9999;
+      z-index: 1;
+      pointer-events: none;
       background: var(--bg);
       padding: 20px 16px;
       box-sizing: border-box;
@@ -148,6 +149,7 @@
       document.getElementById("splash-branding")?.remove();
       document.body.style.background = "transparent";
     }
+    window.addEventListener("flutter-first-frame", removeSplashFromWeb, { once: true });
   </script>
 </head>
 <body>

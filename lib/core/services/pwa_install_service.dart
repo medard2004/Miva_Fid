@@ -9,4 +9,6 @@ class PwaInstallService {
   static bool isInstalled() => isPwaInstalledImpl();
 
   static Future<bool> promptInstall() => promptPwaInstallImpl();
+
+  static void removeWebSplash() => removeWebSplashImpl();
 }
