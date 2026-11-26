@@ -1,13 +1,12 @@
-import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/services/image_upload_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -37,9 +36,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _uploadingLogo = false;
   bool _initialized = false;
 
-  static const _maxLogoBytes = 2 * 1024 * 1024;
-  static const _allowedLogoExtensions = ['jpg', 'jpeg', 'png', 'webp'];
-
   @override
   void initState() {
     super.initState();
@@ -68,37 +64,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _pickLogo() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
-    );
-    if (!mounted || file == null) return;
+    try {
+      final picked = await ImageUploadService.pickAndCropImage(
+        context,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (!mounted || picked == null) return;
 
-    final extension = file.name.split('.').last.toLowerCase();
-    if (!_allowedLogoExtensions.contains(extension)) {
-      ToastService.showError('Format non supporté. Utilisez PNG ou JPG.');
-      return;
+      setState(() => _uploadingLogo = true);
+      final ok = await ref
+          .read(merchantAuthProvider.notifier)
+          .uploadLogo(picked.bytes);
+      if (!mounted) return;
+      final t = AppLocalizations.of(context)!;
+      if (ok) {
+        ToastService.showSuccess(t.merchantProfileLogoSuccess);
+      } else {
+        ToastService.showError(t.merchantProfileLogoError);
+      }
+    } on ImageValidationException catch (e) {
+      if (mounted) ToastService.showError(e.message);
+    } catch (_) {
+      if (mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.merchantProfileLogoError,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingLogo = false);
     }
-    if (File(file.path).lengthSync() > _maxLogoBytes) {
-      ToastService.showError('Image trop lourde. Maximum 2 Mo.');
-      return;
-    }
-
-    setState(() => _uploadingLogo = true);
-    final ok = await ref
-        .read(merchantAuthProvider.notifier)
-        .uploadLogo(File(file.path));
-    if (!mounted) return;
-    final t = AppLocalizations.of(context)!;
-    if (ok) {
-      ToastService.showSuccess(t.merchantProfileLogoSuccess);
-    } else {
-      ToastService.showError(t.merchantProfileLogoError);
-    }
-    setState(() => _uploadingLogo = false);
   }
 
   Future<void> _removeLogo() async {

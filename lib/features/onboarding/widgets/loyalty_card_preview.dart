@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:io';
@@ -189,6 +190,15 @@ class _CardTopGroup extends StatelessWidget {
                         fit: BoxFit.cover,
                         placeholder: (context, url) => fallback(),
                         errorWidget: (context, url, error) => fallback(),
+                      );
+                    }
+                    if (kIsWeb) {
+                      return Image.network(
+                        url,
+                        width: 22,
+                        height: 22,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => fallback(),
                       );
                     }
                     try {

@@ -7,6 +7,7 @@ import 'package:miva_fid/core/api/storage/local_preferences.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/core/services/social_auth_service.dart';
+import 'package:miva_fid/core/widgets/app_download_section.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
@@ -147,6 +148,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
                     ),
                   ),
                 ),
+              ),
+              const AppDownloadSection(
+                primaryTarget: AppDownloadTarget.client,
+                showBoth: true,
               ),
             ],
           ),

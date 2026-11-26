@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -43,6 +44,14 @@ class MerchantAvatar extends StatelessWidget {
           fit: BoxFit.cover,
           placeholder: (_, __) => imageFallback(),
           errorWidget: (_, __, ___) => imageFallback(),
+        );
+      } else if (kIsWeb) {
+        childWidget = Image.network(
+          url,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => imageFallback(),
         );
       } else {
         try {

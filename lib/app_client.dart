@@ -7,6 +7,7 @@ import 'core/errors/error_messages.dart';
 import 'core/router/client_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
+import 'core/widgets/skeleton_loader.dart';
 import 'features/client/providers/app_providers.dart';
 import 'features/client/providers/app_startup_provider.dart';
 import 'features/client/providers/settings_provider.dart';
@@ -56,7 +57,22 @@ class MivaFidClientApp extends ConsumerWidget {
         ErrorMessages.bind(AppLocalizations.of(context)!);
         if (isBootstrapping) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLoader(height: 28, width: 160),
+                    SizedBox(height: 16),
+                    SkeletonCard(height: 180),
+                    SizedBox(height: 16),
+                    SkeletonLoader(height: 64),
+                    SkeletonLoader(height: 64),
+                  ],
+                ),
+              ),
+            ),
           );
         }
         return child ?? const SizedBox.shrink();

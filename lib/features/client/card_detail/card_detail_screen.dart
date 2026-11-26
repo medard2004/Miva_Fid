@@ -7,6 +7,7 @@ import 'package:simple_icons/simple_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:miva_fid/core/notifications/content_unavailable_view.dart';
 import 'package:miva_fid/core/services/wallet_pass_service.dart';
+import 'package:miva_fid/core/utils/toast_service.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
@@ -1121,11 +1122,24 @@ class _MerchantShowcaseCard extends StatelessWidget {
   const _MerchantShowcaseCard({required this.card});
 
   Future<void> _launch(String urlString) async {
-    final uri = Uri.parse(urlString);
+    final uri = Uri.tryParse(urlString);
+    if (uri == null) {
+      ToastService.showError('Lien invalide.');
+      return;
+    }
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final canOpen = await canLaunchUrl(uri);
+      if (!canOpen) {
+        ToastService.showError("Aucune application ne peut ouvrir ce lien.");
+        return;
+      }
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        ToastService.showError("Impossible d'ouvrir ce lien.");
+      }
     } catch (e) {
       debugPrint('[_MerchantShowcaseCard] Erreur ouverture url $urlString: $e');
+      ToastService.showError("Impossible d'ouvrir ce lien.");
     }
   }
 
@@ -1358,6 +1372,25 @@ class _MerchantShowcaseCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                 ],
+                if (card.restaurantX?.isNotEmpty ?? false) ...[
+                  _ContactIconAction(
+                    icon: SimpleIcons.x,
+                    color: AppColors.ink,
+                    tooltip: 'X (Twitter)',
+                    onTap: () => _launch(_formatSocialUrl('x', card.restaurantX!)),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                if (card.restaurantWebsite?.isNotEmpty ?? false) ...[
+                  _ContactIconAction(
+                    icon: LucideIcons.globe,
+                    color: const Color(0xFF2563EB),
+                    tooltip: 'Site web',
+                    onTap: () => _launch(
+                        _formatSocialUrl('website', card.restaurantWebsite!)),
+                  ),
+                  const SizedBox(width: 10),
+                ],
               ],
             ),
           ),
@@ -1384,6 +1417,12 @@ String _formatSocialUrl(String platform, String raw) {
     case 'tiktok':
       final clean = val.replaceAll('@', '').trim();
       return 'https://tiktok.com/@$clean';
+    case 'x':
+    case 'twitter':
+      final clean = val.replaceAll('@', '').trim();
+      return 'https://x.com/$clean';
+    case 'website':
+      return 'https://$val';
     default:
       return 'https://$val';
   }
@@ -1812,6 +1851,25 @@ void _showMerchantVitrineSheet(BuildContext context, LoyaltyCard card) {
                         onTap: () => launchUrl(
                             Uri.parse(_formatSocialUrl(
                                 'tiktok', card.restaurantTiktok!)),
+                            mode: LaunchMode.externalApplication),
+                      ),
+                    if (card.restaurantX?.isNotEmpty ?? false)
+                      _ContactIconAction(
+                        icon: SimpleIcons.x,
+                        color: AppColors.ink,
+                        tooltip: 'X (Twitter)',
+                        onTap: () => launchUrl(
+                            Uri.parse(_formatSocialUrl('x', card.restaurantX!)),
+                            mode: LaunchMode.externalApplication),
+                      ),
+                    if (card.restaurantWebsite?.isNotEmpty ?? false)
+                      _ContactIconAction(
+                        icon: LucideIcons.globe,
+                        color: const Color(0xFF2563EB),
+                        tooltip: 'Site web',
+                        onTap: () => launchUrl(
+                            Uri.parse(_formatSocialUrl(
+                                'website', card.restaurantWebsite!)),
                             mode: LaunchMode.externalApplication),
                       ),
                   ],

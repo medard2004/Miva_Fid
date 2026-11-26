@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -724,10 +725,15 @@ class _CampaignTypeScreenState extends ConsumerState<CampaignTypeScreen> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: draft.localImagePath != null
-                                    ? Image.file(
-                                        File(draft.localImagePath!),
-                                        fit: BoxFit.cover,
-                                      )
+                                    ? (kIsWeb
+                                        ? Image.network(
+                                            draft.localImagePath!,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.file(
+                                            File(draft.localImagePath!),
+                                            fit: BoxFit.cover,
+                                          ))
                                     : Image.network(
                                         draft.imageUrl!,
                                         fit: BoxFit.cover,

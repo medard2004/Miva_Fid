@@ -74,6 +74,25 @@ const _kAvailablePlatforms = <_SocialPlatformConfig>[
     prefixText: '@',
     keyboardType: TextInputType.text,
   ),
+  _SocialPlatformConfig(
+    key: 'x',
+    name: 'X (Twitter)',
+    icon: SimpleIcons.x,
+    brandColor: Color(0xFF0F172A),
+    placeholder: 'chez_x',
+    helper: 'Pseudo ou lien vers votre compte X',
+    prefixText: '@',
+    keyboardType: TextInputType.text,
+  ),
+  _SocialPlatformConfig(
+    key: 'website',
+    name: 'Site web',
+    icon: LucideIcons.globe,
+    brandColor: Color(0xFF2563EB),
+    placeholder: 'https://moncommerce.com',
+    helper: 'Adresse complète de votre site web',
+    keyboardType: TextInputType.url,
+  ),
 ];
 
 _SocialPlatformConfig _platformForKey(String key) {
@@ -229,7 +248,7 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
   String _cleanInput(String key, String input) {
     final trimmed = input.trim();
     if (trimmed.isEmpty) return '';
-    if (key == 'instagram' || key == 'tiktok') {
+    if (key == 'instagram' || key == 'tiktok' || key == 'x') {
       if (trimmed.startsWith('@')) {
         return trimmed.substring(1).trim();
       }
@@ -241,10 +260,24 @@ class _SocialsScreenState extends ConsumerState<SocialsScreen> {
         final parts = trimmed.split('tiktok.com/@');
         return parts.last.split('?').first.replaceAll('/', '').trim();
       }
+      if (trimmed.contains('x.com/')) {
+        final parts = trimmed.split('x.com/');
+        return parts.last.split('?').first.replaceAll('/', '').trim();
+      }
+      if (trimmed.contains('twitter.com/')) {
+        final parts = trimmed.split('twitter.com/');
+        return parts.last.split('?').first.replaceAll('/', '').trim();
+      }
     } else if (key == 'facebook') {
       if (trimmed.contains('facebook.com/')) {
         final parts = trimmed.split('facebook.com/');
         return parts.last.split('?').first.replaceAll('/', '').trim();
+      }
+    } else if (key == 'website') {
+      if (!trimmed.startsWith('http://') &&
+          !trimmed.startsWith('https://') &&
+          trimmed.contains('.')) {
+        return 'https://$trimmed';
       }
     }
     return trimmed;

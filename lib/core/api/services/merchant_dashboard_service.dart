@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import '../core/api_client.dart';
 import '../core/api_exceptions.dart';
 import '../../../models/campaign_recipient_model.dart';
@@ -323,6 +324,15 @@ class MerchantDashboardService {
             .toList();
       });
 
+  Future<MultipartFile> _multipartFromPath(String localPath) async {
+    final xfile = XFile(localPath);
+    final bytes = await xfile.readAsBytes();
+    final name = xfile.name.isNotEmpty && xfile.name.contains('.')
+        ? xfile.name
+        : 'campaign.jpg';
+    return MultipartFile.fromBytes(bytes, filename: name);
+  }
+
   Future<void> sendCampaign({
     required String type,
     String? title,
@@ -343,7 +353,7 @@ class MerchantDashboardService {
             'recipient_type': recipientType,
             if (scheduledAt != null)
               'scheduled_at': scheduledAt.toUtc().toIso8601String(),
-            'image': await MultipartFile.fromFile(localImagePath),
+            'image': await _multipartFromPath(localImagePath),
           };
           for (int i = 0; i < clientIds.length; i++) {
             formDataMap['client_ids[$i]'] = clientIds[i];
@@ -391,7 +401,7 @@ class MerchantDashboardService {
             if (scheduledAt != null)
               'scheduled_at': scheduledAt.toUtc().toIso8601String(),
             'draft_step': draftStep,
-            'image': await MultipartFile.fromFile(localImagePath),
+            'image': await _multipartFromPath(localImagePath),
           };
           if (clientIds != null) {
             for (int i = 0; i < clientIds.length; i++) {
@@ -440,7 +450,7 @@ class MerchantDashboardService {
             if (imageUrl != null) 'image_url': imageUrl,
             'recipient_type': recipientType,
             if (scheduledAt != null) 'scheduled_at': scheduledAt.toUtc().toIso8601String(),
-            'image': await MultipartFile.fromFile(localImagePath),
+            'image': await _multipartFromPath(localImagePath),
           };
           for (int i = 0; i < clientIds.length; i++) {
             formDataMap['client_ids[$i]'] = clientIds[i];

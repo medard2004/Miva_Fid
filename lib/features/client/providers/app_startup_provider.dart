@@ -40,31 +40,41 @@ class AppStartupState {
 ///    avec les données locales.
 final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   final prefs = ref.read(localPreferencesProvider);
-  final hasSeenOnboarding = await prefs.hasSeenOnboarding();
-  ref.read(hasSeenOnboardingProvider.notifier).state = hasSeenOnboarding;
-  final lastRole = await prefs.getLastRole();
+  final authRepository = ref.read(authRepositoryProvider);
+  final merchantAuthRepository = ref.read(merchantAuthRepositoryProvider);
+  final cache = ref.read(offlineCacheServiceProvider);
 
-  // Restaure un éventuel code QR en attente (si aucun n'a déjà été capté
-  // depuis l'URL de démarrage par le routeur).
-  if (ref.read(pendingJoinCodeProvider) == null) {
-    final storedPendingCode = await prefs.getPendingJoinCode();
-    if (storedPendingCode != null && storedPendingCode.isNotEmpty) {
-      ref.read(pendingJoinCodeProvider.notifier).state = storedPendingCode;
-    }
+  // Lectures locales parallèles pour réduire la latence au démarrage / F5.
+  final results = await Future.wait<dynamic>([
+    prefs.hasSeenOnboarding(),
+    prefs.getLastRole(),
+    prefs.getPendingJoinCode(),
+    authRepository.isLoggedIn(),
+    merchantAuthRepository.isLoggedIn(),
+  ]);
+
+  final hasSeenOnboarding = results[0] as bool;
+  final lastRole = results[1] as String?;
+  final storedPendingCode = results[2] as String?;
+  final isClientLoggedIn = results[3] as bool;
+  final isMerchantLoggedIn = results[4] as bool;
+
+  ref.read(hasSeenOnboardingProvider.notifier).state = hasSeenOnboarding;
+
+  if (ref.read(pendingJoinCodeProvider) == null &&
+      storedPendingCode != null &&
+      storedPendingCode.isNotEmpty) {
+    ref.read(pendingJoinCodeProvider.notifier).state = storedPendingCode;
   }
 
   // Attache le listener avant toute restauration de session, pour capter
   // aussi bien un login frais qu'une session déjà valide au démarrage.
   ref.read(deviceTokenProvider);
 
-  final authRepository = ref.read(authRepositoryProvider);
-  final merchantAuthRepository = ref.read(merchantAuthRepositoryProvider);
-  final cache = ref.read(offlineCacheServiceProvider);
-
   // ───────────────────────────────────────────────────────────────────────────
   // CLIENT : Restauration Cache-First
   // ───────────────────────────────────────────────────────────────────────────
-  if (await authRepository.isLoggedIn()) {
+  if (isClientLoggedIn) {
     // 1. Restauration immédiate depuis le cache local (si disponible)
     final cachedUserJson = await cache.getClientUser();
     if (cachedUserJson != null) {
@@ -114,7 +124,7 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   // ───────────────────────────────────────────────────────────────────────────
   // MARCHAND : Restauration Cache-First
   // ───────────────────────────────────────────────────────────────────────────
-  if (await merchantAuthRepository.isLoggedIn()) {
+  if (isMerchantLoggedIn) {
     // 1. Restauration immédiate depuis le cache local (si disponible)
     final cachedMerchantJson = await cache.getMerchantAccount();
     if (cachedMerchantJson != null) {

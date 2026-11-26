@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -172,10 +173,15 @@ class _CampaignContentScreenState
                           child: draft.localImagePath != null
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
-                                  child: Image.file(
-                                    File(draft.localImagePath!),
-                                    fit: BoxFit.cover,
-                                  ),
+                                  child: kIsWeb
+                                      ? Image.network(
+                                          draft.localImagePath!,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.file(
+                                          File(draft.localImagePath!),
+                                          fit: BoxFit.cover,
+                                        ),
                                 )
                               : draft.imageUrl != null && draft.imageUrl!.isNotEmpty
                                   ? ClipRRect(

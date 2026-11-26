@@ -10,6 +10,7 @@ import '../../../core/services/offline_sync_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_download_section.dart';
 import '../../../core/widgets/header_mode_switcher.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../client/providers/settings_provider.dart';
@@ -528,6 +529,13 @@ class MoreScreen extends ConsumerWidget {
                   onTap: _launchWhatsApp,
                 ),
               ]),
+              const SizedBox(height: 20),
+
+              // ── TÉLÉCHARGER LES APPLICATIONS ──────────────────────────────
+              const AppDownloadSection(
+                primaryTarget: AppDownloadTarget.merchant,
+                showBoth: true,
+              ),
               const SizedBox(height: 20),
 
               // ── 6. ZONE DANGEREUX ────────────────────────────────────────

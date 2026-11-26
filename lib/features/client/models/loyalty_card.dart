@@ -202,6 +202,22 @@ class LoyaltyCard {
     return null;
   }
 
+  String? _socialValue(String key) {
+    final entry = restaurantSocialProfiles[key];
+    if (entry is Map) {
+      final raw = entry['url'] ?? entry['link'] ?? entry['handle'] ?? entry['name'];
+      final val = raw?.toString().trim();
+      if (val != null && val.isNotEmpty) return val;
+    } else if (entry is String && entry.trim().isNotEmpty) {
+      return entry.trim();
+    }
+    return null;
+  }
+
+  String? get restaurantX => _socialValue('x') ?? _socialValue('twitter');
+
+  String? get restaurantWebsite => _socialValue('website');
+
   bool get hasRestaurantSocials =>
       (restaurantWhatsapp?.isNotEmpty ?? false) ||
       (restaurantInstagram?.isNotEmpty ?? false) ||

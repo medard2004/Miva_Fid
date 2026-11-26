@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,9 +26,12 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await NotificationService().init(
-      isMerchantApp: true,
-      navigatorKey: merchantNavigatorKey,
+    unawaited(
+      NotificationService()
+          .init(isMerchantApp: true, navigatorKey: merchantNavigatorKey)
+          .catchError((e) {
+        if (kDebugMode) debugPrint('NotificationService init erreur: $e');
+      }),
     );
   } catch (error, stackTrace) {
     if (kDebugMode) {

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/utils/loading_overlay_service.dart';
 import 'package:miva_fid/core/widgets/app_dialog.dart';
+import 'package:miva_fid/core/widgets/app_download_section.dart';
 import 'package:miva_fid/core/widgets/header_mode_switcher.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -293,7 +294,15 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+
+                  // ── TÉLÉCHARGER LES APPLICATIONS ──────────────────────
+                  const AppDownloadSection(
+                    primaryTarget: AppDownloadTarget.client,
+                    showBoth: true,
+                  ),
+
+                  const SizedBox(height: 28),
 
                   // ── BOUTON DÉCONNEXION ────────────────────────────────
                   AppButton(

@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/error_messages.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
+import 'package:miva_fid/core/services/image_upload_service.dart';
+import 'package:miva_fid/core/utils/toast_service.dart';
 import 'package:miva_fid/core/widgets/offline_action_guard.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
@@ -32,17 +35,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     with FormErrorHandler {
   Future<void> _pickAvatar() async {
     if (!OfflineActionGuard.checkCanPerform(context, ref)) return;
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
-    );
+    PickedImageData? picked;
+    try {
+      picked = await ImageUploadService.pickAndCropImage(
+        context,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+    } on ImageValidationException catch (e) {
+      if (mounted) ToastService.showError(e.message);
+      return;
+    }
     if (picked == null || !mounted) return;
 
     try {
+      final xFile = XFile.fromData(
+        picked.bytes,
+        name: picked.filename,
+        path: picked.path,
+      );
       await runGuarded(
-        () => ref.read(authProvider.notifier).updateAvatar(picked),
+        () => ref.read(authProvider.notifier).updateAvatar(xFile),
         useOverlay: true,
       );
       if (mounted) showSuccessToast(ErrorMessages.avatarUpdateSuccess);

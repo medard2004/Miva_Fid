@@ -1,12 +1,13 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
+import '../../../core/services/image_upload_service.dart';
 
 import '../../../core/errors/app_error.dart';
 import '../../../core/errors/error_translator.dart';
@@ -63,22 +64,36 @@ class _VitrineScreenState extends ConsumerState<VitrineScreen> {
   }
 
   Future<void> _pickLogo() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
-    );
-    if (!mounted || file == null) return;
+    try {
+      final picked = await ImageUploadService.pickAndCropImage(
+        context,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (!mounted || picked == null) return;
 
-    setState(() => _uploadingLogo = true);
-    final ok = await ref.read(merchantAuthProvider.notifier).uploadLogo(File(file.path));
-    if (!mounted) return;
-    if (!ok) {
-      ToastService.showError(AppLocalizations.of(context)!.merchantVitrineLogoUploadError);
+      setState(() => _uploadingLogo = true);
+      final ok = await ref
+          .read(merchantAuthProvider.notifier)
+          .uploadLogo(picked.bytes);
+      if (!mounted) return;
+      if (!ok) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.merchantVitrineLogoUploadError,
+        );
+      }
+    } on ImageValidationException catch (e) {
+      if (mounted) ToastService.showError(e.message);
+    } catch (_) {
+      if (mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.merchantVitrineLogoUploadError,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingLogo = false);
     }
-    setState(() => _uploadingLogo = false);
   }
 
   Future<void> _removeLogo() async {

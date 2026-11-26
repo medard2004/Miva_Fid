@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 
+import '../../../core/services/image_upload_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -28,27 +28,35 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
   bool _uploadingLogo = false;
 
   Future<void> _pickLogo() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
-    );
-    if (!mounted || file == null) return;
+    try {
+      final picked = await ImageUploadService.pickAndCropImage(
+        context,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (!mounted || picked == null) return;
 
-    setState(() => _uploadingLogo = true);
-    final ok = await ref
-        .read(merchantAuthProvider.notifier)
-        .uploadLogo(File(file.path));
-    if (!mounted) return;
-    if (ok) {
-      final url = ref.read(merchantAuthProvider).restaurant?.logoUrl ?? '';
-      ref.read(onboardingNotifierProvider.notifier).setLogoUrl(url);
-    } else {
-      ToastService.showError('Impossible d\'envoyer le logo. Réessayez.');
+      setState(() => _uploadingLogo = true);
+      final ok = await ref
+          .read(merchantAuthProvider.notifier)
+          .uploadLogo(picked.bytes);
+      if (!mounted) return;
+      if (ok) {
+        final url = ref.read(merchantAuthProvider).restaurant?.logoUrl ?? '';
+        ref.read(onboardingNotifierProvider.notifier).setLogoUrl(url);
+      } else {
+        ToastService.showError('Impossible d\'envoyer le logo. Réessayez.');
+      }
+    } on ImageValidationException catch (e) {
+      if (mounted) ToastService.showError(e.message);
+    } catch (_) {
+      if (mounted) {
+        ToastService.showError('Impossible d\'envoyer le logo. Réessayez.');
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingLogo = false);
     }
-    setState(() => _uploadingLogo = false);
   }
 
   Future<void> _removeLogo() async {
@@ -286,23 +294,16 @@ class _MerchantStep3ScreenState extends ConsumerState<MerchantStep3Screen> {
                         Builder(builder: (_) {
                           final url = state.logoUrl!;
                           Widget fallback() => const Icon(LucideIcons.store, color: AppColors.merchant, size: 28);
-                          if (url.startsWith('http')) {
+                          if (url.startsWith('http') ||
+                              url.startsWith('blob:') ||
+                              url.startsWith('data:')) {
                             return Image.network(
                               url,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => fallback(),
                             );
                           }
-                          try {
-                            return Image.file(
-                              File(url),
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => fallback(),
-                            );
-                          } catch (e) {
-                            debugPrint('[merchant_step3_screen] Erreur chargement logo local: $e');
-                            return fallback();
-                          }
+                          return fallback();
                         }),
                       if (_uploadingLogo)
                         Container(
