@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../api/config/api_constants.dart';
 import '../router/app_router.dart';
+import '../router/client_router.dart';
+import '../router/merchant_router.dart';
 import '../notifications/notification_destination.dart';
 import '../theme/app_colors.dart';
 import '../../features/client/widgets/components/app_tap_scale.dart';
@@ -36,6 +38,25 @@ class ToastService {
   static final GlobalKey<ScaffoldMessengerState> messengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
+  /// Clé du navigateur actif (liée à `clientNavigatorKey` côté Client,
+  /// `merchantNavigatorKey` côté Marchand, ou `rootNavigatorKey` par défaut).
+  static GlobalKey<NavigatorState> navigatorKey = rootNavigatorKey;
+
+  static GlobalKey<NavigatorState> get _activeNavigatorKey {
+    for (final candidate in [
+      navigatorKey,
+      clientNavigatorKey,
+      merchantNavigatorKey,
+      rootNavigatorKey,
+    ]) {
+      if (candidate.currentState?.overlay != null &&
+          candidate.currentContext != null) {
+        return candidate;
+      }
+    }
+    return navigatorKey;
+  }
+
   static OverlayEntry? _overlayEntry;
   static Timer? _timer;
   static bool _isShowing = false;
@@ -57,10 +78,13 @@ class ToastService {
   }
 
   static void hideCurrent() {
-    if (_isShowing && _overlayEntry != null) {
-      _overlayEntry?.remove();
-      _overlayEntry = null;
-      _isShowing = false;
+    final entry = _overlayEntry;
+    _overlayEntry = null;
+    _isShowing = false;
+    if (entry != null) {
+      try {
+        entry.remove();
+      } catch (_) {}
     }
     _timer?.cancel();
     _timer = null;
@@ -109,14 +133,18 @@ class ToastService {
     Map<String, dynamic>? notificationData,
     Duration duration = const Duration(seconds: 6),
   }) {
-    final context = rootNavigatorKey.currentContext;
-    if (context == null) return;
+    final activeKey = _activeNavigatorKey;
+    final context = activeKey.currentContext;
+    if (context == null) {
+      _showSnackBarFallback('$title : $body', ToastType.info, duration);
+      return;
+    }
 
     if (notificationId != null && markSeen(notificationId)) return;
 
     void onTap() {
       hideCurrent();
-      final ctx = rootNavigatorKey.currentContext;
+      final ctx = _activeNavigatorKey.currentContext;
       if (ctx == null) return;
       final destination = resolveNotificationDestination(
         type: notificationData?['type'] as String? ?? 'campaign',
@@ -165,8 +193,13 @@ class ToastService {
     String? campaignId,
     VoidCallback? onTap,
   }) {
-    final context = rootNavigatorKey.currentContext;
-    if (context == null) return;
+    final activeKey = _activeNavigatorKey;
+    final context = activeKey.currentContext;
+    final overlay = activeKey.currentState?.overlay;
+    if (context == null || overlay == null) {
+      _showSnackBarFallback(message, type, duration);
+      return;
+    }
 
     final isCampaign = campaignId != null && campaignId.isNotEmpty;
 
@@ -231,12 +264,33 @@ class ToastService {
       ),
     );
 
-    final overlay = rootNavigatorKey.currentState?.overlay;
-    if (overlay != null) {
-      overlay.insert(_overlayEntry!);
-      _isShowing = true;
-      _timer = Timer(duration, hideCurrent);
-    }
+    overlay.insert(_overlayEntry!);
+    _isShowing = true;
+    _timer = Timer(duration, hideCurrent);
+  }
+
+  static void _showSnackBarFallback(
+    String message,
+    ToastType type,
+    Duration duration,
+  ) {
+    final messenger = messengerKey.currentState;
+    if (messenger == null) return;
+    final color = switch (type) {
+      ToastType.success => AppColors.success,
+      ToastType.error => AppColors.danger,
+      ToastType.warning => AppColors.warningDark,
+      ToastType.info => AppColors.primary,
+    };
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        duration: duration,
+      ),
+    );
   }
 
   static void showSuccess(String message,

@@ -9,6 +9,8 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'app_merchant.dart';
 import 'core/router/merchant_router.dart';
 import 'core/services/notification_service.dart';
+import 'core/utils/loading_overlay_service.dart';
+import 'core/utils/toast_service.dart';
 import 'firebase_options.dart';
 
 /// Point d'entrée principal pour l'application Marchand (Web PWA & mobile).
@@ -17,6 +19,9 @@ import 'firebase_options.dart';
 /// (push Web + natif) et Firebase.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  ToastService.navigatorKey = merchantNavigatorKey;
+  LoadingOverlayService.navigatorKey = merchantNavigatorKey;
 
   if (kIsWeb) {
     usePathUrlStrategy();

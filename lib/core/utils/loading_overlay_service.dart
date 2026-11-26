@@ -1,14 +1,30 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../router/app_router.dart';
+import '../router/client_router.dart';
+import '../router/merchant_router.dart';
 import '../../features/client/core/theme/app_colors.dart';
 import '../../features/client/core/theme/app_text_styles.dart';
 import '../../features/client/widgets/shared/loading_dots.dart';
 
 /// Voile de chargement plein écran premium, avec effet glassmorphism et animations.
 class LoadingOverlayService {
+  static GlobalKey<NavigatorState> navigatorKey = rootNavigatorKey;
   static OverlayEntry? _overlayEntry;
   static _LoadingOverlayWidgetState? _currentState;
+
+  static OverlayState? get _activeOverlay {
+    for (final candidate in [
+      navigatorKey,
+      clientNavigatorKey,
+      merchantNavigatorKey,
+      rootNavigatorKey,
+    ]) {
+      final overlay = candidate.currentState?.overlay;
+      if (overlay != null) return overlay;
+    }
+    return null;
+  }
 
   /// Affiche le voile. Si déjà affiché, met à jour le message.
   static void show({String? message}) {
@@ -17,7 +33,7 @@ class LoadingOverlayService {
       return;
     }
 
-    final overlay = rootNavigatorKey.currentState?.overlay;
+    final overlay = _activeOverlay;
     if (overlay == null) return;
 
     _overlayEntry = OverlayEntry(
@@ -37,7 +53,9 @@ class LoadingOverlayService {
       await _currentState?.hideAnimation();
     }
 
-    _overlayEntry?.remove();
+    try {
+      _overlayEntry?.remove();
+    } catch (_) {}
     _overlayEntry = null;
     _currentState = null;
   }
