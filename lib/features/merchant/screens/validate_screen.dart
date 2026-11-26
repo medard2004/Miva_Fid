@@ -16,7 +16,6 @@ import '../providers/merchant_auth_provider.dart';
 import '../providers/validate_provider.dart';
 import '../widgets/client_card_sheet.dart';
 import '../widgets/reward_redeem_sheet.dart';
-import '../widgets/validation_success_overlay.dart';
 import '../../client/providers/settings_provider.dart';
 import '../../../core/constants/reward_qr.dart';
 import '../../../core/widgets/offline_action_guard.dart';
@@ -267,9 +266,33 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     }
   }
 
+  void _openValidationSuccessOverlay({
+    required String clientName,
+    required int stampCount,
+    required int pointsEarned,
+    required bool rewardUnlocked,
+    double? cashbackEarned,
+    bool isOfflineSaved = false,
+  }) {
+    context.push(
+      Uri(
+        path: '/merchant/validate/success',
+        queryParameters: {
+          'clientName': clientName,
+          'mechanic': _mechanic,
+          'stampCount': stampCount.toString(),
+          'goal': _goal.toString(),
+          'pointsEarned': pointsEarned.toString(),
+          'rewardUnlocked': rewardUnlocked.toString(),
+          if (cashbackEarned != null) 'cashbackEarned': cashbackEarned.toString(),
+          'isOfflineSaved': isOfflineSaved.toString(),
+        },
+      ).toString(),
+    );
+  }
+
   Future<void> _validateStamp(LoyaltyCardModel card, [double? amount]) async {
     final sheetNavigator = Navigator.of(context);
-    final rootNavigator = Navigator.of(context, rootNavigator: true);
 
     final isOffline = ref.read(isOfflineProvider);
     if (isOffline) {
@@ -285,18 +308,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           );
 
       if (!mounted) return;
-      rootNavigator.push(MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => ValidationSuccessOverlay(
-          clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
-          mechanic: _mechanic,
-          stampCount: card.stampsCount + 1,
-          goal: _goal,
-          pointsEarned: 1,
-          rewardUnlocked: (card.stampsCount + 1) >= _goal,
-          isOfflineSaved: true,
-        ),
-      ));
+      _openValidationSuccessOverlay(
+        clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
+        stampCount: card.stampsCount + 1,
+        pointsEarned: 1,
+        rewardUnlocked: (card.stampsCount + 1) >= _goal,
+        isOfflineSaved: true,
+      );
       return;
     }
 
@@ -309,18 +327,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       await AppHaptics.medium();
       if (!mounted) return;
 
-      rootNavigator.push(MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => ValidationSuccessOverlay(
-          clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
-          mechanic: _mechanic,
-          stampCount: outcome.stampsCurrent,
-          goal: _goal,
-          pointsEarned: outcome.pointsEarned,
-          rewardUnlocked: outcome.rewardUnlocked,
-          cashbackEarned: outcome.cashbackEarned,
-        ),
-      ));
+      _openValidationSuccessOverlay(
+        clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
+        stampCount: outcome.stampsCurrent,
+        pointsEarned: outcome.pointsEarned,
+        rewardUnlocked: outcome.rewardUnlocked,
+        cashbackEarned: outcome.cashbackEarned,
+      );
     } on ValidationException catch (e) {
       if (!mounted) return;
       sheetNavigator.pop();
@@ -346,18 +359,13 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           );
 
       if (!mounted) return;
-      rootNavigator.push(MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => ValidationSuccessOverlay(
-          clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
-          mechanic: _mechanic,
-          stampCount: card.stampsCount + 1,
-          goal: _goal,
-          pointsEarned: 1,
-          rewardUnlocked: (card.stampsCount + 1) >= _goal,
-          isOfflineSaved: true,
-        ),
-      ));
+      _openValidationSuccessOverlay(
+        clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
+        stampCount: card.stampsCount + 1,
+        pointsEarned: 1,
+        rewardUnlocked: (card.stampsCount + 1) >= _goal,
+        isOfflineSaved: true,
+      );
     } catch (e) {
       debugPrint('[validate_screen] Erreur validation stamp: $e');
       if (!mounted) return;

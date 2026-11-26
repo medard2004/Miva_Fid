@@ -194,6 +194,10 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 /// en notification que le routeur sait écouter.
 class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier(AppRouterRef ref) {
+    ref.listen<AsyncValue<AppStartupState>>(
+      appStartupProvider,
+      (_, __) => notifyListeners(),
+    );
     ref.listen<AuthState>(
       authProvider,
       (previous, next) {
@@ -254,6 +258,10 @@ GoRouter appRouter(AppRouterRef ref) {
     refreshListenable: _AuthRefreshNotifier(ref),
     redirect: (context, state) {
       final location = state.matchedLocation;
+
+      if (location != '/splash' && ref.read(appStartupProvider).isLoading) {
+        return null;
+      }
 
       // Dashboard marchand : accès protégé par le token Sanctum obtenu à
       // l'inscription/connexion (voir `/auth/merchant/*`), et par la

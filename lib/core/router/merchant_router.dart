@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/client/providers/app_startup_provider.dart';
 import '../../features/merchant/providers/merchant_auth_provider.dart';
+import '../../features/merchant/widgets/validation_success_overlay.dart';
 import '../../features/merchant/screens/clients_screen.dart';
 import '../../features/merchant/screens/client_detail_screen.dart';
 import '../../features/merchant/screens/dashboard_screen.dart';
@@ -60,6 +62,10 @@ final GlobalKey<NavigatorState> merchantNavigatorKey = GlobalKey<NavigatorState>
 
 class _MerchantAuthRefreshNotifier extends ChangeNotifier {
   _MerchantAuthRefreshNotifier(Ref ref) {
+    ref.listen<AsyncValue<AppStartupState>>(
+      appStartupProvider,
+      (_, __) => notifyListeners(),
+    );
     ref.listen<MerchantAuthState>(
       merchantAuthProvider,
       (previous, next) {
@@ -98,6 +104,13 @@ final merchantRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: _MerchantAuthRefreshNotifier(ref),
     redirect: (context, state) {
       final location = state.matchedLocation;
+
+      // Attendre la fin de l'hydratation au démarrage (F5 / Reload) pour
+      // préserver l'URL exacte sans renvoyer vers /auth/merchant/auth par erreur.
+      if (ref.read(appStartupProvider).isLoading) {
+        return null;
+      }
+
       final merchantAuth = ref.read(merchantAuthProvider);
       final isAuthenticated = merchantAuth.isAuthenticated;
 
@@ -167,7 +180,8 @@ final merchantRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return _slide(ForgotPasswordScreen(
-            initialIdentifier: extra?['identifier'] as String?,
+            initialIdentifier: extra?['identifier'] as String? ??
+                state.uri.queryParameters['identifier'],
           ));
         },
       ),
@@ -176,7 +190,9 @@ final merchantRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return _slide(MerchantVerifyOtpScreen(
-            identifier: extra?['identifier'] as String? ?? '',
+            identifier: extra?['identifier'] as String? ??
+                state.uri.queryParameters['identifier'] ??
+                '',
           ));
         },
       ),
@@ -185,8 +201,12 @@ final merchantRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return _slide(MerchantResetPasswordScreen(
-            identifier: extra?['identifier'] as String? ?? '',
-            resetToken: extra?['reset_token'] as String? ?? '',
+            identifier: extra?['identifier'] as String? ??
+                state.uri.queryParameters['identifier'] ??
+                '',
+            resetToken: extra?['reset_token'] as String? ??
+                state.uri.queryParameters['token'] ??
+                '',
           ));
         },
       ),
@@ -266,6 +286,22 @@ final merchantRouterProvider = Provider<GoRouter>((ref) {
 
       // Routes hors coquille
       GoRoute(
+        path: '/merchant/validate/success',
+        pageBuilder: (_, state) {
+          final q = state.uri.queryParameters;
+          return _fade(ValidationSuccessOverlay(
+            clientName: q['clientName'] ?? 'Client',
+            mechanic: q['mechanic'] ?? 'stamps',
+            stampCount: int.tryParse(q['stampCount'] ?? '') ?? 1,
+            goal: int.tryParse(q['goal'] ?? '') ?? 10,
+            pointsEarned: int.tryParse(q['pointsEarned'] ?? '') ?? 1,
+            rewardUnlocked: q['rewardUnlocked'] == 'true',
+            cashbackEarned: double.tryParse(q['cashbackEarned'] ?? ''),
+            isOfflineSaved: q['isOfflineSaved'] == 'true',
+          ));
+        },
+      ),
+      GoRoute(
         path: '/merchant/offline',
         pageBuilder: (_, __) => _slide(const MerchantOfflineScreen()),
       ),
@@ -279,10 +315,13 @@ final merchantRouterProvider = Provider<GoRouter>((ref) {
         path: '/merchant/sms/conversation',
         pageBuilder: (_, state) {
           final extra = state.extra as Map<String, dynamic>?;
+          final q = state.uri.queryParameters;
           return _slide(SmsConversationScreen(
-            clientName: extra?['clientName'] as String? ?? 'Client',
-            clientPhone: extra?['clientPhone'] as String? ?? '',
-            clientInitials: extra?['clientInitials'] as String? ?? 'C',
+            clientName:
+                extra?['clientName'] as String? ?? q['name'] ?? 'Client',
+            clientPhone: extra?['clientPhone'] as String? ?? q['phone'] ?? '',
+            clientInitials:
+                extra?['clientInitials'] as String? ?? q['initials'] ?? 'C',
           ));
         },
       ),

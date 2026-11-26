@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/providers/api_providers.dart';
+import '../../../core/storage/form_draft_storage.dart';
 import '../../merchant/models/restaurant_account.dart';
 import '../../merchant/providers/merchant_auth_provider.dart';
 import '../models/program_tier.dart';
@@ -221,12 +224,118 @@ class OnboardingState {
       if (longitude != null) 'longitude': longitude,
     };
   }
+
+  Map<String, dynamic> toDraftJson() => {
+        'phone': phone,
+        'commerceName': commerceName,
+        'commerceType': commerceType,
+        'address': address,
+        'city': city,
+        'country': country,
+        'description': description,
+        'logoUrl': logoUrl,
+        'colorPrimary': colorPrimary.toARGB32(),
+        'colorSecondary': colorSecondary.toARGB32(),
+        'loyaltyMode': loyaltyMode,
+        'loops': loops,
+        'fcfaPerPoint': fcfaPerPoint,
+        'cashbackPercentage': cashbackPercentage,
+        'cashbackRedeemThresholdFcfa': cashbackRedeemThresholdFcfa,
+        'cashbackExpiryDays': cashbackExpiryDays,
+        'showReviewButton': showReviewButton,
+        'googleReviewUrl': googleReviewUrl,
+        'stampDesignType': stampDesignType,
+        'stampEmoji': stampEmoji,
+        'stampIcon': stampIcon,
+        'cardDecorationPattern': cardDecorationPattern,
+        'cardGradientType': cardGradientType,
+        'whatsapp': whatsapp,
+        'instagram': instagram,
+        'facebook': facebook,
+        'tiktok': tiktok,
+        'latitude': latitude,
+        'longitude': longitude,
+        'tiers': tiers.map((t) => t.toJson()).toList(),
+      };
+
+  static OnboardingState fromDraftJson(Map<String, dynamic> json) {
+    final rawTiers = json['tiers'];
+    final parsedTiers = <ProgramTier>[];
+    if (rawTiers is List) {
+      for (final item in rawTiers) {
+        if (item is Map) {
+          parsedTiers.add(ProgramTier.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
+    return OnboardingState(
+      phone: json['phone'] as String? ?? '',
+      commerceName: json['commerceName'] as String? ?? '',
+      commerceType: json['commerceType'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      city: json['city'] as String? ?? '',
+      country: json['country'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      logoUrl: json['logoUrl'] as String?,
+      colorPrimary: json['colorPrimary'] is int
+          ? Color(json['colorPrimary'] as int)
+          : const Color(0xFF4F46E5),
+      colorSecondary: json['colorSecondary'] is int
+          ? Color(json['colorSecondary'] as int)
+          : const Color(0xFF3730A3),
+      tiers: parsedTiers.isNotEmpty
+          ? parsedTiers
+          : const [ProgramTier(goal: 10, rewardDescription: '')],
+      loyaltyMode: json['loyaltyMode'] as String? ?? 'stamps',
+      loops: json['loops'] as bool? ?? true,
+      fcfaPerPoint: (json['fcfaPerPoint'] as num?)?.toInt() ?? 100,
+      cashbackPercentage:
+          (json['cashbackPercentage'] as num?)?.toDouble() ?? 5,
+      cashbackRedeemThresholdFcfa:
+          (json['cashbackRedeemThresholdFcfa'] as num?)?.toDouble(),
+      cashbackExpiryDays: (json['cashbackExpiryDays'] as num?)?.toInt(),
+      showReviewButton: json['showReviewButton'] as bool? ?? false,
+      googleReviewUrl: json['googleReviewUrl'] as String? ?? '',
+      stampDesignType: json['stampDesignType'] as String? ?? 'icon',
+      stampEmoji: json['stampEmoji'] as String? ?? '✨',
+      stampIcon: json['stampIcon'] as String? ?? 'check_rounded',
+      cardDecorationPattern:
+          json['cardDecorationPattern'] as String? ?? 'none',
+      cardGradientType: json['cardGradientType'] as String? ?? 'linear',
+      whatsapp: json['whatsapp'] as String? ?? '',
+      instagram: json['instagram'] as String? ?? '',
+      facebook: json['facebook'] as String? ?? '',
+      tiktok: json['tiktok'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+    );
+  }
 }
 
 @Riverpod(keepAlive: true)
 class OnboardingNotifier extends _$OnboardingNotifier {
+  static const String _draftKey = 'merchant_onboarding';
+  bool _hydratedFromAccount = false;
+
   @override
-  OnboardingState build() => const OnboardingState();
+  OnboardingState build() {
+    unawaited(_restoreDraft());
+    return const OnboardingState();
+  }
+
+  @override
+  set state(OnboardingState value) {
+    super.state = value;
+    unawaited(FormDraftStorage.saveJson(_draftKey, value.toDraftJson()));
+  }
+
+  Future<void> _restoreDraft() async {
+    final json = await FormDraftStorage.loadJson(_draftKey);
+    if (json == null || _hydratedFromAccount) return;
+    if (state.commerceName.isEmpty && state.phone.isEmpty) {
+      super.state = OnboardingState.fromDraftJson(json);
+    }
+  }
 
   void setPhone(String v) => state = state.copyWith(phone: v);
   void setCommerceName(String v) => state = state.copyWith(commerceName: v);
@@ -387,7 +496,11 @@ class OnboardingNotifier extends _$OnboardingNotifier {
     }
   }
 
-  void reset() => state = const OnboardingState();
+  void reset() {
+    _hydratedFromAccount = false;
+    super.state = const OnboardingState();
+    unawaited(FormDraftStorage.clear(_draftKey));
+  }
 
   /// Repart d'un état propre, prérempli avec ce que le compte contient déjà.
   ///
@@ -400,6 +513,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       reset();
       return;
     }
+    _hydratedFromAccount = true;
 
     final config = restaurant.loyaltyConfig;
     Color? color(String key) {

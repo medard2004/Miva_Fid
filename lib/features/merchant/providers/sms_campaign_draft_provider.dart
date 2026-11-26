@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/storage/form_draft_storage.dart';
 import '../../../models/campaign_model.dart';
 import '../../../models/campaign_recipient_model.dart';
 import 'sms_provider.dart';
@@ -179,12 +182,65 @@ class CampaignDraftNotifier extends StateNotifier<CampaignDraft> {
         .toSet();
     final initialRecipientType = editingCampaign?.recipientType ??
         (editingCampaign?.type == 'reward' ? 'reward_available' : 'all');
-    setSegment(initialRecipientType);
+    if (editingCampaign == null) {
+      unawaited(_restoreDraft(initialRecipientType));
+    } else {
+      setSegment(initialRecipientType);
+    }
   }
 
+  static const String _draftKey = 'campaign_draft';
   final Ref _ref;
   final CampaignModel? editingCampaign;
   Set<int>? _pendingInitialSelection;
+
+  @override
+  set state(CampaignDraft value) {
+    super.state = value;
+    if (editingCampaign == null) {
+      unawaited(FormDraftStorage.saveJson(_draftKey, {
+        'type': value.type?.value,
+        'title': value.title,
+        'message': value.message,
+        'imageUrl': value.imageUrl,
+        'recipientType': value.recipientType,
+        'selectedClientIds': value.selectedClientIds.toList(),
+        'manuallyEdited': value.manuallyEdited,
+        'scheduledAt': value.scheduledAt?.toIso8601String(),
+      }));
+    }
+  }
+
+  Future<void> _restoreDraft(String fallbackSegment) async {
+    final json = await FormDraftStorage.loadJson(_draftKey);
+    if (!mounted) return;
+    if (json == null) {
+      await setSegment(fallbackSegment);
+      return;
+    }
+    final typeRaw = json['type'] as String?;
+    final rawIds = json['selectedClientIds'];
+    final ids = <int>{};
+    if (rawIds is List) {
+      for (final id in rawIds) {
+        if (id is int) ids.add(id);
+      }
+    }
+    _pendingInitialSelection = ids.isEmpty ? null : ids;
+    super.state = state.copyWith(
+      type: typeRaw != null ? () => CampaignType.fromValue(typeRaw) : null,
+      title: json['title'] as String? ?? '',
+      message: json['message'] as String? ?? '',
+      imageUrl: () => json['imageUrl'] as String?,
+      recipientType: json['recipientType'] as String? ?? fallbackSegment,
+      selectedClientIds: ids,
+      manuallyEdited: json['manuallyEdited'] as bool? ?? false,
+      scheduledAt: () => json['scheduledAt'] != null
+          ? DateTime.tryParse(json['scheduledAt'].toString())
+          : null,
+    );
+    await _reload();
+  }
 
   // ── Step 1: Type ──────────────────────────────────────────────────────
   void setType(CampaignType type) {
@@ -328,6 +384,9 @@ class CampaignDraftNotifier extends StateNotifier<CampaignDraft> {
               clientIds: state.selectedClientIds.toList(),
               scheduledAt: state.scheduledAt,
             );
+      }
+      if (editingCampaign == null) {
+        unawaited(FormDraftStorage.clear(_draftKey));
       }
     } finally {
       if (mounted) state = state.copyWith(sending: false);

@@ -19,7 +19,7 @@ class MivaFidMerchantApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(merchantRouterProvider);
-    ref.watch(appStartupProvider);
+    final isBootstrapping = ref.watch(appStartupProvider).isLoading;
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 
@@ -54,6 +54,11 @@ class MivaFidMerchantApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         ErrorMessages.bind(AppLocalizations.of(context)!);
+        if (isBootstrapping) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         return child ?? const SizedBox.shrink();
       },
     );

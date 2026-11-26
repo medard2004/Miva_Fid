@@ -12,6 +12,7 @@ import '../../features/client/auth/create_password_screen.dart';
 import '../../features/client/auth/forgot_password_screen.dart' as client_forgot;
 import '../../features/client/auth/reset_password_screen.dart';
 import '../../features/client/providers/app_providers.dart';
+import '../../features/client/providers/app_startup_provider.dart';
 import '../../features/client/auth/otp_screen.dart';
 import '../../features/client/auth/signup_screen.dart';
 import '../../features/client/auth/complete_social_profile_screen.dart';
@@ -50,6 +51,10 @@ final GlobalKey<NavigatorState> clientNavigatorKey = GlobalKey<NavigatorState>()
 
 class _ClientAuthRefreshNotifier extends ChangeNotifier {
   _ClientAuthRefreshNotifier(Ref ref) {
+    ref.listen<AsyncValue<AppStartupState>>(
+      appStartupProvider,
+      (_, __) => notifyListeners(),
+    );
     ref.listen<AuthState>(
       authProvider,
       (previous, next) {
@@ -137,6 +142,22 @@ final clientRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: _ClientAuthRefreshNotifier(ref),
     redirect: (context, state) {
       final location = state.matchedLocation;
+
+      // Attendre la fin de l'hydratation au démarrage (F5 / Reload) pour
+      // préserver l'URL exacte sans renvoyer vers /client/auth par erreur.
+      if (ref.read(appStartupProvider).isLoading) {
+        if (!ref.read(authProvider).isAuthenticated &&
+            (location == '/join' || location == '/client/onboarding/join')) {
+          final queryCode = state.uri.queryParameters['code'];
+          if (queryCode != null && queryCode.trim().isNotEmpty) {
+            final token = QrLinkHelper.extractQrToken(queryCode);
+            ref.read(pendingJoinCodeProvider.notifier).state = token;
+            ref.read(localPreferencesProvider).setPendingJoinCode(token);
+          }
+        }
+        return null;
+      }
+
       final isAuthenticated = ref.read(authProvider).isAuthenticated;
 
       // 1. Accès racine web
