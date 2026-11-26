@@ -17,10 +17,12 @@ class ApiClient {
       connectTimeout: const Duration(milliseconds: ApiConstants.connectTimeout),
       receiveTimeout: const Duration(milliseconds: ApiConstants.receiveTimeout),
       responseType: ResponseType.json,
-      // Le tunnel ngrok n'est utilisé qu'en mode dev/debug : en production,
-      // ce header est inutile et ne doit pas être diffusé.
+      // Le header ngrok-skip-browser-warning est requis dès que l'URL cible
+      // passe par un tunnel ngrok (y compris en build release sur Vercel),
+      // sinon ngrok renvoie sa page HTML d'avertissement au lieu du JSON.
       headers: {
-        if (kDebugMode) 'ngrok-skip-browser-warning': 'true',
+        if (kDebugMode || ApiConstants.baseUrl.contains('ngrok'))
+          'ngrok-skip-browser-warning': 'true',
       },
     ));
 

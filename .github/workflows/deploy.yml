@@ -23,7 +23,11 @@ jobs:
         run: flutter pub get
 
       - name: Compilation Flutter Web
-        run: flutter build web --release --no-tree-shake-icons --dart-define=API_BASE_URL="${{ secrets.API_BASE_URL || 'https://distract-buffalo-mockup.ngrok-free.dev/api' }}"
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          API_URL="${API_BASE_URL:-https://distract-buffalo-mockup.ngrok-free.dev/api}"
+          flutter build web --release --no-tree-shake-icons --dart-define=API_BASE_URL="$API_URL"
 
       - name: Préparer vercel.json pour le déploiement
         run: |
