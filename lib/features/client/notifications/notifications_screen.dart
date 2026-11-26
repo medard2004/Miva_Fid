@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:miva_fid/core/api/config/api_constants.dart';
 import 'package:miva_fid/core/notifications/notification_destination.dart';
 import 'package:miva_fid/core/widgets/app_dialog.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
@@ -205,6 +207,29 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       itemBuilder: (context, i) {
                         final n = filteredList[i];
                         final style = _styleFor(n.type);
+                        final restaurantLogo = n.data['restaurant_logo']?.toString();
+                        final restaurantName = n.data['restaurant_name']?.toString();
+                        final displayTitle = (restaurantName != null &&
+                                restaurantName.isNotEmpty &&
+                                !n.title.contains(restaurantName))
+                            ? '$restaurantName • ${n.title}'
+                            : n.title;
+                        final fallbackAvatar = Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: style.color.withValues(alpha: n.isRead ? 0.08 : 0.14),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            style.icon,
+                            color: n.isRead
+                                ? style.color.withValues(alpha: 0.75)
+                                : style.color,
+                            size: 19,
+                          ),
+                        );
 
                         return Dismissible(
                           key: ValueKey(n.id),
@@ -254,23 +279,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // ── Icône douce et ouverte sans boîte rigide ──
-                                  Container(
-                                    width: 42,
-                                    height: 42,
-                                    decoration: BoxDecoration(
-                                      color: style.color.withValues(alpha: n.isRead ? 0.08 : 0.14),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Icon(
-                                      style.icon,
-                                      color: n.isRead
-                                          ? style.color.withValues(alpha: 0.75)
-                                          : style.color,
-                                      size: 19,
-                                    ),
-                                  ),
+                                  // ── Logo de l'établissement (ou icône type en fallback) ──
+                                  if (restaurantLogo != null && restaurantLogo.isNotEmpty)
+                                    ClipOval(
+                                      child: CachedNetworkImage(
+                                        imageUrl: ApiConstants.resolveMediaUrl(restaurantLogo),
+                                        httpHeaders: ApiConstants.mediaHeaders(
+                                            ApiConstants.resolveMediaUrl(restaurantLogo)),
+                                        imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
+                                            ApiConstants.resolveMediaUrl(restaurantLogo)),
+                                        width: 42,
+                                        height: 42,
+                                        fit: BoxFit.cover,
+                                        placeholder: (_, __) => fallbackAvatar,
+                                        errorWidget: (_, __, ___) => fallbackAvatar,
+                                      ),
+                                    )
+                                  else
+                                    fallbackAvatar,
                                   const SizedBox(width: 14),
 
                                   // ── Contenu texte aéré ─────────────────────────
@@ -282,7 +308,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                n.title,
+                                                displayTitle,
                                                 style: AppTextStyles.label().copyWith(
                                                   fontSize: 14,
                                                   fontWeight: n.isRead

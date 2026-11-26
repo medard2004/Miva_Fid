@@ -42,7 +42,7 @@ class NotificationService {
 
     // Local notifications setup (uniquement sur plateformes mobiles natives)
     if (!kIsWeb) {
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings('@drawable/ic_stat_notification');
       const iosSettings = DarwinInitializationSettings();
       const initSettings = InitializationSettings(
         android: androidSettings,
@@ -104,6 +104,9 @@ class NotificationService {
     final body = notification?.body ?? data['body']?.toString() ?? '';
     if (body.isEmpty && title.isEmpty) return;
 
+    final restaurantName = data['restaurant_name']?.toString();
+    final restaurantLogo = data['restaurant_logo']?.toString();
+
     // Cas spéciaux : campagnes marchandes — toast façon vignette Instagram
     if (campaignTypes.contains(type)) {
       final campaignId =
@@ -117,6 +120,8 @@ class NotificationService {
           body: body.isNotEmpty ? body : title,
           campaignId: campaignId,
           imageUrl: imageUrl,
+          restaurantName: restaurantName,
+          restaurantLogo: restaurantLogo,
           notificationId: notificationId,
           notificationData: data,
         );
@@ -126,8 +131,22 @@ class NotificationService {
 
     ToastService.markSeen(notificationId);
 
+    final isWarning = warningTypes.contains(type);
+    if ((restaurantName != null && restaurantName.isNotEmpty) ||
+        (restaurantLogo != null && restaurantLogo.isNotEmpty)) {
+      ToastService.showEstablishmentNotification(
+        title: title,
+        body: body.isNotEmpty ? body : title,
+        restaurantName: restaurantName,
+        restaurantLogo: restaurantLogo,
+        isWarning: isWarning,
+        notificationData: data,
+      );
+      return;
+    }
+
     final messageText = body.isNotEmpty ? body : title;
-    if (warningTypes.contains(type)) {
+    if (isWarning) {
       ToastService.showWarning(messageText);
     } else {
       ToastService.showSuccess(messageText);

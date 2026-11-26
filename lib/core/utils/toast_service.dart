@@ -19,6 +19,8 @@ class _ToastRequest {
   final String? title;
   final String? imageUrl;
   final String? campaignId;
+  final String? restaurantName;
+  final String? restaurantLogo;
   final VoidCallback? onTap;
 
   _ToastRequest({
@@ -28,6 +30,8 @@ class _ToastRequest {
     this.title,
     this.imageUrl,
     this.campaignId,
+    this.restaurantName,
+    this.restaurantLogo,
     this.onTap,
   });
 
@@ -104,6 +108,8 @@ class ToastService {
       title: next.title,
       imageUrl: next.imageUrl,
       campaignId: next.campaignId,
+      restaurantName: next.restaurantName,
+      restaurantLogo: next.restaurantLogo,
       onTap: next.onTap,
     );
   }
@@ -129,6 +135,8 @@ class ToastService {
     required String body,
     required String campaignId,
     String? imageUrl,
+    String? restaurantName,
+    String? restaurantLogo,
     String? notificationId,
     Map<String, dynamic>? notificationData,
     Duration duration = const Duration(seconds: 6),
@@ -165,6 +173,8 @@ class ToastService {
       title: title,
       imageUrl: imageUrl,
       campaignId: campaignId,
+      restaurantName: restaurantName,
+      restaurantLogo: restaurantLogo,
       onTap: onTap,
     );
 
@@ -180,6 +190,66 @@ class ToastService {
       title: request.title,
       imageUrl: request.imageUrl,
       campaignId: request.campaignId,
+      restaurantName: request.restaurantName,
+      restaurantLogo: request.restaurantLogo,
+      onTap: request.onTap,
+    );
+  }
+
+  /// Affiche un toast d'établissement (tampon, points, récompense, cashback...)
+  /// avec le logo et le nom de l'établissement et la redirection au clic.
+  static void showEstablishmentNotification({
+    required String title,
+    required String body,
+    String? restaurantName,
+    String? restaurantLogo,
+    bool isWarning = false,
+    Map<String, dynamic>? notificationData,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    final type = isWarning ? ToastType.warning : ToastType.success;
+    final displayTitle = (restaurantName != null &&
+            restaurantName.isNotEmpty &&
+            !title.contains(restaurantName))
+        ? restaurantName
+        : (title.isNotEmpty ? title : restaurantName);
+    final displayMessage = body.isNotEmpty ? body : title;
+
+    void onTap() {
+      hideCurrent();
+      final ctx = _activeNavigatorKey.currentContext;
+      if (ctx == null || notificationData == null) return;
+      final destination = resolveNotificationDestination(
+        type: notificationData['type'] as String? ?? '',
+        data: notificationData,
+        title: title,
+        body: body,
+      );
+      navigateToNotificationDestination(ctx, destination);
+    }
+
+    final request = _ToastRequest(
+      message: displayMessage,
+      type: type,
+      duration: duration,
+      title: displayTitle,
+      restaurantName: restaurantName,
+      restaurantLogo: restaurantLogo,
+      onTap: notificationData != null ? onTap : null,
+    );
+
+    if (_isShowing) {
+      _queue.add(request);
+      return;
+    }
+
+    _showNow(
+      message: request.message,
+      type: request.type,
+      duration: request.duration,
+      title: request.title,
+      restaurantName: request.restaurantName,
+      restaurantLogo: request.restaurantLogo,
       onTap: request.onTap,
     );
   }
@@ -191,6 +261,8 @@ class ToastService {
     String? title,
     String? imageUrl,
     String? campaignId,
+    String? restaurantName,
+    String? restaurantLogo,
     VoidCallback? onTap,
   }) {
     final activeKey = _activeNavigatorKey;
@@ -209,6 +281,8 @@ class ToastService {
         title: title ?? message,
         body: message,
         imageUrl: imageUrl,
+        restaurantName: restaurantName,
+        restaurantLogo: restaurantLogo,
         onDismiss: hideCurrent,
         onTap: onTap ?? hideCurrent,
       );
@@ -241,11 +315,14 @@ class ToastService {
       }
 
       toast = _ToastWidget(
+        title: title,
         message: message,
+        restaurantLogo: restaurantLogo,
         backgroundColor: backgroundColor,
         accentColor: accentColor,
         iconData: iconData,
         onDismiss: hideCurrent,
+        onTap: onTap,
       );
     }
 
@@ -319,18 +396,24 @@ class ToastService {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ToastWidget extends StatefulWidget {
+  final String? title;
   final String message;
+  final String? restaurantLogo;
   final Color backgroundColor;
   final Color accentColor;
   final IconData iconData;
   final VoidCallback onDismiss;
+  final VoidCallback? onTap;
 
   const _ToastWidget({
+    this.title,
     required this.message,
+    this.restaurantLogo,
     required this.backgroundColor,
     required this.accentColor,
     required this.iconData,
     required this.onDismiss,
+    this.onTap,
   });
 
   @override
@@ -414,67 +497,118 @@ class _ToastWidgetState extends State<_ToastWidget>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: IntrinsicHeight(
-                  child: Row(
-                    children: [
-                      // Left vertical color accent indicator
-                      Container(
-                        width: 4,
-                        color: widget.accentColor,
-                      ),
-                      const SizedBox(width: 12),
-                      // Icon badge
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: widget.accentColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          widget.iconData,
+                child: GestureDetector(
+                  onTap: widget.onTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        // Left vertical color accent indicator
+                        Container(
+                          width: 4,
                           color: widget.accentColor,
-                          size: 17,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Text content
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Text(
-                            widget.message,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              height: 1.35,
+                        const SizedBox(width: 12),
+                        // Establishment logo or icon badge
+                        _buildLeadingBadge(),
+                        const SizedBox(width: 12),
+                        // Text content
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (widget.title != null && widget.title!.isNotEmpty) ...[
+                                  Text(
+                                    widget.title!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                ],
+                                Text(
+                                  widget.message,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: (widget.title != null && widget.title!.isNotEmpty)
+                                        ? AppColors.textSecondary
+                                        : AppColors.textPrimary,
+                                    fontSize: (widget.title != null && widget.title!.isNotEmpty) ? 12 : 13,
+                                    fontWeight: (widget.title != null && widget.title!.isNotEmpty)
+                                        ? FontWeight.w500
+                                        : FontWeight.w600,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Dismiss button
-                      GestureDetector(
-                        onTap: widget.onDismiss,
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(6, 12, 12, 12),
-                          child: Icon(
-                            LucideIcons.x,
-                            color: AppColors.textSecondary.withValues(alpha: 0.6),
-                            size: 16,
+                        const SizedBox(width: 8),
+                        // Dismiss button
+                        GestureDetector(
+                          onTap: widget.onDismiss,
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(6, 12, 12, 12),
+                            child: Icon(
+                              LucideIcons.x,
+                              color: AppColors.textSecondary.withValues(alpha: 0.6),
+                              size: 16,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLeadingBadge() {
+    final logoUrl = widget.restaurantLogo;
+    final fallback = Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: widget.accentColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        widget.iconData,
+        color: widget.accentColor,
+        size: 17,
+      ),
+    );
+
+    if (logoUrl == null || logoUrl.isEmpty) return fallback;
+
+    final resolved = ApiConstants.resolveMediaUrl(logoUrl);
+    return ClipOval(
+      child: CachedNetworkImage(
+        imageUrl: resolved,
+        httpHeaders: ApiConstants.mediaHeaders(resolved),
+        imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(resolved),
+        width: 36,
+        height: 36,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => fallback,
+        errorWidget: (_, __, ___) => fallback,
       ),
     );
   }
@@ -488,6 +622,8 @@ class _CampaignToastWidget extends StatefulWidget {
   final String title;
   final String body;
   final String? imageUrl;
+  final String? restaurantName;
+  final String? restaurantLogo;
   final VoidCallback onDismiss;
   final VoidCallback onTap;
 
@@ -497,6 +633,8 @@ class _CampaignToastWidget extends StatefulWidget {
     required this.onDismiss,
     required this.onTap,
     this.imageUrl,
+    this.restaurantName,
+    this.restaurantLogo,
   });
 
   @override
@@ -545,7 +683,16 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = widget.imageUrl != null && widget.imageUrl!.isNotEmpty;
+    final thumbUrl = (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
+        ? widget.imageUrl
+        : (widget.restaurantLogo != null && widget.restaurantLogo!.isNotEmpty
+            ? widget.restaurantLogo
+            : null);
+    final hasImage = thumbUrl != null;
+    final hasLogo = widget.restaurantLogo != null && widget.restaurantLogo!.isNotEmpty;
+    final badgeLabel = (widget.restaurantName != null && widget.restaurantName!.isNotEmpty)
+        ? widget.restaurantName!
+        : 'Nouvelle offre';
 
     return SlideTransition(
       position: _offsetAnimation,
@@ -584,21 +731,21 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Vignette image
+                    // Vignette image (image campagne ou logo établissement)
                     Container(
                       width: 84,
                       color: AppColors.background,
                       child: hasImage
                           ? CachedNetworkImage(
                               imageUrl:
-                                  ApiConstants.resolveMediaUrl(widget.imageUrl),
+                                  ApiConstants.resolveMediaUrl(thumbUrl),
                               httpHeaders: ApiConstants.mediaHeaders(
                                   ApiConstants.resolveMediaUrl(
-                                      widget.imageUrl)),
+                                      thumbUrl)),
                               imageRenderMethodForWeb:
                                   ApiConstants.webRenderMethodFor(
                                       ApiConstants.resolveMediaUrl(
-                                          widget.imageUrl)),
+                                          thumbUrl)),
                               fit: BoxFit.cover,
                               placeholder: (_, __) => Container(
                                 color: AppColors.background,
@@ -649,33 +796,58 @@ class _CampaignToastWidgetState extends State<_CampaignToastWidget>
                           children: [
                             Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF5B50EC).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        LucideIcons.sparkles,
-                                        size: 11,
-                                        color: Color(0xFF5B50EC),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Nouvelle offre',
-                                        style: TextStyle(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF5B50EC),
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5B50EC).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (hasLogo) ...[
+                                          ClipOval(
+                                            child: CachedNetworkImage(
+                                              imageUrl: ApiConstants.resolveMediaUrl(widget.restaurantLogo!),
+                                              httpHeaders: ApiConstants.mediaHeaders(
+                                                  ApiConstants.resolveMediaUrl(widget.restaurantLogo!)),
+                                              imageRenderMethodForWeb: ApiConstants.webRenderMethodFor(
+                                                  ApiConstants.resolveMediaUrl(widget.restaurantLogo!)),
+                                              width: 14,
+                                              height: 14,
+                                              fit: BoxFit.cover,
+                                              errorWidget: (_, __, ___) => const Icon(
+                                                LucideIcons.store,
+                                                size: 11,
+                                                color: Color(0xFF5B50EC),
+                                              ),
+                                            ),
+                                          ),
+                                        ] else
+                                          const Icon(
+                                            LucideIcons.sparkles,
+                                            size: 11,
+                                            color: Color(0xFF5B50EC),
+                                          ),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            badgeLabel,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF5B50EC),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                                const Spacer(),
+                                const SizedBox(width: 6),
                                 GestureDetector(
                                   onTap: widget.onDismiss,
                                   behavior: HitTestBehavior.opaque,

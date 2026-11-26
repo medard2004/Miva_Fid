@@ -16,11 +16,12 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || payload.data?.title || 'Miva Fid';
   const body = payload.notification?.body || payload.data?.body || '';
   const image = payload.notification?.image || payload.data?.image_url || undefined;
+  const icon = payload.notification?.icon || payload.data?.restaurant_logo || '/icons/Icon-192.png';
   const tag = payload.data?.notification_id || payload.data?.type || 'miva-fid-push';
   const options = {
     body,
-    icon: '/icons/Icon-192.png',
-    badge: '/icons/Icon-192.png',
+    icon,
+    badge: '/icons/badge-96.png',
     ...(image ? { image } : {}),
     tag,
     vibrate: [200, 100, 200],

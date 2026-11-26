@@ -156,6 +156,10 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
     final notificationId = payload['id']?.toString();
     final data = payload['data'] as Map<String, dynamic>? ?? {};
     final dedupId = data['notification_id']?.toString() ?? notificationId;
+    final restaurantName =
+        data['restaurant_name']?.toString() ?? payload['restaurant_name']?.toString();
+    final restaurantLogo =
+        data['restaurant_logo']?.toString() ?? payload['restaurant_logo']?.toString();
 
     if (ToastService.hasBeenSeen(dedupId)) return;
 
@@ -178,6 +182,8 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
           body: body.isEmpty ? title : body,
           campaignId: campaignId,
           imageUrl: imageUrl,
+          restaurantName: restaurantName,
+          restaurantLogo: restaurantLogo,
           notificationId: dedupId,
           notificationData: mergedData,
         );
@@ -190,8 +196,22 @@ class NotificationsNotifier extends StateNotifier<List<AppNotification>> {
     final alreadyShown = ToastService.markSeen(dedupId);
     if (alreadyShown) return;
 
+    final isWarning = _warningTypes.contains(type);
+    if ((restaurantName != null && restaurantName.isNotEmpty) ||
+        (restaurantLogo != null && restaurantLogo.isNotEmpty)) {
+      ToastService.showEstablishmentNotification(
+        title: title,
+        body: body.isNotEmpty ? body : title,
+        restaurantName: restaurantName,
+        restaurantLogo: restaurantLogo,
+        isWarning: isWarning,
+        notificationData: {'type': type, ...data},
+      );
+      return;
+    }
+
     final message = body.isNotEmpty ? body : title;
-    if (_warningTypes.contains(type)) {
+    if (isWarning) {
       ToastService.showWarning(message);
     } else {
       ToastService.showSuccess(message);
