@@ -25,8 +25,23 @@ jobs:
       - name: Compilation Flutter Web
         run: flutter build web --release --no-tree-shake-icons --dart-define=API_BASE_URL="${{ secrets.API_BASE_URL || 'https://distract-buffalo-mockup.ngrok-free.dev/api' }}"
 
-      - name: Préparer le déploiement
-        run: cp vercel.json build/web/vercel.json
+      - name: Préparer vercel.json pour le déploiement
+        run: |
+          cat > build/web/vercel.json << 'EOF'
+          {
+            "rewrites": [
+              { "source": "/(.*)", "destination": "/index.html" }
+            ],
+            "headers": [
+              {
+                "source": "/flutter_service_worker.js",
+                "headers": [
+                  { "key": "Cache-Control", "value": "no-cache" }
+                ]
+              }
+            ]
+          }
+          EOF
 
       - name: Déploiement sur Vercel
         env:
