@@ -9,6 +9,7 @@ import 'package:miva_fid/features/client/providers/settings_provider.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/l10n/gen/app_localizations.dart';
 import 'package:miva_fid/features/client/widgets/components/components.dart';
+import '../../../core/utils/qr_link_helper.dart';
 import '../../../core/widgets/offline_action_guard.dart';
 
 /// Fond du chrome caméra — volontairement fixe (jamais [AppColors.ink],
@@ -87,7 +88,8 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
     _handled = true;
     HapticFeedback.mediumImpact();
     _cameraController.stop();
-    context.pushReplacement('/client/onboarding/join', extra: {'code': value});
+    final token = QrLinkHelper.extractQrToken(value);
+    context.pushReplacement('/client/onboarding/join', extra: {'code': token});
   }
 
   Future<void> _openManualEntry() async {
@@ -145,7 +147,8 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen>
         return;
       }
       _handled = true;
-      context.pushReplacement('/client/onboarding/join', extra: {'code': code});
+      final token = QrLinkHelper.extractQrToken(code);
+      context.pushReplacement('/client/onboarding/join', extra: {'code': token});
     }
   }
 

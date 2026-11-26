@@ -44,6 +44,15 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
   ref.read(hasSeenOnboardingProvider.notifier).state = hasSeenOnboarding;
   final lastRole = await prefs.getLastRole();
 
+  // Restaure un éventuel code QR en attente (si aucun n'a déjà été capté
+  // depuis l'URL de démarrage par le routeur).
+  if (ref.read(pendingJoinCodeProvider) == null) {
+    final storedPendingCode = await prefs.getPendingJoinCode();
+    if (storedPendingCode != null && storedPendingCode.isNotEmpty) {
+      ref.read(pendingJoinCodeProvider.notifier).state = storedPendingCode;
+    }
+  }
+
   // Attache le listener avant toute restauration de session, pour capter
   // aussi bien un login frais qu'une session déjà valide au démarrage.
   ref.read(deviceTokenProvider);

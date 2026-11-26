@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miva_fid/core/api/storage/local_preferences.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
@@ -70,7 +71,7 @@ class _CompleteSocialProfileScreenState
 
     if (success) {
       ref.read(signupFlowProvider.notifier).reset();
-      context.go('/client/wallet');
+      context.go(consumePostClientAuthRoute(ref));
     } else {
       handleError(
         ref.read(authProvider).lastError,

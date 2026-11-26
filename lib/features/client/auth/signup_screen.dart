@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:simple_icons/simple_icons.dart';
+import 'package:miva_fid/core/api/storage/local_preferences.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/core/services/social_auth_service.dart';
@@ -86,7 +87,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
 
       context.go(result.needsProfileCompletion
           ? '/client/complete-social-profile'
-          : '/client/wallet');
+          : consumePostClientAuthRoute(ref));
     } catch (e) {
       if (mounted) handleError(e, context: ErrorContext.socialLogin);
     }

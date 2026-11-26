@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../api/storage/local_preferences.dart';
+import '../utils/qr_link_helper.dart';
 import '../../features/client/core/router/app_route_observer.dart' as client_router;
 import '../../features/client/core/router/tab_transition_direction.dart';
 import '../../features/client/core/theme/app_motion.dart' as client_motion;
@@ -11,6 +13,7 @@ import '../../features/client/auth/forgot_password_screen.dart' as client_forgot
 import '../../features/client/auth/reset_password_screen.dart';
 import '../../features/client/splash/splash_screen.dart';
 import '../../features/client/providers/app_providers.dart';
+import '../../features/client/providers/app_startup_provider.dart';
 import '../../features/merchant/providers/merchant_auth_provider.dart';
 import '../../features/client/auth/otp_screen.dart';
 import '../../features/client/auth/signup_screen.dart';
@@ -129,6 +132,24 @@ CustomTransitionPage<void> _clientTabFadePage(GoRouterState state, Widget child)
       );
     },
   );
+}
+
+/// Extrait le `code` (ou `qr_token`) d'adhésion depuis les query params de
+/// l'URL (scan appareil photo) ou depuis `state.extra` (scanner intégré).
+String? _extractJoinCode(GoRouterState state) {
+  final queryCode = state.uri.queryParameters['code'];
+  if (queryCode != null && queryCode.trim().isNotEmpty) {
+    return QrLinkHelper.extractQrToken(queryCode);
+  }
+  final extra = state.extra;
+  String? raw;
+  if (extra is Map<String, dynamic>) {
+    raw = extra['code'] as String?;
+  } else if (extra is String) {
+    raw = extra;
+  }
+  if (raw == null || raw.trim().isEmpty) return null;
+  return QrLinkHelper.extractQrToken(raw);
 }
 
 /// Construit l'écran OTP depuis les données `extra` du router.
@@ -298,6 +319,20 @@ GoRouter appRouter(AppRouterRef ref) {
           location.startsWith('/client/legal');
 
       if (!isAuthenticated) {
+        if (location == '/client/onboarding/join') {
+          final rawCode = _extractJoinCode(state);
+          if (rawCode != null && rawCode.isNotEmpty) {
+            ref.read(pendingJoinCodeProvider.notifier).state = rawCode;
+            ref.read(localPreferencesProvider).setPendingJoinCode(rawCode);
+          }
+          // Si le démarrage est encore en cours (lien direct dans la PWA ou le
+          // navigateur), on passe par `/splash` pour restaurer l'éventuelle
+          // session client existante avant de demander une connexion.
+          if (ref.read(appStartupProvider).isLoading) {
+            return '/splash';
+          }
+          return '/client/auth';
+        }
         return isPublicRoute ? null : '/client/auth';
       }
 
@@ -406,14 +441,7 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/client/onboarding/join',
         builder: (_, state) {
-          final extra = state.extra;
-          String? code;
-          if (extra is Map<String, dynamic>) {
-            code = extra['code'] as String?;
-          } else if (extra is String) {
-            code = extra;
-          }
-          return JoinRestaurantScreen(scannedCode: code);
+          return JoinRestaurantScreen(scannedCode: _extractJoinCode(state));
         },
       ),
 

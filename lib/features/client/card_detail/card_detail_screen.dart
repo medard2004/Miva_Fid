@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:miva_fid/core/notifications/content_unavailable_view.dart';
+import 'package:miva_fid/core/services/wallet_pass_service.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/core/theme/app_shadows.dart';
@@ -62,7 +63,7 @@ class CardDetailScreen extends ConsumerWidget {
         title: t.cardDetailTitle,
         trailing: IconButton(
           onPressed: () =>
-              _showExportModal(context, card, _exportBoundaryKey, t),
+              _showExportModal(context, ref, card, _exportBoundaryKey, t),
           icon: const Icon(LucideIcons.share2,
               color: AppColors.primary, size: 20),
           tooltip: t.cardDetailExportTooltip,
@@ -93,6 +94,41 @@ class CardDetailScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                    ),
+
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppButton(
+                            label: 'Apple Wallet',
+                            variant: AppButtonVariant.outline,
+                            icon: SimpleIcons.apple,
+                            onTap: () => WalletPassService.addToWallet(
+                              context: context,
+                              ref: ref,
+                              card: card,
+                              platform: WalletPlatform.apple,
+                              exportKey: _exportBoundaryKey,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AppButton(
+                            label: 'Google Wallet',
+                            variant: AppButtonVariant.outline,
+                            icon: LucideIcons.wallet,
+                            onTap: () => WalletPassService.addToWallet(
+                              context: context,
+                              ref: ref,
+                              card: card,
+                              platform: WalletPlatform.google,
+                              exportKey: _exportBoundaryKey,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
                     if (card.tiers.length > 1) ...[
@@ -229,7 +265,7 @@ class CardDetailScreen extends ConsumerWidget {
 }
 
 /// Modal d'exportation et de partage de la carte.
-void _showExportModal(BuildContext context, LoyaltyCard card,
+void _showExportModal(BuildContext context, WidgetRef ref, LoyaltyCard card,
     GlobalKey exportKey, AppLocalizations t) {
   showModalBottomSheet(
     context: context,
@@ -260,6 +296,38 @@ void _showExportModal(BuildContext context, LoyaltyCard card,
               ],
             ),
             const SizedBox(height: 20),
+            _ExportOptionTile(
+              icon: SimpleIcons.apple,
+              title: 'Ajouter à Apple Wallet',
+              subtitle: 'Enregistrer la carte dans Apple Cartes (iOS)',
+              onTap: () {
+                Navigator.pop(context);
+                WalletPassService.addToWallet(
+                  context: context,
+                  ref: ref,
+                  card: card,
+                  platform: WalletPlatform.apple,
+                  exportKey: exportKey,
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            _ExportOptionTile(
+              icon: LucideIcons.wallet,
+              title: 'Ajouter à Google Wallet',
+              subtitle: 'Enregistrer la carte dans Google Wallet (Android)',
+              onTap: () {
+                Navigator.pop(context);
+                WalletPassService.addToWallet(
+                  context: context,
+                  ref: ref,
+                  card: card,
+                  platform: WalletPlatform.google,
+                  exportKey: exportKey,
+                );
+              },
+            ),
+            const SizedBox(height: 10),
             _ExportOptionTile(
               icon: LucideIcons.bookmarkPlus,
               title: t.cardDetailSaveTitle,

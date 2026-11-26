@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:simple_icons/simple_icons.dart';
+import 'package:miva_fid/core/api/storage/local_preferences.dart';
 import 'package:miva_fid/core/errors/app_error.dart';
 import 'package:miva_fid/core/errors/form_error_handler.dart';
 import 'package:miva_fid/core/services/social_auth_service.dart';
@@ -63,7 +64,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with FormErrorHandler {
             .startSocialSignup(provider: provider);
         context.go('/client/complete-social-profile');
       } else {
-        context.go('/client/wallet');
+        context.go(consumePostClientAuthRoute(ref));
       }
     } catch (e) {
       // Une annulation utilisateur est absorbée en silence par handleError.

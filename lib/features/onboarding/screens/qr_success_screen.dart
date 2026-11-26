@@ -13,6 +13,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/qr_link_helper.dart';
 import '../../../core/widgets/app_badge.dart';
 import '../../../core/widgets/app_button.dart';
 import '../providers/onboarding_provider.dart';
@@ -42,11 +43,11 @@ class _QrSuccessScreenState extends ConsumerState<QrSuccessScreen> {
     super.dispose();
   }
 
-  /// Le QR encode directement le `qr_token` du restaurant — c'est ce que
-  /// `POST /loyalty-cards/join` attend côté client (scan ou saisie manuelle).
+  /// Le QR encode l'URL web intelligente contenant le `qr_token` du
+  /// restaurant (`https://<domaine>/#/client/onboarding/join?code=<qr_token>`).
   String _buildQrPayload() {
     final restaurant = ref.read(merchantAuthProvider).restaurant;
-    return restaurant?.qrToken ?? '';
+    return QrLinkHelper.buildJoinUrl(restaurant?.qrToken ?? '');
   }
 
   Future<void> _generatePdf() async {

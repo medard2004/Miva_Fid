@@ -5,6 +5,7 @@ class LocalPreferences {
   static const _secureStorage = FlutterSecureStorage();
   static const String _onboardingKey = 'has_seen_onboarding';
   static const String _lastRoleKey = 'last_role';
+  static const String _pendingJoinCodeKey = 'pending_join_code';
 
   Future<void> setHasSeenOnboarding(bool value) async {
     await _secureStorage.write(key: _onboardingKey, value: value.toString());
@@ -23,6 +24,22 @@ class LocalPreferences {
   Future<String?> getLastRole() async {
     return _secureStorage.read(key: _lastRoleKey);
   }
+
+  /// Code QR en attente d'adhésion après une redirection OAuth / connexion.
+  Future<void> setPendingJoinCode(String? code) async {
+    if (code == null || code.trim().isEmpty) {
+      await _secureStorage.delete(key: _pendingJoinCodeKey);
+    } else {
+      await _secureStorage.write(
+        key: _pendingJoinCodeKey,
+        value: code.trim(),
+      );
+    }
+  }
+
+  Future<String?> getPendingJoinCode() async {
+    return _secureStorage.read(key: _pendingJoinCodeKey);
+  }
 }
 
 final localPreferencesProvider = Provider<LocalPreferences>((ref) {
@@ -35,3 +52,19 @@ final localPreferencesProvider = Provider<LocalPreferences>((ref) {
 /// stockage sécurisé n'étant relu qu'au boot par `appStartupProvider`), et
 /// re-proposerait l'intro à un retour en arrière dans la même session.
 final hasSeenOnboardingProvider = StateProvider<bool>((ref) => false);
+
+/// Miroir en mémoire du `qr_token` scanné avant authentification client.
+final pendingJoinCodeProvider = StateProvider<String?>((ref) => null);
+
+/// Consomme l'éventuel `qr_token` en attente après authentification client et
+/// retourne la route cible (`/client/onboarding/join?code=...` ou
+/// `/client/wallet`).
+String consumePostClientAuthRoute(WidgetRef ref) {
+  final pendingCode = ref.read(pendingJoinCodeProvider);
+  if (pendingCode != null && pendingCode.isNotEmpty) {
+    ref.read(pendingJoinCodeProvider.notifier).state = null;
+    ref.read(localPreferencesProvider).setPendingJoinCode(null);
+    return '/client/onboarding/join?code=${Uri.encodeComponent(pendingCode)}';
+  }
+  return '/client/wallet';
+}

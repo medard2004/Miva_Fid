@@ -13,6 +13,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/qr_link_helper.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 import '../providers/merchant_provider.dart';
@@ -60,11 +61,13 @@ class QrCodeScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => Center(child: Text(t.merchantQrCodeLoadError)),
         data: (merchant) {
-          // Le QR encode le `qr_token` Laravel réel (celui que
-          // `joinByQrToken` vérifie côté client) — jamais un identifiant
-          // Supabase, obsolète depuis la migration de l'auth marchand.
+          // Le QR encode l'URL web intelligente contenant le `qr_token` Laravel
+          // (`https://<domaine>/#/client/onboarding/join?code=<qr_token>`), afin
+          // qu'un scan depuis l'appareil photo ouvre le web client tout en
+          // restant compatible avec le scanner intégré.
           final restaurant = ref.watch(merchantAuthProvider).restaurant;
-          final qrData = restaurant?.qrToken ?? '';
+          final qrToken = restaurant?.qrToken ?? '';
+          final qrData = QrLinkHelper.buildJoinUrl(qrToken);
           final shortCode = restaurant?.shortCode ?? '';
           final merchantName = merchant?.name ?? 'Votre Commerce';
           final merchantAddress = merchant?.address ?? '';

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miva_fid/core/api/storage/local_preferences.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
 import 'package:miva_fid/features/client/core/theme/app_text_styles.dart';
 import 'package:miva_fid/features/client/providers/app_providers.dart';
@@ -74,8 +75,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
 
     // 2. Session client restaurée
+    final pendingJoinCode = ref.read(pendingJoinCodeProvider);
     if (isClientAuth) {
-      context.go('/client/wallet');
+      context.go(consumePostClientAuthRoute(ref));
       return;
     }
 
@@ -96,7 +98,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       return;
     }
 
-    // 3. Sur le Web, redirection directe vers l'authentification marchand
+    // 3b. Un scan QR client est en attente : envoyer vers l'auth client
+    // (même sur le Web, où le défaut pointe normalement vers l'auth marchand).
+    if (pendingJoinCode != null && pendingJoinCode.isNotEmpty) {
+      context.go('/client/auth');
+      return;
+    }
+
+    // 4. Sur le Web, redirection directe vers l'authentification marchand
     if (kIsWeb) {
       context.go('/auth/merchant/auth');
       return;
