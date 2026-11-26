@@ -97,38 +97,16 @@ class CardDetailScreen extends ConsumerWidget {
                     ),
 
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppButton(
-                            label: 'Apple Wallet',
-                            variant: AppButtonVariant.outline,
-                            icon: SimpleIcons.apple,
-                            onTap: () => WalletPassService.addToWallet(
-                              context: context,
-                              ref: ref,
-                              card: card,
-                              platform: WalletPlatform.apple,
-                              exportKey: _exportBoundaryKey,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: AppButton(
-                            label: 'Google Wallet',
-                            variant: AppButtonVariant.outline,
-                            icon: LucideIcons.wallet,
-                            onTap: () => WalletPassService.addToWallet(
-                              context: context,
-                              ref: ref,
-                              card: card,
-                              platform: WalletPlatform.google,
-                              exportKey: _exportBoundaryKey,
-                            ),
-                          ),
-                        ),
-                      ],
+                    AppButton(
+                      label: 'Ajouter à Google Wallet',
+                      variant: AppButtonVariant.outline,
+                      icon: LucideIcons.wallet,
+                      onTap: () => WalletPassService.addToGoogleWallet(
+                        context: context,
+                        ref: ref,
+                        card: card,
+                        exportKey: _exportBoundaryKey,
+                      ),
                     ),
 
                     if (card.tiers.length > 1) ...[
@@ -297,32 +275,15 @@ void _showExportModal(BuildContext context, WidgetRef ref, LoyaltyCard card,
             ),
             const SizedBox(height: 20),
             _ExportOptionTile(
-              icon: SimpleIcons.apple,
-              title: 'Ajouter à Apple Wallet',
-              subtitle: 'Enregistrer la carte dans Apple Cartes (iOS)',
-              onTap: () {
-                Navigator.pop(context);
-                WalletPassService.addToWallet(
-                  context: context,
-                  ref: ref,
-                  card: card,
-                  platform: WalletPlatform.apple,
-                  exportKey: exportKey,
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            _ExportOptionTile(
               icon: LucideIcons.wallet,
               title: 'Ajouter à Google Wallet',
-              subtitle: 'Enregistrer la carte dans Google Wallet (Android)',
+              subtitle: 'Enregistrer la carte dans Google Wallet',
               onTap: () {
                 Navigator.pop(context);
-                WalletPassService.addToWallet(
+                WalletPassService.addToGoogleWallet(
                   context: context,
                   ref: ref,
                   card: card,
-                  platform: WalletPlatform.google,
                   exportKey: exportKey,
                 );
               },

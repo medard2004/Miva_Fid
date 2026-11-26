@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,23 +9,16 @@ import '../../features/client/core/theme/app_colors.dart';
 import '../../features/client/models/loyalty_card.dart';
 import '../api/providers/api_providers.dart';
 
-enum WalletPlatform { apple, google }
-
-/// Gère l'ajout d'une carte de fidélité vers Apple Wallet (.pkpass) ou
-/// Google Wallet (JWT Save URL), avec repli automatique vers l'enregistrement
-/// hors-ligne de la carte si les certificats Wallet serveur ne sont pas encore
-/// activés.
+/// Gère l'ajout d'une carte de fidélité vers Google Wallet (JWT Save URL),
+/// avec repli automatique vers l'enregistrement hors-ligne de l'image de la
+/// carte si Google Wallet n'est pas encore activé sur le serveur.
 class WalletPassService {
-  static Future<void> addToWallet({
+  static Future<void> addToGoogleWallet({
     required BuildContext context,
     required WidgetRef ref,
     required LoyaltyCard card,
-    required WalletPlatform platform,
     required GlobalKey exportKey,
   }) async {
-    final platformName =
-        platform == WalletPlatform.apple ? 'Apple Wallet' : 'Google Wallet';
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -38,7 +32,7 @@ class WalletPassService {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.dio.get(
         '/loyalty-cards/${card.id}/wallet-pass',
-        queryParameters: {'platform': platform.name},
+        queryParameters: {'platform': 'google'},
       );
       if (response.data is Map) {
         final url = response.data['url']?.toString();
@@ -48,10 +42,10 @@ class WalletPassService {
       }
     } on DioException catch (e) {
       debugPrint(
-        '[WalletPassService] Endpoint $platformName indisponible (${e.response?.statusCode}): ${e.message}',
+        '[WalletPassService] Endpoint Google Wallet indisponible (${e.response?.statusCode}): ${e.message}',
       );
     } catch (e) {
-      debugPrint('[WalletPassService] Erreur $platformName: $e');
+      debugPrint('[WalletPassService] Erreur Google Wallet: $e');
     }
 
     if (context.mounted) Navigator.pop(context);
@@ -59,7 +53,11 @@ class WalletPassService {
     if (passUrl != null) {
       final uri = Uri.tryParse(passUrl);
       if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+          webOnlyWindowName: kIsWeb ? '_blank' : null,
+        );
         return;
       }
     }
@@ -67,12 +65,11 @@ class WalletPassService {
     if (!context.mounted) return;
 
     // Repli : enregistrement de l'image haute définition de la carte (avec QR)
-    // pour un accès instantané hors-ligne, en attendant l'activation des
-    // certificats Apple/Google Wallet côté serveur.
+    // tant que les clés Google Wallet ne sont pas encore configurées côté serveur.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          '$platformName nécessite des certificats serveur actifs — export de la carte en cours…',
+        content: const Text(
+          'Google Wallet non encore activé sur le serveur — export de la carte en cours…',
         ),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.inkSolid,
@@ -88,4 +85,3 @@ class WalletPassService {
     );
   }
 }
-
