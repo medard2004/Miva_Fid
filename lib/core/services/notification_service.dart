@@ -7,6 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../notifications/notification_destination.dart';
 import '../router/app_router.dart';
 import '../utils/toast_service.dart';
+import 'web_push_interop.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -190,34 +191,65 @@ class NotificationService {
     navigateToNotificationDestination(context, destination);
   }
 
-  Future<bool> hasPromptableWebPermission() async {
-    if (!kIsWeb) return false;
+  Future<WebPushPermissionState> getWebPermissionState() async {
+    if (!kIsWeb) return WebPushPermissionState.unsupported;
+    final state = await getWebPushState();
+    if (state != WebPushPermissionState.unsupported) {
+      return state;
+    }
     try {
       final settings = await _messaging.getNotificationSettings();
-      return settings.authorizationStatus == AuthorizationStatus.notDetermined;
+      return switch (settings.authorizationStatus) {
+        AuthorizationStatus.authorized ||
+        AuthorizationStatus.provisional =>
+          WebPushPermissionState.granted,
+        AuthorizationStatus.denied => WebPushPermissionState.denied,
+        AuthorizationStatus.notDetermined => WebPushPermissionState.promptable,
+      };
     } catch (e) {
       debugPrint('[notification_service] Erreur check permission web: $e');
-      return false;
+      return WebPushPermissionState.unsupported;
     }
+  }
+
+  Future<bool> hasPromptableWebPermission() async {
+    final state = await getWebPermissionState();
+    return state == WebPushPermissionState.promptable;
   }
 
   Future<bool> requestPermissionFromUserGesture() async {
     try {
+      if (kIsWeb) {
+        final result = await requestWebPushPermission();
+        if (result == 'granted') {
+          await ensureMessagingServiceWorkerReady();
+          return true;
+        }
+        if (result == 'denied') {
+          return false;
+        }
+      }
       final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
-      return settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional;
+      final granted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
+      if (granted && kIsWeb) {
+        await ensureMessagingServiceWorkerReady();
+      }
+      return granted;
     } catch (e) {
       debugPrint('[notification_service] Erreur requestPermission web: $e');
       return false;
     }
   }
 
-  Future<String?> getToken() {
+  Future<String?> getToken() async {
     if (kIsWeb) {
+      await ensureMessagingServiceWorkerReady();
       if (webVapidKey.isEmpty) {
         debugPrint(
           '[notification_service] FIREBASE_VAPID_KEY non défini : le push Web/PWA nécessite --dart-define=FIREBASE_VAPID_KEY=...',

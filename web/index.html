@@ -206,6 +206,45 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    (function () {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(function () {});
+      }
+      window.__mivaWebPush = {
+        isIosNonPwa: function () {
+          var ua = navigator.userAgent || '';
+          var isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          var isStandalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+          return isIos && !isStandalone;
+        },
+        getState: function () {
+          if (this.isIosNonPwa() && !('Notification' in window)) return 'ios_install_required';
+          if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'unsupported';
+          return Notification.permission || 'default';
+        },
+        ensureServiceWorker: function () {
+          if (!('serviceWorker' in navigator)) return Promise.resolve(false);
+          return navigator.serviceWorker.register('/firebase-messaging-sw.js')
+            .then(function () { return navigator.serviceWorker.ready; })
+            .then(function () { return true; })
+            .catch(function () { return false; });
+        },
+        requestPermission: function () {
+          if (!('Notification' in window)) return Promise.resolve('unsupported');
+          try {
+            var res = Notification.requestPermission();
+            if (res && typeof res.then === 'function') {
+              return res.then(function (p) { return p || 'default'; }).catch(function () { return Notification.permission || 'denied'; });
+            }
+            return Promise.resolve(Notification.permission || 'default');
+          } catch (e) {
+            return Promise.resolve('denied');
+          }
+        }
+      };
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async=""></script>
 
 
