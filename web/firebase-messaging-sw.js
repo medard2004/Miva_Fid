@@ -13,25 +13,30 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || payload.data?.title || 'Miva Fid';
-  const body = payload.notification?.body || payload.data?.body || '';
-  const image = payload.notification?.image || payload.data?.image_url || undefined;
-  const rawIcon = payload.notification?.icon || payload.data?.restaurant_logo || '';
+  // Le serveur envoie désormais un message data-only pour le Web (pas de
+  // bloc `notification` ni `webpush.notification`). Title, body et icône
+  // sont donc lus exclusivement depuis `payload.data`.
+  const data = payload.data || {};
+  const title = data.title || 'Miva Fid';
+  const body = data.body || '';
+  const image = data.image_url || undefined;
+  const rawIcon = data.restaurant_logo || '';
   const icon = rawIcon && rawIcon.indexOf('ngrok') === -1 ? rawIcon : undefined;
-  const tag = payload.data?.notification_id || payload.data?.type || 'miva-fid-push';
+  const tag = data.notification_id || data.type || 'miva-fid-push';
   const options = {
     body,
     ...(icon ? { icon } : {}),
     badge: '/icons/badge-96.png',
     ...(image ? { image } : {}),
     tag,
+    renotify: !!data.notification_id,
     vibrate: [200, 100, 200],
     data: {
-      ...(payload.data || {}),
-      link: payload.fcmOptions?.link || payload.data?.link || '/',
+      ...data,
+      link: payload.fcmOptions?.link || data.link || '/',
     },
   };
-  self.registration.showNotification(title, options);
+  return self.registration.showNotification(title, options);
 });
 
 self.addEventListener('notificationclick', (event) => {
