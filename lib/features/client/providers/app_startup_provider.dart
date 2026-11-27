@@ -79,7 +79,11 @@ final appStartupProvider = FutureProvider<AppStartupState>((ref) async {
 
   // Attache le listener avant toute restauration de session, pour capter
   // aussi bien un login frais qu'une session déjà valide au démarrage.
-  ref.read(deviceTokenProvider);
+  try {
+    ref.read(deviceTokenProvider);
+  } catch (e) {
+    debugPrint('[app_startup_provider] Erreur init deviceTokenProvider: $e');
+  }
 
   // ───────────────────────────────────────────────────────────────────────────
   // CLIENT : Restauration Cache-First (non-bloquante si cache disponible)

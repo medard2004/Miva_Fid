@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -17,7 +19,9 @@ class NotificationService {
   static const String webVapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
 
   final _localNotifications = FlutterLocalNotificationsPlugin();
-  final _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging get _messaging => FirebaseMessaging.instance;
+  final _tokenRefreshController = StreamController<String>.broadcast();
+  StreamSubscription<String>? _messagingTokenRefreshSub;
   bool _isMerchantApp = false;
   GlobalKey<NavigatorState> _navigatorKey = rootNavigatorKey;
 
@@ -62,6 +66,10 @@ class NotificationService {
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+    // Relais sécurisé de rotation du token FCM une fois Firebase initialisé
+    _messagingTokenRefreshSub ??=
+        _messaging.onTokenRefresh.listen(_tokenRefreshController.add);
 
     // App en arrière-plan, ramenée au premier plan par un tap sur le push.
     FirebaseMessaging.onMessageOpenedApp.listen(_routeForMessage);
@@ -192,7 +200,7 @@ class NotificationService {
   }
 
   Future<WebPushPermissionState> getWebPermissionState() async {
-    if (!kIsWeb) return WebPushPermissionState.unsupported;
+    if (!kIsWeb || Firebase.apps.isEmpty) return WebPushPermissionState.unsupported;
     try {
       final settings = await _messaging.getNotificationSettings();
       return switch (settings.authorizationStatus) {
@@ -214,6 +222,7 @@ class NotificationService {
   }
 
   Future<bool> requestPermissionFromUserGesture() async {
+    if (Firebase.apps.isEmpty) return false;
     try {
       final settings = await _messaging.requestPermission(
         alert: true,
@@ -228,7 +237,8 @@ class NotificationService {
     }
   }
 
-  Future<String?> getToken() {
+  Future<String?> getToken() async {
+    if (Firebase.apps.isEmpty) return null;
     if (kIsWeb) {
       if (webVapidKey.isEmpty) {
         debugPrint(
@@ -242,7 +252,13 @@ class NotificationService {
     return _messaging.getToken();
   }
 
-  Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
+  Stream<String> get onTokenRefresh => _tokenRefreshController.stream;
+
+  Future<void> dispose() async {
+    await _messagingTokenRefreshSub?.cancel();
+    _messagingTokenRefreshSub = null;
+    await _tokenRefreshController.close();
+  }
 
   Future<void> showLocalNotification({
     required String title,
