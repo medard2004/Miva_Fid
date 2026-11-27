@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/core/api_exceptions.dart';
@@ -172,36 +171,17 @@ class MerchantOfflineErrorWidget extends ConsumerWidget {
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     icon: const Icon(LucideIcons.refreshCw, size: 16),
                     label: const Text(
-                      'Réessayer',
+                      'Actualiser',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    context.push('/merchant/offline');
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    side: BorderSide(color: AppColors.border),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(LucideIcons.database, size: 16),
-                  label: const Text(
-                    'État du cache',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
               ],
             ),
           ],

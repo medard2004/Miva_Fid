@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import 'dart:async';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
@@ -434,7 +436,8 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                                         ToastService.showSuccess('Campagne supprimée');
                                         return true;
                                       } catch (e) {
-                                        ToastService.showError('Erreur: $e');
+                                        final err = ErrorTranslator.translate(e, context: ErrorContext.merchantCampaign);
+                                        ToastService.showError(err.displayMessage ?? 'Impossible de supprimer la campagne.');
                                         return false;
                                       }
                                     }
@@ -479,7 +482,8 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                                         ToastService.showSuccess('Campagne archivée');
                                         return true;
                                       } catch (e) {
-                                        ToastService.showError('Erreur: $e');
+                                        final err = ErrorTranslator.translate(e, context: ErrorContext.merchantCampaign);
+                                        ToastService.showError(err.displayMessage ?? 'Impossible d\'archiver la campagne.');
                                         return false;
                                       }
                                     } else {
@@ -499,7 +503,8 @@ class _SmsCampaignScreenState extends ConsumerState<SmsCampaignScreen> {
                                           ToastService.showSuccess('Campagne supprimée');
                                           return true;
                                         } catch (e) {
-                                          ToastService.showError('Erreur: $e');
+                                          final err = ErrorTranslator.translate(e, context: ErrorContext.merchantCampaign);
+                                          ToastService.showError(err.displayMessage ?? 'Impossible de supprimer la campagne.');
                                           return false;
                                         }
                                       }

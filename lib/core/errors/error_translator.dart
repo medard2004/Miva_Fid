@@ -57,6 +57,18 @@ class ErrorTranslator {
       if (_has(raw, ['doit etre different'])) {
         return AppError.general(ErrorMessages.passwordMustDiffer);
       }
+      if (_has(raw, ['aucun destinataire'])) {
+        return AppError.general(ErrorMessages.campaignNoRecipients);
+      }
+      if (_has(raw, ['plafond quotidien', 'destinataires atteint'])) {
+        return AppError.general(ErrorMessages.campaignCapReached);
+      }
+      if (_has(raw, ['moins de 5 minutes', 'patientez un court instant'])) {
+        return AppError.general(ErrorMessages.campaignWaitResend);
+      }
+      if (_has(raw, ['suspendu'])) {
+        return AppError.general(ErrorMessages.campaignSuspended);
+      }
       return AppError.general(_fallbackMessage(context));
     }
 
@@ -218,6 +230,18 @@ class ErrorTranslator {
     if (_has(raw, ['utilise un mot de passe'])) {
       return AppError.general(ErrorMessages.socialEmailUsesPassword);
     }
+    if (_has(raw, ['aucun destinataire'])) {
+      return AppError.general(ErrorMessages.campaignNoRecipients);
+    }
+    if (_has(raw, ['plafond quotidien', 'destinataires atteint'])) {
+      return AppError.general(ErrorMessages.campaignCapReached);
+    }
+    if (_has(raw, ['moins de 5 minutes', 'patientez un court instant'])) {
+      return AppError.general(ErrorMessages.campaignWaitResend);
+    }
+    if (_has(raw, ['suspendu'])) {
+      return AppError.general(ErrorMessages.campaignSuspended);
+    }
     if (status == 401 || status == 403) {
       return AppError.general(_unauthorizedMessage(context, e.message));
     }
@@ -336,6 +360,8 @@ class ErrorTranslator {
         return ErrorMessages.teamActionFailed;
       case ErrorContext.merchantSettings:
         return ErrorMessages.merchantSettingsFailed;
+      case ErrorContext.merchantCampaign:
+        return ErrorMessages.campaignFailed;
     }
   }
 

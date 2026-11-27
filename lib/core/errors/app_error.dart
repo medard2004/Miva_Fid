@@ -56,4 +56,5 @@ enum ErrorContext {
   createLoyaltyProgram,
   manageTeam,
   merchantSettings,
+  merchantCampaign,
 }

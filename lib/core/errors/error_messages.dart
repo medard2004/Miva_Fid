@@ -127,6 +127,13 @@ class ErrorMessages {
   // ── Paramètres commerce ──
   static String get merchantSettingsFailed => 'Impossible d\'enregistrer vos modifications. Vérifiez votre connexion et réessayez.';
 
+  // ── Campagnes SMS / Notifications ──
+  static String get campaignFailed => 'Impossible de traiter la campagne. Vérifiez votre connexion et réessayez.';
+  static String get campaignNoRecipients => 'Aucun destinataire valide pour cette campagne.';
+  static String get campaignCapReached => 'Plafond quotidien de destinataires atteint pour aujourd\'hui. Vous pouvez programmer l\'envoi pour demain.';
+  static String get campaignWaitResend => 'Cette notification a été envoyée récemment. Veuillez patienter quelques minutes avant de la renvoyer.';
+  static String get campaignSuspended => 'L\'envoi de notifications est temporairement suspendu pour votre établissement.';
+
   // ── Erreurs de champ (affichées sous le champ) ──
   static String get fieldRequired => _t?.errFieldRequired ?? 'Veuillez renseigner ce champ.';
 

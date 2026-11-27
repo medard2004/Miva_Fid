@@ -10,6 +10,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/api/config/api_constants.dart';
 import '../../../core/api/providers/api_providers.dart';
 import '../../../core/api/core/api_exceptions.dart';
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/services/realtime_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -83,8 +85,9 @@ class _SmsCampaignDetailScreenState
       });
     } catch (e) {
       if (mounted) {
+        final err = ErrorTranslator.translate(e, context: ErrorContext.merchantCampaign);
         setState(() {
-          _error = '$e';
+          _error = err.displayMessage ?? 'Impossible de charger la campagne.';
           _loading = false;
         });
       }
@@ -119,7 +122,8 @@ class _SmsCampaignDetailScreenState
     } on ApiException catch (e) {
       ToastService.showError(e.message);
     } catch (e) {
-      ToastService.showError('Erreur lors du renvoi de la notification');
+      final err = ErrorTranslator.translate(e, context: ErrorContext.merchantCampaign);
+      ToastService.showError(err.displayMessage ?? 'Erreur lors du renvoi de la notification');
     } finally {
       if (mounted) setState(() => _isResending = false);
     }

@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/core/api_exceptions.dart';
-import '../../../core/services/connectivity_service.dart';
-import '../../../core/services/offline_sync_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/toast_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -138,8 +136,6 @@ class MoreScreen extends ConsumerWidget {
     final teamAsync = ref.watch(teamNotifierProvider);
     final proximitySettingsAsync = ref.watch(proximitySettingsProvider);
     final proximityActive = proximitySettingsAsync.value?.enabled ?? false;
-    final isOffline = ref.watch(isOfflineProvider);
-    final syncState = ref.watch(offlineSyncProvider);
 
     final merchantName =
         (account?.name?.isNotEmpty ?? false) ? account!.name! : 'Votre Commerce';
@@ -429,17 +425,6 @@ class MoreScreen extends ConsumerWidget {
                   icon: LucideIcons.sliders,
                   label: t.settingsPreferences,
                   onTap: () => context.push('/merchant/more/preferences'),
-                ),
-                _buildMenuItem(
-                  icon: LucideIcons.database,
-                  label: 'Mode hors ligne & Synchronisation',
-                  tag: isOffline
-                      ? 'Hors ligne'
-                      : (syncState.pendingCount > 0
-                          ? '${syncState.pendingCount} en attente'
-                          : 'Synchronisé'),
-                  tagDone: !isOffline && syncState.pendingCount == 0,
-                  onTap: () => context.push('/merchant/offline'),
                 ),
                 _buildMenuItem(
                   icon: LucideIcons.globe,

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/error_translator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/toast_service.dart';
@@ -71,7 +73,10 @@ class _CampaignRecipientsScreenState
                   context.go('/merchant/sms');
                 }
               } catch (e) {
-                if (context.mounted) ToastService.showError('$e');
+                if (context.mounted) {
+                  final err = ErrorTranslator.translate(e, context: ErrorContext.merchantCampaign);
+                  ToastService.showError(err.displayMessage ?? 'Impossible d\'enregistrer le brouillon.');
+                }
               }
             },
           ),
