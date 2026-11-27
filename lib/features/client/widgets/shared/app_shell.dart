@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:miva_fid/core/widgets/offline_banner.dart';
+import 'package:miva_fid/core/widgets/pwa_top_install_banner.dart';
 import 'package:miva_fid/core/widgets/web_push_prompt_banner.dart';
 import 'package:miva_fid/features/client/core/router/tab_transition_direction.dart';
 import 'package:miva_fid/features/client/core/theme/app_colors.dart';
@@ -83,6 +84,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 child: Column(
                   children: [
                     const OfflineBanner(),
+                    const PwaTopInstallBanner(),
                     const WebPushPromptBanner(),
                     Expanded(child: widget.child),
                   ],

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/offline_banner.dart';
+import '../../../core/widgets/pwa_top_install_banner.dart';
 import '../../../core/widgets/web_push_prompt_banner.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../providers/merchant_ui_provider.dart';
@@ -121,6 +122,7 @@ class _MerchantShellState extends ConsumerState<MerchantShell> {
           child: Column(
             children: [
               const OfflineBanner(),
+              const PwaTopInstallBanner(),
               const WebPushPromptBanner(),
               Expanded(child: widget.navigationShell),
             ],
