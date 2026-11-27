@@ -65,17 +65,31 @@
       return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     };
 
-    // Réalignement PWA : désactive tout ancien service worker Flutter
-    // (tout en conservant firebase-messaging-sw.js), purge les caches
-    // d'assets obsolètes et recharge une seule fois si une nouvelle build
-    // est détectée. Ne touche jamais au localStorage des tokens.
+    // Enregistrement explicite du Service Worker PWA (FCM Push + Cache Offline complet)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+          .then(function(reg) {
+            console.log('[PWA] Service worker enregistré avec succès:', reg.scope);
+          })
+          .catch(function(err) {
+            console.warn('[PWA] Erreur enregistrement service worker:', err);
+          });
+      });
+    }
+
+    // Réalignement PWA : vérifie si une nouvelle version applicative est disponible
     (function realignPwaAssets() {
       var RELOAD_GUARD_KEY = 'mivafid_pwa_realigned';
       var VERSION_KEY = 'mivafid_build_sig';
 
       async function run() {
+        // En mode hors-ligne, ne pas tenter de rechargement ou de purge
+        if (!navigator.onLine) return;
+
         var needsReload = false;
 
+        // Désactive l'ancien service worker par défaut de Flutter s'il traîne encore
         if ('serviceWorker' in navigator) {
           try {
             var regs = await navigator.serviceWorker.getRegistrations();
@@ -92,18 +106,6 @@
               if (isLegacyFlutterSw) {
                 var unregistered = await reg.unregister();
                 if (unregistered) needsReload = true;
-              }
-            }
-          } catch (_) {}
-        }
-
-        if ('caches' in window) {
-          try {
-            var keys = await caches.keys();
-            for (var j = 0; j < keys.length; j++) {
-              var name = keys[j];
-              if (name.indexOf('firebase') === -1) {
-                await caches.delete(name);
               }
             }
           } catch (_) {}
