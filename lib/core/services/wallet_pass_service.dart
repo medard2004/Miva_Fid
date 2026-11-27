@@ -28,6 +28,7 @@ class WalletPassService {
     );
 
     String? passUrl;
+    String? apiError;
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.dio.get(
@@ -41,47 +42,87 @@ class WalletPassService {
         }
       }
     } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 501) {
+        // Google Wallet pas encore activé côté serveur
+        apiError = 'not_configured';
+      } else {
+        apiError = 'network';
+      }
       debugPrint(
-        '[WalletPassService] Endpoint Google Wallet indisponible (${e.response?.statusCode}): ${e.message}',
+        '[WalletPassService] Endpoint Google Wallet indisponible ($statusCode): ${e.message}',
       );
     } catch (e) {
+      apiError = 'unknown';
       debugPrint('[WalletPassService] Erreur Google Wallet: $e');
     }
 
     if (context.mounted) Navigator.pop(context);
 
+    // Ouvrir l'URL Google Wallet si elle a été récupérée avec succès.
+    //
+    // IMPORTANT : sur Flutter Web, `canLaunchUrl` retourne toujours `false`
+    // pour les schémas https:// car le navigateur ne peut pas vérifier à
+    // l'avance si le schéma est géré. On lance donc directement `launchUrl`
+    // et on gère l'échec éventuel dans le catch.
     if (passUrl != null) {
       final uri = Uri.tryParse(passUrl);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-          webOnlyWindowName: kIsWeb ? '_blank' : null,
-        );
-        return;
+      if (uri != null) {
+        try {
+          final launched = await launchUrl(
+            uri,
+            mode: kIsWeb
+                ? LaunchMode.platformDefault
+                : LaunchMode.externalApplication,
+            webOnlyWindowName: kIsWeb ? '_blank' : null,
+          );
+          if (launched) return;
+        } catch (e) {
+          debugPrint('[WalletPassService] Échec ouverture URL: $e');
+        }
       }
     }
 
     if (!context.mounted) return;
 
-    // Repli : enregistrement de l'image haute définition de la carte (avec QR)
-    // tant que les clés Google Wallet ne sont pas encore configurées côté serveur.
+    // Repli : message adapté selon la raison de l'échec + export de l'image
+    // de la carte en dernier recours.
+    final String snackMessage;
+    if (apiError == 'not_configured') {
+      snackMessage =
+          'Google Wallet n\'est pas encore activé. Votre carte sera exportée en image.';
+    } else if (apiError == 'network') {
+      snackMessage =
+          'Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.';
+    } else if (passUrl != null) {
+      // L'URL a été générée mais n'a pas pu s'ouvrir
+      snackMessage =
+          'Impossible d\'ouvrir Google Wallet. Votre carte sera exportée en image.';
+    } else {
+      snackMessage =
+          'Google Wallet indisponible pour le moment. Votre carte sera exportée en image.';
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text(
-          'Google Wallet non encore activé sur le serveur — export de la carte en cours…',
-        ),
+        content: Text(snackMessage),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.inkSolid,
+        backgroundColor: apiError == 'network'
+            ? AppColors.error
+            : AppColors.inkSolid,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
 
-    await CardExportService.exportAndShareCard(
-      context,
-      card,
-      'save',
-      exportKey,
-    );
+    // En cas d'erreur réseau, pas d'export auto — l'utilisateur veut juste
+    // ajouter à Google Wallet, pas sauvegarder une image.
+    if (apiError != 'network') {
+      await CardExportService.exportAndShareCard(
+        context,
+        card,
+        'save',
+        exportKey,
+      );
+    }
   }
 }
