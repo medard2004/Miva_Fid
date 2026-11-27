@@ -83,13 +83,10 @@ class SocialAuthService {
     try {
       _assertFirebaseReady();
 
-      // Purge toute session sociale précédente afin de toujours proposer le
-      // sélecteur de compte (utile pour changer de compte ou en tester plusieurs).
-      await signOut();
-
       // Sur le Web, on utilise directement le flux popup natif Firebase Auth.
-      // Cela évite les contraintes de rendu de bouton GIS de google_sign_in_web,
-      // ouvre la fenêtre Google officielle et retourne directement le jeton Firebase requis par Laravel.
+      // IMPORTANT : aucun `await` (ex. `signOut()`) ne doit précéder
+      // `signInWithPopup` afin de conserver le geste utilisateur synchrone
+      // exigé par Safari iOS / WebKit (sinon la popup est bloquée).
       if (kIsWeb) {
         final GoogleAuthProvider googleProvider = GoogleAuthProvider();
         googleProvider.addScope('email');
@@ -109,6 +106,10 @@ class SocialAuthService {
 
         return firebaseIdToken;
       }
+
+      // Purge toute session sociale précédente afin de toujours proposer le
+      // sélecteur de compte (utile pour changer de compte ou en tester plusieurs).
+      await signOut();
 
       await _ensureInitialized();
 

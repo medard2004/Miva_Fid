@@ -290,7 +290,7 @@ class ErrorTranslator {
     }
     if (_has(raw, ['popup-blocked', 'popup_blocked'])) {
       return const AppError.general(
-        'La fenêtre de connexion Google a été bloquée par le navigateur. Autorisez les popups et réessayez.',
+        'La fenêtre de connexion Google a été bloquée par le navigateur. Sur iPhone : Réglages → Safari → désactivez « Bloquer les pop-ups », puis réessayez.',
       );
     }
     if (_has(raw, ['operation-not-allowed'])) {
