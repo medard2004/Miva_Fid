@@ -7,6 +7,7 @@ import 'core/errors/error_messages.dart';
 import 'core/router/client_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
+import 'core/widgets/pwa_lifecycle_watcher.dart';
 import 'core/widgets/skeleton_loader.dart';
 import 'features/client/providers/app_providers.dart';
 import 'features/client/providers/app_startup_provider.dart';
@@ -55,19 +56,21 @@ class MivaFidClientApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         ErrorMessages.bind(AppLocalizations.of(context)!);
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 160),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeIn,
-          child: isBootstrapping
-              ? const KeyedSubtree(
-                  key: ValueKey('boot_client'),
-                  child: BootAppearScreen(isMerchant: false),
-                )
-              : KeyedSubtree(
-                  key: const ValueKey('ready_client'),
-                  child: child ?? const SizedBox.shrink(),
-                ),
+        return PwaLifecycleWatcher(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeIn,
+            child: isBootstrapping
+                ? const KeyedSubtree(
+                    key: ValueKey('boot_client'),
+                    child: BootAppearScreen(isMerchant: false),
+                  )
+                : KeyedSubtree(
+                    key: const ValueKey('ready_client'),
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+          ),
         );
       },
     );

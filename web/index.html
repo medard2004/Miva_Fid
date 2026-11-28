@@ -152,6 +152,86 @@
         setTimeout(run, 2500);
       }, { once: true });
     })();
+
+    // ─── Protection écran noir PWA / Web : veille prolongée & perte WebGL ─────────
+    (function setupPwaResumeRecovery() {
+      var _hiddenTimestamp = 0;
+      var _webglLost = false;
+
+      // Détecter la révocation du contexte WebGL par l'OS mobile (iOS/Android)
+      window.addEventListener('webglcontextlost', function(e) {
+        console.warn('[PWA] Contexte WebGL perdu en arrière-plan.');
+        _webglLost = true;
+        if (e && e.preventDefault) {
+          e.preventDefault();
+        }
+      }, true);
+
+      window.addEventListener('webglcontextrestored', function() {
+        console.log('[PWA] Contexte WebGL restauré avec succès.');
+        _webglLost = false;
+        window.dispatchEvent(new Event('resize'));
+      }, true);
+
+      function hasDeadCanvas() {
+        if (_webglLost) return true;
+        try {
+          var canvases = document.querySelectorAll('canvas');
+          for (var i = 0; i < canvases.length; i++) {
+            var c = canvases[i];
+            var gl = c.getContext('webgl2') || c.getContext('webgl');
+            if (gl && gl.isContextLost && gl.isContextLost()) {
+              return true;
+            }
+          }
+        } catch (_) {}
+        return false;
+      }
+
+      function onAppResume() {
+        var now = Date.now();
+        var elapsed = _hiddenTimestamp > 0 ? (now - _hiddenTimestamp) : 0;
+        _hiddenTimestamp = 0;
+
+        // Si le contexte WebGL a été détruit par l'OS ou si l'app est restée en arrière-plan
+        // plus de 20 minutes (seuil où WebKit / Safari suspend définitivement l'état GPU) :
+        var isDead = hasDeadCanvas();
+        var isLongIdle = elapsed > (20 * 60 * 1000);
+
+        if (isDead || isLongIdle) {
+          console.warn('[PWA] Reprise après veille prolongée (' + Math.round(elapsed / 1000) + 's) - Rechargement automatique préventif.');
+          var GUARD_KEY = 'miva_resume_reload_guard';
+          var lastReload = parseInt(sessionStorage.getItem(GUARD_KEY) || '0', 10);
+          if (now - lastReload > 8000) {
+            sessionStorage.setItem(GUARD_KEY, String(now));
+            window.location.reload();
+            return;
+          }
+        }
+
+        // Réveil forcé de la boucle de rendu Flutter CanvasKit
+        window.dispatchEvent(new Event('resize'));
+        if (window.requestAnimationFrame) {
+          requestAnimationFrame(function() {
+            window.dispatchEvent(new Event('resize'));
+          });
+        }
+      }
+
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+          _hiddenTimestamp = Date.now();
+        } else if (document.visibilityState === 'visible') {
+          onAppResume();
+        }
+      });
+
+      window.addEventListener('pageshow', function(e) {
+        if (e && e.persisted) {
+          onAppResume();
+        }
+      });
+    })();
   </script>
   
   

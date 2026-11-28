@@ -21,6 +21,7 @@ class LoyaltyCardModel {
     this.levelPosition,
     this.levelIconKey,
     this.cyclesCompleted = 0,
+    this.goal,
   });
 
   final String id;
@@ -60,6 +61,9 @@ class LoyaltyCardModel {
   /// Nombre de cycles complets terminés à vie (programme bouclé N fois) —
   /// sert au filtrage marchand (« a déjà terminé le programme »).
   final int cyclesCompleted;
+
+  /// Objectif de tampons ou points associé à la carte si renvoyé par l'API
+  final int? goal;
 
   bool get hasRewardAvailable => status == 'reward_available';
 
@@ -104,6 +108,9 @@ class LoyaltyCardModel {
       levelPosition: level == null ? null : (level['position'] as num?)?.toInt(),
       levelIconKey: level?['icon_key'] as String?,
       cyclesCompleted: _asInt(json['cycles_completed']),
+      goal: (json['goal'] as num?)?.toInt() ??
+          (json['stamps_goal'] as num?)?.toInt() ??
+          (json['progress'] is Map ? (json['progress']['goal'] as num?)?.toInt() : null),
       client: client == null
           ? null
           : UserModel(
@@ -156,6 +163,7 @@ class LoyaltyCardModel {
     int? levelPosition,
     String? levelIconKey,
     int? cyclesCompleted,
+    int? goal,
   }) {
     return LoyaltyCardModel(
       id: id ?? this.id,
@@ -176,6 +184,7 @@ class LoyaltyCardModel {
       levelPosition: levelPosition ?? this.levelPosition,
       levelIconKey: levelIconKey ?? this.levelIconKey,
       cyclesCompleted: cyclesCompleted ?? this.cyclesCompleted,
+      goal: goal ?? this.goal,
     );
   }
 }

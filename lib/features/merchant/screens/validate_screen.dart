@@ -13,6 +13,7 @@ import '../../../core/widgets/header_mode_switcher.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../models/loyalty_card_model.dart';
 import '../providers/merchant_auth_provider.dart';
+import '../providers/merchant_provider.dart';
 import '../providers/validate_provider.dart';
 import '../widgets/client_card_sheet.dart';
 import '../widgets/reward_redeem_sheet.dart';
@@ -46,10 +47,56 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
   String get _mechanic =>
       ref.read(merchantAuthProvider).restaurant?.loyaltyType ?? 'stamps';
 
-  int get _goal {
-    final config =
-        ref.read(merchantAuthProvider).restaurant?.loyaltyConfig ?? const {};
-    return (config['goal'] as num?)?.toInt() ?? 10;
+  int get _goal => _resolveGoal();
+
+  int _goalForCard([LoyaltyCardModel? card]) => _resolveGoal(card);
+
+  int _resolveGoal([LoyaltyCardModel? card]) {
+    // 1. Si la carte résolue porte déjà son propre objectif explicite
+    if (card?.goal != null && card!.goal! > 0) {
+      return card.goal!;
+    }
+
+    final restaurant = ref.read(merchantAuthProvider).restaurant;
+    final config = restaurant?.loyaltyConfig ?? const {};
+
+    // 2. Vérification des paliers (tiers) dans loyaltyConfig
+    final rawTiers = config['tiers'];
+    if (rawTiers is List && rawTiers.isNotEmpty) {
+      final currentStamps = card?.stampsCount ?? 0;
+      final sortedGoals = <int>[];
+      for (final t in rawTiers) {
+        if (t is Map) {
+          final g = (t['goal'] as num?)?.toInt();
+          if (g != null && g > 0) {
+            sortedGoals.add(g);
+          }
+        }
+      }
+      sortedGoals.sort();
+
+      if (sortedGoals.isNotEmpty) {
+        // Retourne le premier palier supérieur aux tampons actuels, ou le dernier
+        for (final g in sortedGoals) {
+          if (currentStamps < g) {
+            return g;
+          }
+        }
+        return sortedGoals.last;
+      }
+    }
+
+    // 3. Fallback sur le MerchantModel (stampsRequired) si chargé
+    final merchant = ref.read(merchantNotifierProvider).value;
+    if (merchant != null && merchant.stampsRequired > 0) {
+      return merchant.stampsRequired;
+    }
+
+    // 4. Fallback sur la clé racine 'goal' dans loyaltyConfig
+    final rootGoal = (config['goal'] as num?)?.toInt();
+    if (rootGoal != null && rootGoal > 0) return rootGoal;
+
+    return 10;
   }
 
   int get _fcfaPerPoint {
@@ -127,7 +174,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
       builder: (_) => ClientCardSheet(
         card: resolvedCard,
         mechanic: _mechanic,
-        goal: _goal,
+        goal: _goalForCard(resolvedCard),
         fcfaPerPoint: _fcfaPerPoint,
         cashbackPercentage: _cashbackPercentage,
         cashbackRedeemThresholdFcfa: _cashbackRedeemThresholdFcfa,
@@ -273,7 +320,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
     required bool rewardUnlocked,
     double? cashbackEarned,
     bool isOfflineSaved = false,
+    int? goal,
   }) {
+    final effectiveGoal = (goal != null && goal > 0) ? goal : _goal;
     context.push(
       Uri(
         path: '/merchant/validate/success',
@@ -281,7 +330,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
           'clientName': clientName,
           'mechanic': _mechanic,
           'stampCount': stampCount.toString(),
-          'goal': _goal.toString(),
+          'goal': effectiveGoal.toString(),
           'pointsEarned': pointsEarned.toString(),
           'rewardUnlocked': rewardUnlocked.toString(),
           if (cashbackEarned != null) 'cashbackEarned': cashbackEarned.toString(),
@@ -293,6 +342,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
 
   Future<void> _validateStamp(LoyaltyCardModel card, [double? amount]) async {
     final sheetNavigator = Navigator.of(context);
+    final cardGoal = _goalForCard(card);
 
     final isOffline = ref.read(isOfflineProvider);
     if (isOffline) {
@@ -304,7 +354,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
             amountFcfa: amount,
             clientName: card.client?.name,
             currentStamps: card.stampsCount,
-            goal: _goal,
+            goal: cardGoal,
           );
 
       if (!mounted) return;
@@ -312,8 +362,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
         stampCount: card.stampsCount + 1,
         pointsEarned: 1,
-        rewardUnlocked: (card.stampsCount + 1) >= _goal,
+        rewardUnlocked: (card.stampsCount + 1) >= cardGoal,
         isOfflineSaved: true,
+        goal: cardGoal,
       );
       return;
     }
@@ -333,6 +384,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         pointsEarned: outcome.pointsEarned,
         rewardUnlocked: outcome.rewardUnlocked,
         cashbackEarned: outcome.cashbackEarned,
+        goal: cardGoal,
       );
     } on ValidationException catch (e) {
       if (!mounted) return;
@@ -355,7 +407,7 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
             amountFcfa: amount,
             clientName: card.client?.name,
             currentStamps: card.stampsCount,
-            goal: _goal,
+            goal: cardGoal,
           );
 
       if (!mounted) return;
@@ -363,8 +415,9 @@ class _ValidateScreenState extends ConsumerState<ValidateScreen> {
         clientName: card.client?.name ?? AppLocalizations.of(context)!.merchantValidateDefaultClientName,
         stampCount: card.stampsCount + 1,
         pointsEarned: 1,
-        rewardUnlocked: (card.stampsCount + 1) >= _goal,
+        rewardUnlocked: (card.stampsCount + 1) >= cardGoal,
         isOfflineSaved: true,
+        goal: cardGoal,
       );
     } catch (e) {
       debugPrint('[validate_screen] Erreur validation stamp: $e');
