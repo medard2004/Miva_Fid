@@ -5,12 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/config/api_constants.dart';
-import 'skeleton_loader.dart';
 
 /// Widget réutilisable d'affichage d'image avec :
 /// - aperçu local immédiat (`previewBytes`) si fourni pendant/avant l'upload
 /// - cache réseau (`CachedNetworkImage`)
-/// - shimmer placeholder pendant le chargement
+/// - placeholder léger pendant le chargement
 /// - fallback propre si l'URL est absente ou en échec
 class AppNetworkImage extends StatelessWidget {
   final String? imageUrl;
@@ -71,10 +70,13 @@ class AppNetworkImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        placeholder: (_, __) => SkeletonLoader(
+        placeholder: (_, __) => Container(
           width: width,
           height: height ?? 48,
-          borderRadius: borderRadius,
+          decoration: BoxDecoration(
+            color: fallbackBackgroundColor ?? Colors.black.withValues(alpha: 0.05),
+            borderRadius: borderRadius,
+          ),
         ),
         errorWidget: (_, __, ___) => _buildFallback(),
       );

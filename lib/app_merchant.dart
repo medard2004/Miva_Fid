@@ -55,10 +55,20 @@ class MivaFidMerchantApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         ErrorMessages.bind(AppLocalizations.of(context)!);
-        if (isBootstrapping) {
-          return const BootSkeletonScreen(isMerchant: true);
-        }
-        return child ?? const SizedBox.shrink();
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 160),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          child: isBootstrapping
+              ? const KeyedSubtree(
+                  key: ValueKey('boot_merchant'),
+                  child: BootAppearScreen(isMerchant: true),
+                )
+              : KeyedSubtree(
+                  key: const ValueKey('ready_merchant'),
+                  child: child ?? const SizedBox.shrink(),
+                ),
+        );
       },
     );
   }

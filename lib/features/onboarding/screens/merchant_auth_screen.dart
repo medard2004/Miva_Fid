@@ -235,9 +235,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     fontSize: 20,
                     color: AppColors.textPrimary,
                   ),
-                )
-                    .animate(key: ValueKey('title_$_isLogin'))
-                    .fadeIn(duration: 200.ms),
+                ),
 
                 const SizedBox(height: Sp.md),
 
@@ -337,7 +335,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                       ),
                     ],
                   ),
-                ).animate().fadeIn(duration: 400.ms),
+                ),
 
                 const SizedBox(height: Sp.xl),
 
@@ -358,9 +356,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     }
                     return null;
                   },
-                )
-                    .animate(key: ValueKey('email_$_isLogin'))
-                    .fadeIn(duration: 300.ms),
+                ),
 
                 AppInput(
                   label: 'MOT DE PASSE',
@@ -388,9 +384,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     }
                     return null;
                   },
-                )
-                    .animate(key: ValueKey('pass_$_isLogin'))
-                    .fadeIn(duration: 300.ms),
+                ),
 
                 if (!_isLogin)
                   PasswordRulesChecklist(password: _passwordCtrl.text),
@@ -415,7 +409,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                         ),
                       ),
                     ),
-                  ).animate().fadeIn(duration: 200.ms),
+                  ),
                   const SizedBox(height: Sp.md),
                 ],
 
@@ -495,7 +489,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   icon: LucideIcons.arrowRight,
                   loading: _loading,
                   onPressed: _handleSubmit,
-                ).animate().fadeIn(duration: 400.ms),
+                ),
 
                 const SizedBox(height: Sp.md),
 
@@ -517,7 +511,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                     ),
                     Expanded(child: Divider(color: AppColors.border.withValues(alpha: 0.5), thickness: 1)),
                   ],
-                ).animate().fadeIn(duration: 400.ms),
+                ),
 
                 const SizedBox(height: Sp.md),
 
@@ -528,7 +522,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   onTap: () {
                     if (!_loading) _continueWithSocial('google');
                   },
-                ).animate().fadeIn(duration: 400.ms),
+                ),
                 const SizedBox(height: Sp.sm),
                 _SocialAuthButton(
                   label: 'Continuer avec Apple',
@@ -536,7 +530,7 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                   onTap: () {
                     if (!_loading) _continueWithSocial('apple');
                   },
-                ).animate().fadeIn(duration: 450.ms),
+                ),
 
                 const SizedBox(height: Sp.xl),
 
@@ -576,14 +570,22 @@ class _MerchantAuthScreenState extends ConsumerState<MerchantAuthScreen> {
                         ],
                       ),
                     ),
-                  ).animate().fadeIn(duration: 450.ms),
+                  ),
 
                 const AppDownloadSection(
                   primaryTarget: AppDownloadTarget.merchant,
                   showBoth: true,
                 ),
               ],
-            ),
+            )
+                .animate()
+                .fadeIn(duration: 160.ms, curve: Curves.easeOutCubic)
+                .slideY(
+                  begin: 0.015,
+                  end: 0,
+                  duration: 160.ms,
+                  curve: Curves.easeOutCubic,
+                ),
           ),
         ),
       ),

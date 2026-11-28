@@ -134,9 +134,12 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
       ),
       body: SafeArea(
         child: merchantAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.all(Sp.md),
-            child: Column(children: [SkeletonCard(height: 200), SkeletonCard()]),
+          loading: () => const Center(
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
           ),
           error: (_, __) => Center(child: Text(t.merchantQrCodeLoadError, style: AppTextStyles.bodyMd())),
           data: (merchant) {
@@ -146,7 +149,8 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
 
             final loyaltyMode = merchant.loyaltyMode;
 
-            return SingleChildScrollView(
+            return FastAppear(
+              child: SingleChildScrollView(
               padding: const EdgeInsets.all(Sp.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,6 +232,7 @@ class _ProgrammeScreenState extends ConsumerState<ProgrammeScreen> {
                     const SizedBox(height: Sp.md),
                   ],
                 ],
+              ),
               ),
             );
           },

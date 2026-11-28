@@ -79,12 +79,16 @@ class MerchantAuthRepository {
     final response =
         await _authService.socialLogin(provider, idToken, action: action);
     final token = response['access_token'];
-    if (token != null) {
-      await _tokenStorage.saveToken(token);
-    }
     final restaurantData = response['restaurant'] ?? {};
-    if (restaurantData is Map<String, dynamic>) {
-      await _cache?.saveMerchantAccount(restaurantData);
+    final writes = <Future<void>>[];
+    if (token != null) {
+      writes.add(_tokenStorage.saveToken(token));
+    }
+    if (restaurantData is Map<String, dynamic> && _cache != null) {
+      writes.add(_cache.saveMerchantAccount(restaurantData));
+    }
+    if (writes.isNotEmpty) {
+      await Future.wait(writes);
     }
     return RestaurantAccount.fromJson(restaurantData);
   }

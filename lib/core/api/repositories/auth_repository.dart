@@ -44,12 +44,16 @@ class AuthRepository {
     final response =
         await _authService.socialLogin(provider, idToken, action: action);
     final token = response['access_token'];
-    if (token != null) {
-      await _tokenStorage.saveToken(token);
-    }
     final clientData = response['client'] ?? {};
-    if (clientData is Map<String, dynamic>) {
-      await _cache?.saveClientUser(clientData);
+    final writes = <Future<void>>[];
+    if (token != null) {
+      writes.add(_tokenStorage.saveToken(token));
+    }
+    if (clientData is Map<String, dynamic> && _cache != null) {
+      writes.add(_cache.saveClientUser(clientData));
+    }
+    if (writes.isNotEmpty) {
+      await Future.wait(writes);
     }
     return {
       'client': AppUser.fromJson(clientData),

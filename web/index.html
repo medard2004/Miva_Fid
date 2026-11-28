@@ -33,11 +33,16 @@
   <title>Miva Fid - Fidélité & Récompenses</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://accounts.google.com" crossorigin>
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://mivafid-app.firebaseapp.com" crossorigin>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Cropper.js requis par image_cropper_for_web -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" crossorigin="anonymous" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" crossorigin="anonymous"></script>
+  <!-- Cropper.js requis par image_cropper_for_web (chargé sans bloquer le rendu initial) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" crossorigin="anonymous" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" crossorigin="anonymous" /></noscript>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" crossorigin="anonymous"></script>
   
   <script>
     // Capture l'invite d'installation PWA pour pouvoir la déclencher depuis l'app Flutter
@@ -133,7 +138,19 @@
         }
       }
 
-      run();
+      // Exécuter la vérification de mise à jour après le premier rendu pour ne jamais
+      // concurrencer le chargement initial de Flutter et du flux Google OAuth.
+      function scheduleRun() {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(function() { run(); }, { timeout: 3000 });
+        } else {
+          setTimeout(run, 1200);
+        }
+      }
+      window.addEventListener('flutter-first-frame', scheduleRun, { once: true });
+      window.addEventListener('load', function() {
+        setTimeout(run, 2500);
+      }, { once: true });
     })();
   </script>
   
@@ -158,16 +175,14 @@
   <style id="splash-screen-style">
     :root {
       --bg: #0F0E1A;
-      --card: #19172B;
-      --sk: #25223D;
-      --sk-hi: #343055;
+      --accent: #6366F1;
+      --ring: rgba(99, 102, 241, 0.2);
     }
     @media (prefers-color-scheme: light) {
       :root {
         --bg: #F8FAFC;
-        --card: #FFFFFF;
-        --sk: #E2E8F0;
-        --sk-hi: #F1F5F9;
+        --accent: #4F46E5;
+        --ring: rgba(79, 70, 229, 0.16);
       }
     }
     html, body {
@@ -182,83 +197,54 @@
       z-index: 1;
       pointer-events: none;
       background: var(--bg);
-      padding: 20px 16px;
-      box-sizing: border-box;
-      max-width: 680px;
-      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 120ms ease-out;
+    }
+    #splash.splash-out {
+      opacity: 0;
+    }
+    .splash-loader {
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 14px;
-      overflow: hidden;
+      animation: splash-appear 160ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
-    .sk {
-      background: linear-gradient(90deg, var(--sk) 25%, var(--sk-hi) 50%, var(--sk) 75%);
-      background-size: 200% 100%;
-      animation: sk-shimmer 1.25s infinite linear;
-      border-radius: 12px;
+    .splash-spinner {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 2.5px solid var(--ring);
+      border-top-color: var(--accent);
+      animation: splash-spin 650ms linear infinite;
     }
-    .sk-row { display: flex; align-items: center; gap: 12px; }
-    .sk-circle { width: 42px; height: 42px; border-radius: 999px; flex-shrink: 0; }
-    .sk-hero { height: 156px; border-radius: 18px; }
-    .sk-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    @keyframes splash-appear {
+      from { opacity: 0; transform: scale(0.94); }
+      to { opacity: 1; transform: scale(1); }
     }
-    .sk-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    @keyframes sk-shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+    @keyframes splash-spin {
+      to { transform: rotate(360deg); }
     }
   </style>
   <script id="splash-screen-script">
     function removeSplashFromWeb() {
-      document.getElementById("splash")?.remove();
+      var el = document.getElementById("splash");
       document.getElementById("splash-branding")?.remove();
       document.body.style.background = "transparent";
+      if (!el) return;
+      el.classList.add("splash-out");
+      setTimeout(function() { el.remove(); }, 130);
     }
     window.addEventListener("flutter-first-frame", removeSplashFromWeb, { once: true });
   </script>
 </head>
 <body>
   <div id="splash" aria-hidden="true">
-    <div class="sk-row">
-      <div class="sk sk-circle"></div>
-      <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
-        <div class="sk" style="height:14px; width:46%;"></div>
-        <div class="sk" style="height:10px; width:30%;"></div>
-      </div>
-      <div class="sk" style="height:32px; width:74px; border-radius:999px;"></div>
-    </div>
-    <div class="sk sk-hero"></div>
-    <div class="sk-kpis">
-      <div class="sk" style="height:68px;"></div>
-      <div class="sk" style="height:68px;"></div>
-      <div class="sk" style="height:68px;"></div>
-    </div>
-    <div class="sk-card">
-      <div class="sk-row">
-        <div class="sk sk-circle" style="width:40px;height:40px;"></div>
-        <div style="flex:1; display:flex; flex-direction:column; gap:7px;">
-          <div class="sk" style="height:13px; width:55%;"></div>
-          <div class="sk" style="height:10px; width:35%;"></div>
-        </div>
-      </div>
-      <div class="sk" style="height:10px; width:92%;"></div>
-      <div class="sk" style="height:10px; width:70%;"></div>
-    </div>
-    <div class="sk-card">
-      <div class="sk-row">
-        <div class="sk sk-circle" style="width:40px;height:40px;"></div>
-        <div style="flex:1; display:flex; flex-direction:column; gap:7px;">
-          <div class="sk" style="height:13px; width:48%;"></div>
-          <div class="sk" style="height:10px; width:28%;"></div>
-        </div>
-      </div>
-      <div class="sk" style="height:10px; width:85%;"></div>
+    <div class="splash-loader">
+      <div class="splash-spinner"></div>
     </div>
   </div>
   

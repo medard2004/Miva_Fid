@@ -5,6 +5,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
 
 import '../errors/error_translator.dart';
+import '../../firebase_options.dart';
 
 class SocialAuthService {
   static bool _googleInitialized = false;
@@ -28,13 +29,10 @@ class SocialAuthService {
   /// Le backend valide l'`id_token` Google comme un jeton **Firebase**.
   /// Sans `Firebase.initializeApp()` réussi, `signInWithCredential` échoue avec
   /// un message opaque ; on préfère dire tout de suite ce qui manque.
-  static void _assertFirebaseReady() {
+  static Future<void> _ensureFirebaseReady() async {
     if (Firebase.apps.isNotEmpty) return;
-    throw StateError(
-      'Firebase n\'est pas initialisé : le fichier de configuration '
-      '(android/app/google-services.json ou ios/Runner/GoogleService-Info.plist) '
-      'est absent. Lancer `flutterfire configure` avant d\'utiliser la '
-      'connexion Google.',
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
     );
   }
 
@@ -60,34 +58,41 @@ class SocialAuthService {
   /// permettre le changement de compte ou la connexion à un autre compte sur
   /// mobile comme sur web.
   static Future<void> signOut() async {
-    try {
-      if (Firebase.apps.isNotEmpty) {
-        await FirebaseAuth.instance.signOut();
-      }
-    } catch (e) {
-      debugPrint('Erreur Firebase signOut: $e');
+    final futures = <Future<void>>[];
+
+    if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
+      futures.add(
+        FirebaseAuth.instance.signOut().catchError((Object e) {
+          debugPrint('Erreur Firebase signOut: $e');
+        }),
+      );
     }
 
     if (!kIsWeb) {
-      try {
-        await _ensureInitialized();
-        await GoogleSignIn.instance.signOut();
-      } catch (e) {
-        debugPrint('Erreur GoogleSignIn signOut: $e');
-      }
+      futures.add(
+        _ensureInitialized().then((_) => GoogleSignIn.instance.signOut()).catchError((Object e) {
+          debugPrint('Erreur GoogleSignIn signOut: $e');
+        }),
+      );
+    }
+
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
     }
   }
 
   /// S'authentifie avec Google puis Firebase, et retourne l'id_token Firebase pour le backend
   static Future<String?> signInWithGoogle() async {
     try {
-      _assertFirebaseReady();
-
       // Sur le Web, on utilise directement le flux popup natif Firebase Auth.
       // IMPORTANT : aucun `await` (ex. `signOut()`) ne doit précéder
-      // `signInWithPopup` afin de conserver le geste utilisateur synchrone
-      // exigé par Safari iOS / WebKit (sinon la popup est bloquée).
+      // `signInWithPopup` lorsque Firebase est déjà prêt afin de conserver
+      // le geste utilisateur synchrone exigé par Safari iOS / WebKit.
       if (kIsWeb) {
+        if (Firebase.apps.isEmpty) {
+          await _ensureFirebaseReady();
+        }
+
         final GoogleAuthProvider googleProvider = GoogleAuthProvider();
         googleProvider.addScope('email');
         googleProvider.addScope('profile');
@@ -96,8 +101,11 @@ class SocialAuthService {
         final UserCredential userCredential =
             await FirebaseAuth.instance.signInWithPopup(googleProvider);
 
+        // `signInWithPopup` vient tout juste de délivrer un jeton frais :
+        // `forceRefresh: false` évite un aller-retour réseau redondant vers
+        // `securetoken.googleapis.com`.
         final String? firebaseIdToken =
-            await userCredential.user?.getIdToken(true);
+            await userCredential.user?.getIdToken(false);
 
         if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
           throw Exception(
@@ -107,11 +115,13 @@ class SocialAuthService {
         return firebaseIdToken;
       }
 
-      // Purge toute session sociale précédente afin de toujours proposer le
-      // sélecteur de compte (utile pour changer de compte ou en tester plusieurs).
-      await signOut();
+      await _ensureFirebaseReady();
 
-      await _ensureInitialized();
+      // Purge toute session sociale précédente et initialise GoogleSignIn en parallèle.
+      await Future.wait([
+        signOut(),
+        _ensureInitialized(),
+      ]);
 
       // Flux interactif systématique : la reconnexion silencieuse reprenait
       // toujours le dernier compte Google utilisé, sans jamais laisser
@@ -139,10 +149,10 @@ class SocialAuthService {
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
 
-      // Récupère le jeton JWT Firebase (idToken)
-      // Ce jeton sera validé par le backend Laravel
+      // Récupère le jeton JWT Firebase (idToken) sans forcer de refresh réseau
+      // superflu puisque `signInWithCredential` vient de le fournir.
       final String? firebaseIdToken =
-          await userCredential.user?.getIdToken(true);
+          await userCredential.user?.getIdToken(false);
 
       if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
         throw Exception(

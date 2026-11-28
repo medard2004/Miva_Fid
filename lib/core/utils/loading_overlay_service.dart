@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../router/app_router.dart';
 import '../router/client_router.dart';
@@ -88,10 +89,10 @@ class _LoadingOverlayWidgetState extends State<_LoadingOverlayWidget>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 120),
     );
     _fadeAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
 
     _controller.forward();
   }
@@ -118,57 +119,63 @@ class _LoadingOverlayWidgetState extends State<_LoadingOverlayWidget>
 
   @override
   Widget build(BuildContext context) {
+    final content = Container(
+      color: AppColors.surfaceCard.withValues(alpha: kIsWeb ? 0.88 : 0.55),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.ink.withValues(alpha: 0.06),
+                    blurRadius: 24,
+                    spreadRadius: 8,
+                  ),
+                ],
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: const LoadingDots(
+                  color: AppColors.primary, dotSize: 10),
+            ),
+            if (_message != null) ...[
+              const SizedBox(height: 32),
+              Text(
+                _message!,
+                style: AppTextStyles.bodyMedium(
+                  color: AppColors.ink.withValues(alpha: 0.85),
+                ).copyWith(
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
     return Positioned.fill(
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Material(
           color: Colors.transparent,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-            child: Container(
-              color: AppColors.surfaceCard.withValues(alpha: 0.5),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted.withValues(alpha: 0.85),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.ink.withValues(alpha: 0.06),
-                            blurRadius: 24,
-                            spreadRadius: 8,
-                          ),
-                        ],
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: const LoadingDots(
-                          color: AppColors.primary, dotSize: 10),
-                    ),
-                    if (_message != null) ...[
-                      const SizedBox(height: 32),
-                      Text(
-                        _message!,
-                        style: AppTextStyles.bodyMedium(
-                          color: AppColors.ink.withValues(alpha: 0.85),
-                        ).copyWith(
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ],
+          // Sur Web/CanvasKit, le flou plein écran coûte cher à chaque frame
+          // d'animation ; un voile translucide garde l'effet fluide et rapide.
+          child: kIsWeb
+              ? content
+              : BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                  child: content,
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     );
