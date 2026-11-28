@@ -19,7 +19,14 @@ const _fallbackCenter = LatLng(6.1319, 1.2228);
 /// Tuiles OpenStreetMap (gratuit, sans clé API) via `flutter_map` — pas de
 /// compte Google Cloud ni de facturation requise.
 class MerchantLocationMapScreen extends StatefulWidget {
-  const MerchantLocationMapScreen({super.key});
+  const MerchantLocationMapScreen({
+    super.key,
+    this.initialLatitude,
+    this.initialLongitude,
+  });
+
+  final double? initialLatitude;
+  final double? initialLongitude;
 
   @override
   State<MerchantLocationMapScreen> createState() =>
@@ -28,18 +35,26 @@ class MerchantLocationMapScreen extends StatefulWidget {
 
 class _MerchantLocationMapScreenState
     extends State<MerchantLocationMapScreen> {
-  LatLng _target = _fallbackCenter;
+  late LatLng _target;
   final _controller = MapController();
+  bool _isLocatingGps = false;
 
   @override
   void initState() {
     super.initState();
-    _centerOnGpsBestEffort();
+    if (widget.initialLatitude != null && widget.initialLongitude != null) {
+      _target = LatLng(widget.initialLatitude!, widget.initialLongitude!);
+    } else {
+      _target = _fallbackCenter;
+      _centerOnGpsBestEffort();
+    }
   }
 
   /// Best-effort : n'affiche aucune erreur si la position n'est pas
   /// disponible, le repli sur `_fallbackCenter` suffit sur cet écran.
   Future<void> _centerOnGpsBestEffort() async {
+    if (_isLocatingGps) return;
+    setState(() => _isLocatingGps = true);
     try {
       final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
@@ -47,12 +62,11 @@ class _MerchantLocationMapScreenState
       setState(() => _target = target);
       _controller.move(target, 16);
     } on LocationServiceException {
-      // Reste sur _fallbackCenter — l'utilisateur ajuste le pin à la main.
+      // Reste sur _target — l'utilisateur ajuste le pin à la main.
     } catch (e) {
       debugPrint('[merchant_location_map_screen] Erreur localisation GPS: $e');
-      // Idem pour un GPS trop lent (`TimeoutException` brute du plugin,
-      // pas notre `LocationServiceException`) — best-effort, on n'affiche
-      // rien, l'utilisateur ajuste le pin à la main.
+    } finally {
+      if (mounted) setState(() => _isLocatingGps = false);
     }
   }
 
@@ -68,6 +82,11 @@ class _MerchantLocationMapScreenState
             options: MapOptions(
               initialCenter: _target,
               initialZoom: 16,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.pinchZoom |
+                    InteractiveFlag.drag |
+                    InteractiveFlag.doubleTapZoom,
+              ),
               onPositionChanged: (camera, hasGesture) =>
                   _target = camera.center,
             ),
@@ -94,6 +113,12 @@ class _MerchantLocationMapScreenState
                   _RoundIconButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: () => context.pop(),
+                  ),
+                  const Spacer(),
+                  // Bouton pour recentrer sur sa position GPS actuelle
+                  _RoundIconButton(
+                    icon: _isLocatingGps ? LucideIcons.loader : LucideIcons.locateFixed,
+                    onTap: _isLocatingGps ? () {} : _centerOnGpsBestEffort,
                   ),
                 ],
               ),

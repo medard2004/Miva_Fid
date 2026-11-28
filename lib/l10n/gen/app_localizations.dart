@@ -2183,7 +2183,7 @@ abstract class AppLocalizations {
   /// No description provided for @merchantNavSms.
   ///
   /// In fr, this message translates to:
-  /// **'SMS'**
+  /// **'Notif'**
   String get merchantNavSms;
 
   /// No description provided for @merchantNavSettings.
@@ -3335,8 +3335,8 @@ abstract class AppLocalizations {
   /// No description provided for @merchantQrCodeWhatsappShareMessage.
   ///
   /// In fr, this message translates to:
-  /// **'Rejoignez mon programme de fidélité Miva-Fid chez {name} !'**
-  String merchantQrCodeWhatsappShareMessage(String name);
+  /// **'Rejoignez le programme de fidélité de {name} sur Miva-Fid : {link}'**
+  String merchantQrCodeWhatsappShareMessage(String name, String link);
 
   /// No description provided for @merchantProgrammeTitle.
   ///

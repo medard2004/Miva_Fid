@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -189,7 +190,7 @@ class QrCodeScreen extends ConsumerWidget {
                     _buildActionButton(
                       icon: LucideIcons.share,
                       label: t.merchantQrCodeShareButton,
-                      onTap: () => _shareWhatsApp(t, merchantName),
+                      onTap: () => _shareQrLink(t, merchantName, qrData),
                     ),
                   ],
                 ),
@@ -449,9 +450,14 @@ class QrCodeScreen extends ConsumerWidget {
     await Printing.sharePdf(bytes: await doc.save(), filename: 'mivafid-comptoir.pdf');
   }
 
-  Future<void> _shareWhatsApp(AppLocalizations t, String name) async {
-    final msg = Uri.encodeComponent(t.merchantQrCodeWhatsappShareMessage(name));
-    final url = Uri.parse('https://wa.me/?text=$msg');
-    if (await canLaunchUrl(url)) await launchUrl(url);
+  Future<void> _shareQrLink(AppLocalizations t, String name, String qrData) async {
+    final text = t.merchantQrCodeWhatsappShareMessage(name, qrData);
+    try {
+      await Share.share(text);
+    } catch (_) {
+      final msg = Uri.encodeComponent(text);
+      final url = Uri.parse('https://wa.me/?text=$msg');
+      if (await canLaunchUrl(url)) await launchUrl(url);
+    }
   }
 }

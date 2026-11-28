@@ -442,7 +442,7 @@
   "merchantNavClients": "Clients",
   "merchantNavStats": "Stats",
   "merchantNavValidate": "Validate",
-  "merchantNavSms": "SMS",
+  "merchantNavSms": "Notif",
   "merchantNavSettings": "Settings",
 
   "merchantMoreBusinessProfile": "Business profile",
@@ -683,9 +683,12 @@
   "merchantQrCodeTipMessage": "Place the QR code at checkout or on tables to maximize scans.",
   "merchantQrCodePdfScanMessage": "Scan to earn your points!",
   "merchantQrCodePdfPoweredBy": "Powered by Miva-Fid",
-  "merchantQrCodeWhatsappShareMessage": "Join my Miva-Fid loyalty program at {name}!",
+  "merchantQrCodeWhatsappShareMessage": "Join {name}'s loyalty program on Miva-Fid: {link}",
   "@merchantQrCodeWhatsappShareMessage": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": { "type": "String" },
+      "link": { "type": "String" }
+    }
   },
 
   "merchantProgrammeTitle": "Loyalty",

@@ -62,12 +62,43 @@ class LocationService {
       throw const LocationServiceException(LocationFailureReason.permissionDeniedForever);
     }
 
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 15),
-      ),
-    );
+    // Tentative 1 : position avec précision équilibrée / élevée (adaptée iOS/Safari/Android)
+    try {
+      LocationSettings locationSettings;
+      if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS) {
+        locationSettings = AppleSettings(
+          accuracy: LocationAccuracy.medium,
+          activityType: ActivityType.other,
+          pauseLocationUpdatesAutomatically: false,
+          showBackgroundLocationIndicator: false,
+          timeLimit: const Duration(seconds: 12),
+        );
+      } else {
+        locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 12),
+        );
+      }
+
+      return await Geolocator.getCurrentPosition(locationSettings: locationSettings);
+    } catch (e) {
+      debugPrint('[location_service] Échec getCurrentPosition initial: $e');
+
+      // Tentative 2 de repli rapide : dernière position connue (instantané sur mobile/iOS)
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null) {
+        return lastKnown;
+      }
+
+      // Tentative 3 : précision plus basse (réseau / cell tower) si signal GPS faible
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+    }
   }
 
   /// Déduit automatiquement le Pays, la Ville et le Quartier/Rue à partir

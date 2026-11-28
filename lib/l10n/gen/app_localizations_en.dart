@@ -1158,7 +1158,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get merchantNavValidate => 'Validate';
 
   @override
-  String get merchantNavSms => 'SMS';
+  String get merchantNavSms => 'Notif';
 
   @override
   String get merchantNavSettings => 'Settings';
@@ -1771,8 +1771,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get merchantQrCodePdfPoweredBy => 'Powered by Miva-Fid';
 
   @override
-  String merchantQrCodeWhatsappShareMessage(String name) {
-    return 'Join my Miva-Fid loyalty program at $name!';
+  String merchantQrCodeWhatsappShareMessage(String name, String link) {
+    return 'Join $name\'s loyalty program on Miva-Fid: $link';
   }
 
   @override

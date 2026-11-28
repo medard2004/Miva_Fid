@@ -414,7 +414,19 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: '/auth/merchant/location/map',
-        pageBuilder: (_, __) => _slide(const MerchantLocationMapScreen()),
+        pageBuilder: (_, state) {
+          final extra = state.extra;
+          double? lat;
+          double? lng;
+          if (extra is Map) {
+            lat = (extra['latitude'] as num?)?.toDouble();
+            lng = (extra['longitude'] as num?)?.toDouble();
+          }
+          return _slide(MerchantLocationMapScreen(
+            initialLatitude: lat,
+            initialLongitude: lng,
+          ));
+        },
       ),
       GoRoute(
         path: '/auth/merchant/step2',

@@ -129,8 +129,12 @@ class _MerchantLocationScreenState
   }
 
   Future<void> _openMap() async {
-    final result =
-        await context.push<(double, double)>('/auth/merchant/location/map');
+    final result = await context.push<(double, double)>(
+      '/auth/merchant/location/map',
+      extra: (_latitude != null && _longitude != null)
+          ? {'latitude': _latitude, 'longitude': _longitude}
+          : null,
+    );
     if (result == null || !mounted) return;
 
     setState(() {
