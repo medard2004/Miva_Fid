@@ -277,56 +277,26 @@
       z-index: 1;
       pointer-events: none;
       background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       opacity: 1;
-      transition: opacity 120ms ease-out;
+      transition: opacity 100ms ease-out;
     }
     #splash.splash-out {
       opacity: 0;
-    }
-    .splash-loader {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      animation: splash-appear 160ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-    .splash-spinner {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      border: 2.5px solid var(--ring);
-      border-top-color: var(--accent);
-      animation: splash-spin 650ms linear infinite;
-    }
-    @keyframes splash-appear {
-      from { opacity: 0; transform: scale(0.94); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    @keyframes splash-spin {
-      to { transform: rotate(360deg); }
     }
   </style>
   <script id="splash-screen-script">
     function removeSplashFromWeb() {
       var el = document.getElementById("splash");
-      document.getElementById("splash-branding")?.remove();
       document.body.style.background = "transparent";
       if (!el) return;
       el.classList.add("splash-out");
-      setTimeout(function() { el.remove(); }, 130);
+      setTimeout(function() { el.remove(); }, 100);
     }
     window.addEventListener("flutter-first-frame", removeSplashFromWeb, { once: true });
   </script>
 </head>
 <body>
-  <div id="splash" aria-hidden="true">
-    <div class="splash-loader">
-      <div class="splash-spinner"></div>
-    </div>
-  </div>
+  <div id="splash" aria-hidden="true"></div>
   
   
   

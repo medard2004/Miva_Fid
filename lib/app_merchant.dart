@@ -8,8 +8,6 @@ import 'core/router/merchant_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
 import 'core/widgets/pwa_lifecycle_watcher.dart';
-import 'core/widgets/skeleton_loader.dart';
-import 'features/client/providers/app_startup_provider.dart';
 import 'features/client/providers/settings_provider.dart';
 import 'features/merchant/providers/merchant_auth_provider.dart';
 import 'l10n/gen/app_localizations.dart';
@@ -21,7 +19,6 @@ class MivaFidMerchantApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(merchantRouterProvider);
-    final isBootstrapping = ref.watch(appStartupProvider).isLoading;
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 
@@ -57,20 +54,7 @@ class MivaFidMerchantApp extends ConsumerWidget {
       builder: (context, child) {
         ErrorMessages.bind(AppLocalizations.of(context)!);
         return PwaLifecycleWatcher(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 160),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeIn,
-            child: isBootstrapping
-                ? const KeyedSubtree(
-                    key: ValueKey('boot_merchant'),
-                    child: BootAppearScreen(isMerchant: true),
-                  )
-                : KeyedSubtree(
-                    key: const ValueKey('ready_merchant'),
-                    child: child ?? const SizedBox.shrink(),
-                  ),
-          ),
+          child: child ?? const SizedBox.shrink(),
         );
       },
     );

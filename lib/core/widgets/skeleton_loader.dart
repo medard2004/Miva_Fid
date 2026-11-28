@@ -29,8 +29,7 @@ class FastAppear extends StatelessWidget {
   }
 }
 
-/// Écran de démarrage minimaliste sans squelette avec apparition rapide,
-/// utilisé pendant l'hydratation initiale côté Client et Marchand.
+/// Écran de transition neutre sans chargement circulaire bloquant.
 class BootAppearScreen extends StatelessWidget {
   const BootAppearScreen({super.key, this.isMerchant = false});
 
@@ -38,27 +37,7 @@ class BootAppearScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: const SizedBox(
-          width: 28,
-          height: 28,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            color: AppColors.primary,
-          ),
-        )
-            .animate()
-            .fadeIn(duration: 140.ms, curve: Curves.easeOut)
-            .scale(
-              begin: const Offset(0.92, 0.92),
-              end: const Offset(1.0, 1.0),
-              duration: 140.ms,
-              curve: Curves.easeOutCubic,
-            ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }
 

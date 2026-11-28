@@ -8,6 +8,7 @@ import 'core/router/app_router.dart';
 import 'core/services/proximity_client_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/toast_service.dart';
+import 'core/widgets/pwa_lifecycle_watcher.dart';
 import 'features/client/providers/app_providers.dart';
 import 'features/client/providers/settings_provider.dart';
 import 'features/merchant/providers/merchant_auth_provider.dart';
@@ -86,7 +87,9 @@ class MivaFidApp extends ConsumerWidget {
       // synchronisation de `AppColors` avec le mode sombre.
       builder: (context, child) {
         ErrorMessages.bind(AppLocalizations.of(context)!);
-        return child ?? const SizedBox.shrink();
+        return PwaLifecycleWatcher(
+          child: child ?? const SizedBox.shrink(),
+        );
       },
     );
   }
